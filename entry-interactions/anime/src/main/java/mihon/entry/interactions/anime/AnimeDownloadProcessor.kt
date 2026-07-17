@@ -91,7 +91,12 @@ internal class AnimeDownloadProcessor(
     }
 
     override fun renameSource(oldSource: UnifiedSource, newSource: UnifiedSource) {
-        // Anime download directories are keyed by source id, so a source display-name rename does not move files.
+        animeDownloadManager.renameSource(oldSource, newSource)
+    }
+
+    override suspend fun renameEntry(entry: Entry, newTitle: String) {
+        entry.requireAnime()
+        animeDownloadManager.renameAnime(entry, newTitle)
     }
 
     override fun reorderQueue(items: List<EntryDownloadQueueItem>) {
@@ -253,8 +258,7 @@ internal class AnimeDownloadProcessor(
 
     override suspend fun deleteEntryDownloads(entry: Entry) {
         entry.requireAnime()
-        val episodes = dependencies.entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
-        animeDownloadManager.deleteEpisodes(entry, episodes)
+        animeDownloadManager.deleteAnime(entry)
     }
 
     override fun hasDownloads(entry: Entry): Boolean {

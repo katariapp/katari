@@ -20,6 +20,7 @@ import mihon.entry.interactions.manga.download.model.MangaDownload
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.storage.extension
 import tachiyomi.core.common.util.lang.launchIO
+import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.model.Entry
@@ -218,11 +219,9 @@ internal class DownloadManager(
      * @param entry the manga of the chapters.
      * @param source the source of the chapters.
      */
-    fun deleteChapters(chapters: List<EntryChapter>, entry: Entry, source: UnifiedSource) {
-        launchIO {
-            if (chapters.isEmpty()) {
-                return@launchIO
-            }
+    suspend fun deleteChapters(chapters: List<EntryChapter>, entry: Entry, source: UnifiedSource) {
+        withIOContext {
+            if (chapters.isEmpty()) return@withIOContext
 
             removeFromDownloadQueue(chapters)
 
@@ -244,8 +243,8 @@ internal class DownloadManager(
      * @param source the source of the manga.
      * @param removeQueued whether to also remove queued downloads.
      */
-    fun deleteManga(manga: Entry, source: UnifiedSource, removeQueued: Boolean = true) {
-        launchIO {
+    suspend fun deleteManga(manga: Entry, source: UnifiedSource, removeQueued: Boolean = true) {
+        withIOContext {
             if (removeQueued) {
                 downloader.removeFromQueue(manga)
             }
@@ -284,10 +283,12 @@ internal class DownloadManager(
      * Triggers the execution of the deletion of pending chapters.
      */
     fun deletePendingChapters() {
-        val pendingChapters = pendingDeleter.getPendingChapters()
-        for ((manga, chapters) in pendingChapters) {
-            val source = sourceManager.get(manga.source) ?: continue
-            deleteChapters(chapters, manga, source)
+        launchIO {
+            val pendingChapters = pendingDeleter.getPendingChapters()
+            for ((manga, chapters) in pendingChapters) {
+                val source = sourceManager.get(manga.source) ?: continue
+                deleteChapters(chapters, manga, source)
+            }
         }
     }
 

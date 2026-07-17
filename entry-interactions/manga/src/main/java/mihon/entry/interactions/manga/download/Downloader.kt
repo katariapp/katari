@@ -417,15 +417,13 @@ internal class Downloader(
                 download.source,
             )
 
-            // Only rename the directory if it's downloaded
             if (downloadPreferences.saveChaptersAsCBZ.get()) {
                 archiveChapter(mangaDir, chapterDirname, tmpDir)
             } else {
-                tmpDir.renameTo(chapterDirname)
+                DiskUtil.createNoMediaFile(tmpDir, context)
+                publishChapterDirectory(mangaDir, chapterDirname, tmpDir, download)
             }
             cache.addChapter(chapterDirname, mangaDir, download.entry)
-
-            DiskUtil.createNoMediaFile(tmpDir, context)
 
             download.status = DownloadState.DOWNLOADED
         } catch (error: Throwable) {
@@ -668,14 +666,71 @@ internal class Downloader(
         dirname: String,
         tmpDir: UniFile,
     ) {
-        val zip = mangaDir.createFile("$dirname.cbz$TMP_DIR_SUFFIX")!!
+        val finalName = "$dirname.cbz"
+        val stagingName = finalName + TMP_DIR_SUFFIX
+        val backupName = finalName + PUBLISH_BACKUP_SUFFIX
+        recoverPublicationBackup(mangaDir, finalName)
+        mangaDir.findFile(stagingName)?.delete()
+        val zip = mangaDir.createFile(stagingName) ?: error("Failed to create temporary chapter archive")
         ZipWriter(context, zip).use { writer ->
             tmpDir.listFiles()?.forEach { file ->
                 writer.write(file)
             }
         }
-        zip.renameTo("$dirname.cbz")
+        check(zip.length() != 0L) { "Temporary chapter archive is empty" }
+        val existing = mangaDir.findFile(finalName)
+        if (existing != null && !existing.renameTo(backupName)) {
+            error("Failed to preserve existing chapter archive")
+        }
+        if (!zip.renameTo(finalName)) {
+            mangaDir.findFile(backupName)?.renameTo(finalName)
+            error("Failed to publish chapter archive")
+        }
+        val published = mangaDir.findFile(finalName)
+        if (published == null || !published.isFile || published.length() == 0L) {
+            published?.delete()
+            mangaDir.findFile(backupName)?.renameTo(finalName)
+            error("Published chapter archive failed validation")
+        }
+        mangaDir.findFile(backupName)?.delete()
         tmpDir.delete()
+    }
+
+    private fun publishChapterDirectory(
+        mangaDir: UniFile,
+        dirname: String,
+        tmpDir: UniFile,
+        download: MangaDownload,
+    ) {
+        check(isDownloadSuccessful(download, tmpDir)) { "Temporary chapter directory failed validation" }
+        val backupName = dirname + PUBLISH_BACKUP_SUFFIX
+        recoverPublicationBackup(mangaDir, dirname)
+        val existing = mangaDir.findFile(dirname)
+        if (existing != null && !existing.renameTo(backupName)) {
+            error("Failed to preserve existing chapter directory")
+        }
+        if (!tmpDir.renameTo(dirname)) {
+            mangaDir.findFile(backupName)?.renameTo(dirname)
+            error("Failed to publish chapter directory")
+        }
+        val published = mangaDir.findFile(dirname)
+        if (published == null || !published.isDirectory || !isDownloadSuccessful(download, published)) {
+            published?.delete()
+            mangaDir.findFile(backupName)?.renameTo(dirname)
+            error("Published chapter directory failed validation")
+        }
+        mangaDir.findFile(backupName)?.delete()
+    }
+
+    private fun recoverPublicationBackup(mangaDir: UniFile, finalName: String) {
+        val backup = mangaDir.findFile(finalName + PUBLISH_BACKUP_SUFFIX) ?: return
+        val published = mangaDir.findFile(finalName)
+        if (published?.isValidMangaChapterArtifact() == true) {
+            backup.delete()
+            return
+        }
+        published?.delete()
+        backup.renameTo(finalName)
     }
 
     /**
@@ -789,6 +844,7 @@ internal class Downloader(
 
     companion object {
         const val TMP_DIR_SUFFIX = "_tmp"
+        const val PUBLISH_BACKUP_SUFFIX = ".bak_tmp"
         const val WARNING_NOTIF_TIMEOUT_MS = 30_000L
         const val CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 15
         private const val HELP_WARNING_URL =

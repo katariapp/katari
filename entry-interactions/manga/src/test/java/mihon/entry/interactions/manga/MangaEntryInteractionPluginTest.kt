@@ -587,7 +587,7 @@ class MangaEntryInteractionPluginTest {
         interactions.download.cleanup(manga, listOf(chapter))
 
         coVerify(exactly = 1) { manager.enqueueChaptersToDelete(listOf(chapter), manga) }
-        verify(exactly = 0) { manager.deleteChapters(any(), any(), any()) }
+        coVerify(exactly = 0) { manager.deleteChapters(any(), any(), any()) }
     }
 
     @Test

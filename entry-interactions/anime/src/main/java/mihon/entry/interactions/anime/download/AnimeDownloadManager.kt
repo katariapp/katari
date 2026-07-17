@@ -1,6 +1,7 @@
 package mihon.entry.interactions.anime.download
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ import mihon.entry.interactions.EntryDownloadWorkController
 import mihon.entry.interactions.anime.download.model.AnimeDownload
 import mihon.entry.interactions.anime.download.model.AnimeDownloadFailure
 import mihon.entry.interactions.anime.toEntryDownloadMessage
+import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -208,12 +210,43 @@ internal class AnimeDownloadManager(
     }
 
     suspend fun deleteEpisodes(anime: Entry, episodes: List<EntryChapter>) {
-        if (episodes.isEmpty()) return
-        removeFromQueue(episodes.map(EntryChapter::id))
-        val source = sourceManager.get(anime.source) ?: return
-        val (_, episodeDirs) = provider.findEpisodeDirs(episodes, anime, source)
-        episodeDirs.forEach { it.delete() }
-        cache.removeEpisodes(episodes, anime)
+        withIOContext {
+            if (episodes.isEmpty()) return@withIOContext
+            removeFromQueue(episodes.map(EntryChapter::id))
+            sourceManager.get(anime.source)?.let { source ->
+                val (_, episodeDirs) = provider.findEpisodeDirs(episodes, anime, source)
+                episodeDirs.forEach { it.delete() }
+            }
+            cache.removeEpisodes(episodes, anime)
+        }
+    }
+
+    suspend fun deleteAnime(anime: Entry) {
+        withIOContext {
+            val queuedEpisodeIds = queueState.value
+                .filter { it.anime.id == anime.id }
+                .map { it.episode.id }
+            removeFromQueue(queuedEpisodeIds)
+            sourceManager.get(anime.source)?.let { source ->
+                provider.findAnimeDir(anime.title, source)?.delete()
+            }
+            cache.removeAnime(anime)
+        }
+    }
+
+    fun renameSource(oldSource: UnifiedSource, newSource: UnifiedSource) {
+        if (provider.renameSource(oldSource, newSource)) cache.invalidateCache()
+    }
+
+    suspend fun renameAnime(anime: Entry, newTitle: String) {
+        withIOContext {
+            val source = sourceManager.get(anime.source) ?: return@withIOContext
+            val queuedEpisodeIds = queueState.value
+                .filter { it.anime.id == anime.id }
+                .map { it.episode.id }
+            removeFromQueue(queuedEpisodeIds)
+            if (provider.renameEntry(source, anime, newTitle)) cache.invalidateCache()
+        }
     }
 
     fun isEpisodeDownloaded(

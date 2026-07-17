@@ -227,11 +227,15 @@ internal class AnimeDownloadCache(
                             .associate { it.name!! to AnimeTitleDirectory(it) }
 
                         sourceDir.animeDirs.values.forEach { animeDir ->
+                            animeDir.dir?.let(provider::recoverEpisodePackages)
                             animeDir.episodeDirs = animeDir.dir?.listFiles().orEmpty()
                                 .mapNotNull {
                                     when {
                                         it.name?.endsWith(TMP_DIR_SUFFIX) == true -> null
-                                        it.isDirectory && !it.name.isNullOrBlank() -> it.name
+                                        it.name?.endsWith(AnimeDownloadProvider.BACKUP_DIR_SUFFIX) == true -> null
+                                        it.isDirectory &&
+                                            !it.name.isNullOrBlank() &&
+                                            provider.isEpisodePackageValid(it) -> it.name
                                         else -> null
                                     }
                                 }
