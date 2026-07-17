@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.entry.VideoStream
 import eu.kanade.tachiyomi.source.entry.VideoStreamType
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.anime.animeProgressState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -114,6 +117,32 @@ class VideoPlayerViewModelTest {
         playbackRepository.upserts.single().completed shouldBe false
         historyRepository.upserts.single().chapterId shouldBe 2L
         historyRepository.upserts.single().sessionReadDuration shouldBe 15_000L
+    }
+
+    @Test
+    fun `persist playback reports completion to shared download lifecycle`() = runTest(dispatcher) {
+        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val viewModel = createViewModel(
+            entryChapterRepository = FakeEntryChapterRepository(emptyList()),
+            playbackRepository = FakeEntryProgressRepository(existingState = null),
+            historyRepository = FakeHistoryRepository(),
+            resolver = RecordingVideoStreamResolver(),
+            downloadLifecycle = downloadLifecycle,
+        )
+        viewModel.init(entryId = 1L, chapterId = 2L)
+        advanceUntilIdle()
+
+        viewModel.persistPlayback(positionMs = 95_000L, durationMs = 100_000L)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            downloadLifecycle.onEvent(
+                EntryDownloadLifecycleEvent.Completed(
+                    visibleEntry = videoEntry(1L),
+                    child = chapter(id = 2L, entryId = 1L, sourceOrder = 2L),
+                ),
+            )
+        }
     }
 
     @Test
@@ -239,6 +268,7 @@ class VideoPlayerViewModelTest {
         historyRepository: HistoryRepository,
         resolver: VideoStreamResolver,
         getEntryWithChapters: GetEntryWithChapters? = null,
+        downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     ): VideoPlayerViewModel {
         return VideoPlayerViewModel(
             savedState = SavedStateHandle(),
@@ -248,6 +278,7 @@ class VideoPlayerViewModelTest {
             getEntryWithChapters = getEntryWithChapters,
             entryProgressRepository = playbackRepository,
             historyRepository = historyRepository,
+            downloadLifecycle = downloadLifecycle,
             resolveDispatcher = dispatcher,
             persistenceDispatcher = dispatcher,
         )

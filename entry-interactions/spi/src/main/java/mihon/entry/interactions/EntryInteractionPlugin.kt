@@ -81,6 +81,7 @@ interface EntryDownloadProcessor {
     ): EntryBulkDownloadCandidateResult
     suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
+    suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) = delete(entry, chapters)
     suspend fun deleteEntryDownloads(entry: Entry)
 
     fun hasDownloads(entry: Entry): Boolean

@@ -22,8 +22,6 @@ import tachiyomi.core.common.storage.extension
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.system.ImageUtil
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.source.service.SourceManager
@@ -41,9 +39,7 @@ internal class DownloadManager(
     private val context: Context,
     private val provider: DownloadProvider = Injekt.get(),
     private val cache: DownloadCache = Injekt.get(),
-    private val getCategories: GetCategories = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
-    private val downloadPreferences: DownloadPreferences = Injekt.get(),
     private val downloader: Downloader = Downloader(context, provider, cache),
     private val pendingDeleter: DownloadPendingDeleter = DownloadPendingDeleter(context),
     private val workController: EntryDownloadWorkController = Injekt.get(),
@@ -224,16 +220,15 @@ internal class DownloadManager(
      */
     fun deleteChapters(chapters: List<EntryChapter>, entry: Entry, source: UnifiedSource) {
         launchIO {
-            val filteredChapters = getChaptersToDelete(chapters, entry)
-            if (filteredChapters.isEmpty()) {
+            if (chapters.isEmpty()) {
                 return@launchIO
             }
 
-            removeFromDownloadQueue(filteredChapters)
+            removeFromDownloadQueue(chapters)
 
-            val (mangaDir, chapterDirs) = provider.findChapterDirs(filteredChapters, entry, source)
+            val (mangaDir, chapterDirs) = provider.findChapterDirs(chapters, entry, source)
             chapterDirs.forEach { it.delete() }
-            cache.removeChapters(filteredChapters, entry)
+            cache.removeChapters(chapters, entry)
 
             // Delete manga directory if empty
             if (mangaDir?.listFiles()?.isEmpty() == true) {
@@ -282,7 +277,7 @@ internal class DownloadManager(
      * @param manga the manga of the chapters.
      */
     suspend fun enqueueChaptersToDelete(chapters: List<EntryChapter>, manga: Entry) {
-        pendingDeleter.addChapters(getChaptersToDelete(chapters, manga), manga)
+        pendingDeleter.addChapters(chapters, manga)
     }
 
     /**
@@ -386,26 +381,6 @@ internal class DownloadManager(
             cache.addChapter(newName, mangaDir, manga)
         } else {
             logcat(LogPriority.ERROR) { "Could not rename downloaded chapter: ${oldNames.joinToString()}" }
-        }
-    }
-
-    private suspend fun getChaptersToDelete(chapters: List<EntryChapter>, entry: Entry): List<EntryChapter> {
-        // Retrieve the categories that are set to exclude from being deleted on read
-        val categoriesToExclude = downloadPreferences.removeExcludeCategories.get().map(String::toLong)
-
-        val categoriesForManga = getCategories.await(entry.id)
-            .map { it.id }
-            .ifEmpty { listOf(0) }
-        val filteredCategoryManga = if (categoriesForManga.intersect(categoriesToExclude.toSet()).isNotEmpty()) {
-            chapters.filterNot { it.read }
-        } else {
-            chapters
-        }
-
-        return if (!downloadPreferences.removeBookmarkedChapters.get()) {
-            filteredCategoryManga.filterNot { it.bookmark }
-        } else {
-            filteredCategoryManga
         }
     }
 

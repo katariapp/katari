@@ -4,7 +4,6 @@ import android.app.Application
 import mihon.entry.interactions.EntryInteractionRuntimeContribution
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.book.download.BookDownloadCache
-import mihon.entry.interactions.book.download.BookDownloadCleanup
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.entry.interactions.book.download.BookDownloadProvider
 import mihon.entry.interactions.book.download.BookDownloadStore
@@ -64,15 +63,6 @@ fun InjektRegistrar.addBookEntryInteractionRuntime(
             store = get(),
         )
     }
-    addSingletonFactory {
-        BookDownloadCleanup(
-            downloadPreferences = get(),
-            getCategories = get(),
-            getEntryWithChapters = get(),
-            entryRepository = get(),
-            downloadManager = get(),
-        )
-    }
     addSingletonFactory { BookProcessorPreferences(profilePreferenceStore) }
     addSingletonFactory {
         BookProcessorSelectionCoordinator(
@@ -98,7 +88,7 @@ fun InjektRegistrar.addBookEntryInteractionRuntime(
             incognitoState = get<EntryReaderIncognitoState>(),
             materializationStore = get(),
             downloadCache = get(),
-            downloadCleanup = get(),
+            downloadLifecycle = get(),
         )
     }
     return EntryInteractionRuntimeContribution(

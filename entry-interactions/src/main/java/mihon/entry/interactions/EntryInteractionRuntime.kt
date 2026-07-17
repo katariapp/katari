@@ -28,6 +28,7 @@ import mihon.entry.viewer.settings.ViewerSettingBinder
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import mihon.entry.viewer.settings.ViewerSettingsInteraction
 import tachiyomi.core.common.preference.PreferenceStore
+import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
@@ -59,6 +60,16 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryReaderIncognitoState> { dependencies.readerIncognitoState }
     addSingletonFactory<EntryReaderTracking> { dependencies.readerTracking }
     addSingletonFactory<EntryDownloadWorkController> { DefaultEntryDownloadWorkController(app) }
+    addSingletonFactory { FilterEntryChaptersForDownload(get(), get(), get()) }
+    addSingletonFactory<EntryDownloadLifecycleInteraction> {
+        EntryDownloadLifecycleManager(
+            downloadPreferences = get(),
+            getCategories = get(),
+            getEntryWithChapters = get(),
+            entryRepository = get(),
+            downloadInteraction = { Injekt.get() },
+        )
+    }
 
     addSingletonFactory { MangaReaderSettingsProvider(dependencies.profilePreferenceStore) }
     addSingletonFactory { ReaderBasePreferences(dependencies.basePreferenceStore) }
@@ -104,10 +115,11 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                         getEntryWithChapters = get(),
                         entryChapterRepository = get(),
                         entryProgressRepository = get(),
-                        filterEntryChaptersForDownload = FilterEntryChaptersForDownload(get(), get(), get()),
+                        filterEntryChaptersForDownload = get(),
                         childGroupFilterDataSource = dependencies.mangaChildGroupFilterDataSource,
                         downloadPreferences = get(),
                         sourceManager = get(),
+                        downloadLifecycle = get(),
                         entryInteractionPreferences = get<EntryInteractionPreferences>(),
                     ),
                 ),
@@ -118,9 +130,11 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                         entryProgressRepository = get(),
                         playbackPreferencesRepository = get(),
                         downloadPreferences = get(),
+                        filterEntryChaptersForDownload = get(),
                         downloadPreferencesRepository = get(),
                         sourceManager = get(),
                         entryRepository = get(),
+                        downloadLifecycle = get(),
                         entryInteractionPreferences = get<EntryInteractionPreferences>(),
                         historyRepository = get(),
                     ),
@@ -130,7 +144,8 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                         getEntryWithChapters = get(),
                         entryChapterRepository = get(),
                         entryProgressRepository = get(),
-                        filterEntryChaptersForDownload = FilterEntryChaptersForDownload(get(), get(), get()),
+                        filterEntryChaptersForDownload = get(),
+                        downloadLifecycle = get(),
                         downloadsEnabled = true,
                     ),
                 ),

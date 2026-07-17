@@ -2,6 +2,8 @@ package mihon.entry.interactions.anime
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryConsumptionProcessor
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.consumptionStatus
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -11,6 +13,7 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 
 internal class AnimeConsumptionProcessor(
     private val entryProgressRepository: EntryProgressRepository,
+    private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
 ) : EntryConsumptionProcessor {
     override val type: EntryType = EntryType.ANIME
     override val supportsBookmark: Boolean = false
@@ -55,6 +58,9 @@ internal class AnimeConsumptionProcessor(
                 )
             }
             entryProgressRepository.upsertAndSyncChild(updated)
+        }
+        if (consumed) {
+            downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
         }
     }
 

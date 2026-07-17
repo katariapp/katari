@@ -437,6 +437,12 @@ private class RegistryEntryDownloadInteraction(
         processor.delete(entry, chapters)
     }
 
+    override suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) {
+        val processor = processors[entry.type] ?: return
+        processor.requireMatchingEntryType("download", entry, processors.keys)
+        processor.cleanup(entry, chapters)
+    }
+
     override suspend fun deleteEntryDownloads(entry: Entry) {
         val processor = processors[entry.type] ?: return
         processor.requireMatchingEntryType("download", entry, processors.keys)

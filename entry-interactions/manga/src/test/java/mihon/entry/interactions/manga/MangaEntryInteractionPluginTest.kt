@@ -9,6 +9,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -23,6 +24,8 @@ import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryOpenOptions
@@ -221,9 +224,6 @@ class MangaEntryInteractionPluginTest {
         val consumptionProcessor = MangaConsumptionProcessor(
             entryChapterRepository = dependencies.entryChapterRepository,
             entryProgressRepository = dependencies.entryProgressRepository,
-            downloadPreferences = dependencies.downloadPreferences,
-            downloadManager = dependencies.downloadManager,
-            sourceManager = dependencies.sourceManager,
         )
         val animeEntry = entry(EntryType.ANIME)
 
@@ -461,15 +461,12 @@ class MangaEntryInteractionPluginTest {
     }
 
     @Test
-    fun `manga consumption deletes downloads only when marking read and preference is enabled`() = runTest {
+    fun `manga consumption reports newly consumed children to shared lifecycle policy`() = runTest {
         val repository = FakeEntryChapterRepository(emptyList())
-        val downloadManager = mockDownloadManager(chapterDownloaded = false)
-        val sourceManager = mockSourceManager()
+        val lifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
         val processor = mangaConsumptionProcessor(
             repository = repository,
-            removeAfterMarkedAsRead = true,
-            downloadManager = downloadManager,
-            sourceManager = sourceManager,
+            downloadLifecycle = lifecycle,
         )
         val entry = entry(EntryType.MANGA)
         val chapter = chapter(id = 1L, read = false)
@@ -477,29 +474,24 @@ class MangaEntryInteractionPluginTest {
         processor.setConsumed(entry, listOf(chapter), consumed = true)
         processor.setConsumed(entry, listOf(chapter.copy(read = true)), consumed = false)
 
-        verify(exactly = 1) {
-            downloadManager.deleteChapters(
-                listOf(chapter),
-                entry,
-                any(),
-            )
+        coVerify(exactly = 1) {
+            lifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, listOf(chapter)))
         }
     }
 
     @Test
-    fun `manga consumption does not delete downloads when preference is disabled`() = runTest {
+    fun `manga consumption does not report lifecycle cleanup when marking unread`() = runTest {
         val repository = FakeEntryChapterRepository(emptyList())
-        val downloadManager = mockDownloadManager(chapterDownloaded = false)
+        val lifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
         val processor = mangaConsumptionProcessor(
             repository = repository,
-            removeAfterMarkedAsRead = false,
-            downloadManager = downloadManager,
+            downloadLifecycle = lifecycle,
         )
         val entry = entry(EntryType.MANGA)
 
-        processor.setConsumed(entry, listOf(chapter(id = 1L, read = false)), consumed = true)
+        processor.setConsumed(entry, listOf(chapter(id = 1L, read = true)), consumed = false)
 
-        verify(exactly = 0) { downloadManager.deleteChapters(any(), any(), any()) }
+        coVerify(exactly = 0) { lifecycle.onEvent(any()) }
     }
 
     @Test
@@ -584,6 +576,21 @@ class MangaEntryInteractionPluginTest {
     }
 
     @Test
+    fun `manga lifecycle cleanup is deferred through the pending deletion store`() = runTest {
+        val manager = mockDownloadManager(chapterDownloaded = true)
+        val interactions = createEntryInteractions(
+            listOf(mangaEntryInteractionPlugin(dependencies(downloadManager = manager))),
+        )
+        val manga = entry(EntryType.MANGA)
+        val chapter = chapter()
+
+        interactions.download.cleanup(manga, listOf(chapter))
+
+        coVerify(exactly = 1) { manager.enqueueChaptersToDelete(listOf(chapter), manga) }
+        verify(exactly = 0) { manager.deleteChapters(any(), any(), any()) }
+    }
+
+    @Test
     fun `manga merged downloads are queued under each real owner and start once`() = runTest {
         val visible = entry(EntryType.MANGA, id = 1L, sourceId = 10L, profileId = 7L)
         val member = entry(EntryType.MANGA, id = 2L, sourceId = 20L, profileId = 7L)
@@ -661,16 +668,12 @@ class MangaEntryInteractionPluginTest {
     private fun mangaConsumptionProcessor(
         repository: EntryChapterRepository,
         progressRepository: EntryProgressRepository = FakeEntryProgressRepository(emptyList()),
-        removeAfterMarkedAsRead: Boolean = false,
-        downloadManager: DownloadManager = mockDownloadManager(chapterDownloaded = false),
-        sourceManager: SourceManager = mockSourceManager(),
+        downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     ): MangaConsumptionProcessor {
         return MangaConsumptionProcessor(
             entryChapterRepository = repository,
             entryProgressRepository = progressRepository,
-            downloadPreferences = mockDownloadPreferences(removeAfterMarkedAsRead),
-            downloadManager = downloadManager,
-            sourceManager = sourceManager,
+            downloadLifecycle = downloadLifecycle,
         )
     }
 

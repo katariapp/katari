@@ -19,8 +19,9 @@ import kotlinx.coroutines.test.runTest
 import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookLocator
 import mihon.book.api.BookPublication
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.book.download.BookDownloadCache
-import mihon.entry.interactions.book.download.BookDownloadCleanup
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
@@ -76,7 +77,7 @@ class BookReaderSessionFactoryTest {
         )
         val publicationSession = TestPublicationSession()
         val processor = SessionFactoryTestProcessor(publicationSession)
-        val downloadCleanup = mockk<BookDownloadCleanup>(relaxed = true)
+        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
         val context = mockk<Context> {
             every { applicationContext } returns this@mockk
             every { contentResolver } returns mockk<ContentResolver>()
@@ -103,7 +104,7 @@ class BookReaderSessionFactoryTest {
             },
             materializationStore = mockk(relaxed = true),
             downloadCache = failingDownloadCache(),
-            downloadCleanup = downloadCleanup,
+            downloadLifecycle = downloadLifecycle,
             now = { 100L },
         )
 
@@ -124,7 +125,9 @@ class BookReaderSessionFactoryTest {
         assertTrue(updatedProgress.captured.completed)
         assertEquals(100L, updatedProgress.captured.completionUpdatedAt)
         assertEquals(100L, updatedProgress.captured.locatorUpdatedAt)
-        coVerify(exactly = 1) { downloadCleanup.afterReaderCompleted(entry, chapter) }
+        coVerify(exactly = 1) {
+            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.Completed(entry, chapter))
+        }
 
         session.recordHistory(500L)
         coVerify {

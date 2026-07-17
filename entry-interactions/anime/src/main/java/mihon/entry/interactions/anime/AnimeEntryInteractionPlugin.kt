@@ -1,5 +1,7 @@
 package mihon.entry.interactions.anime
 
+import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
@@ -28,9 +30,11 @@ fun animeEntryInteractionPlugin(
             animeDownloadManager = Injekt.get(),
             animeDownloadCache = Injekt.get(),
             downloadPreferences = dependencies.downloadPreferences,
+            filterEntryChaptersForDownload = dependencies.filterEntryChaptersForDownload,
             downloadPreferencesRepository = dependencies.downloadPreferencesRepository,
             sourceManager = dependencies.sourceManager,
             entryRepository = dependencies.entryRepository,
+            downloadLifecycle = dependencies.downloadLifecycle,
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
             historyRepository = dependencies.historyRepository,
         ),
@@ -64,6 +68,7 @@ internal fun animeEntryInteractionPlugin(
         registry.registerConsumptionProcessor(
             AnimeConsumptionProcessor(
                 entryProgressRepository = dependencies.entryProgressRepository,
+                downloadLifecycle = dependencies.downloadLifecycle,
             ),
         )
         registry.registerUpdateEligibilityProcessor(AnimeUpdateEligibilityProcessor())
@@ -102,9 +107,11 @@ data class AnimeEntryInteractionDependencies(
     val entryProgressRepository: EntryProgressRepository,
     val playbackPreferencesRepository: PlaybackPreferencesRepository,
     val downloadPreferences: DownloadPreferences,
+    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload,
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
+    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     val entryInteractionPreferences: EntryInteractionPreferences,
     val historyRepository: HistoryRepository? = null,
 )
@@ -117,9 +124,11 @@ internal data class AnimeEntryInteractionRuntimeDependencies(
     val animeDownloadManager: AnimeDownloadManager,
     val animeDownloadCache: AnimeDownloadCache,
     val downloadPreferences: DownloadPreferences,
+    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload,
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
+    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     val entryInteractionPreferences: EntryInteractionPreferences,
     val historyRepository: HistoryRepository? = null,
 )

@@ -3,23 +3,20 @@ package mihon.entry.interactions.manga
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryConsumptionProcessor
 import mihon.entry.interactions.EntryConsumptionStatus
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.consumptionStatus
-import mihon.entry.interactions.manga.download.DownloadManager
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.EntryProgressLocator
 import tachiyomi.domain.entry.model.progressResourceKey
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
-import tachiyomi.domain.source.service.SourceManager
 
 internal class MangaConsumptionProcessor(
     private val entryChapterRepository: EntryChapterRepository,
     private val entryProgressRepository: EntryProgressRepository,
-    private val downloadPreferences: DownloadPreferences,
-    private val downloadManager: DownloadManager,
-    private val sourceManager: SourceManager,
+    private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
 ) : EntryConsumptionProcessor {
     override val type: EntryType = EntryType.MANGA
     override val supportsBookmark: Boolean = true
@@ -79,8 +76,8 @@ internal class MangaConsumptionProcessor(
             entryProgressRepository.upsertAndSyncChild(updated)
         }
 
-        if (consumed && downloadPreferences.removeAfterMarkedAsRead.get()) {
-            downloadManager.deleteChapters(chaptersToUpdate, entry, sourceManager.getOrStub(entry.source))
+        if (consumed) {
+            downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
         }
     }
 

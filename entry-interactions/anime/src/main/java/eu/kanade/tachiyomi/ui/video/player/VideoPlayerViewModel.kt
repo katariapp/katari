@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.anime.positionMs
 import mihon.entry.interactions.viewer.EntryChildDirection
 import mihon.entry.interactions.viewer.EntryChildWindow
@@ -55,6 +57,8 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
     private val entryRepository: EntryRepository? = runCatching { Injekt.get<EntryRepository>() }.getOrNull(),
     private val entryProgressRepository: EntryProgressRepository = Injekt.get(),
     private val historyRepository: HistoryRepository = Injekt.get(),
+    private val downloadLifecycle: EntryDownloadLifecycleInteraction? =
+        runCatching { Injekt.get<EntryDownloadLifecycleInteraction>() }.getOrNull(),
     private val resolveDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val persistenceDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val now: () -> Long = { System.currentTimeMillis() },
@@ -331,6 +335,20 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
                     snapshot.historyUpdate?.let { historyUpdate ->
                         historyRepository.upsertHistory(historyUpdate)
                     }
+                    val lifecycleEvent = if (snapshot.completedNow) {
+                        EntryDownloadLifecycleEvent.Completed(current.entry, current.childWindow.current)
+                    } else {
+                        EntryDownloadLifecycleEvent.Progressed(
+                            visibleEntry = current.entry,
+                            child = current.childWindow.current,
+                            fraction = if (safeDurationMs > 0L) {
+                                safePositionMs.toDouble() / safeDurationMs
+                            } else {
+                                0.0
+                            },
+                        )
+                    }
+                    downloadLifecycle?.onEvent(lifecycleEvent)
                 }
             }
         }

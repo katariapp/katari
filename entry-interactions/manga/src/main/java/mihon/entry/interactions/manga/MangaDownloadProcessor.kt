@@ -153,6 +153,11 @@ internal class MangaDownloadProcessor(
         downloadManager.deleteChapters(chapters, entry, dependencies.sourceManager.getOrStub(entry.source))
     }
 
+    override suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) {
+        entry.requireManga()
+        downloadManager.enqueueChaptersToDelete(chapters, entry)
+    }
+
     override suspend fun deleteEntryDownloads(entry: Entry) {
         entry.requireManga()
         downloadManager.deleteManga(entry, dependencies.sourceManager.getOrStub(entry.source))

@@ -243,7 +243,7 @@ internal class AnimeDownloadProcessor(
         chapters: List<EntryChapter>,
     ): List<EntryChapter> {
         entry.requireAnime()
-        return chapters.takeIf { dependencies.downloadPreferences.downloadNewEntryChapters.get() }.orEmpty()
+        return dependencies.filterEntryChaptersForDownload.await(entry, chapters)
     }
 
     override suspend fun delete(entry: Entry, chapters: List<EntryChapter>) {

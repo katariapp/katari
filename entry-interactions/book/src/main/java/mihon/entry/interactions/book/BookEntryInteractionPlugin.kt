@@ -1,8 +1,8 @@
 package mihon.entry.interactions.book
 
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
-import mihon.entry.interactions.book.download.BookDownloadCleanup
 import mihon.entry.interactions.book.download.BookDownloadManager
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.repository.EntryChapterRepository
@@ -16,7 +16,7 @@ fun bookEntryInteractionPlugin(
     return EntryInteractionPlugin { registry ->
         val openProcessor = BookOpenProcessor()
         val downloadManager = if (dependencies.downloadsEnabled) Injekt.get<BookDownloadManager>() else null
-        val downloadCleanup = if (dependencies.downloadsEnabled) Injekt.get<BookDownloadCleanup>() else null
+        val downloadLifecycle = dependencies.downloadLifecycle
         registry.registerOpenProcessor(openProcessor)
         registry.registerCapabilityProcessor(BookCapabilityProcessor())
         registry.registerChildListProcessor(BookChildListProcessor(dependencies.entryProgressRepository))
@@ -48,7 +48,7 @@ fun bookEntryInteractionPlugin(
             BookConsumptionProcessor(
                 entryProgressRepository = dependencies.entryProgressRepository,
                 entryChapterRepository = dependencies.entryChapterRepository,
-                downloadCleanup = downloadCleanup,
+                downloadLifecycle = downloadLifecycle,
             ),
         )
         registry.registerUpdateEligibilityProcessor(BookUpdateEligibilityProcessor())
@@ -67,5 +67,6 @@ data class BookEntryInteractionDependencies(
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
     val filterEntryChaptersForDownload: FilterEntryChaptersForDownload? = null,
+    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     val downloadsEnabled: Boolean = false,
 )

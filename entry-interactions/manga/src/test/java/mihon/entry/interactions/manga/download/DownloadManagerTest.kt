@@ -13,8 +13,6 @@ import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.manga.download.model.DownloadState
 import mihon.entry.interactions.manga.download.model.MangaDownload
 import org.junit.jupiter.api.Test
-import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.source.service.SourceManager
@@ -68,9 +66,7 @@ class DownloadManagerTest {
             context = mockk(relaxed = true),
             provider = mockk(),
             cache = mockk(),
-            getCategories = mockk<GetCategories>(),
             sourceManager = mockk<SourceManager>(),
-            downloadPreferences = mockk<DownloadPreferences>(),
             downloader = downloader,
             pendingDeleter = mockk<DownloadPendingDeleter>(),
             workController = mockk(relaxed = true),

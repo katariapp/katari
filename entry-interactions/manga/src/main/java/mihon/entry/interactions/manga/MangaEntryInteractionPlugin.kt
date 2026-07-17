@@ -2,6 +2,7 @@ package mihon.entry.interactions.manga
 
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryChildGroupFilterDataSource
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
@@ -33,6 +34,7 @@ fun mangaEntryInteractionPlugin(
             downloadCache = Injekt.get(),
             sourceManager = dependencies.sourceManager,
             entryRepository = Injekt.get(),
+            downloadLifecycle = dependencies.downloadLifecycle,
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
         ),
     )
@@ -62,9 +64,7 @@ internal fun mangaEntryInteractionPlugin(
             MangaConsumptionProcessor(
                 entryChapterRepository = dependencies.entryChapterRepository,
                 entryProgressRepository = dependencies.entryProgressRepository,
-                downloadPreferences = dependencies.downloadPreferences,
-                downloadManager = dependencies.downloadManager,
-                sourceManager = dependencies.sourceManager,
+                downloadLifecycle = dependencies.downloadLifecycle,
             ),
         )
         registry.registerUpdateEligibilityProcessor(MangaUpdateEligibilityProcessor())
@@ -104,6 +104,7 @@ data class MangaEntryInteractionDependencies(
     val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val downloadPreferences: DownloadPreferences,
     val sourceManager: SourceManager,
+    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )
 
@@ -118,5 +119,6 @@ internal data class MangaEntryInteractionRuntimeDependencies(
     val downloadCache: DownloadCache,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
+    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )

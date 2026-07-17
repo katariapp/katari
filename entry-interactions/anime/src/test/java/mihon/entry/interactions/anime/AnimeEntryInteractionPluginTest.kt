@@ -18,6 +18,7 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -28,11 +29,14 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
+import mihon.entry.interactions.EntryDownloadLifecycleEvent
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryInteractionPlugin
@@ -49,6 +53,8 @@ import mihon.entry.interactions.createEntryInteractions
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
+import tachiyomi.domain.category.interactor.GetCategories
+import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
@@ -274,6 +280,32 @@ class AnimeEntryInteractionPluginTest {
             )
             manager.startDownloads()
         }
+    }
+
+    @Test
+    fun `anime automatic downloads honor shared category exclusions`() = runTest {
+        val anime = entry(EntryType.ANIME).copy(favorite = true)
+        val episode = chapter(id = 2L)
+        val preferences = tachiyomi.domain.download.service.DownloadPreferences(InMemoryPreferenceStore()).apply {
+            downloadNewEntryChapters.set(true)
+            downloadNewEntryChapterCategoriesExclude.set(setOf("9"))
+        }
+        val getCategories = mockk<GetCategories> {
+            coEvery { await(anime.id) } returns listOf(Category(9L, "Excluded", 0L, 0L))
+        }
+        val interactions = createEntryInteractions(
+            listOf(
+                animeEntryInteractionPlugin(
+                    dependencies(
+                        chapters = listOf(episode),
+                        automaticDownloadPreferences = preferences,
+                        getCategories = getCategories,
+                    ),
+                ),
+            ),
+        )
+
+        interactions.download.filterAutoDownloadCandidates(anime, listOf(episode)) shouldBe emptyList()
     }
 
     @Test
@@ -815,6 +847,8 @@ class AnimeEntryInteractionPluginTest {
 
     @Test
     fun `anime consumption marks watched without changing recency`() = runTest {
+        val newlyWatched = chapter(id = 1L, read = false)
+        val alreadyWatched = chapter(id = 2L, read = true)
         val chapterRepository = FakeEntryChapterRepository(
             listOf(
                 chapter(id = 1L, read = false),
@@ -827,22 +861,27 @@ class AnimeEntryInteractionPluginTest {
                 playbackState(chapterId = 2L, positionMs = 10_000L, completed = false),
             ),
         )
+        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
+            downloadLifecycle = downloadLifecycle,
         )
+        val anime = entry(EntryType.ANIME)
 
         processor.setConsumed(
-            entry = entry(EntryType.ANIME),
-            chapters = listOf(
-                chapter(id = 1L, read = false),
-                chapter(id = 2L, read = true),
-            ),
+            entry = anime,
+            chapters = listOf(newlyWatched, alreadyWatched),
             consumed = true,
         )
 
         playbackRepository.upsertedStates.shouldContainExactly(
             playbackState(chapterId = 1L, positionMs = 20_000L, completed = true, lastWatchedAt = 70L),
         )
+        coVerify(exactly = 1) {
+            downloadLifecycle.onEvent(
+                EntryDownloadLifecycleEvent.MarkedConsumed(anime, listOf(newlyWatched)),
+            )
+        }
     }
 
     @Test
@@ -934,6 +973,8 @@ class AnimeEntryInteractionPluginTest {
         entryInteractionPreferences: EntryInteractionPreferences =
             EntryInteractionPreferences(InMemoryPreferenceStore()),
         animeDownloadManager: AnimeDownloadManager? = null,
+        automaticDownloadPreferences: tachiyomi.domain.download.service.DownloadPreferences = mockk(relaxed = true),
+        getCategories: GetCategories = mockk(relaxed = true),
         downloadPreferencesRepository: DownloadPreferencesRepository = FakeDownloadPreferencesRepository(),
         sourceManager: SourceManager = mockSourceManager(),
     ): AnimeEntryInteractionRuntimeDependencies {
@@ -950,7 +991,12 @@ class AnimeEntryInteractionPluginTest {
             playbackPreferencesRepository = FakePlaybackPreferencesRepository(playbackPreferences),
             animeDownloadManager = animeDownloadManager ?: mockAnimeDownloadManager(episodeDownloaded),
             animeDownloadCache = mockAnimeDownloadCache(),
-            downloadPreferences = mockk(relaxed = true),
+            downloadPreferences = automaticDownloadPreferences,
+            filterEntryChaptersForDownload = FilterEntryChaptersForDownload(
+                entryChapterRepository = entryChapterRepository,
+                downloadPreferences = automaticDownloadPreferences,
+                getCategories = getCategories,
+            ),
             downloadPreferencesRepository = downloadPreferencesRepository,
             sourceManager = sourceManager,
             entryRepository = entryRepository,

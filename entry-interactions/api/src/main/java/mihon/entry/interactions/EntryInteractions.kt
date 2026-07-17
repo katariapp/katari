@@ -93,6 +93,7 @@ interface EntryDownloadInteraction {
     ): EntryBulkDownloadCandidateResult
     suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
+    suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>)
     suspend fun deleteEntryDownloads(entry: Entry)
 
     fun hasDownloads(entry: Entry): Boolean
@@ -132,6 +133,30 @@ data class EntryDownloadOptions(
 data class EntryDownloadOptionSelection(
     val values: Map<String, String?>,
 )
+
+sealed interface EntryDownloadLifecycleEvent {
+    data class MarkedConsumed(
+        val visibleEntry: Entry,
+        val children: List<EntryChapter>,
+    ) : EntryDownloadLifecycleEvent
+
+    data class Progressed(
+        val visibleEntry: Entry,
+        val child: EntryChapter,
+        val fraction: Double,
+        val deduplicateByNumber: Boolean = false,
+    ) : EntryDownloadLifecycleEvent
+
+    data class Completed(
+        val visibleEntry: Entry,
+        val child: EntryChapter,
+        val deduplicateByNumber: Boolean = false,
+    ) : EntryDownloadLifecycleEvent
+}
+
+fun interface EntryDownloadLifecycleInteraction {
+    suspend fun onEvent(event: EntryDownloadLifecycleEvent)
+}
 
 data class EntryBulkDownloadAction(
     val type: EntryBulkDownloadActionType,
