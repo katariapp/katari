@@ -44,7 +44,8 @@ The registry maintains one processor map per category keyed by `EntryType` and r
 | Continue | Registered | Registered | Registered | Provider-backed next-item selection and opening exist for all three types. |
 | Download | Registered | Registered | Conditional | Book registers only when `downloadsEnabled`; production runtime enables it, while construction can omit it. |
 | Capability | Registered | Registered | Registered | Provider exists, but migration and merge are separate default-false methods. |
-| Consumption | Registered | Registered | Registered | Consumed-state behavior exists; bookmark support remains a separate property. |
+| Consumption | Registered | Registered | Registered | Consumed-state behavior exists independently from bookmark mutation. |
+| Bookmark | Registered | Absent | Absent | Manga's operational provider proves Bookmarking; Anime and Book carry explicit intentional-absence outcomes. |
 | Update eligibility | Registered | Registered | Registered | Each type owns its update eligibility policy. |
 | Progress | Registered | Registered | Registered | Snapshot, restore, and copy behavior exist for all three types. |
 | Playback preferences | Absent | Registered | Absent | Anime alone provides playback preference snapshot, restore, and copy behavior. |
@@ -69,7 +70,7 @@ Provisional owner: registration is owned by each type plugin; processor uniquene
 | Bulk download: bookmarked children | Derived candidate, currently type-specific | `resolveBulkDownloadCandidates(...BOOKMARKED...)` and `EntryBulkDownloadCandidateResult.Unsupported` | Downloader today; intended owner unresolved | Manga filters bookmarked children. Anime and Book explicitly return `Unsupported`. This intersects downloads with bookmarking and is not proven by bulk-download support alone. |
 | Download cleanup | Provider-backed with shared default | `cleanup` defaults to `delete` | Downloader/lifecycle policy | All download providers inherit or specialize behavior; relationship to bookmarks must be mapped in 0.2. |
 | Consumed state | Provider-backed | Registered `EntryConsumptionProcessor` and required mutation methods | Type processor | All three types support consumed/unconsumed behavior. Manga has custom partial-progress semantics; Anime and Book use their media-specific persistence/default eligibility. |
-| Bookmark children | Type-wide property on provider | Required `EntryConsumptionProcessor.supportsBookmark`; registry guards mutation | Consumption processor | Manga true. Anime and Book false and their `setBookmarked` implementations are no-ops. Provider registration alone therefore does not prove bookmarking. |
+| Bookmark children | Provider-backed | Presence of `EntryBookmarkProcessor`; compatibility dispatch uses the same provider map | Bookmark provider | Manga registered. Anime and Book have no provider and retain explicit intentional-absence outcomes. Consumption registration alone does not prove bookmarking. |
 | Migration | Entry-dependent method, currently type result | `EntryCapabilityProcessor.supportsMigration(entry)`, default false | Capability processor | Manga true, Anime true, Book inherits false. Documentation currently disagrees for Anime. |
 | Merge | Entry- and selection-dependent | `supportsMerge(entry)`, default false; selection also requires at least two entries, same type, and at most one already-merged entry | Capability processor plus shared selection policy | Manga true, Anime true, Book false. Documentation agrees with this result. |
 | Update eligibility | Provider-backed, entry/policy-dependent | Presence of `EntryUpdateEligibilityProcessor` | Type processor | All three registered; the result is a policy decision, not a simple support boolean. |
@@ -93,7 +94,7 @@ Defaults are executable statements of absence and can hide missing work when tre
 | `supportsDownloadOptions` / option resolver | False / null | Download options absent unless the provider opts in. Book redundantly restates the default. |
 | Bulk bookmarked candidates | Anime and Book return `Unsupported` | Explicit unsupported combination, but no evidence yet distinguishes intentional product absence from unfinished integration. |
 | Missing capability processor or default methods | Migration false; merge false | Absence by registration/default rather than a reviewed reason. |
-| Bookmark support false | Registry does not dispatch mutation; Anime and Book mutation methods also no-op | Deliberate-looking absence duplicated by a flag, dispatch guard, and processor no-op. |
+| Missing bookmark provider | Compatibility support and eligibility queries return false; mutation is a no-op | Safe compatibility behavior; intentional absence still requires an explicit owned outcome in the capability report. |
 | Anime child-group provider | False support/apply, empty flows/sets, setter no-op | An unsupported implementation is registered, making provider presence misleading. |
 | Missing child-group provider | False support/apply, empty flows/sets, setter no-op | Effective behavior matches Anime through a different evidence path. |
 | Missing playback-preference processor | Null snapshot; restore/copy no-op | Optional provider-backed behavior. |
@@ -186,7 +187,7 @@ Coverage is classified as **shared contract**, **type-focused**, **synthetic reg
 | Registry dispatch and absence | `EntryInteractionRegistryTest` covers missing-provider behavior, duplicate registration, type dispatch, mismatched types, and synthetic support results for most processor categories | Strong registry mechanics; it does not enumerate real plugins or prove cross-feature completeness. Update eligibility has no comparable registry-focused cases. |
 | Type plugin composition | `MangaEntryInteractionPluginTest`, `AnimeEntryInteractionPluginTest`, and `BookEntryInteractionPluginTest` exercise selected registrations | Uneven. Manga/Anime smoke tests touch continue/download; Book's plugin test intentionally constructs downloads disabled, so production Book composition is not covered as a complete plugin contract. |
 | Open and continue | Manga/Anime plugin tests; Book continue and `BookOpenProcessorTest`; notification action tests cover Manga/Anime opening | Type-focused behavior exists, but no shared all-supporting-types contract and no Book notification open-action case. |
-| Consumption and bookmarks | Manga, Anime, and Book consumption tests; registry bookmark dispatch; Updates selection consumer test | Consumption is covered per type. Bookmark support is tested positively for Manga and negatively for Book, but Anime's intentional absence is mostly incidental and no shared capability contract drives consumer tests. |
+| Consumption and bookmarks | Manga, Anime, and Book plugin reports; registry bookmark-provider dispatch and validation; Updates selection consumer test | Positive, absent, duplicate, and contradictory bookmark authority is covered. Application consumers and shared cross-feature contracts have not migrated yet. |
 | Download core and queue | Type download manager/provider/store/downloader tests; registry dispatch; shared download job/runtime/notification tests | Strong media implementation and shared runtime coverage, but no single contract discovers all registered download types. |
 | Bulk downloads | Anime and Book candidate tests; synthetic registry dispatch | Manga bulk candidate policy and the `BOOKMARKED` action have no focused test. Unsupported Anime/Book bookmarked results are also untested. |
 | Automatic downloads | Anime and Book focused tests; `LibraryUpdateJobInteractionBoundaryTest` proves routing through the interaction | Manga automatic filtering lacks focused coverage; boundary test proves architecture, not behavior for every type. |
@@ -235,7 +236,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 
 | Concept | Independent representations that must currently agree |
 | ------- | ----------------------------------------------------- |
-| Bookmarked downloads | Bookmark support property; Manga candidate filtering; Anime/Book `Unsupported`; presentation `downloadBookmarkedSupported`; dropdown visibility; documentation callout; lifecycle bookmark protection. |
+| Bookmarked downloads | Bookmark provider registration; Manga candidate filtering; Anime/Book `Unsupported`; presentation `downloadBookmarkedSupported`; dropdown visibility; documentation callout; lifecycle bookmark protection. |
 | Bulk download | Download processor support; capability facade forwarding; entry/library selection predicates; notification action predicate; local/stub exclusions. |
 | Download configuration | Per-downloader setting-capability set; settings screen Manga-only lookup; individual settings visibility; downloader preference consumption. |
 | Migration/merge | Capability processor booleans; selection rules; entry/library action visibility; migration use-case guards; public reference. |
@@ -402,3 +403,19 @@ the legacy `supportsDownloads` result.
   compatibility paths until their assigned phases migrate them.
 - Derived bookmark/download behavior is deliberately absent from the fundamental catalog and is the Phase 2 vertical
   proof.
+
+## Phase 2 Vertical Proof Progress
+
+Milestone 2.1 separates Bookmarking from Consumption at the operational boundary. `EntryBookmarkProcessor` registration
+is the only positive provider-backed Bookmarking fact:
+
+- Manga registers its bookmark persistence implementation and automatically contributes Bookmarking evidence.
+- Anime and Book register no bookmark provider, implement no unsupported bookmark no-op, and retain explicit owned
+  intentional-absence outcomes.
+- The existing consumption compatibility facade derives bookmark support, eligibility, and dispatch from the bookmark
+  provider map.
+- Consumption registration alone cannot accidentally advertise Bookmarking.
+- Duplicate bookmark providers and a provider combined with an explicit absence fail composition.
+
+Derived download selection, cleanup, application actions, and presentation remain unchanged and therefore still expose
+the duplication recorded above. Milestone 2.2 owns the shared bookmark/download policy migration.

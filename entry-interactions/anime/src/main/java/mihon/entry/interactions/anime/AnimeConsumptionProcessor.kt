@@ -16,7 +16,6 @@ internal class AnimeConsumptionProcessor(
     private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
 ) : EntryConsumptionProcessor {
     override val type: EntryType = EntryType.ANIME
-    override val supportsBookmark: Boolean = false
 
     override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
         entry.requireAnime()
@@ -62,9 +61,5 @@ internal class AnimeConsumptionProcessor(
         if (consumed) {
             downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
         }
-    }
-
-    override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
-        entry.requireAnime()
     }
 }

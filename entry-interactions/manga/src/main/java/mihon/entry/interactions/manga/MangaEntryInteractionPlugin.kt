@@ -60,13 +60,13 @@ internal fun mangaEntryInteractionPlugin(
                 dependencies = dependencies,
             ),
         )
-        registry.registerConsumptionProcessor(
-            MangaConsumptionProcessor(
-                entryChapterRepository = dependencies.entryChapterRepository,
-                entryProgressRepository = dependencies.entryProgressRepository,
-                downloadLifecycle = dependencies.downloadLifecycle,
-            ),
+        val consumptionProcessor = MangaConsumptionProcessor(
+            entryChapterRepository = dependencies.entryChapterRepository,
+            entryProgressRepository = dependencies.entryProgressRepository,
+            downloadLifecycle = dependencies.downloadLifecycle,
         )
+        registry.registerConsumptionProcessor(consumptionProcessor)
+        registry.registerBookmarkProcessor(consumptionProcessor)
         registry.registerUpdateEligibilityProcessor(MangaUpdateEligibilityProcessor())
         registry.registerProgressProcessor(
             MangaProgressProcessor(

@@ -1,6 +1,7 @@
 package mihon.entry.interactions.manga
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.EntryBookmarkProcessor
 import mihon.entry.interactions.EntryConsumptionProcessor
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
@@ -17,9 +18,8 @@ internal class MangaConsumptionProcessor(
     private val entryChapterRepository: EntryChapterRepository,
     private val entryProgressRepository: EntryProgressRepository,
     private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
-) : EntryConsumptionProcessor {
+) : EntryConsumptionProcessor, EntryBookmarkProcessor {
     override val type: EntryType = EntryType.MANGA
-    override val supportsBookmark: Boolean = true
 
     override fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
         return when (consumed) {

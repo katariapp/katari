@@ -17,7 +17,6 @@ internal class BookConsumptionProcessor(
     private val now: () -> Long = System::currentTimeMillis,
 ) : EntryConsumptionProcessor {
     override val type = EntryType.BOOK
-    override val supportsBookmark = false
 
     override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
         entry.requireBook()
@@ -47,9 +46,5 @@ internal class BookConsumptionProcessor(
         if (consumed) {
             downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
         }
-    }
-
-    override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
-        entry.requireBook()
     }
 }

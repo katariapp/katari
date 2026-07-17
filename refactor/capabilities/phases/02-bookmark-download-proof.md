@@ -11,17 +11,51 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 - Book does not yet support bookmarks.
 - Bookmark-aware download cleanup keeps its current preference semantics.
 
-## Scope
+## Milestone 2.1 — Bookmark Provider Authority
 
-- [ ] Make bookmark support a single fundamental fact.
-- [ ] Derive bookmark actions from bookmark support.
-- [ ] Derive bookmarked bulk download from Bookmarks + Downloads.
+- [x] Represent bookmark mutation as its own operational provider registration rather than a boolean sub-capability on
+  consumption providers.
+- [x] Make bookmark provider registration contribute the fundamental Bookmarking evidence.
+- [x] Register the Manga bookmark provider; leave Anime and Book without one and retain their explicit intentional
+  absence outcomes.
+- [x] Preserve the existing `EntryConsumptionInteraction` bookmark compatibility API by deriving its answers and dispatch
+  from bookmark provider presence.
+- [x] Remove unsupported Anime and Book bookmark no-ops.
+- [x] Add focused registry and real-type coverage for positive, absent, duplicate, and contradictory bookmark authority.
+- [x] Stop before derived download behavior changes.
+
+## Milestone 2.2 — Shared Bookmark/Download Policy
+
+- [ ] Derive bookmarked bulk-download applicability from Bookmarking + Downloads.
 - [ ] Move generic bookmarked-child selection into shared download policy.
-- [ ] Derive bookmark-protected cleanup from the same capability evidence.
+- [ ] Remove downloader-specific bookmarked branches that exist only because bookmark support was absent.
+- [ ] Derive bookmark-protected cleanup applicability from the same capability evidence while preserving its preference
+  semantics.
+- [ ] Surface any genuine specialized downloader requirement as an explicit obligation.
+- [ ] Add synthetic Anime bookmark-provider coverage without changing Anime download code.
+- [ ] Stop before application presentation migration.
+
+## Milestone 2.3 — Application and Presentation Derivation
+
+- [ ] Derive entry and Updates bookmark actions from Bookmarking.
+- [ ] Derive bookmarked bulk-download action availability from Bookmarking + Downloads.
 - [ ] Remove `downloadBookmarkedSupported` as behavioral authority.
-- [ ] Remove per-type bookmarked-download opt-ins or unsupported branches that exist only because bookmarks are absent.
-- [ ] Add an end-to-end synthetic capability test that grants Anime bookmark support without changing Anime download implementation.
-- [ ] Verify that all common consequences activate in that test configuration.
+- [ ] Preserve labels and icons as presentation-only metadata.
+- [ ] Add application policy and presentation coverage driven by capability evidence.
+- [ ] Stop before the Phase 2 integration gate.
+
+## Milestone 2.4 — Vertical Contract and Integration Gate
+
+- [ ] Add an end-to-end synthetic configuration that grants Anime bookmark support without changing Anime download
+  implementation.
+- [ ] Verify mutation dispatch, UI policy, candidate selection, cleanup policy, reporting, and applicable contracts all
+  activate from that single registration.
+- [ ] Verify current production support remains Manga-only.
+- [ ] Remove superseded compatibility internals within the Phase 2 slice while retaining public compatibility APIs needed
+  by later phases.
+- [ ] Update the atlas and relevant public documentation projection or verification.
+- [ ] Run the complete Phase 2 validation set and review every manifesto criterion for the vertical proof.
+- [ ] Stop before Phase 3.
 
 ## Non-Goals
 
@@ -50,3 +84,17 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 ## Manifesto Review
 
 This phase passes only if it demonstrates: declare once, derive common consequences, surface exceptional work.
+
+## Milestone 2.1 Completion Notes
+
+`EntryBookmarkProcessor` registration is now the sole positive operational authority for Bookmarking. Consumption
+registration proves only Consumption. Manga registers its existing persistence implementation as both providers; Anime
+and Book register only consumption and retain their explicit, owned intentional-absence outcomes.
+
+The existing `EntryConsumptionInteraction` bookmark methods remain as a compatibility facade. Support, mutation
+eligibility, and dispatch derive from bookmark-provider presence, so adding a provider activates all three without a
+second support boolean. Missing providers remain safely unavailable, and the unsupported Anime and Book mutation no-ops
+have been removed.
+
+No downloader, cleanup, application action, presentation flag, or public documentation behavior changed in this
+milestone. Those consequences remain deliberately assigned to Milestones 2.2–2.4.

@@ -285,6 +285,20 @@ class EntryInteractionRegistryTest {
     }
 
     @Test
+    fun `duplicate bookmark processor registration fails`() {
+        val plugin = EntryInteractionPlugin { registry ->
+            registry.registerBookmarkProcessor(RecordingBookmarkProcessor(EntryType.MANGA))
+            registry.registerBookmarkProcessor(RecordingBookmarkProcessor(EntryType.MANGA))
+        }
+
+        val exception = assertThrows<IllegalStateException> {
+            createEntryInteractions(listOf(plugin))
+        }
+
+        exception.message shouldContain "Duplicate bookmark processor registered for EntryType MANGA"
+    }
+
+    @Test
     fun `duplicate playback preferences processor registration fails`() {
         val plugin = EntryInteractionPlugin { registry ->
             registry.registerPlaybackPreferencesProcessor(RecordingPlaybackPreferencesProcessor(EntryType.ANIME))
@@ -562,8 +576,8 @@ class EntryInteractionRegistryTest {
     }
 
     @Test
-    fun `bookmark dispatch skips unsupported processors`() = runTest {
-        val processor = RecordingConsumptionProcessor(EntryType.ANIME, supportsBookmark = false)
+    fun `bookmark compatibility is unavailable without a bookmark provider`() = runTest {
+        val processor = RecordingConsumptionProcessor(EntryType.ANIME)
         val interactions = createEntryInteractions(
             listOf(
                 EntryInteractionPlugin { registry ->
@@ -572,20 +586,43 @@ class EntryInteractionRegistryTest {
             ),
         )
 
+        interactions.consumption.supportsBookmark(EntryType.ANIME) shouldBe false
+        interactions.consumption.canSetBookmarked(
+            EntryType.ANIME,
+            EntryConsumptionStatus(consumed = false, bookmarked = false, hasPartialProgress = false),
+            bookmarked = true,
+        ) shouldBe false
         interactions.consumption.setBookmarked(entry(EntryType.ANIME, id = 51L), listOf(chapter), bookmarked = true)
+    }
 
-        processor.bookmarkedEntryIds shouldBe emptyList()
+    @Test
+    fun `bookmark dispatch selects registered provider by entry type`() = runTest {
+        val processor = RecordingBookmarkProcessor(EntryType.MANGA)
+        val interactions = createEntryInteractions(
+            listOf(
+                EntryInteractionPlugin { registry ->
+                    registry.registerBookmarkProcessor(processor)
+                },
+            ),
+        )
+
+        interactions.consumption.supportsBookmark(EntryType.MANGA) shouldBe true
+        interactions.consumption.setBookmarked(entry(EntryType.MANGA, id = 52L), listOf(chapter), bookmarked = true)
+
+        processor.bookmarkedEntryIds shouldBe listOf(52L)
     }
 
     @Test
     fun `consumption capability dispatch selects processor by entry type`() {
         val mangaProcessor = RecordingConsumptionProcessor(EntryType.MANGA, resetsPartialProgress = true)
-        val animeProcessor = RecordingConsumptionProcessor(EntryType.ANIME, supportsBookmark = false)
+        val animeProcessor = RecordingConsumptionProcessor(EntryType.ANIME)
+        val mangaBookmarkProcessor = RecordingBookmarkProcessor(EntryType.MANGA)
         val interactions = createEntryInteractions(
             listOf(
                 EntryInteractionPlugin { registry ->
                     registry.registerConsumptionProcessor(mangaProcessor)
                     registry.registerConsumptionProcessor(animeProcessor)
+                    registry.registerBookmarkProcessor(mangaBookmarkProcessor)
                 },
             ),
         )
@@ -1287,12 +1324,10 @@ class EntryInteractionRegistryTest {
 
     private open class RecordingConsumptionProcessor(
         open override val type: EntryType,
-        override val supportsBookmark: Boolean = true,
         private val resetsPartialProgress: Boolean = false,
     ) : EntryConsumptionProcessor {
         val consumedEntryIds = mutableListOf<Long>()
         val consumedValues = mutableListOf<Boolean>()
-        val bookmarkedEntryIds = mutableListOf<Long>()
 
         override fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
             return when (consumed) {
@@ -1305,6 +1340,12 @@ class EntryInteractionRegistryTest {
             consumedEntryIds += entry.id
             consumedValues += consumed
         }
+    }
+
+    private class RecordingBookmarkProcessor(
+        override val type: EntryType,
+    ) : EntryBookmarkProcessor {
+        val bookmarkedEntryIds = mutableListOf<Long>()
 
         override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
             bookmarkedEntryIds += entry.id

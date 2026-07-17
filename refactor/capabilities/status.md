@@ -13,14 +13,15 @@ Updated: 2026-07-17
 - Capability semantics commit: `471978d3d` (`(feat): define capability support semantics`)
 - Evidence composition commit: `a3ae2c6b5` (`(feat): collect capability evidence from composition`)
 - Deterministic report commit: `2c6e26a52` (`(feat): report composed entry capabilities`)
+- Production report commit: `8e03f7469` (`(feat): expose production capability reports`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 1 — Authoritative capability foundation
-- Milestone: 1.4 — Foundation integration gate
-- State: Complete; stopped before Phase 2 with Milestone 1.4 uncommitted
+- Phase: Phase 2 — Bookmarking and downloads vertical proof
+- Milestone: 2.1 — Bookmark provider authority
+- State: Complete; stopped before Milestone 2.2 with changes uncommitted
 
 ## Completed
 
@@ -43,23 +44,35 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Milestone 1.2 registration-derived evidence and composition validation implemented
 - [x] Milestone 1.3 reviewed catalog and deterministic type reports implemented
 - [x] Milestone 1.4 production boundary, production composition coverage, and Phase 1 exit gate completed
+- [x] Phase 2 split into four bounded implementation milestones
+- [x] Milestone 2.1 bookmark provider authority and compatibility dispatch completed
 
 ## Current Scope
 
-Milestone 1.4 exposes the composed report through the production Entry interaction boundary without migrating feature consumers.
+Milestone 2.1 replaces the bookmark boolean sub-capability and unsupported mutation no-ops with a distinct operational
+bookmark provider. Existing application consumers remain on the compatibility facade during this milestone.
 
-`EntryInteractions.capabilityReport`, `EntryInteractionComposition.capabilityReport`, and the DI-provided
-`EntryCapabilityReport` refer to the same immutable report. Existing interaction properties, compatibility support APIs,
-and runtime dispatch remain unchanged. Application features do not consume the report yet.
+Manga registers the provider and thereby produces Bookmarking evidence. Anime and Book do not register one and keep
+their accepted explicit intentional-absence outcomes. Derived bulk download, cleanup, UI, and presentation behavior is
+reserved for Milestones 2.2 and 2.3.
 
-## Phase 1 Milestones
+The implementation now satisfies that scope: Manga provider registration is the sole positive Bookmarking authority;
+Anime and Book have neither a provider nor mutation no-ops; compatibility support and dispatch derive from the provider
+map.
+
+## Milestone Sequence
 
 - 1.1: Capability vocabulary and support semantics
 - 1.2: Registration-derived evidence collection and validation
 - 1.3: Deterministic reports for real type compositions
 - 1.4: Compatibility, integration validation, and Phase 1 exit gate
 
-Phase 1 is complete. Phase 2 has not started.
+Phase 1 is complete. Phase 2 milestones are:
+
+- 2.1: Bookmark provider authority and compatibility dispatch
+- 2.2: Shared bookmark/download policy
+- 2.3: Application and presentation derivation
+- 2.4: Vertical contract and integration gate
 
 ## Last Validation
 
@@ -73,6 +86,8 @@ Phase 1 is complete. Phase 2 has not started.
 - `git diff --check` passed
 - Production runtime composition reports Manga, Anime, and Book, with provider-backed download support for all three
 - Existing `createEntryInteractions` callers retain the same dispatch and compatibility behavior; application features currently have no report consumer
+- All Entry interaction API, registry, Manga, Anime, and Book module tests passed after the bookmark-provider split
+- `./gradlew --quiet :app:compileFossKotlin` and `checkEntryInteractionBoundaries` passed for Milestone 2.1
 
 ## Manifesto Comparison
 
@@ -86,8 +101,13 @@ Phase 1 is complete. Phase 2 has not started.
 - The production composition proves Book downloads from the actual enabled Book plugin path rather than a documentation or presentation flag.
 - Unresolved catalog entries remain visible migration blockers for their assigned later phases and are not treated as accepted absence.
 - No UI, settings, worker, policy, or public documentation behavior changed in Phase 1.
+- Bookmarking is now declared by one operational provider registration rather than a consumption boolean plus type no-ops.
+- The compatibility facade derives support from that registration, so it cannot disagree with capability evidence.
+- Derived download, cleanup, and UI consequences have not been pulled into the content-type plugin; their feature-owned
+  migration remains isolated in Milestones 2.2 and 2.3.
+- Production support remains Manga-only, and public capability documentation remains behaviorally accurate.
 
 ## Exact Next Action After Review
 
-After explicit approval, commit Milestone 1.4 and begin Phase 2 Milestone planning. Do not implement the whole Phase 2
-checklist as one slice; first split the bookmark/download proof into bounded review milestones and record the active one.
+After explicit approval, commit Milestone 2.1 and complete only Milestone 2.2: shared bookmarked-download candidate and
+cleanup policy, including the synthetic Anime bookmark-provider proof. Stop before application/presentation migration.

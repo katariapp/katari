@@ -42,6 +42,7 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     private val downloadProcessors = mutableMapOf<EntryType, EntryDownloadProcessor>()
     private val capabilityProcessors = mutableMapOf<EntryType, EntryCapabilityProcessor>()
     private val consumptionProcessors = mutableMapOf<EntryType, EntryConsumptionProcessor>()
+    private val bookmarkProcessors = mutableMapOf<EntryType, EntryBookmarkProcessor>()
     private val updateEligibilityProcessors = mutableMapOf<EntryType, EntryUpdateEligibilityProcessor>()
     private val progressProcessors = mutableMapOf<EntryType, EntryProgressProcessor>()
     private val playbackPreferencesProcessors = mutableMapOf<EntryType, EntryPlaybackPreferencesProcessor>()
@@ -89,10 +90,17 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
             processor.type,
             processor,
             consumptionProcessors,
-            listOfNotNull(
-                EntryCapabilityCatalog.CONSUMPTION,
-                EntryCapabilityCatalog.BOOKMARKING.takeIf { processor.supportsBookmark },
-            ),
+            EntryCapabilityCatalog.CONSUMPTION,
+        )
+    }
+
+    override fun registerBookmarkProcessor(processor: EntryBookmarkProcessor) {
+        registerProcessor(
+            "bookmark",
+            processor.type,
+            processor,
+            bookmarkProcessors,
+            EntryCapabilityCatalog.BOOKMARKING,
         )
     }
 
@@ -163,6 +171,7 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
                 downloadProcessors = downloadProcessors.toMap(),
                 capabilityProcessors = capabilityProcessors.toMap(),
                 consumptionProcessors = consumptionProcessors.toMap(),
+                bookmarkProcessors = bookmarkProcessors.toMap(),
                 updateEligibilityProcessors = updateEligibilityProcessors.toMap(),
                 progressProcessors = progressProcessors.toMap(),
                 playbackPreferencesProcessors = playbackPreferencesProcessors.toMap(),
@@ -188,6 +197,7 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
                 downloadProcessors.keys +
                 capabilityProcessors.keys +
                 consumptionProcessors.keys +
+                bookmarkProcessors.keys +
                 updateEligibilityProcessors.keys +
                 progressProcessors.keys +
                 playbackPreferencesProcessors.keys +
@@ -257,6 +267,7 @@ private class DefaultEntryInteractions(
     downloadProcessors: Map<EntryType, EntryDownloadProcessor>,
     capabilityProcessors: Map<EntryType, EntryCapabilityProcessor>,
     consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
+    bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
     updateEligibilityProcessors: Map<EntryType, EntryUpdateEligibilityProcessor>,
     progressProcessors: Map<EntryType, EntryProgressProcessor>,
     playbackPreferencesProcessors: Map<EntryType, EntryPlaybackPreferencesProcessor>,
@@ -271,7 +282,8 @@ private class DefaultEntryInteractions(
     override val download: EntryDownloadInteraction = RegistryEntryDownloadInteraction(downloadProcessors)
     override val capability: EntryCapabilityInteraction =
         RegistryEntryCapabilityInteraction(capabilityProcessors, downloadProcessors)
-    override val consumption: EntryConsumptionInteraction = RegistryEntryConsumptionInteraction(consumptionProcessors)
+    override val consumption: EntryConsumptionInteraction =
+        RegistryEntryConsumptionInteraction(consumptionProcessors, bookmarkProcessors)
     override val updateEligibility: EntryUpdateEligibilityInteraction =
         RegistryEntryUpdateEligibilityInteraction(updateEligibilityProcessors)
     override val progress: EntryProgressInteraction = RegistryEntryProgressInteraction(progressProcessors)
@@ -668,22 +680,22 @@ private class RegistryEntryCapabilityInteraction(
 }
 
 private class RegistryEntryConsumptionInteraction(
-    private val processors: Map<EntryType, EntryConsumptionProcessor>,
+    private val consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
+    private val bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
 ) : EntryConsumptionInteraction {
     override fun canSetConsumed(entryType: EntryType, status: EntryConsumptionStatus, consumed: Boolean): Boolean {
-        val processor = processors.requireProcessor("consumption", entryType)
+        val processor = consumptionProcessors.requireProcessor("consumption", entryType)
         return processor.canSetConsumed(status, consumed)
     }
 
     override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
-        val processor = processors.requireProcessor("consumption", entry.type)
-        processor.requireMatchingEntryType("consumption", entry, processors.keys)
+        val processor = consumptionProcessors.requireProcessor("consumption", entry.type)
+        processor.requireMatchingEntryType("consumption", entry, consumptionProcessors.keys)
         processor.setConsumed(entry, chapters, consumed)
     }
 
     override fun supportsBookmark(entryType: EntryType): Boolean {
-        val processor = processors.requireProcessor("consumption", entryType)
-        return processor.supportsBookmark
+        return entryType in bookmarkProcessors
     }
 
     override fun canSetBookmarked(
@@ -691,16 +703,13 @@ private class RegistryEntryConsumptionInteraction(
         status: EntryConsumptionStatus,
         bookmarked: Boolean,
     ): Boolean {
-        val processor = processors.requireProcessor("consumption", entryType)
-        return processor.canSetBookmarked(status, bookmarked)
+        return bookmarkProcessors[entryType]?.canSetBookmarked(status, bookmarked) ?: false
     }
 
     override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
-        val processor = processors.requireProcessor("consumption", entry.type)
-        processor.requireMatchingEntryType("consumption", entry, processors.keys)
-        if (processor.supportsBookmark) {
-            processor.setBookmarked(entry, chapters, bookmarked)
-        }
+        val processor = bookmarkProcessors[entry.type] ?: return
+        processor.requireMatchingEntryType("bookmark", entry, bookmarkProcessors.keys)
+        processor.setBookmarked(entry, chapters, bookmarked)
     }
 }
 
@@ -904,6 +913,16 @@ private fun EntryCapabilityProcessor.requireMatchingEntryType(
 }
 
 private fun EntryConsumptionProcessor.requireMatchingEntryType(
+    category: String,
+    entry: Entry,
+    registeredTypes: Set<EntryType>,
+) {
+    require(type == entry.type) {
+        processorMismatchMessage(category, entry.type, type, registeredTypes)
+    }
+}
+
+private fun EntryBookmarkProcessor.requireMatchingEntryType(
     category: String,
     entry: Entry,
     registeredTypes: Set<EntryType>,

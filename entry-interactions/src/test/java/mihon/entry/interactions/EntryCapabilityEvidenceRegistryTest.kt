@@ -173,10 +173,32 @@ class EntryCapabilityEvidenceRegistryTest {
     }
 
     @Test
+    fun `consumption registration does not imply bookmark support`() {
+        val processor = mockk<EntryConsumptionProcessor>(relaxed = true) {
+            every { type } returns EntryType.ANIME
+        }
+
+        val composition = createEntryInteractionComposition(
+            listOf(EntryInteractionPlugin { it.registerConsumptionProcessor(processor) }),
+        )
+
+        composition.capabilityEvidence.records.map { it.capability } shouldBe listOf(
+            EntryCapabilityCatalog.CONSUMPTION,
+        )
+        composition.interactions.consumption.supportsBookmark(EntryType.ANIME) shouldBe false
+        composition.capabilityReport.type(EntryType.ANIME)
+            .entry(EntryCapabilityCatalog.BOOKMARKING)
+            .value.shouldBeInstanceOf<EntryCapabilityReportValue.Outcome>()
+            .result.shouldBeInstanceOf<EntrySupportResult.Unresolved>()
+    }
+
+    @Test
     fun `positive provider sub-capabilities contribute their own catalog evidence`() {
         val consumptionProcessor = mockk<EntryConsumptionProcessor>(relaxed = true) {
             every { type } returns EntryType.MANGA
-            every { supportsBookmark } returns true
+        }
+        val bookmarkProcessor = mockk<EntryBookmarkProcessor>(relaxed = true) {
+            every { type } returns EntryType.MANGA
         }
         val downloadProcessor = mockk<EntryDownloadProcessor>(relaxed = true) {
             every { type } returns EntryType.MANGA
@@ -190,6 +212,7 @@ class EntryCapabilityEvidenceRegistryTest {
             listOf(
                 EntryInteractionPlugin { registry ->
                     registry.registerConsumptionProcessor(consumptionProcessor)
+                    registry.registerBookmarkProcessor(bookmarkProcessor)
                     registry.registerDownloadProcessor(downloadProcessor)
                 },
             ),
@@ -225,16 +248,15 @@ class EntryCapabilityEvidenceRegistryTest {
 
     @Test
     fun `positive evidence and explicit absence fail composition`() {
-        val processor = mockk<EntryConsumptionProcessor>(relaxed = true) {
+        val processor = mockk<EntryBookmarkProcessor>(relaxed = true) {
             every { type } returns EntryType.MANGA
-            every { supportsBookmark } returns true
         }
 
         shouldThrow<IllegalStateException> {
             createEntryInteractionComposition(
                 listOf(
                     EntryInteractionPlugin { registry ->
-                        registry.registerConsumptionProcessor(processor)
+                        registry.registerBookmarkProcessor(processor)
                         registry.declareCapabilityOutcome(
                             EntryCapabilityOutcomeDeclaration(
                                 entryType = EntryType.MANGA,

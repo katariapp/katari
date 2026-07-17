@@ -110,7 +110,6 @@ interface EntryCapabilityProcessor {
 
 interface EntryConsumptionProcessor {
     val type: EntryType
-    val supportsBookmark: Boolean
 
     fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
         return when (consumed) {
@@ -120,9 +119,13 @@ interface EntryConsumptionProcessor {
     }
 
     suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
+}
+
+interface EntryBookmarkProcessor {
+    val type: EntryType
 
     fun canSetBookmarked(status: EntryConsumptionStatus, bookmarked: Boolean): Boolean {
-        return supportsBookmark && status.bookmarked != bookmarked
+        return status.bookmarked != bookmarked
     }
 
     suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
@@ -199,6 +202,7 @@ interface EntryInteractionRegistry {
     fun registerDownloadProcessor(processor: EntryDownloadProcessor)
     fun registerCapabilityProcessor(processor: EntryCapabilityProcessor)
     fun registerConsumptionProcessor(processor: EntryConsumptionProcessor)
+    fun registerBookmarkProcessor(processor: EntryBookmarkProcessor)
     fun registerUpdateEligibilityProcessor(processor: EntryUpdateEligibilityProcessor)
     fun registerProgressProcessor(processor: EntryProgressProcessor)
     fun registerPlaybackPreferencesProcessor(processor: EntryPlaybackPreferencesProcessor)
