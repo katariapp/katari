@@ -226,6 +226,7 @@ class EntryCapabilityEvidenceRegistryTest {
             EntryCapabilityCatalog.BOOKMARKING,
             EntryCapabilityCatalog.CONSUMPTION,
             EntryCapabilityCatalog.DOWNLOADS,
+            EntryCapabilityCatalog.BULK_DOWNLOADS,
             EntryCapabilityCatalog.DOWNLOAD_ARCHIVE_PACKAGING,
             EntryCapabilityCatalog.DOWNLOAD_PARALLEL_ITEM_TRANSFERS,
         )

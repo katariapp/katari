@@ -102,7 +102,6 @@ class BookmarkDownloadVerticalContractTest {
             every { updates() } returns emptyFlow()
             every { queueStatusUpdates() } returns emptyFlow()
             every { queueProgressUpdates() } returns emptyFlow()
-            every { supportsBulkDownload(any()) } returns true
             coEvery { resolveBulkDownloadCandidatePool(any(), any()) } answers {
                 secondArg<List<EntryChapter>?>().orEmpty()
             }

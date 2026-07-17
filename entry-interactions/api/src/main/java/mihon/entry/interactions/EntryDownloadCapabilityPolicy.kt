@@ -8,7 +8,7 @@ object EntryDownloadCapabilityPolicy {
         capabilityReport: EntryCapabilityReport,
         entryType: EntryType,
     ): Boolean {
-        return capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.DOWNLOADS) &&
+        return capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.BULK_DOWNLOADS) &&
             capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.BOOKMARKING)
     }
 

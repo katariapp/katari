@@ -17,14 +17,16 @@ Updated: 2026-07-17
 - Bookmark provider commit: `5a3c13b37` (`(refactor): make bookmarking provider-backed`)
 - Bookmark/download policy commit: `d1b1d8b49` (`(refactor): derive bookmark download policy`)
 - Bookmark action availability commit: `4273281bd` (`(refactor): derive bookmark action availability`)
+- Bookmark/download proof commit: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
+- Retired download-parity manifesto commit: `677dd025a` (`(chore): remove no longer needed manifesto`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 2 — Bookmarking and downloads vertical proof
-- Milestone: 2.4 — Vertical contract and integration gate
-- State: Phase complete; stopped before Phase 3 with changes uncommitted
+- Phase: Phase 3 — Core type-wide capability migration
+- Milestone: 3.1 — Downloads and bulk downloads
+- State: Complete and uncommitted; stopped before Milestone 3.2
 
 ## Completed
 
@@ -52,17 +54,19 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Milestone 2.2 shared bookmark/download candidate and cleanup policy completed
 - [x] Milestone 2.3 capability-derived application and presentation availability completed
 - [x] Milestone 2.4 vertical contract, production projection, compatibility cleanup, and Phase 2 exit gate completed
+- [x] Milestone 3.1 authoritative Downloads and Bulk Downloads evidence, consumer migration, and compatibility cleanup completed
 
 ## Current Scope
 
-Phase 2 is complete. One synthetic Anime bookmark-provider registration now exercises the whole vertical consequence
-chain: report support, bookmark mutation, application policy, bookmarked candidate selection, cleanup protection, and
-capability-selected contract applicability.
+Milestone 3.1 is complete. Download-provider registration is the single positive authority for Downloads and Bulk
+Downloads because every provider is required to supply the media-specific bulk candidate pool. The registry, Entry,
+Updates, Library, and library-update notifications consume the composed report; local-source, selection, and queue-size
+constraints remain with their owning features.
 
-Production composition proves Bookmarking and bookmarked-download applicability remain Manga-only. Bookmark operations
-use a distinct `EntryBookmarkInteraction`; the temporary consumption compatibility surface is removed. The public
-content-type reference retains the current Manga/Anime/Book results and describes the derived download consequences of
-individual bookmark support.
+The old download-support queries and constant per-downloader bulk-support declarations are removed. Bookmarked bulk
+downloads now compose Bulk Downloads + Bookmarking. Production Manga, Anime, and Book compositions support both facts,
+and reduced composition without a download provider leaves both unresolved. Runtime behavior and the public
+content-type documentation remain unchanged.
 
 ## Milestone Sequence
 
@@ -77,6 +81,16 @@ Phase 1 is complete. Phase 2 milestones are:
 - 2.2: Shared bookmark/download policy
 - 2.3: Application and presentation derivation
 - 2.4: Vertical contract and integration gate
+
+Phase 2 is complete. Phase 3 milestones are:
+
+- 3.1: Downloads and bulk downloads
+- 3.2: Open and continue
+- 3.3: Consumption and progress
+- 3.4: Merge and migration
+- 3.5: Child-group and library filtering
+- 3.6: Playback preferences
+- 3.7: Update eligibility and Phase 3 exit gate
 
 ## Last Validation
 
@@ -110,6 +124,11 @@ Phase 1 is complete. Phase 2 milestones are:
 - Production runtime composition asserts Bookmarking and bookmarked-download applicability are Manga-only
 - `./gradlew --quiet checkEntryInteractionBoundaries :app:compileFossKotlin spotlessCheck` passed for Milestone 2.4
 - `git diff --check` passed for Milestone 2.4
+- All Entry interaction API, registry, Manga, Anime, and Book debug unit-test suites passed for Milestone 3.1
+- Focused FOSS application tests passed for download-menu capability projection and Updates selection actions
+- Production runtime composition and real plugin tests assert Downloads and Bulk Downloads for Manga, Anime, and Book
+- `./gradlew --quiet :app:compileFossKotlin checkEntryInteractionBoundaries spotlessCheck` passed for Milestone 3.1
+- `git diff --check` passed for Milestone 3.1
 
 ## Manifesto Comparison
 
@@ -117,7 +136,7 @@ Phase 1 is complete. Phase 2 milestones are:
 - Reports are built from composed evidence and accepted outcomes rather than a manually populated per-type support matrix.
 - Contextual providers produce conditional report entries and cannot become unconditional supported results.
 - Anime and Book bookmark absence and Anime child-group-filter absence are explicit owned product decisions.
-- Legacy facts whose current booleans are not yet authoritative evidence—such as merge, migration, bulk download, and some filters—remain visibly unresolved for later migration.
+- Legacy facts whose current booleans are not yet authoritative evidence—such as merge, migration, and some filters—remain visibly unresolved for later migration.
 - Registration order does not affect report ordering or values.
 - Production inspection reuses the report created from operational plugin registration; it does not introduce another support matrix.
 - The production composition proves Book downloads from the actual enabled Book plugin path rather than a documentation or presentation flag.
@@ -129,7 +148,7 @@ Phase 1 is complete. Phase 2 milestones are:
 - Derived download, cleanup, and application consequences remain feature-owned rather than being pulled into
   content-type plugins.
 - Production support remains Manga-only, and public capability documentation remains behaviorally accurate.
-- Bookmarked download selection is derived from Downloads + Bookmarking rather than separately implemented per downloader.
+- Bookmarked download selection is derived from Bulk Downloads + Bookmarking rather than separately implemented per downloader.
 - Cleanup consumes the same Bookmarking truth and keeps preference semantics in the feature that owns them.
 - A synthetic Anime provider receives both shared consequences without an Anime downloader change.
 - No new derived capability flag or per-type opt-in was introduced.
@@ -142,7 +161,15 @@ Phase 1 is complete. Phase 2 milestones are:
   no longer depends on a contributor remembering each consumer.
 - No specialized bookmark/downloader obligation exists because shared child and download models satisfy the combination;
   a future combination that needs media-specific work must surface that requirement explicitly.
+- Download-provider registration is the only positive authority for Downloads and Bulk Downloads; a contributor does not
+  have to declare the same support in a processor, facade, presentation object, or application consumer.
+- Generic individual and bulk download consumers query the composed report while feature-owned contextual restrictions
+  remain local to the feature that evaluates them.
+- Manga, Anime, and Book production compositions support both download facts, preserving the reviewed product matrix
+  without a manually maintained per-type table.
 
 ## Exact Next Action After Review
 
-After explicit approval, commit Milestone 2.4. Do not begin Phase 3 until the user explicitly asks to continue.
+After approval, commit Milestone 3.1 and complete only Milestone 3.2: make Open and Continue provider registration
+authoritative, migrate any support consumers, remove superseded compatibility queries, verify the production matrix, and
+stop before Milestone 3.3.

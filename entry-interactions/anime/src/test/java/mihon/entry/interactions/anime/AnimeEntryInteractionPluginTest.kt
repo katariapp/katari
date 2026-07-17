@@ -119,6 +119,7 @@ class AnimeEntryInteractionPluginTest {
         val report = composition.capabilityReport.type(EntryType.ANIME)
 
         report.entry(EntryCapabilityCatalog.DOWNLOADS).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.BULK_DOWNLOADS).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
         report.entry(EntryCapabilityCatalog.PLAYBACK_PREFERENCES)
             .outcome()
             .shouldBeInstanceOf<EntrySupportResult.Supported>()
@@ -143,7 +144,10 @@ class AnimeEntryInteractionPluginTest {
             listOf(animeEntryInteractionPlugin(dependencies(chapters = episodes))),
         )
 
-        interactions.download.supportsBulkDownload(anime) shouldBe true
+        interactions.capabilityReport.supportsTypeWide(
+            EntryType.ANIME,
+            EntryCapabilityCatalog.BULK_DOWNLOADS,
+        ) shouldBe true
         listOf(1, 5, 10, 25).forEach { limit ->
             val next = interactions.download.resolveBulkDownloadCandidates(
                 anime,

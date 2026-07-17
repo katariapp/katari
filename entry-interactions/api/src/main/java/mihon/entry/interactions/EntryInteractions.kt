@@ -74,7 +74,6 @@ interface EntryDownloadInteraction {
     fun reorderSeries(entryType: EntryType, entryId: Long, moveToTop: Boolean)
     fun cancelQueuedDownloads(items: List<EntryDownloadQueueItem>)
 
-    fun supportsDownloads(entryType: EntryType): Boolean
     fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>>
 
     suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean = true)
@@ -87,7 +86,6 @@ interface EntryDownloadInteraction {
     )
     fun supportsDownloadOptions(entry: Entry): Boolean
     suspend fun resolveDownloadOptions(context: Context, entry: Entry, chapter: EntryChapter): EntryDownloadOptions?
-    fun supportsBulkDownload(entry: Entry): Boolean
     suspend fun resolveBulkDownloadCandidates(
         entry: Entry,
         action: EntryBulkDownloadAction,
@@ -196,7 +194,6 @@ interface EntryCapabilityInteraction {
     fun migrationEntries(entries: List<Entry>): List<Entry>
     fun supportsMerge(entry: Entry): Boolean
     fun canMergeSelection(selection: List<EntryMergeCapabilityItem>): Boolean
-    fun supportsBulkDownload(entry: Entry): Boolean
 }
 
 data class EntryMergeCapabilityItem(

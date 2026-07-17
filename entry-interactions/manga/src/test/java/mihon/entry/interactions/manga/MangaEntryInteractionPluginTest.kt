@@ -96,6 +96,8 @@ class MangaEntryInteractionPluginTest {
 
         report.entry(EntryCapabilityCatalog.OPEN).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
         report.entry(EntryCapabilityCatalog.BOOKMARKING).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.DOWNLOADS).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.BULK_DOWNLOADS).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
         report.entry(EntryCapabilityCatalog.DOWNLOAD_ARCHIVE_PACKAGING)
             .outcome()
             .shouldBeInstanceOf<EntrySupportResult.Supported>()

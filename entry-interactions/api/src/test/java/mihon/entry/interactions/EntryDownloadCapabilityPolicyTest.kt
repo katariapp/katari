@@ -9,7 +9,7 @@ class EntryDownloadCapabilityPolicyTest {
     @Test
     fun `bookmarked bulk downloads require both fundamental capabilities`() {
         val report = report(
-            downloads = setOf(EntryType.MANGA, EntryType.ANIME, EntryType.BOOK),
+            bulkDownloads = setOf(EntryType.MANGA, EntryType.ANIME, EntryType.BOOK),
             bookmarks = setOf(EntryType.MANGA),
         )
 
@@ -21,7 +21,7 @@ class EntryDownloadCapabilityPolicyTest {
     @Test
     fun `new bookmark evidence activates shared single and mixed selection policy`() {
         val report = report(
-            downloads = setOf(EntryType.MANGA, EntryType.ANIME),
+            bulkDownloads = setOf(EntryType.MANGA, EntryType.ANIME),
             bookmarks = setOf(EntryType.MANGA, EntryType.ANIME),
         )
 
@@ -36,7 +36,7 @@ class EntryDownloadCapabilityPolicyTest {
     @Test
     fun `bookmark protection depends on bookmarking rather than downloader implementation`() {
         val report = report(
-            downloads = setOf(EntryType.MANGA, EntryType.ANIME),
+            bulkDownloads = setOf(EntryType.MANGA, EntryType.ANIME),
             bookmarks = setOf(EntryType.ANIME),
         )
 
@@ -45,11 +45,11 @@ class EntryDownloadCapabilityPolicyTest {
     }
 
     private fun report(
-        downloads: Set<EntryType>,
+        bulkDownloads: Set<EntryType>,
         bookmarks: Set<EntryType>,
     ): EntryCapabilityReport {
         val records = buildList {
-            downloads.forEach { add(providerEvidence(it, EntryCapabilityCatalog.DOWNLOADS)) }
+            bulkDownloads.forEach { add(providerEvidence(it, EntryCapabilityCatalog.BULK_DOWNLOADS)) }
             bookmarks.forEach { add(providerEvidence(it, EntryCapabilityCatalog.BOOKMARKING)) }
         }
         return createEntryCapabilityReport(

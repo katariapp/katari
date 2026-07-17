@@ -30,7 +30,8 @@ import eu.kanade.tachiyomi.util.system.notificationBuilder
 import eu.kanade.tachiyomi.util.system.notify
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityReport
 import tachiyomi.core.common.Constants
 import tachiyomi.core.common.i18n.pluralStringResource
 import tachiyomi.core.common.i18n.stringResource
@@ -53,7 +54,7 @@ class LibraryUpdateNotifier(
     private val sourceManager: SourceManager = Injekt.get(),
     private val getMergedEntry: GetMergedEntry = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
 ) {
 
     private val percentFormatter = NumberFormat.getPercentInstance().apply {
@@ -283,7 +284,10 @@ class LibraryUpdateNotifier(
                 update.viewEntryIntent(context),
             )
             if (
-                entryDownloadInteraction.supportsBulkDownload(update.originEntry) &&
+                entryCapabilityReport.supportsTypeWide(
+                    update.originEntry.type,
+                    EntryCapabilityCatalog.BULK_DOWNLOADS,
+                ) &&
                 update.children.size <= CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD
             ) {
                 addAction(

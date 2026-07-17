@@ -128,11 +128,6 @@ internal class BookDownloadProcessor(
         chapter: EntryChapter,
     ) = null
 
-    override fun supportsBulkDownload(entry: Entry): Boolean {
-        entry.requireBook()
-        return true
-    }
-
     override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
         candidates: List<EntryChapter>?,

@@ -71,7 +71,6 @@ import logcat.LogPriority
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryDownloadCapabilityPolicy
-import mihon.entry.interactions.EntryDownloadInteraction
 import mihon.entry.interactions.EntryOpenInteraction
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
@@ -112,7 +111,6 @@ class EntryScreen(
         val scope = rememberCoroutineScope()
         val lifecycleOwner = LocalLifecycleOwner.current
         val entryOpenInteraction = remember { Injekt.get<EntryOpenInteraction>() }
-        val entryDownloadInteraction = remember { Injekt.get<EntryDownloadInteraction>() }
         val entryCapabilityReport = remember { Injekt.get<EntryCapabilityReport>() }
         val screenModel = rememberScreenModel {
             EntryScreenModel(
@@ -140,7 +138,14 @@ class EntryScreen(
         }
 
         val successState = state as EntryScreenModel.State.Success
-        val downloadsSupported = entryDownloadInteraction.supportsDownloads(successState.entry.type)
+        val downloadsSupported = entryCapabilityReport.supportsTypeWide(
+            successState.entry.type,
+            EntryCapabilityCatalog.DOWNLOADS,
+        )
+        val bulkDownloadsSupported = entryCapabilityReport.supportsTypeWide(
+            successState.entry.type,
+            EntryCapabilityCatalog.BULK_DOWNLOADS,
+        )
         val bookmarksSupported = entryCapabilityReport.supportsTypeWide(
             successState.entry.type,
             EntryCapabilityCatalog.BOOKMARKING,
@@ -242,7 +247,7 @@ class EntryScreen(
                 webViewSource != null
             },
             onDownloadActionClicked = screenModel::runDownloadAction
-                .takeIf { !successState.source.isLocalOrStub() && screenModel.supportsBulkDownload() },
+                .takeIf { !successState.source.isLocalOrStub() && bulkDownloadsSupported },
             bookmarkedDownloadsSupported = bookmarkedDownloadsSupported,
             onEditCategoryClicked = screenModel::showChangeCategoryDialog.takeIf { successState.entry.favorite },
             onEditFetchIntervalClicked = screenModel::showSetFetchIntervalDialog.takeIf {

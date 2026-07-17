@@ -64,14 +64,12 @@ class EntryInteractionRegistryTest {
     }
 
     @Test
-    fun `missing download processor exposes unsupported capability with neutral query results`() = runTest {
+    fun `missing download processor exposes neutral operation results`() = runTest {
         val interactions = createEntryInteractions(emptyList())
         val entry = entry(EntryType.BOOK)
 
-        interactions.download.supportsDownloads(EntryType.BOOK) shouldBe false
         interactions.download.settingCapabilities() shouldBe emptyMap()
         interactions.download.supportsDownloadOptions(entry) shouldBe false
-        interactions.download.supportsBulkDownload(entry) shouldBe false
         interactions.download.resolveDownloadOptions(context, entry, chapter).shouldBeNull()
         interactions.download.resolveBulkDownloadCandidates(
             entry = entry,
@@ -182,7 +180,6 @@ class EntryInteractionRegistryTest {
                 EntryMergeCapabilityItem(manga.copy(id = 2L), isMerged = false),
             ),
         ) shouldBe false
-        interactions.capability.supportsBulkDownload(manga) shouldBe false
     }
 
     @Test
@@ -538,7 +535,7 @@ class EntryInteractionRegistryTest {
     }
 
     @Test
-    fun `capability queries preserve migration merge and bulk download policy`() {
+    fun `capability queries preserve migration and merge policy`() {
         val interactions = createEntryInteractions(
             listOf(
                 EntryInteractionPlugin { registry ->
@@ -555,10 +552,6 @@ class EntryInteractionRegistryTest {
                             migrationSupported = false,
                             mergeSupported = true,
                         ),
-                    )
-                    registry.registerDownloadProcessor(RecordingDownloadProcessor(EntryType.MANGA))
-                    registry.registerDownloadProcessor(
-                        RecordingDownloadProcessor(EntryType.ANIME, bulkDownloadSupported = false),
                     )
                 },
             ),
@@ -591,9 +584,6 @@ class EntryInteractionRegistryTest {
                 EntryMergeCapabilityItem(otherManga, isMerged = true),
             ),
         ) shouldBe false
-
-        interactions.capability.supportsBulkDownload(manga) shouldBe true
-        interactions.capability.supportsBulkDownload(anime) shouldBe false
     }
 
     @Test
@@ -1234,7 +1224,6 @@ class EntryInteractionRegistryTest {
 
     private open class RecordingDownloadProcessor(
         open override val type: EntryType,
-        private val bulkDownloadSupported: Boolean = true,
         override val settingCapabilities: Set<EntryDownloadSettingCapability> = emptySet(),
     ) : EntryDownloadProcessor {
         override val events: Flow<EntryDownloadEvent> = emptyFlow()
@@ -1296,8 +1285,6 @@ class EntryInteractionRegistryTest {
             downloadedEntryIds += entry.id
             downloadStartNow += startNow
         }
-
-        override fun supportsBulkDownload(entry: Entry): Boolean = bulkDownloadSupported
 
         override suspend fun resolveBulkDownloadCandidatePool(
             entry: Entry,

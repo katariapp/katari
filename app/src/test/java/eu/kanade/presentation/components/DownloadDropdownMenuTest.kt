@@ -33,7 +33,7 @@ class DownloadDropdownMenuTest {
         registeredTypes = EntryType.entries,
         evidence = EntryCapabilityEvidenceSnapshot(
             buildList {
-                EntryType.entries.forEach { add(providerEvidence(it, EntryCapabilityCatalog.DOWNLOADS)) }
+                EntryType.entries.forEach { add(providerEvidence(it, EntryCapabilityCatalog.BULK_DOWNLOADS)) }
                 bookmarks.forEach { add(providerEvidence(it, EntryCapabilityCatalog.BOOKMARKING)) }
             },
         ),

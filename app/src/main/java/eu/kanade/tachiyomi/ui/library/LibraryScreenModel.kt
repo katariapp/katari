@@ -40,7 +40,9 @@ import kotlinx.coroutines.flow.updateAndGet
 import mihon.core.common.utils.mutate
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityInteraction
+import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryConsumptionInteraction
 import mihon.entry.interactions.EntryDownloadInteraction
 import mihon.entry.interactions.EntryLibraryFilterInteraction
@@ -106,6 +108,7 @@ class LibraryScreenModel(
     private val sourceManager: SourceManager = Injekt.get(),
     private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
+    private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
     private val entryLibraryFilterInteraction: EntryLibraryFilterInteraction = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
@@ -691,7 +694,10 @@ class LibraryScreenModel(
         val selectedItems = state.value.selectedLibraryItems
         if (selectedItems.isEmpty()) return false
         return selectedItems.all { item ->
-            !item.isLocal && entryCapabilityInteraction.supportsBulkDownload(item.entry)
+            !item.isLocal && entryCapabilityReport.supportsTypeWide(
+                item.entry.type,
+                EntryCapabilityCatalog.BULK_DOWNLOADS,
+            )
         }
     }
 

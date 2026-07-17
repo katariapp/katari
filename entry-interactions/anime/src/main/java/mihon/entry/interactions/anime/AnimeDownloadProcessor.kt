@@ -211,11 +211,6 @@ internal class AnimeDownloadProcessor(
         )
     }
 
-    override fun supportsBulkDownload(entry: Entry): Boolean {
-        entry.requireAnime()
-        return true
-    }
-
     override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
         candidates: List<EntryChapter>?,

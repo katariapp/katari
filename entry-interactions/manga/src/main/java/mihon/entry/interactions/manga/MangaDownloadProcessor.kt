@@ -128,11 +128,6 @@ internal class MangaDownloadProcessor(
         }
     }
 
-    override fun supportsBulkDownload(entry: Entry): Boolean {
-        entry.requireManga()
-        return true
-    }
-
     override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
         candidates: List<EntryChapter>?,

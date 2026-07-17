@@ -205,7 +205,10 @@ class UpdatesScreenModel(
                         visibleCoverData = entry?.asEntryCover() ?: chapterUpdate.coverData,
                         downloadStateProvider = { downloadStatus.state },
                         downloadProgressProvider = { downloadStatus.progress },
-                        downloadSupported = entryDownloadInteraction.supportsDownloads(update.entryType),
+                        downloadSupported = entryCapabilityReport.supportsTypeWide(
+                            update.entryType,
+                            EntryCapabilityCatalog.DOWNLOADS,
+                        ),
                         selected = update.key in selectedKeys,
                     )
                 }

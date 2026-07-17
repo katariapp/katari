@@ -77,7 +77,8 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
             processor.type,
             processor,
             downloadProcessors,
-            listOf(EntryCapabilityCatalog.DOWNLOADS) + processor.settingCapabilities.map { it.capability },
+            listOf(EntryCapabilityCatalog.DOWNLOADS, EntryCapabilityCatalog.BULK_DOWNLOADS) +
+                processor.settingCapabilities.map { it.capability },
         )
     }
 
@@ -283,7 +284,7 @@ private class DefaultEntryInteractions(
     override val download: EntryDownloadInteraction =
         RegistryEntryDownloadInteraction(downloadProcessors, capabilityReport)
     override val capability: EntryCapabilityInteraction =
-        RegistryEntryCapabilityInteraction(capabilityProcessors, downloadProcessors)
+        RegistryEntryCapabilityInteraction(capabilityProcessors)
     override val consumption: EntryConsumptionInteraction =
         RegistryEntryConsumptionInteraction(consumptionProcessors)
     override val bookmark: EntryBookmarkInteraction = RegistryEntryBookmarkInteraction(bookmarkProcessors)
@@ -502,10 +503,6 @@ private class RegistryEntryDownloadInteraction(
             }
     }
 
-    override fun supportsDownloads(entryType: EntryType): Boolean {
-        return entryType in processors
-    }
-
     override fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>> {
         return processors.mapValues { (_, processor) -> processor.settingCapabilities }
     }
@@ -552,12 +549,6 @@ private class RegistryEntryDownloadInteraction(
         return processor.resolveDownloadOptions(context, entry, chapter)
     }
 
-    override fun supportsBulkDownload(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
-        processor.requireMatchingEntryType("download", entry, processors.keys)
-        return processor.supportsBulkDownload(entry)
-    }
-
     override suspend fun resolveBulkDownloadCandidates(
         entry: Entry,
         action: EntryBulkDownloadAction,
@@ -566,7 +557,9 @@ private class RegistryEntryDownloadInteraction(
     ): EntryBulkDownloadCandidateResult {
         val processor = processors[entry.type] ?: return EntryBulkDownloadCandidateResult.Unsupported
         processor.requireMatchingEntryType("download", entry, processors.keys)
-        if (!processor.supportsBulkDownload(entry)) return EntryBulkDownloadCandidateResult.Unsupported
+        if (!capabilityReport.supportsTypeWide(entry.type, EntryCapabilityCatalog.BULK_DOWNLOADS)) {
+            return EntryBulkDownloadCandidateResult.Unsupported
+        }
         if (
             action.type == EntryBulkDownloadActionType.BOOKMARKED &&
             !EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(capabilityReport, entry.type)
@@ -670,7 +663,6 @@ private fun List<EntryChapter>.selectBulkDownloadCandidates(
 
 private class RegistryEntryCapabilityInteraction(
     private val processors: Map<EntryType, EntryCapabilityProcessor>,
-    private val downloadProcessors: Map<EntryType, EntryDownloadProcessor>,
 ) : EntryCapabilityInteraction {
     override fun supportsMigration(entry: Entry): Boolean {
         val processor = processors[entry.type] ?: return false
@@ -698,12 +690,6 @@ private class RegistryEntryCapabilityInteraction(
         if (selection.count { it.isMerged } > 1) return false
 
         return selection.all { supportsMerge(it.entry) }
-    }
-
-    override fun supportsBulkDownload(entry: Entry): Boolean {
-        val processor = downloadProcessors[entry.type] ?: return false
-        processor.requireMatchingEntryType("download", entry, downloadProcessors.keys)
-        return processor.supportsBulkDownload(entry)
     }
 }
 

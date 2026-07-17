@@ -53,9 +53,11 @@ class EntryInteractionRuntimeCapabilityTest {
             (interactions.bookmark === bookmarkInteraction) shouldBe true
             report.types.map { it.entryType } shouldBe EntryType.entries
             EntryType.entries.forEach { entryType ->
-                interactions.download.supportsDownloads(entryType) shouldBe true
                 report.type(entryType)
                     .entry(EntryCapabilityCatalog.DOWNLOADS)
+                    .supported shouldBe true
+                report.type(entryType)
+                    .entry(EntryCapabilityCatalog.BULK_DOWNLOADS)
                     .supported shouldBe true
             }
             report.types.filter {

@@ -93,7 +93,6 @@ class BookEntryInteractionPluginTest {
                 bookmarked = true,
             ),
         )
-        assertFalse(interactions.download.supportsDownloads(EntryType.BOOK))
         assertFalse(interactions.capability.supportsMigration(entry))
         assertFalse(interactions.capability.supportsMerge(entry))
         val report = composition.capabilityReport.type(EntryType.BOOK)
@@ -103,6 +102,7 @@ class BookEntryInteractionPluginTest {
                 EntrySupportResult.IntentionallyUnsupported,
         )
         assertTrue(report.entry(EntryCapabilityCatalog.DOWNLOADS).outcome() is EntrySupportResult.Unresolved)
+        assertTrue(report.entry(EntryCapabilityCatalog.BULK_DOWNLOADS).outcome() is EntrySupportResult.Unresolved)
     }
 
     @Test
@@ -117,6 +117,11 @@ class BookEntryInteractionPluginTest {
         assertTrue(
             composition.capabilityReport.type(EntryType.BOOK)
                 .entry(EntryCapabilityCatalog.DOWNLOADS)
+                .outcome() is EntrySupportResult.Supported,
+        )
+        assertTrue(
+            composition.capabilityReport.type(EntryType.BOOK)
+                .entry(EntryCapabilityCatalog.BULK_DOWNLOADS)
                 .outcome() is EntrySupportResult.Supported,
         )
     }

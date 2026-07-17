@@ -73,7 +73,6 @@ interface EntryDownloadProcessor {
         entry: Entry,
         chapter: EntryChapter,
     ): EntryDownloadOptions? = null
-    fun supportsBulkDownload(entry: Entry): Boolean
 
     /** Loads media-specific candidates before shared bulk-action selection is applied. */
     suspend fun resolveBulkDownloadCandidatePool(

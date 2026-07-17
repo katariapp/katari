@@ -1140,10 +1140,6 @@ class EntryScreenModel(
         }
     }
 
-    fun supportsBulkDownload(): Boolean {
-        return successState?.entry?.let(entryCapabilityInteraction::supportsBulkDownload) == true
-    }
-
     fun supportsMerge(): Boolean {
         return successState?.entry?.let(entryCapabilityInteraction::supportsMerge) == true
     }
