@@ -126,8 +126,9 @@ internal class AnimeDownloadProcessor(
             anime = entry,
             episodes = chapters,
             preferences = downloadPreferences(entry),
-            autoStart = startNow,
+            autoStart = false,
         )
+        startQueuedDownloads(chapters, startNow)
     }
 
     override suspend fun downloadWithOptions(
@@ -153,8 +154,9 @@ internal class AnimeDownloadProcessor(
             anime = entry,
             episodes = chapters,
             preferences = persistedPreferences,
-            autoStart = startNow,
+            autoStart = false,
         )
+        startQueuedDownloads(chapters, startNow)
     }
 
     override fun supportsDownloadOptions(entry: Entry): Boolean {
@@ -330,6 +332,14 @@ internal class AnimeDownloadProcessor(
     private suspend fun downloadPreferences(entry: Entry): DownloadPreferences {
         return dependencies.downloadPreferencesRepository.getByEntryId(entry.id)
             ?: createDefaultVideoDownloadPreferences(entry.id)
+    }
+
+    private fun startQueuedDownloads(chapters: List<EntryChapter>, startNow: Boolean) {
+        if (startNow) {
+            animeDownloadManager.startDownloadsNow(chapters.map(EntryChapter::id))
+        } else {
+            animeDownloadManager.startDownloads()
+        }
     }
 }
 

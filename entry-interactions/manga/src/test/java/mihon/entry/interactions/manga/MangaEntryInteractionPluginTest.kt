@@ -564,6 +564,26 @@ class MangaEntryInteractionPluginTest {
     }
 
     @Test
+    fun `manga downloads start normally and promote every selected chapter for start now`() = runTest {
+        val manager = mockDownloadManager(chapterDownloaded = false)
+        val interactions = createEntryInteractions(
+            listOf(mangaEntryInteractionPlugin(dependencies(downloadManager = manager))),
+        )
+        val manga = entry(EntryType.MANGA)
+        val chapters = listOf(chapter(id = 2L), chapter(id = 3L))
+
+        interactions.download.download(manga, chapters, startNow = false)
+
+        verify(exactly = 1) { manager.downloadChapters(manga, chapters, autoStart = false) }
+        verify(exactly = 1) { manager.startDownloads() }
+
+        interactions.download.download(manga, chapters, startNow = true)
+
+        verify(exactly = 2) { manager.downloadChapters(manga, chapters, autoStart = false) }
+        verify(exactly = 1) { manager.startDownloadsNow(listOf(2L, 3L)) }
+    }
+
+    @Test
     fun `manga preview config follows manga preview preferences`() = runTest {
         val entryInteractionPreferences = EntryInteractionPreferences(InMemoryPreferenceStore())
         entryInteractionPreferences.enableMangaPreview.set(true)
@@ -588,6 +608,7 @@ class MangaEntryInteractionPluginTest {
         chapters: List<EntryChapter> = emptyList(),
         progressStates: List<EntryProgressState> = emptyList(),
         chapterDownloaded: Boolean = false,
+        downloadManager: DownloadManager = mockDownloadManager(chapterDownloaded),
         entryInteractionPreferences: EntryInteractionPreferences =
             EntryInteractionPreferences(InMemoryPreferenceStore()),
     ): MangaEntryInteractionRuntimeDependencies {
@@ -600,7 +621,7 @@ class MangaEntryInteractionPluginTest {
             filterEntryChaptersForDownload = mockk(relaxed = true),
             childGroupFilterDataSource = FakeEntryChildGroupFilterDataSource(),
             downloadPreferences = mockDownloadPreferences(),
-            downloadManager = mockDownloadManager(chapterDownloaded),
+            downloadManager = downloadManager,
             downloadCache = mockDownloadCache(),
             sourceManager = mockSourceManager(),
             entryInteractionPreferences = entryInteractionPreferences,

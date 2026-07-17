@@ -42,6 +42,7 @@ import logcat.LogPriority
 import mihon.core.archive.ZipWriter
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
+import mihon.entry.interactions.EntryDownloadQueuePolicy
 import mihon.entry.interactions.EntryPageImageCache
 import mihon.entry.interactions.manga.download.model.DownloadState
 import mihon.entry.interactions.manga.download.model.MangaDownload
@@ -751,21 +752,18 @@ internal class Downloader(
     }
 
     fun updateQueue(downloads: List<MangaDownload>) {
-        val wasRunning = isRunning
-
-        if (downloads.isEmpty()) {
-            clearQueue()
-            stop()
-            return
+        _queueState.update { current ->
+            val reordered = EntryDownloadQueuePolicy.reorderPending(
+                queue = current,
+                requested = downloads,
+                keyOf = { it.chapter.id },
+                isActive = { it.status == DownloadState.DOWNLOADING },
+            )
+            store.clear()
+            store.addAll(reordered)
+            reordered
         }
-
-        pause()
-        internalClearQueue()
-        addAllToQueue(downloads)
-
-        if (wasRunning) {
-            start()
-        }
+        if (queueState.value.isEmpty()) stop()
     }
 
     companion object {

@@ -39,11 +39,21 @@ interface EntryDownloadProcessor {
     fun invalidateCache()
     fun renameSource(oldSource: UnifiedSource, newSource: UnifiedSource)
     suspend fun renameEntry(entry: Entry, newTitle: String) = Unit
+
+    /** Reorders pending work without interrupting an unrelated active download. */
     fun reorderQueue(items: List<EntryDownloadQueueItem>)
     fun reorderSeries(entryId: Long, moveToTop: Boolean)
+
+    /** Cancels only the selected work. Pending-item cancellation must not restart active work. */
     fun cancelQueuedDownloads(items: List<EntryDownloadQueueItem>)
 
+    /** Adds work to the queue and starts processing when [autoStart] is true. */
     suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean)
+
+    /**
+     * Adds work and starts processing it. When [startNow] is true, the new work is promoted ahead of
+     * other pending work without interrupting an active download.
+     */
     suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean)
     suspend fun downloadWithOptions(
         entry: Entry,

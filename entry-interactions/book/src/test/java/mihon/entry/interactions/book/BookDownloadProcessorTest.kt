@@ -42,6 +42,22 @@ class BookDownloadProcessorTest {
     }
 
     @Test
+    fun `start now promotes every selected book child after owner-aware queueing`() = runTest {
+        val visible = entry(id = 1L, source = 10L)
+        val member = entry(id = 2L, source = 20L)
+        val visibleChapter = chapter(id = 11L, entryId = visible.id, number = 1.0)
+        val memberChapter = chapter(id = 21L, entryId = member.id, number = 1.0)
+        val fixture = fixture(entries = mapOf(member.id to member))
+
+        fixture.processor.download(visible, listOf(visibleChapter, memberChapter), startNow = true)
+
+        coVerify(exactly = 1) { fixture.manager.queueBooks(visible, listOf(visibleChapter), autoStart = false) }
+        coVerify(exactly = 1) { fixture.manager.queueBooks(member, listOf(memberChapter), autoStart = false) }
+        verify(exactly = 1) { fixture.manager.startDownloadsNow(listOf(11L, 21L)) }
+        verify(exactly = 0) { fixture.manager.startDownloads() }
+    }
+
+    @Test
     fun `next bulk download respects merged reading order and limit`() = runTest {
         val visible = entry(id = 1L, source = 10L).copy(
             chapterFlags = Entry.CHAPTER_SORT_DESC or Entry.CHAPTER_SORTING_NUMBER,

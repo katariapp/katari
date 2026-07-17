@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
+import mihon.entry.interactions.EntryDownloadQueuePolicy
 import mihon.entry.interactions.manga.download.model.DownloadState
 import mihon.entry.interactions.manga.download.model.MangaDownload
 import tachiyomi.core.common.i18n.stringResource
@@ -43,20 +43,12 @@ internal class DownloadManager(
     private val getCategories: GetCategories = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadPreferences: DownloadPreferences = Injekt.get(),
+    private val downloader: Downloader = Downloader(context, provider, cache),
+    private val pendingDeleter: DownloadPendingDeleter = DownloadPendingDeleter(context),
 ) {
-
-    /**
-     * Downloader whose only task is to download chapters.
-     */
-    private val downloader = Downloader(context, provider, cache)
 
     val isRunning: Boolean
         get() = downloader.isRunning
-
-    /**
-     * Queue to delay the deletion of a list of chapters until triggered.
-     */
-    private val pendingDeleter = DownloadPendingDeleter(context)
 
     val queueState
         get() = downloader.queueState
@@ -109,15 +101,15 @@ internal class DownloadManager(
         return queueState.value.find { it.chapter.id == chapterId }
     }
 
-    fun startDownloadNow(chapterId: Long) {
-        val existingDownload = getQueuedDownloadOrNull(chapterId)
-        // If not in queue try to start a new download
-        val toAdd = existingDownload ?: runBlocking { MangaDownload.fromChapterId(chapterId) } ?: return
-        queueState.value.toMutableList().apply {
-            existingDownload?.let { remove(it) }
-            add(0, toAdd)
-            reorderQueue(this)
-        }
+    fun startDownloadsNow(chapterIds: Collection<Long>) {
+        reorderQueue(
+            EntryDownloadQueuePolicy.promote(
+                queue = queueState.value,
+                keys = chapterIds,
+                keyOf = { it.chapter.id },
+                isActive = { it.status == DownloadState.DOWNLOADING },
+            ),
+        )
         startDownloads()
     }
 
@@ -271,18 +263,10 @@ internal class DownloadManager(
 
     private fun removeFromDownloadQueue(chapters: List<EntryChapter>) {
         val wasRunning = downloader.isRunning
-        if (wasRunning) {
-            downloader.pause()
-        }
-
         downloader.removeFromQueue(chapters)
 
-        if (wasRunning) {
-            if (queueState.value.isEmpty()) {
-                downloader.stop()
-            } else if (queueState.value.isNotEmpty()) {
-                downloader.start()
-            }
+        if (wasRunning && queueState.value.isEmpty()) {
+            downloader.stop()
         }
     }
 

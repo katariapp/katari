@@ -209,6 +209,37 @@ class AnimeEntryInteractionPluginTest {
                 autoStart = false,
             )
         }
+        verify(exactly = 1) { manager.startDownloads() }
+    }
+
+    @Test
+    fun `anime start now promotes all selected episodes and starts processing`() = runTest {
+        val anime = entry(EntryType.ANIME)
+        val episodes = listOf(chapter(id = 2L), chapter(id = 3L))
+        val manager = mockAnimeDownloadManager(false)
+        val interactions = createEntryInteractions(
+            listOf(
+                animeEntryInteractionPlugin(
+                    dependencies(
+                        chapters = episodes,
+                        animeDownloadManager = manager,
+                    ),
+                ),
+            ),
+        )
+
+        interactions.download.download(anime, episodes, startNow = true)
+
+        verify(exactly = 1) {
+            manager.queueEpisodes(
+                anime = anime,
+                episodes = episodes,
+                preferences = any(),
+                autoStart = false,
+            )
+        }
+        verify(exactly = 1) { manager.startDownloadsNow(listOf(2L, 3L)) }
+        verify(exactly = 0) { manager.startDownloads() }
     }
 
     @Test

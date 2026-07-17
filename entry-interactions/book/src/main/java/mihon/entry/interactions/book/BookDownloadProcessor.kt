@@ -104,8 +104,12 @@ internal class BookDownloadProcessor(
 
     override suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean) {
         entry.requireBook()
-        queueByOwner(entry, chapters, autoStart = !startNow)
-        if (startNow) chapters.singleOrNull()?.id?.let(manager::startDownloadNow)
+        queueByOwner(entry, chapters, autoStart = false)
+        if (startNow) {
+            manager.startDownloadsNow(chapters.map(EntryChapter::id))
+        } else {
+            manager.startDownloads()
+        }
     }
 
     override fun supportsDownloadOptions(entry: Entry): Boolean {

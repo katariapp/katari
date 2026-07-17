@@ -108,9 +108,11 @@ internal class MangaDownloadProcessor(
 
     override suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean) {
         entry.requireManga()
-        downloadManager.downloadChapters(entry, chapters, autoStart = !startNow)
+        downloadManager.downloadChapters(entry, chapters, autoStart = false)
         if (startNow) {
-            chapters.singleOrNull()?.id?.let(downloadManager::startDownloadNow)
+            downloadManager.startDownloadsNow(chapters.map(EntryChapter::id))
+        } else {
+            downloadManager.startDownloads()
         }
     }
 

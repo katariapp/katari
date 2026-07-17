@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
+import mihon.entry.interactions.EntryDownloadQueuePolicy
 import mihon.entry.interactions.book.download.model.BookDownload
 import mihon.entry.interactions.book.download.model.BookDownloadFailure
 import mihon.entry.interactions.book.toEntryDownloadMessage
@@ -137,9 +138,18 @@ internal class BookDownloadManager(
         if (autoStart) startDownloads()
     }
 
-    fun startDownloadNow(chapterId: Long) {
-        val selected = queueState.value.firstOrNull { it.chapter.id == chapterId } ?: return
-        reorderQueue(listOf(selected) + queueState.value.filterNot { it.chapter.id == chapterId })
+    fun startDownloadsNow(chapterIds: Collection<Long>) {
+        reorderQueue(
+            EntryDownloadQueuePolicy.promote(
+                queue = queueState.value,
+                keys = chapterIds,
+                keyOf = { it.chapter.id },
+                isActive = {
+                    it.status == BookDownload.State.RESOLVING ||
+                        it.status == BookDownload.State.DOWNLOADING
+                },
+            ),
+        )
         startDownloads()
     }
 
@@ -162,7 +172,15 @@ internal class BookDownloadManager(
 
     fun reorderQueue(downloads: List<BookDownload>) {
         synchronized(queueMutationLock) {
-            _queueState.value = downloads
+            _queueState.value = EntryDownloadQueuePolicy.reorderPending(
+                queue = queueState.value,
+                requested = downloads,
+                keyOf = { it.chapter.id },
+                isActive = {
+                    it.status == BookDownload.State.RESOLVING ||
+                        it.status == BookDownload.State.DOWNLOADING
+                },
+            )
             rewriteStoredQueueLocked()
         }
     }

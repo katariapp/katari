@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
+import mihon.entry.interactions.EntryDownloadQueuePolicy
 import mihon.entry.interactions.anime.download.model.AnimeDownload
 import mihon.entry.interactions.anime.download.model.AnimeDownloadFailure
 import mihon.entry.interactions.anime.toEntryDownloadMessage
@@ -85,6 +86,21 @@ internal class AnimeDownloadManager(
         }
         _isRunning.value = true
         launchProcessorIfNeeded()
+    }
+
+    fun startDownloadsNow(episodeIds: Collection<Long>) {
+        reorderQueue(
+            EntryDownloadQueuePolicy.promote(
+                queue = queueState.value,
+                keys = episodeIds,
+                keyOf = { it.episode.id },
+                isActive = {
+                    it.status == AnimeDownload.State.RESOLVING ||
+                        it.status == AnimeDownload.State.DOWNLOADING
+                },
+            ),
+        )
+        startDownloads()
     }
 
     fun pauseDownloads() {
@@ -175,7 +191,17 @@ internal class AnimeDownloadManager(
     }
 
     fun reorderQueue(downloads: List<AnimeDownload>) {
-        updateQueue(downloads)
+        updateQueue(
+            EntryDownloadQueuePolicy.reorderPending(
+                queue = queueState.value,
+                requested = downloads,
+                keyOf = { it.episode.id },
+                isActive = {
+                    it.status == AnimeDownload.State.RESOLVING ||
+                        it.status == AnimeDownload.State.DOWNLOADING
+                },
+            ),
+        )
     }
 
     suspend fun deleteEpisodes(anime: Entry, episodes: List<EntryChapter>) {
