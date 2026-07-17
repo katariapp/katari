@@ -1,6 +1,6 @@
 # Capability Atlas
 
-Status: Milestones 0.1 and 0.2 complete; expected-state decisions deferred to Milestone 0.3
+Status: Phase 1 authoritative capability foundation complete; production consumers remain on compatibility APIs
 
 This file records the current executable evidence for capability support. It is an inventory of facts to review, not a new source of behavioral truth and not a proposal for the final capability model.
 
@@ -266,7 +266,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 
 ## Coverage and Documentation Gaps
 
-- No executable catalog enumerates fundamental capability declarations and automatically supplies the applicable consumer/test/documentation set.
+- The Phase 1 executable catalog and report enumerate reviewed fundamental capability facts, but consumer selection, shared contracts, and documentation projection have not migrated yet.
 - No shared contract instantiates every real content-type provider claiming open, continue, download, bulk download, consumption, bookmark, migration, merge, update, progress, preview, or immersive support.
 - `EntryType.entries` is used by one strong shared lifecycle test, but enum membership is not the same as capability applicability.
 - The content reference is entirely hand-maintained. Anime migration already demonstrates that executable support and documentation can disagree without validation failing.
@@ -358,7 +358,7 @@ Milestone 1.2 connects evidence collection to Entry interaction composition:
 - capability processors, update-eligibility processors, child-group processors, and library-filter processors do not contribute support merely by registration because their current registration does not prove their sub-capabilities; and
 - empty or absent evidence remains valid input for the unresolved reporting work in Milestone 1.3 rather than being interpreted as intentional unsupported behavior.
 
-The existing `createEntryInteractions` API and runtime dispatch remain unchanged. The composed evidence snapshot is currently an inspection foundation only; production consumers and deterministic real-type reports have not migrated yet.
+The existing `createEntryInteractions` API and runtime dispatch remain unchanged. The composed evidence snapshot is an inspection foundation; production feature consumers have not migrated yet.
 
 Milestone 1.3 adds the reviewed fundamental catalog and deterministic type reports. The catalog includes provider-backed core interactions, distinct download-setting facts, contextual download options, bookmarking, library progress, filtering, merge/migration, preview, and immersive capability. Universal policy and derived combinations remain outside it.
 
@@ -373,4 +373,32 @@ Current report interpretation is deliberately stricter than current fallback beh
 
 Manga, Anime, and Book plugin tests assert their current report projections. Book downloads report supported whenever the production download provider is present; omitting that provider in the existing construction/testing seam leaves the fact unresolved instead of misclassifying Book downloads as intentionally unsupported.
 
-The report is deterministic across plugin registration order and rejects evidence outside the reviewed catalog or any positive-evidence/explicit-absence conflict. It remains available only from `EntryInteractionComposition`; normal production callers still receive the unchanged `EntryInteractions` facade until Milestone 1.4.
+The report is deterministic across plugin registration order and rejects evidence outside the reviewed catalog or any positive-evidence/explicit-absence conflict.
+
+Milestone 1.4 exposes that same immutable report through `EntryInteractions` and registers it as the production
+`EntryCapabilityReport`. The report is not reconstructed by DI and no independent content-type matrix was added. Existing
+interaction properties, compatibility support methods, and dispatch paths remain unchanged.
+
+A production-composition test resolves the actual runtime Manga, Anime, and Book plugin builders with operational
+dependencies replaced by test doubles. It proves that every production type is inspectable and that all three production
+download registrations—including Book's enabled construction path—produce supported download evidence consistent with
+the legacy `supportsDownloads` result.
+
+### Implemented evidence owners
+
+- The Entry interaction registry owns provider-registration evidence and rejects duplicate or contradictory authority.
+- Type plugins own exceptional intrinsic facts and explicit intentional-absence decisions.
+- The reviewed catalog owns stable capability identity and scope, not per-type support values.
+- The deterministic report owns unresolved migration visibility and never converts missing evidence into unsupported.
+- The production `EntryInteractions` composition owns access to the resulting report; DI only exposes the same instance.
+
+### Remaining migration work
+
+- Merge, migration, bulk download, library progress, download options, and filter facts remain unresolved until their
+  authoritative evidence is migrated in Phase 3 or Phase 4.
+- Unresolved values do not satisfy the exit gate of the later phase that owns the capability. Phase 1 records those gaps;
+  it does not classify them as completed or intentional absence.
+- Application actions, settings, policies, workers, presentation, shared contracts, and public documentation still use
+  compatibility paths until their assigned phases migrate them.
+- Derived bookmark/download behavior is deliberately absent from the fundamental catalog and is the Phase 2 vertical
+  proof.

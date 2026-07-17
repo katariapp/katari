@@ -152,6 +152,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             ),
         )
     }
+    addSingletonFactory<EntryCapabilityReport> { get<EntryInteractions>().capabilityReport }
     addSingletonFactory<EntryOpenInteraction> { get<EntryInteractions>().open }
     addSingletonFactory<EntryContinueInteraction> { get<EntryInteractions>().continueEntry }
     addSingletonFactory<EntryDownloadInteraction> { get<EntryInteractions>().download }

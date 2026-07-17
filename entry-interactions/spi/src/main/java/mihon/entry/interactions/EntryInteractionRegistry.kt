@@ -150,8 +150,14 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
         val evidenceSnapshot = EntryCapabilityEvidenceSnapshot(capabilityEvidence)
         val outcomeSnapshot = EntryCapabilityOutcomeSnapshot(capabilityOutcomes)
         val registeredTypes = registeredTypes(evidenceSnapshot, outcomeSnapshot)
+        val capabilityReport = createEntryCapabilityReport(
+            registeredTypes = registeredTypes,
+            evidence = evidenceSnapshot,
+            outcomes = outcomeSnapshot,
+        )
         return EntryInteractionComposition(
             interactions = DefaultEntryInteractions(
+                capabilityReport = capabilityReport,
                 openProcessors = openProcessors.toMap(),
                 continueProcessors = continueProcessors.toMap(),
                 downloadProcessors = downloadProcessors.toMap(),
@@ -168,11 +174,7 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
             ),
             capabilityEvidence = evidenceSnapshot,
             capabilityOutcomes = outcomeSnapshot,
-            capabilityReport = createEntryCapabilityReport(
-                registeredTypes = registeredTypes,
-                evidence = evidenceSnapshot,
-                outcomes = outcomeSnapshot,
-            ),
+            capabilityReport = capabilityReport,
         )
     }
 
@@ -249,6 +251,7 @@ private val EntryDownloadSettingCapability.capability: EntryFundamentalCapabilit
     }
 
 private class DefaultEntryInteractions(
+    override val capabilityReport: EntryCapabilityReport,
     openProcessors: Map<EntryType, EntryOpenProcessor>,
     continueProcessors: Map<EntryType, EntryContinueProcessor>,
     downloadProcessors: Map<EntryType, EntryDownloadProcessor>,

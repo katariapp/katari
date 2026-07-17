@@ -15,6 +15,7 @@ class EntryCapabilityEvidenceRegistryTest {
         val composition = createEntryInteractionComposition(emptyList())
 
         composition.capabilityEvidence.records shouldBe emptyList()
+        (composition.interactions.capabilityReport === composition.capabilityReport) shouldBe true
     }
 
     @Test

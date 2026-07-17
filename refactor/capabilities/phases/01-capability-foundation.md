@@ -43,13 +43,13 @@ Create the capability vocabulary, support result, evidence model, and determinis
 
 ## Milestone 1.4 — Foundation Integration Gate
 
-- [ ] Expose the inspection/query foundation through the Entry interaction composition boundary.
-- [ ] Verify existing compatibility APIs and production behavior remain unchanged.
-- [ ] Add registry and production-composition coverage for every registered type.
-- [ ] Run the complete Phase 1 validation set.
-- [ ] Update the atlas with the implemented evidence owners and remaining migration work.
-- [ ] Review every Phase 1 exit gate and manifesto risk.
-- [ ] Stop before Phase 2.
+- [x] Expose the inspection/query foundation through the Entry interaction composition boundary.
+- [x] Verify existing compatibility APIs and production behavior remain unchanged.
+- [x] Add registry and production-composition coverage for every registered type.
+- [x] Run the complete Phase 1 validation set.
+- [x] Update the atlas with the implemented evidence owners and remaining migration work.
+- [x] Review every Phase 1 exit gate and manifesto risk.
+- [x] Stop before Phase 2.
 
 ## Non-Goals
 
@@ -78,3 +78,17 @@ Create the capability vocabulary, support result, evidence model, and determinis
 ## Manifesto Review
 
 Confirm that the foundation centralizes evidence rather than centralizing duplicated booleans.
+
+## Completion Notes
+
+`EntryInteractions.capabilityReport` exposes the immutable report assembled from the same plugin registration that creates
+the operational interactions. The runtime registers that exact instance for inspection; it does not assemble a second
+support matrix. Existing interaction properties and dispatch behavior remain unchanged.
+
+The production-composition test resolves the real Manga, Anime, and Book plugin assembly while replacing operational
+dependencies only. It verifies that all registered types are inspectable and that production-enabled Book downloads
+produce the same provider-backed support evidence as Manga and Anime downloads.
+
+Unresolved entries are intentionally not accepted as completed capability migrations. Phase 1 establishes the
+foundation and identifies those entries; their owning Phase 3 or Phase 4 exit gates remain blocked until authoritative
+evidence or an accepted absence replaces each unresolved result.
