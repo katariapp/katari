@@ -14,27 +14,39 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import mihon.feature.graph.FeatureArtifactSelection
+import mihon.feature.graph.FeatureGraph
+import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.FeatureGraphEvaluation
+import mihon.feature.graph.discoverAndAssembleFeatureGraph
+import mihon.feature.graph.evaluateFeatureGraph
+import mihon.feature.graph.selectFeatureArtifacts
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.service.sortedForReading
 
 fun createEntryInteractions(
     plugins: List<EntryInteractionPlugin>,
-): EntryInteractions = createEntryInteractionComposition(plugins).interactions
+    featureContributors: List<FeatureGraphContributor>,
+): EntryInteractions = createEntryInteractionComposition(plugins, featureContributors).interactions
 
 data class EntryInteractionComposition(
     val interactions: EntryInteractions,
-    val capabilityEvidence: EntryCapabilityEvidenceSnapshot,
-    val capabilityOutcomes: EntryCapabilityOutcomeSnapshot,
-    val capabilityReport: EntryCapabilityReport,
+    val featureGraph: FeatureGraph,
+    val featureGraphEvaluation: FeatureGraphEvaluation,
+    val featureArtifacts: FeatureArtifactSelection,
 )
 
 fun createEntryInteractionComposition(
     plugins: List<EntryInteractionPlugin>,
+    featureContributors: List<FeatureGraphContributor>,
 ): EntryInteractionComposition {
+    val featureGraph = discoverAndAssembleFeatureGraph(plugins + featureContributors)
+    val featureGraphEvaluation = evaluateFeatureGraph(featureGraph)
+    val featureArtifacts = selectFeatureArtifacts(featureGraph, featureGraphEvaluation)
     val registry = DefaultEntryInteractionRegistry()
     plugins.forEach { it.register(registry) }
-    return registry.createComposition()
+    return registry.createComposition(featureGraph, featureGraphEvaluation, featureArtifacts)
 }
 
 private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
@@ -52,34 +64,16 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     private val libraryFilterProcessors = mutableMapOf<EntryType, EntryLibraryFilterProcessor>()
     private val previewProcessors = mutableMapOf<EntryType, EntryPreviewInteraction>()
     private val immersiveProcessors = mutableMapOf<EntryType, EntryImmersiveProcessor>()
-    private val capabilityEvidence = mutableListOf<EntryCapabilityEvidenceRecord>()
-    private val capabilityOutcomes = mutableListOf<EntryCapabilityOutcomeDeclaration>()
-
-    override fun declareIntrinsicCapability(declaration: EntryIntrinsicCapabilityDeclaration) {
-        capabilityEvidence += declaration.evidenceRecord()
-    }
-
-    override fun declareCapabilityOutcome(declaration: EntryCapabilityOutcomeDeclaration) {
-        capabilityOutcomes += declaration
-    }
-
     override fun registerOpenProcessor(processor: EntryOpenProcessor) {
-        registerProcessor("open", processor.type, processor, openProcessors, EntryCapabilityCatalog.OPEN)
+        registerProcessor("open", processor.type, processor, openProcessors)
     }
 
     override fun registerContinueProcessor(processor: EntryContinueProcessor) {
-        registerProcessor("continue", processor.type, processor, continueProcessors, EntryCapabilityCatalog.CONTINUE)
+        registerProcessor("continue", processor.type, processor, continueProcessors)
     }
 
     override fun registerDownloadProcessor(processor: EntryDownloadProcessor) {
-        registerProcessor(
-            "download",
-            processor.type,
-            processor,
-            downloadProcessors,
-            listOf(EntryCapabilityCatalog.DOWNLOADS, EntryCapabilityCatalog.BULK_DOWNLOADS) +
-                processor.settingCapabilities.map { it.capability },
-        )
+        registerProcessor("download", processor.type, processor, downloadProcessors)
     }
 
     override fun registerCapabilityProcessor(processor: EntryCapabilityProcessor) {
@@ -87,23 +81,11 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     }
 
     override fun registerConsumptionProcessor(processor: EntryConsumptionProcessor) {
-        registerProcessor(
-            "consumption",
-            processor.type,
-            processor,
-            consumptionProcessors,
-            EntryCapabilityCatalog.CONSUMPTION,
-        )
+        registerProcessor("consumption", processor.type, processor, consumptionProcessors)
     }
 
     override fun registerBookmarkProcessor(processor: EntryBookmarkProcessor) {
-        registerProcessor(
-            "bookmark",
-            processor.type,
-            processor,
-            bookmarkProcessors,
-            EntryCapabilityCatalog.BOOKMARKING,
-        )
+        registerProcessor("bookmark", processor.type, processor, bookmarkProcessors)
     }
 
     override fun registerUpdateEligibilityProcessor(processor: EntryUpdateEligibilityProcessor) {
@@ -111,27 +93,15 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     }
 
     override fun registerProgressProcessor(processor: EntryProgressProcessor) {
-        registerProcessor("progress", processor.type, processor, progressProcessors, EntryCapabilityCatalog.PROGRESS)
+        registerProcessor("progress", processor.type, processor, progressProcessors)
     }
 
     override fun registerPlaybackPreferencesProcessor(processor: EntryPlaybackPreferencesProcessor) {
-        registerProcessor(
-            "playback preferences",
-            processor.type,
-            processor,
-            playbackPreferencesProcessors,
-            EntryCapabilityCatalog.PLAYBACK_PREFERENCES,
-        )
+        registerProcessor("playback preferences", processor.type, processor, playbackPreferencesProcessors)
     }
 
     override fun registerChildListProcessor(processor: EntryChildListProcessor) {
-        registerProcessor(
-            "child list",
-            processor.type,
-            processor,
-            childListProcessors,
-            EntryCapabilityCatalog.CHILD_LIST,
-        )
+        registerProcessor("child list", processor.type, processor, childListProcessors)
     }
 
     override fun registerChildGroupFilterProcessor(processor: EntryChildGroupFilterProcessor) {
@@ -143,31 +113,20 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     }
 
     override fun registerPreviewProcessor(processor: EntryPreviewProcessor) {
-        registerProcessor("preview", processor.type, processor, previewProcessors, EntryCapabilityCatalog.PREVIEW)
+        registerProcessor("preview", processor.type, processor, previewProcessors)
     }
 
     override fun registerImmersiveProcessor(processor: EntryImmersiveProcessor) {
-        registerProcessor(
-            "immersive feed",
-            processor.type,
-            processor,
-            immersiveProcessors,
-            EntryCapabilityCatalog.IMMERSIVE,
-        )
+        registerProcessor("immersive feed", processor.type, processor, immersiveProcessors)
     }
 
-    fun createComposition(): EntryInteractionComposition {
-        val evidenceSnapshot = EntryCapabilityEvidenceSnapshot(capabilityEvidence)
-        val outcomeSnapshot = EntryCapabilityOutcomeSnapshot(capabilityOutcomes)
-        val registeredTypes = registeredTypes(evidenceSnapshot, outcomeSnapshot)
-        val capabilityReport = createEntryCapabilityReport(
-            registeredTypes = registeredTypes,
-            evidence = evidenceSnapshot,
-            outcomes = outcomeSnapshot,
-        )
+    fun createComposition(
+        featureGraph: FeatureGraph,
+        featureGraphEvaluation: FeatureGraphEvaluation,
+        featureArtifacts: FeatureArtifactSelection,
+    ): EntryInteractionComposition {
         return EntryInteractionComposition(
             interactions = DefaultEntryInteractions(
-                capabilityReport = capabilityReport,
                 openProcessors = openProcessors.toMap(),
                 continueProcessors = continueProcessors.toMap(),
                 downloadProcessors = downloadProcessors.toMap(),
@@ -183,87 +142,27 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
                 previewProcessors = previewProcessors.toMap(),
                 immersiveProcessors = immersiveProcessors.toMap(),
             ),
-            capabilityEvidence = evidenceSnapshot,
-            capabilityOutcomes = outcomeSnapshot,
-            capabilityReport = capabilityReport,
+            featureGraph = featureGraph,
+            featureGraphEvaluation = featureGraphEvaluation,
+            featureArtifacts = featureArtifacts,
         )
     }
 
-    private fun registeredTypes(
-        evidence: EntryCapabilityEvidenceSnapshot,
-        outcomes: EntryCapabilityOutcomeSnapshot,
-    ): List<EntryType> {
-        return (
-            openProcessors.keys +
-                continueProcessors.keys +
-                downloadProcessors.keys +
-                capabilityProcessors.keys +
-                consumptionProcessors.keys +
-                bookmarkProcessors.keys +
-                updateEligibilityProcessors.keys +
-                progressProcessors.keys +
-                playbackPreferencesProcessors.keys +
-                childListProcessors.keys +
-                childGroupFilterProcessors.keys +
-                libraryFilterProcessors.keys +
-                previewProcessors.keys +
-                immersiveProcessors.keys +
-                evidence.records.map { it.entryType } +
-                outcomes.declarations.map { it.entryType }
-            )
-            .distinct()
-            .sortedBy(EntryType::ordinal)
-    }
-
     private fun <T : Any> registerProcessor(
         category: String,
         type: EntryType,
         processor: T,
         processors: MutableMap<EntryType, T>,
-        capability: EntryFundamentalCapability,
-    ) {
-        registerProcessor(category, type, processor, processors, listOf(capability))
-    }
-
-    private fun <T : Any> registerProcessor(
-        category: String,
-        type: EntryType,
-        processor: T,
-        processors: MutableMap<EntryType, T>,
-        capabilities: List<EntryFundamentalCapability> = emptyList(),
     ) {
         val previous = processors.putIfAbsent(type, processor)
         check(previous == null) {
             "Duplicate $category processor registered for EntryType $type. Registered types: " +
                 processors.registeredTypes()
         }
-        capabilities.forEach { capability ->
-            capabilityEvidence += EntryCapabilityEvidenceRecord(
-                entryType = type,
-                capability = capability,
-                evidence = EntryCapabilityEvidence.ProviderRegistration(
-                    owner = PROVIDER_CAPABILITY_OWNER,
-                    provider = category,
-                ),
-            )
-        }
     }
 }
 
-private val PROVIDER_CAPABILITY_OWNER = EntryCapabilityOwner("entry-interactions.registry")
-
-private val EntryDownloadSettingCapability.capability: EntryFundamentalCapability
-    get() = when (this) {
-        EntryDownloadSettingCapability.ARCHIVE_PACKAGING -> EntryCapabilityCatalog.DOWNLOAD_ARCHIVE_PACKAGING
-        EntryDownloadSettingCapability.TALL_IMAGE_SPLITTING -> EntryCapabilityCatalog.DOWNLOAD_TALL_IMAGE_SPLITTING
-        EntryDownloadSettingCapability.PARALLEL_SOURCE_TRANSFERS ->
-            EntryCapabilityCatalog.DOWNLOAD_PARALLEL_SOURCE_TRANSFERS
-        EntryDownloadSettingCapability.PARALLEL_ITEM_TRANSFERS ->
-            EntryCapabilityCatalog.DOWNLOAD_PARALLEL_ITEM_TRANSFERS
-    }
-
 private class DefaultEntryInteractions(
-    override val capabilityReport: EntryCapabilityReport,
     openProcessors: Map<EntryType, EntryOpenProcessor>,
     continueProcessors: Map<EntryType, EntryContinueProcessor>,
     downloadProcessors: Map<EntryType, EntryDownloadProcessor>,
@@ -282,7 +181,7 @@ private class DefaultEntryInteractions(
     override val open: EntryOpenInteraction = RegistryEntryOpenInteraction(openProcessors)
     override val continueEntry: EntryContinueInteraction = RegistryEntryContinueInteraction(continueProcessors)
     override val download: EntryDownloadInteraction =
-        RegistryEntryDownloadInteraction(downloadProcessors, capabilityReport)
+        RegistryEntryDownloadInteraction(downloadProcessors)
     override val capability: EntryCapabilityInteraction =
         RegistryEntryCapabilityInteraction(capabilityProcessors)
     override val consumption: EntryConsumptionInteraction =

@@ -17,10 +17,9 @@ authorities:
 
 Their wiring may change, but the behavior is migration input rather than code to revert indiscriminately.
 
-## Retire at the Phase 3.5 Boundary Cut
+## Retired at the Phase 3.5 Boundary Cut
 
-These artifacts encode the evidence/report prototype and must stop acting as production architecture before real types
-and features migrate:
+These artifacts encoded the evidence/report prototype and were removed before real types and features migrate:
 
 - `EntryCapabilityCatalog` as a central list of known capabilities
 - `EntryCapabilityReport`, type reports, and `supportsTypeWide` as the application support authority
@@ -30,9 +29,9 @@ and features migrate:
 - `Unresolved` as the result of ordinary provider absence
 - Report tests and fixtures whose purpose is to enumerate current type/capability outcomes
 
-The cut removes these definitions and production exposure rather than leaving deprecated but callable facades. It is
-allowed to break every unported consumer. Those failures are recorded as migration obligations for Phases 4–7. The old
-authority must not remain beside the new graph merely to keep compilation green.
+The cut removed these definitions and production exposure rather than leaving deprecated but callable facades. It
+intentionally broke unported consumers. Those failures are recorded as migration obligations for Phases 4–7; the old
+authority was not retained beside the new graph merely to keep compilation green.
 
 ## Rehome Through Feature Migration
 

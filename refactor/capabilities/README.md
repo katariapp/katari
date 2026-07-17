@@ -13,8 +13,9 @@ Before doing capability-refactor work, read:
 3. [`status.md`](status.md)
 4. [`capability-atlas.md`](capability-atlas.md)
 5. [`legacy-artifacts.md`](legacy-artifacts.md)
-6. The active file under [`phases/`](phases/)
-7. Relevant records under [`decisions/`](decisions/)
+6. [`migration-obligations.md`](migration-obligations.md)
+7. The active file under [`phases/`](phases/)
+8. Relevant records under [`decisions/`](decisions/)
 
 Then inspect the current branch, recent commits, working tree, and tests rather than assuming this workspace is newer than Git.
 
@@ -81,5 +82,6 @@ A future continuation can use:
 - `status.md`: concise operational resume point
 - `capability-atlas.md`: inventory of capability facts, consumers, duplication, and coverage
 - `legacy-artifacts.md`: committed prototype artifacts to retain, retire, or rehome
+- `migration-obligations.md`: compile failures exposed by the architecture cut and their owning migration phases
 - `phases/`: bounded phase checklists and validation requirements
 - `decisions/`: accepted architectural decisions with consequences

@@ -27,6 +27,9 @@ import mihon.entry.interactions.settings.EntryMediaCachePreferences
 import mihon.entry.viewer.settings.ViewerSettingBinder
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import mihon.entry.viewer.settings.ViewerSettingsInteraction
+import mihon.feature.graph.FeatureArtifactSelection
+import mihon.feature.graph.FeatureGraph
+import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.core.common.preference.PreferenceStore
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektRegistrar
@@ -108,8 +111,8 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         )
     }
 
-    addSingletonFactory<EntryInteractions> {
-        createEntryInteractions(
+    addSingletonFactory<EntryInteractionComposition> {
+        createEntryInteractionComposition(
             plugins = listOf(
                 mangaEntryInteractionPlugin(
                     MangaEntryInteractionDependencies(
@@ -153,7 +156,10 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             ),
         )
     }
-    addSingletonFactory<EntryCapabilityReport> { get<EntryInteractions>().capabilityReport }
+    addSingletonFactory<EntryInteractions> { get<EntryInteractionComposition>().interactions }
+    addSingletonFactory<FeatureGraph> { get<EntryInteractionComposition>().featureGraph }
+    addSingletonFactory<FeatureGraphEvaluation> { get<EntryInteractionComposition>().featureGraphEvaluation }
+    addSingletonFactory<FeatureArtifactSelection> { get<EntryInteractionComposition>().featureArtifacts }
     addSingletonFactory<EntryOpenInteraction> { get<EntryInteractions>().open }
     addSingletonFactory<EntryContinueInteraction> { get<EntryInteractions>().continueEntry }
     addSingletonFactory<EntryDownloadInteraction> { get<EntryInteractions>().download }

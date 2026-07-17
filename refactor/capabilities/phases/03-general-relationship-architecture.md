@@ -45,16 +45,16 @@ obligations. It is intentionally generic and may break production compilation at
 
 ## Milestone 3.5 — Dependency Boundary and Migration Cut
 
-- [ ] Establish module dependencies so contribution owners point toward the generic kernel.
-- [ ] Switch the intended composition boundary even if unported production code stops compiling.
-- [ ] Remove `EntryCapabilityCatalog`, `EntryCapabilityReport`, `supportsTypeWide`, legacy report assembly, and production
+- [x] Establish module dependencies so contribution owners point toward the generic kernel.
+- [x] Switch the intended composition boundary even if unported production code stops compiling.
+- [x] Remove `EntryCapabilityCatalog`, `EntryCapabilityReport`, `supportsTypeWide`, legacy report assembly, and production
   report DI exposure rather than deprecating them behind a working facade.
-- [ ] Remove explicit unsupported declarations whose only purpose is to compensate for an absent provider.
-- [ ] Do not preserve old report APIs as a parallel authority; allow their unported consumers to fail compilation.
-- [ ] Record compile failures as concrete migration obligations owned by later phases.
-- [ ] Reject compatibility facades, fallback registries, and dual authorities introduced only to keep the build green.
-- [ ] Run the complete synthetic unknown-type/unknown-feature proof.
-- [ ] Stop before migrating Manga, Anime, or Book.
+- [x] Remove explicit unsupported declarations whose only purpose is to compensate for an absent provider.
+- [x] Do not preserve old report APIs as a parallel authority; allow their unported consumers to fail compilation.
+- [x] Record compile failures as concrete migration obligations owned by later phases.
+- [x] Reject compatibility facades, fallback registries, and dual authorities introduced only to keep the build green.
+- [x] Run the complete synthetic unknown-type/unknown-feature proof.
+- [x] Stop before migrating Manga, Anime, or Book.
 
 ## Non-Goals
 
@@ -162,3 +162,26 @@ Anonymous tests prove that every complete compatible contribution selects and ex
 objects, while unsupported and incomplete relationships do not. They also cover fixture ownership, aggregated missing
 projection obligations, deterministic ordering, ownership constraints, and rejection of a curated evaluation subset.
 No test restates which production type supports which capability.
+
+## Milestone 3.5 Completion Notes
+
+`entry-interactions:api` now points toward and exports the standalone graph kernel. `EntryInteractionPlugin` combines its
+existing operational registration responsibility with an owned `FeatureGraphContributor`; no default contribution or
+lambda compatibility wrapper was added. Independent feature contributors remain separate inputs to application
+composition, preventing feature ownership from being folded into content-type plugins.
+
+The composition boundary now discovers and assembles all supplied contributors, evaluates the graph, selects contracts
+and projections, and exposes those results beside operational interactions. The runtime DI path is switched to this
+composition object. Production content-type and feature contributors are intentionally absent until Phases 4 and 5, so
+their old construction paths do not compile.
+
+The central catalog, evidence/support report vocabulary, report assembly, `supportsTypeWide`, report-driven download
+policy, report DI binding, and their authority-focused tests were deleted. Anime and Book explicit unsupported outcomes
+were removed because missing providers are sufficient. No deprecated API, empty contribution, fallback query, or
+replacement boolean was introduced.
+
+`migration-obligations.md` records the remaining report consumers and plugin/test boundaries by responsible owner and
+phase. `:entry-interactions:spi:compileDebugKotlin` fails specifically at the retired report-based download policy. The
+generic kernel tests and `:entry-interactions:api:compileDebugKotlin` pass, including a complete synthetic proof where an
+unknown future type automatically receives shared consequences, contracts, and projections while another future type
+automatically produces its missing specialized obligation.

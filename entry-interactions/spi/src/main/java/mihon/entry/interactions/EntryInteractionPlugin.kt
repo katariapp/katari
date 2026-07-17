@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import mihon.feature.graph.FeatureGraphContributor
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
@@ -189,13 +190,11 @@ interface EntryPreviewProcessor : EntryPreviewInteraction {
     val type: EntryType
 }
 
-fun interface EntryInteractionPlugin {
+interface EntryInteractionPlugin : FeatureGraphContributor {
     fun register(registry: EntryInteractionRegistry)
 }
 
 interface EntryInteractionRegistry {
-    fun declareIntrinsicCapability(declaration: EntryIntrinsicCapabilityDeclaration)
-    fun declareCapabilityOutcome(declaration: EntryCapabilityOutcomeDeclaration)
     fun registerOpenProcessor(processor: EntryOpenProcessor)
     fun registerContinueProcessor(processor: EntryContinueProcessor)
     fun registerDownloadProcessor(processor: EntryDownloadProcessor)

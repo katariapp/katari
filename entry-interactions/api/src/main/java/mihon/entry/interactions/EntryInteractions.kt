@@ -9,7 +9,6 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
 interface EntryInteractions {
-    val capabilityReport: EntryCapabilityReport
     val open: EntryOpenInteraction
     val continueEntry: EntryContinueInteraction
     val download: EntryDownloadInteraction

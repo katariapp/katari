@@ -9,6 +9,7 @@ Updated: 2026-07-17
 - Contribution semantics commit: `d89e51693` (`(feat): define generic feature contributions`)
 - Discovery and assembly commit: `03d0b6422` (`(feat): assemble discovered feature graph`)
 - Evaluation and obligations commit: `0a578b784` (`(feat): evaluate feature relationships`)
+- Contract and projection selection commit: `f1e66f671` (`(feat): select feature contracts and projections`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -16,8 +17,8 @@ Updated: 2026-07-17
 ## Active Work
 
 - Phase: Phase 3 — General Relationship Architecture
-- Milestone: 3.4 — Contract and projection selection
-- State: complete and uncommitted; stopped before Milestone 3.5 dependency boundary and migration cut
+- Milestone: 3.5 — Dependency boundary and migration cut
+- State: Phase 3 complete; production compilation is intentionally broken; Phase 4 has not started
 
 ## Why the Plan Was Reset
 
@@ -44,7 +45,7 @@ authority or weakening the architecture.
   and projections.
 - Generic assembly and evaluation contain no concrete type, capability, or feature allowlist.
 - Tests verify architecture mechanics, shared behavior, and genuine media behavior; they do not restate declarations.
-- The existing report and Bookmarking/Downloads slice are prototypes and migration evidence, not protected architecture.
+- The retired report and the retained Bookmarking/Downloads behavior are migration evidence, not protected architecture.
 
 ## Completed Historical Work
 
@@ -70,6 +71,9 @@ authority or weakening the architecture.
 - [x] Milestone 3.3 committed in `0a578b784`
 - [x] Milestone 3.4 generic contract, fixture, and projection selection implemented
 - [x] Decision `0010-contract-fixture-and-projection-selection.md` accepted
+- [x] Milestone 3.4 committed in `f1e66f671`
+- [x] Milestone 3.5 dependency boundary and legacy authority cut implemented
+- [x] Decision `0011-production-boundary-cut.md` accepted
 
 ## New Phase Sequence
 
@@ -91,34 +95,37 @@ Phase 3 milestones:
 No Manga, Anime, Book, Bookmarking, Downloads, or other product-specific branch may enter the generic Phase 3 kernel.
 The phase uses anonymous synthetic contributions to prove unknown future participation.
 
-At Milestone 3.5, `EntryCapabilityCatalog`, `EntryCapabilityReport`, `supportsTypeWide`, legacy report assembly, explicit
-absence compensation, and production report DI exposure are removed rather than deprecated behind a working facade.
-Unported consumers may fail to compile and become migration obligations. The old report must not survive beside the
-graph.
+Milestone 3.5 removed `EntryCapabilityCatalog`, `EntryCapabilityReport`, `supportsTypeWide`, legacy report assembly,
+explicit absence compensation, and production report DI exposure rather than deprecating them behind a working facade.
+Unported consumers now fail to compile and are recorded in `migration-obligations.md`. The old report does not survive
+beside the graph.
 
 ## Current Working Tree Scope
 
-- Generic contract and projection selection consumes evaluated applicability without rechecking provider support.
-- Selection rejects incomplete, duplicate, unexpected, or stale evaluation coverage rather than accepting a curated
-  contract/documentation subset.
-- Every applicable type selects the same feature-owned executable contract and projection objects.
-- Contracts declare typed media fixture requirements only when direct providers/adapters are insufficient.
-- Missing contract fixtures become obligations attributed to the affected content-type owner.
-- Missing shared projections become one feature-owned obligation listing every affected applicable subject.
-- Contracts, fixtures, developer projections, and documentation projections are optional unless declared by the owning
-  feature; there is no universal artifact list.
-- Accepted decision `0010-contract-fixture-and-projection-selection.md` and Phase 3.4 completion notes.
-- No existing production source or consumer changed in this milestone.
+- `entry-interactions:api` exports the lower-level `feature-graph` contract.
+- Entry-type plugins must be owned graph contributors as well as operational registrars; no default or lambda
+  compatibility contribution exists.
+- Independent feature contributors remain separate composition inputs and are not forced through entry-type plugins.
+- Entry-interaction composition now discovers, assembles, evaluates, and selects the graph and exposes all three results
+  through runtime DI beside operational interactions.
+- The catalog, legacy evidence/support model, report, `supportsTypeWide`, report assembly, report-driven download policy,
+  report DI binding, and authority-focused unit tests are deleted.
+- Anime and Book no longer declare explicit unsupported outcomes for missing providers.
+- Remaining production/test references are owned in `migration-obligations.md`; they are compile failures rather than a
+  working fallback authority.
+- A complete anonymous acceptance test proves future complete, incomplete, and partial types through unchanged discovery,
+  evaluation, consequence, obligation, contract, and projection paths.
+- Accepted decision `0011-production-boundary-cut.md` and Phase 3.5 completion notes.
 
 ## Last Validation
 
-- `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest` passed during implementation.
-- Selection tests cover automatic artifact enrollment, actual execution of selected opaque objects, exclusion of
-  unsupported/incomplete relationships, fixture ownership, aggregated projection obligations, deterministic ordering,
-  and rejection of curated evaluation coverage.
-- Search confirms the new selector and tests contain no concrete product type, feature, `EntryType`, or legacy
-  capability-report references.
-- `./gradlew --quiet checkEntryInteractionBoundaries spotlessCheck` passed.
+- `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest :entry-interactions:api:compileDebugKotlin` passed.
+- The complete synthetic test covers automatic future participation, shared artifact identity, missing specialized
+  obligations, and a valid partial type without production vocabulary.
+- `:entry-interactions:spi:compileDebugKotlin` fails at the deleted report-based download policy, as recorded in
+  `migration-obligations.md`.
+- Search confirms no legacy catalog/report definition, explicit unsupported outcome, or production report DI binding
+  remains.
 - `git diff --check` passed.
 
 ## Manifesto Comparison
@@ -147,11 +154,17 @@ graph.
 - Fixture obligations are type-owned only when a contract declares genuine media-specific validation input.
 - Missing shared projections are feature-owned and aggregated across affected subjects instead of duplicated per type.
 - No contract, fixture, or projection kind is globally mandatory.
+- The old catalog/report authority was deleted rather than wrapped or deprecated.
+- Type plugins and independent feature contributors meet only at environment composition; neither side enumerates the
+  other.
+- No empty type contribution or feature-contributor fallback hides unported work.
+- Known compile failures are mapped to Phases 4, 5, and 7 with responsible owners.
+- The lower generic and provider-contract boundaries compile even though production does not.
 - Compilation pressure cannot justify dual authorities or fallback architecture.
 - The full architecture is app-wide and not limited to Bookmarking or Downloads.
 
 ## Exact Next Action After Review
 
-Review Milestone 3.4 selection semantics and proposed decision `0010`. After explicit approval, mark the decision
-accepted and commit Milestone 3.4. Then begin only Milestone 3.5: establish the production dependency boundary, remove
-the legacy catalog/report authority, and record rather than conceal unported compile failures.
+Phase 3 is complete. Await explicit authorization before starting Phase 4. When authorized, first verify the boundary-cut
+commit and working tree, then define and execute only the first bounded entry-type composition milestone; do not migrate
+feature consumers.

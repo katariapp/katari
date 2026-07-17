@@ -566,3 +566,24 @@ Contracts, fixtures, and projection channels are all optional unless an owning f
 architecture introduces no universal artifact list. Contract execution, developer-report rendering, documentation
 generation, and production validation remain Phase 7 work; Milestone 3.4 proves only generic automatic selection and
 owned failure semantics.
+
+## Phase 3.5 Dependency Boundary and Legacy Cut
+
+The provider-contract API now exports the standalone graph kernel, and the SPI composition boundary requires every
+entry-type plugin to be an owned graph contributor as well as an operational processor registrar. Independent feature
+contributors are supplied separately and joined only at application composition, so feature modules do not become
+content-type plugins and type modules do not enumerate consuming features.
+
+Composition now discovers, assembles, evaluates, and selects the graph before exposing its `FeatureGraph`, evaluation,
+and artifact-selection results beside operational interactions. There is no default type contribution, empty feature
+contributor fallback, or concrete contributor list in the kernel.
+
+The central capability catalog, evidence/report model, report assembly, report DI exposure, `supportsTypeWide`, and the
+report-driven download capability policy were deleted. Explicit unsupported outcomes were removed from Anime and Book;
+provider absence now stands alone. Tests that existed to validate the retired authority were deleted rather than ported
+to another capability matrix.
+
+The lower architecture boundary compiles and the complete synthetic unknown-contribution proof passes. Production SPI
+and application compilation intentionally fail where download policy, lifecycle cleanup, screens, actions,
+notifications, type plugins, and behavioral tests still consume the old boundary. These failures are owned in
+`migration-obligations.md`; they are not reasons to restore a compatibility authority.
