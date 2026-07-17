@@ -15,11 +15,13 @@ import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
+import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
 import mihon.entry.interactions.book.download.model.BookDownload
 import mihon.entry.interactions.book.download.model.BookDownloadFailure
+import mihon.entry.interactions.createEntryInteractions
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
@@ -98,7 +100,10 @@ class BookDownloadProcessorTest {
             chapters = chapters,
         )
 
-        val result = fixture.processor.resolveBulkDownloadCandidates(
+        val interactions = createEntryInteractions(
+            listOf(EntryInteractionPlugin { it.registerDownloadProcessor(fixture.processor) }),
+        )
+        val result = interactions.download.resolveBulkDownloadCandidates(
             entry = visible,
             action = EntryBulkDownloadAction.next(2),
             candidates = null,
@@ -146,17 +151,12 @@ class BookDownloadProcessorTest {
             fixture.cache.isDownloaded(BookDownloadPackageKey(entry.source, entry.url, downloaded.url))
         } returns true
 
-        val result = fixture.processor.resolveBulkDownloadCandidates(
+        val result = fixture.processor.resolveBulkDownloadCandidatePool(
             entry = entry,
-            action = EntryBulkDownloadAction.unread,
             candidates = listOf(downloaded, available),
-            memberEntryIds = emptyList(),
         )
 
-        assertEquals(
-            listOf(available),
-            assertIs<EntryBulkDownloadCandidateResult.Supported>(result).chapters,
-        )
+        assertEquals(listOf(available), result)
     }
 
     private fun fixture(

@@ -493,7 +493,48 @@ class EntryInteractionRegistryTest {
         result shouldBe EntryBulkDownloadCandidateResult.Supported(listOf(chapter.copy(id = 42L)))
         mangaProcessor.bulkDownloadEntryIds shouldBe emptyList()
         animeProcessor.bulkDownloadEntryIds shouldBe listOf(41L)
-        animeProcessor.bulkDownloadActions shouldBe listOf(EntryBulkDownloadAction.next(5))
+    }
+
+    @Test
+    fun `bookmarked bulk download is unavailable without bookmark capability`() = runTest {
+        val processor = RecordingDownloadProcessor(EntryType.ANIME)
+        val interactions = createEntryInteractions(
+            listOf(EntryInteractionPlugin { it.registerDownloadProcessor(processor) }),
+        )
+
+        val result = interactions.download.resolveBulkDownloadCandidates(
+            entry = entry(EntryType.ANIME, id = 43L),
+            action = EntryBulkDownloadAction.bookmarked,
+            candidates = listOf(chapter.copy(id = 44L, bookmark = true)),
+        )
+
+        result shouldBe EntryBulkDownloadCandidateResult.Unsupported
+        processor.bulkDownloadEntryIds shouldBe emptyList()
+    }
+
+    @Test
+    fun `synthetic Anime bookmark provider activates shared bookmarked selection`() = runTest {
+        val downloadProcessor = RecordingDownloadProcessor(EntryType.ANIME)
+        val bookmarkProcessor = RecordingBookmarkProcessor(EntryType.ANIME)
+        val regular = chapter.copy(id = 45L, bookmark = false)
+        val bookmarked = chapter.copy(id = 46L, read = true, bookmark = true)
+        val interactions = createEntryInteractions(
+            listOf(
+                EntryInteractionPlugin { registry ->
+                    registry.registerDownloadProcessor(downloadProcessor)
+                    registry.registerBookmarkProcessor(bookmarkProcessor)
+                },
+            ),
+        )
+
+        val result = interactions.download.resolveBulkDownloadCandidates(
+            entry = entry(EntryType.ANIME, id = 47L),
+            action = EntryBulkDownloadAction.bookmarked,
+            candidates = listOf(regular, bookmarked),
+        )
+
+        result shouldBe EntryBulkDownloadCandidateResult.Supported(listOf(bookmarked))
+        downloadProcessor.bulkDownloadEntryIds shouldBe listOf(47L)
     }
 
     @Test
@@ -1210,7 +1251,6 @@ class EntryInteractionRegistryTest {
         val queuedEntryIds = mutableListOf<Long>()
         val queueAutoStart = mutableListOf<Boolean>()
         val bulkDownloadEntryIds = mutableListOf<Long>()
-        val bulkDownloadActions = mutableListOf<EntryBulkDownloadAction>()
         val reorderedChildIds = mutableListOf<List<Long>>()
         val cancelledChildIds = mutableListOf<List<Long>>()
         val statusRequests = mutableListOf<Long>()
@@ -1262,17 +1302,12 @@ class EntryInteractionRegistryTest {
 
         override fun supportsBulkDownload(entry: Entry): Boolean = bulkDownloadSupported
 
-        override suspend fun resolveBulkDownloadCandidates(
+        override suspend fun resolveBulkDownloadCandidatePool(
             entry: Entry,
-            action: EntryBulkDownloadAction,
             candidates: List<EntryChapter>?,
-            memberEntryIds: List<Long>,
-        ): EntryBulkDownloadCandidateResult {
+        ): List<EntryChapter> {
             bulkDownloadEntryIds += entry.id
-            bulkDownloadActions += action
-            return EntryBulkDownloadCandidateResult.Supported(
-                candidates ?: listOf(EntryChapter.create().copy(id = 90L)),
-            )
+            return candidates ?: listOf(EntryChapter.create().copy(id = 90L))
         }
 
         override suspend fun filterAutoDownloadCandidates(

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
+import tachiyomi.domain.entry.service.sortedForReading
 
 fun createEntryInteractions(
     plugins: List<EntryInteractionPlugin>,
@@ -279,7 +280,8 @@ private class DefaultEntryInteractions(
 ) : EntryInteractions {
     override val open: EntryOpenInteraction = RegistryEntryOpenInteraction(openProcessors)
     override val continueEntry: EntryContinueInteraction = RegistryEntryContinueInteraction(continueProcessors)
-    override val download: EntryDownloadInteraction = RegistryEntryDownloadInteraction(downloadProcessors)
+    override val download: EntryDownloadInteraction =
+        RegistryEntryDownloadInteraction(downloadProcessors, capabilityReport)
     override val capability: EntryCapabilityInteraction =
         RegistryEntryCapabilityInteraction(capabilityProcessors, downloadProcessors)
     override val consumption: EntryConsumptionInteraction =
@@ -417,6 +419,7 @@ private class RegistryEntryContinueInteraction(
 
 private class RegistryEntryDownloadInteraction(
     private val processors: Map<EntryType, EntryDownloadProcessor>,
+    private val capabilityReport: EntryCapabilityReport,
 ) : EntryDownloadInteraction {
     private val paused = MutableStateFlow(false)
 
@@ -562,7 +565,22 @@ private class RegistryEntryDownloadInteraction(
     ): EntryBulkDownloadCandidateResult {
         val processor = processors[entry.type] ?: return EntryBulkDownloadCandidateResult.Unsupported
         processor.requireMatchingEntryType("download", entry, processors.keys)
-        return processor.resolveBulkDownloadCandidates(entry, action, candidates, memberEntryIds)
+        if (!processor.supportsBulkDownload(entry)) return EntryBulkDownloadCandidateResult.Unsupported
+        if (
+            action.type == EntryBulkDownloadActionType.BOOKMARKED &&
+            !supportsBookmarkedBulkDownloads(entry.type)
+        ) {
+            return EntryBulkDownloadCandidateResult.Unsupported
+        }
+        val pool = processor.resolveBulkDownloadCandidatePool(entry, candidates)
+        return EntryBulkDownloadCandidateResult.Supported(
+            pool.selectBulkDownloadCandidates(entry, action, memberEntryIds),
+        )
+    }
+
+    private fun supportsBookmarkedBulkDownloads(entryType: EntryType): Boolean {
+        return capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.DOWNLOADS) &&
+            capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.BOOKMARKING)
     }
 
     override suspend fun filterAutoDownloadCandidates(
@@ -637,6 +655,20 @@ private class RegistryEntryDownloadInteraction(
 
     override fun cancelQueuedDownload(entryType: EntryType, chapterId: Long): EntryDownloadStatus? {
         return processors[entryType]?.cancelQueuedDownload(chapterId)
+    }
+}
+
+private fun List<EntryChapter>.selectBulkDownloadCandidates(
+    entry: Entry,
+    action: EntryBulkDownloadAction,
+    memberEntryIds: List<Long>,
+): List<EntryChapter> {
+    return when (action.type) {
+        EntryBulkDownloadActionType.NEXT -> filterNot(EntryChapter::read)
+            .sortedForReading(entry, memberEntryIds.ifEmpty { map(EntryChapter::entryId).distinct() })
+            .let { chapters -> action.limit?.let(chapters::take) ?: chapters }
+        EntryBulkDownloadActionType.UNREAD -> filterNot(EntryChapter::read)
+        EntryBulkDownloadActionType.BOOKMARKED -> filter(EntryChapter::bookmark)
     }
 }
 

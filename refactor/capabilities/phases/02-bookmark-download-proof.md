@@ -26,14 +26,14 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 
 ## Milestone 2.2 — Shared Bookmark/Download Policy
 
-- [ ] Derive bookmarked bulk-download applicability from Bookmarking + Downloads.
-- [ ] Move generic bookmarked-child selection into shared download policy.
-- [ ] Remove downloader-specific bookmarked branches that exist only because bookmark support was absent.
-- [ ] Derive bookmark-protected cleanup applicability from the same capability evidence while preserving its preference
+- [x] Derive bookmarked bulk-download applicability from Bookmarking + Downloads.
+- [x] Move generic bookmarked-child selection into shared download policy.
+- [x] Remove downloader-specific bookmarked branches that exist only because bookmark support was absent.
+- [x] Derive bookmark-protected cleanup applicability from the same capability evidence while preserving its preference
   semantics.
-- [ ] Surface any genuine specialized downloader requirement as an explicit obligation.
-- [ ] Add synthetic Anime bookmark-provider coverage without changing Anime download code.
-- [ ] Stop before application presentation migration.
+- [x] Surface any genuine specialized downloader requirement as an explicit obligation.
+- [x] Add synthetic Anime bookmark-provider coverage without changing Anime download code.
+- [x] Stop before application presentation migration.
 
 ## Milestone 2.3 — Application and Presentation Derivation
 
@@ -98,3 +98,21 @@ have been removed.
 
 No downloader, cleanup, application action, presentation flag, or public documentation behavior changed in this
 milestone. Those consequences remain deliberately assigned to Milestones 2.2–2.4.
+
+## Milestone 2.2 Completion Notes
+
+Download processors now provide a media-specific candidate pool without interpreting the requested bulk action. The
+shared registry policy owns Next, Unread, and Bookmarked selection. Bookmarked selection is applicable only when the
+composed type report supports both Downloads and Bookmarking; otherwise it returns the existing structured Unsupported
+result.
+
+Manga, Anime, and Book no longer contain bookmark-specific downloader branches. A synthetic Anime bookmark provider
+therefore activates bookmarked candidate selection without changing or wrapping Anime download behavior. No specialized
+bookmark/downloader adapter was found necessary, so this combination has no missing specialized obligation.
+
+Shared cleanup policy now protects bookmarked children only for types with authoritative Bookmarking support. The
+existing remove-bookmarked preference continues to override that protection. Tests cover Manga production support,
+unsupported Anime behavior, synthetic Anime support, and preference override semantics.
+
+Application action visibility and `downloadBookmarkedSupported` remain unchanged for Milestone 2.3. Production behavior
+therefore remains Manga-only at the UI boundary.

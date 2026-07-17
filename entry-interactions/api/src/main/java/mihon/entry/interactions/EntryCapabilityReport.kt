@@ -109,6 +109,14 @@ data class EntryCapabilityReport(
     fun type(entryType: EntryType): EntryCapabilityTypeReport {
         return types.single { it.entryType == entryType }
     }
+
+    fun supportsTypeWide(entryType: EntryType, capability: EntryFundamentalCapability): Boolean {
+        require(capability.scope == EntryCapabilityScope.TYPE_WIDE) {
+            "Type-wide support queries cannot evaluate contextual capability ${capability.id}"
+        }
+        val value = type(entryType).entry(capability).value
+        return (value as? EntryCapabilityReportValue.Outcome)?.result is EntrySupportResult.Supported
+    }
 }
 
 fun createEntryCapabilityReport(

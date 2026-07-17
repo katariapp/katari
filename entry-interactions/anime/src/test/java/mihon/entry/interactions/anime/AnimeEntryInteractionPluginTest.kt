@@ -161,6 +161,11 @@ class AnimeEntryInteractionPluginTest {
 
         all.chapters.size shouldBe 30
         all.chapters.all { !it.read } shouldBe true
+        interactions.download.resolveBulkDownloadCandidates(
+            anime,
+            EntryBulkDownloadAction.bookmarked,
+            candidates = episodes,
+        ) shouldBe EntryBulkDownloadCandidateResult.Unsupported
     }
 
     @Test

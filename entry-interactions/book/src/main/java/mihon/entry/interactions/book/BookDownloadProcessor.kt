@@ -26,7 +26,6 @@ import mihon.entry.interactions.book.download.model.BookDownload
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.entry.service.sortedForReading
 
 internal class BookDownloadProcessor(
     private val dependencies: BookDownloadProcessorDependencies,
@@ -134,29 +133,13 @@ internal class BookDownloadProcessor(
         return true
     }
 
-    override suspend fun resolveBulkDownloadCandidates(
+    override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
-        action: EntryBulkDownloadAction,
         candidates: List<EntryChapter>?,
-        memberEntryIds: List<Long>,
-    ): EntryBulkDownloadCandidateResult {
+    ): List<EntryChapter> {
         entry.requireBook()
-        if (action.type == EntryBulkDownloadActionType.BOOKMARKED) {
-            return EntryBulkDownloadCandidateResult.Unsupported
-        }
-        val chapters = (candidates ?: dependencies.getEntryWithChapters.awaitChapters(entry.id))
-            .filterNot { it.read }
+        return (candidates ?: dependencies.getEntryWithChapters.awaitChapters(entry.id))
             .filterNot { isDownloadedByOwner(entry, it) }
-        val ordered = chapters
-            .filterNot { it.read }
-            .sortedForReading(entry, memberEntryIds.ifEmpty { chapters.map(EntryChapter::entryId).distinct() })
-        return EntryBulkDownloadCandidateResult.Supported(
-            chapters = when (action.type) {
-                EntryBulkDownloadActionType.NEXT -> action.limit?.let(ordered::take) ?: ordered
-                EntryBulkDownloadActionType.UNREAD -> ordered
-                EntryBulkDownloadActionType.BOOKMARKED -> error("Handled above")
-            },
-        )
     }
 
     override suspend fun filterAutoDownloadCandidates(

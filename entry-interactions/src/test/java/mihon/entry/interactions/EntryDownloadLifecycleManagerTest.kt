@@ -19,7 +19,7 @@ import tachiyomi.domain.entry.repository.EntryRepository
 
 class EntryDownloadLifecycleManagerTest {
     @Test
-    fun `marked consumed cleanup applies owner categories and bookmark protection for every type`() = runTest {
+    fun `marked consumed cleanup derives bookmark protection from capability support`() = runTest {
         EntryType.entries.forEach { type ->
             val visible = entry(id = 1L, type = type)
             val member = entry(id = 2L, type = type, sourceId = 20L)
@@ -40,9 +40,47 @@ class EntryDownloadLifecycleManagerTest {
                 ),
             )
 
-            coVerify(exactly = 1) { fixture.downloads.delete(visible, listOf(normal)) }
+            val expected = if (type == EntryType.MANGA) listOf(normal) else listOf(normal, bookmarked)
+            coVerify(exactly = 1) { fixture.downloads.delete(visible, expected) }
             coVerify(exactly = 0) { fixture.downloads.delete(member, any()) }
         }
+    }
+
+    @Test
+    fun `synthetic Anime bookmark provider activates cleanup protection`() = runTest {
+        val visible = entry(id = 1L, type = EntryType.ANIME)
+        val normal = chapter(id = 11L, entryId = visible.id)
+        val bookmarked = chapter(id = 12L, entryId = visible.id, bookmark = true)
+        val bookmarkProcessor = mockk<EntryBookmarkProcessor>(relaxed = true) {
+            every { type } returns EntryType.ANIME
+        }
+        val composition = createEntryInteractionComposition(
+            listOf(EntryInteractionPlugin { it.registerBookmarkProcessor(bookmarkProcessor) }),
+        )
+        val fixture = fixture(capabilityReport = composition.capabilityReport)
+        fixture.preferences.removeAfterMarkedAsRead.set(true)
+
+        fixture.manager.onEvent(
+            EntryDownloadLifecycleEvent.MarkedConsumed(
+                visibleEntry = visible,
+                children = listOf(normal, bookmarked),
+            ),
+        )
+
+        coVerify(exactly = 1) { fixture.downloads.delete(visible, listOf(normal)) }
+    }
+
+    @Test
+    fun `remove bookmarked preference overrides capability protection`() = runTest {
+        val visible = entry(id = 1L, type = EntryType.MANGA)
+        val bookmarked = chapter(id = 12L, entryId = visible.id, bookmark = true)
+        val fixture = fixture()
+        fixture.preferences.removeAfterMarkedAsRead.set(true)
+        fixture.preferences.removeBookmarkedChapters.set(true)
+
+        fixture.manager.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(visible, listOf(bookmarked)))
+
+        coVerify(exactly = 1) { fixture.downloads.delete(visible, listOf(bookmarked)) }
     }
 
     @Test
@@ -112,6 +150,7 @@ class EntryDownloadLifecycleManagerTest {
         memberEntries: List<Entry> = emptyList(),
         readingOrder: List<EntryChapter> = emptyList(),
         categories: Map<Long, List<Category>> = emptyMap(),
+        capabilityReport: EntryCapabilityReport = productionCapabilityReport(),
     ): Fixture {
         val preferences = DownloadPreferences(InMemoryPreferenceStore())
         val downloads = mockk<EntryDownloadInteraction>(relaxed = true)
@@ -135,7 +174,27 @@ class EntryDownloadLifecycleManagerTest {
                 getEntryWithChapters = getEntryWithChapters,
                 entryRepository = entryRepository,
                 downloadInteraction = { downloads },
+                capabilityReport = { capabilityReport },
             ),
+        )
+    }
+
+    private fun productionCapabilityReport(): EntryCapabilityReport {
+        return createEntryCapabilityReport(
+            registeredTypes = EntryType.entries,
+            evidence = EntryCapabilityEvidenceSnapshot(
+                listOf(
+                    EntryCapabilityEvidenceRecord(
+                        entryType = EntryType.MANGA,
+                        capability = EntryCapabilityCatalog.BOOKMARKING,
+                        evidence = EntryCapabilityEvidence.ProviderRegistration(
+                            owner = EntryCapabilityOwner("entry-download-lifecycle-test"),
+                            provider = "bookmark",
+                        ),
+                    ),
+                ),
+            ),
+            outcomes = EntryCapabilityOutcomeSnapshot(emptyList()),
         )
     }
 

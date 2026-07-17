@@ -14,14 +14,15 @@ Updated: 2026-07-17
 - Evidence composition commit: `a3ae2c6b5` (`(feat): collect capability evidence from composition`)
 - Deterministic report commit: `2c6e26a52` (`(feat): report composed entry capabilities`)
 - Production report commit: `8e03f7469` (`(feat): expose production capability reports`)
+- Bookmark provider commit: `5a3c13b37` (`(refactor): make bookmarking provider-backed`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
 - Phase: Phase 2 — Bookmarking and downloads vertical proof
-- Milestone: 2.1 — Bookmark provider authority
-- State: Complete; stopped before Milestone 2.2 with changes uncommitted
+- Milestone: 2.2 — Shared bookmark/download policy
+- State: Complete; stopped before Milestone 2.3 with changes uncommitted
 
 ## Completed
 
@@ -46,19 +47,20 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Milestone 1.4 production boundary, production composition coverage, and Phase 1 exit gate completed
 - [x] Phase 2 split into four bounded implementation milestones
 - [x] Milestone 2.1 bookmark provider authority and compatibility dispatch completed
+- [x] Milestone 2.2 shared bookmark/download candidate and cleanup policy completed
 
 ## Current Scope
 
-Milestone 2.1 replaces the bookmark boolean sub-capability and unsupported mutation no-ops with a distinct operational
-bookmark provider. Existing application consumers remain on the compatibility facade during this milestone.
+Milestone 2.2 moves bookmark/download implications into shared download feature policy without changing application
+presentation.
 
 Manga registers the provider and thereby produces Bookmarking evidence. Anime and Book do not register one and keep
-their accepted explicit intentional-absence outcomes. Derived bulk download, cleanup, UI, and presentation behavior is
-reserved for Milestones 2.2 and 2.3.
+their accepted explicit intentional-absence outcomes. Bulk download and cleanup are now derived; UI and presentation
+behavior remains reserved for Milestone 2.3.
 
-The implementation now satisfies that scope: Manga provider registration is the sole positive Bookmarking authority;
-Anime and Book have neither a provider nor mutation no-ops; compatibility support and dispatch derive from the provider
-map.
+Download processors now load media-specific candidate pools, while shared policy selects Next, Unread, or Bookmarked.
+Bookmarked applicability derives from Downloads + Bookmarking. Cleanup protection derives from Bookmarking and retains
+the existing preference override. No specialized bookmark/downloader adapter was required.
 
 ## Milestone Sequence
 
@@ -77,7 +79,7 @@ Phase 1 is complete. Phase 2 milestones are:
 ## Last Validation
 
 - `./gradlew --quiet spotlessApply` completed successfully on 2026-07-17
-- `./gradlew --quiet :entry-interactions:api:testDebugUnitTest` passed, including six deterministic-report tests
+- `./gradlew --quiet :entry-interactions:api:testDebugUnitTest` passed, including seven deterministic-report/query tests
 - `./gradlew --quiet :entry-interactions:testDebugUnitTest` passed, including evidence/report composition, existing registry, and production runtime-composition tests
 - Focused Manga, Anime, and Book `EntryInteractionPluginTest` suites passed with type-report assertions
 - `./gradlew --quiet checkEntryInteractionBoundaries` passed
@@ -88,6 +90,9 @@ Phase 1 is complete. Phase 2 milestones are:
 - Existing `createEntryInteractions` callers retain the same dispatch and compatibility behavior; application features currently have no report consumer
 - All Entry interaction API, registry, Manga, Anime, and Book module tests passed after the bookmark-provider split
 - `./gradlew --quiet :app:compileFossKotlin` and `checkEntryInteractionBoundaries` passed for Milestone 2.1
+- All Entry interaction API, registry, Manga, Anime, and Book module tests passed after the shared candidate-policy split
+- Synthetic Anime Bookmarking tests passed for shared candidate selection and cleanup protection
+- `./gradlew --quiet :app:compileFossKotlin`, `checkEntryInteractionBoundaries`, and `spotlessCheck` passed for Milestone 2.2
 
 ## Manifesto Comparison
 
@@ -103,11 +108,17 @@ Phase 1 is complete. Phase 2 milestones are:
 - No UI, settings, worker, policy, or public documentation behavior changed in Phase 1.
 - Bookmarking is now declared by one operational provider registration rather than a consumption boolean plus type no-ops.
 - The compatibility facade derives support from that registration, so it cannot disagree with capability evidence.
-- Derived download, cleanup, and UI consequences have not been pulled into the content-type plugin; their feature-owned
-  migration remains isolated in Milestones 2.2 and 2.3.
+- Derived download and cleanup consequences remain feature-owned rather than being pulled into content-type plugins; UI
+  migration remains isolated in Milestone 2.3.
 - Production support remains Manga-only, and public capability documentation remains behaviorally accurate.
+- Bookmarked download selection is derived from Downloads + Bookmarking rather than separately implemented per downloader.
+- Cleanup consumes the same Bookmarking truth and keeps preference semantics in the feature that owns them.
+- A synthetic Anime provider receives both shared consequences without an Anime downloader change.
+- No new derived capability flag or per-type opt-in was introduced.
+- Application presentation still duplicates bookmarked action availability and is the bounded scope of Milestone 2.3.
 
 ## Exact Next Action After Review
 
-After explicit approval, commit Milestone 2.1 and complete only Milestone 2.2: shared bookmarked-download candidate and
-cleanup policy, including the synthetic Anime bookmark-provider proof. Stop before application/presentation migration.
+After explicit approval, commit Milestone 2.2 and complete only Milestone 2.3: derive entry, Updates, and bookmarked bulk
+download action visibility from capability evidence and remove `downloadBookmarkedSupported` as behavioral authority.
+Stop before the Phase 2 integration gate.

@@ -105,6 +105,32 @@ class EntryCapabilityReportTest {
     }
 
     @Test
+    fun `type-wide support query accepts only authoritative supported outcomes`() {
+        val report = createEntryCapabilityReport(
+            registeredTypes = listOf(EntryType.MANGA, EntryType.ANIME),
+            evidence = EntryCapabilityEvidenceSnapshot(
+                listOf(providerEvidence(EntryType.MANGA, EntryCapabilityCatalog.BOOKMARKING)),
+            ),
+            outcomes = EntryCapabilityOutcomeSnapshot(
+                listOf(
+                    EntryCapabilityOutcomeDeclaration(
+                        EntryType.ANIME,
+                        EntryCapabilityCatalog.BOOKMARKING,
+                        EntrySupportResult.IntentionallyUnsupported(owner, "Not in current product scope"),
+                    ),
+                ),
+            ),
+        )
+
+        report.supportsTypeWide(EntryType.MANGA, EntryCapabilityCatalog.BOOKMARKING) shouldBe true
+        report.supportsTypeWide(EntryType.ANIME, EntryCapabilityCatalog.BOOKMARKING) shouldBe false
+        report.supportsTypeWide(EntryType.MANGA, EntryCapabilityCatalog.MERGE) shouldBe false
+        shouldThrow<IllegalArgumentException> {
+            report.supportsTypeWide(EntryType.MANGA, EntryCapabilityCatalog.PREVIEW)
+        }
+    }
+
+    @Test
     fun `positive evidence cannot coexist with explicit absence`() {
         val evidence = EntryCapabilityEvidenceSnapshot(
             listOf(providerEvidence(EntryType.MANGA, EntryCapabilityCatalog.DOWNLOADS)),

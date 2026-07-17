@@ -19,7 +19,6 @@ import mihon.entry.interactions.EntryDownloadStatus
 import mihon.entry.interactions.manga.download.model.DownloadState
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.service.sortedForReading
 
 internal class MangaDownloadProcessor(
     private val dependencies: MangaEntryInteractionRuntimeDependencies,
@@ -134,17 +133,15 @@ internal class MangaDownloadProcessor(
         return true
     }
 
-    override suspend fun resolveBulkDownloadCandidates(
+    override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
-        action: EntryBulkDownloadAction,
         candidates: List<EntryChapter>?,
-        memberEntryIds: List<Long>,
-    ): EntryBulkDownloadCandidateResult {
+    ): List<EntryChapter> {
         entry.requireManga()
-        val chapters = candidates ?: loadBulkDownloadCandidates(entry, action)
-        return EntryBulkDownloadCandidateResult.Supported(
-            chapters = chapters.selectBulkDownloadCandidates(entry, action, memberEntryIds),
-        )
+        return candidates ?: dependencies.entryChapterRepository.getChaptersByEntryIdAwait(
+            entry.id,
+            applyScanlatorFilter = true,
+        ).filterNot { isDownloaded(entry, it) }
     }
 
     override suspend fun filterAutoDownloadCandidates(
@@ -237,40 +234,5 @@ internal class MangaDownloadProcessor(
             downloadManager.downloadChapters(owner.entry, owner.children, autoStart = false)
         }
         if (autoStart && owners.isNotEmpty()) downloadManager.startDownloads()
-    }
-
-    private suspend fun loadBulkDownloadCandidates(
-        entry: Entry,
-        action: EntryBulkDownloadAction,
-    ): List<EntryChapter> {
-        return when (action.type) {
-            EntryBulkDownloadActionType.NEXT,
-            EntryBulkDownloadActionType.UNREAD,
-            -> dependencies.entryChapterRepository.getChaptersByEntryIdAwait(
-                entry.id,
-                applyScanlatorFilter = true,
-            )
-                .sortedForReading(entry)
-                .filterNot { it.read }
-                .filterNot { isDownloaded(entry, it) }
-            EntryBulkDownloadActionType.BOOKMARKED ->
-                dependencies.entryChapterRepository
-                    .getBookmarkedChaptersByEntryId(entry.id)
-                    .filterNot { isDownloaded(entry, it) }
-        }
-    }
-}
-
-private fun List<EntryChapter>.selectBulkDownloadCandidates(
-    entry: Entry,
-    action: EntryBulkDownloadAction,
-    memberEntryIds: List<Long>,
-): List<EntryChapter> {
-    return when (action.type) {
-        EntryBulkDownloadActionType.NEXT -> filterNot { it.read }
-            .sortedForReading(entry, memberEntryIds.ifEmpty { map(EntryChapter::entryId).distinct() })
-            .let { chapters -> action.limit?.let(chapters::take) ?: chapters }
-        EntryBulkDownloadActionType.UNREAD -> filterNot { it.read }
-        EntryBulkDownloadActionType.BOOKMARKED -> filter { it.bookmark }
     }
 }

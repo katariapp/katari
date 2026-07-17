@@ -32,7 +32,6 @@ import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.VideoDownloadQualityMode
-import tachiyomi.domain.entry.service.sortedForReading
 import tachiyomi.i18n.MR
 
 internal class AnimeDownloadProcessor(
@@ -217,30 +216,14 @@ internal class AnimeDownloadProcessor(
         return true
     }
 
-    override suspend fun resolveBulkDownloadCandidates(
+    override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
-        action: EntryBulkDownloadAction,
         candidates: List<EntryChapter>?,
-        memberEntryIds: List<Long>,
-    ): EntryBulkDownloadCandidateResult {
+    ): List<EntryChapter> {
         entry.requireAnime()
-        if (action.type == EntryBulkDownloadActionType.BOOKMARKED) {
-            return EntryBulkDownloadCandidateResult.Unsupported
-        }
-        val chapters = candidates ?: dependencies.entryChapterRepository
+        return candidates ?: dependencies.entryChapterRepository
             .getChaptersByEntryIdAwait(entry.id, applyScanlatorFilter = true)
-            .filterNot { it.read }
             .filterNot { isDownloaded(entry, it) }
-        val unconsumed = chapters
-            .filterNot { it.read }
-            .sortedForReading(entry, memberEntryIds.ifEmpty { chapters.map(EntryChapter::entryId).distinct() })
-        return EntryBulkDownloadCandidateResult.Supported(
-            chapters = when (action.type) {
-                EntryBulkDownloadActionType.NEXT -> action.limit?.let(unconsumed::take) ?: unconsumed
-                EntryBulkDownloadActionType.UNREAD -> unconsumed
-                EntryBulkDownloadActionType.BOOKMARKED -> error("Handled above")
-            },
-        )
     }
 
     override suspend fun filterAutoDownloadCandidates(

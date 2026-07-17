@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.EntryBulkDownloadAction
+import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityReportEntry
 import mihon.entry.interactions.EntryCapabilityReportValue
@@ -101,6 +103,24 @@ class MangaEntryInteractionPluginTest {
             .value
             .shouldBeInstanceOf<EntryCapabilityReportValue.Conditional>()
         report.entry(EntryCapabilityCatalog.MERGE).outcome().shouldBeInstanceOf<EntrySupportResult.Unresolved>()
+    }
+
+    @Test
+    fun `manga bookmark provider activates shared bookmarked download selection`() = runTest {
+        val manga = entry(EntryType.MANGA)
+        val regular = chapter(id = 1L, bookmark = false)
+        val bookmarked = chapter(id = 2L, read = true, bookmark = true)
+        val interactions = createEntryInteractions(
+            listOf(mangaEntryInteractionPlugin(dependencies(chapters = listOf(regular, bookmarked)))),
+        )
+
+        val result = interactions.download.resolveBulkDownloadCandidates(
+            entry = manga,
+            action = EntryBulkDownloadAction.bookmarked,
+            candidates = listOf(regular, bookmarked),
+        )
+
+        result shouldBe EntryBulkDownloadCandidateResult.Supported(listOf(bookmarked))
     }
 
     @Test

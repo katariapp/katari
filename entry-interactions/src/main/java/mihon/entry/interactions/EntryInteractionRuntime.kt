@@ -68,6 +68,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             getEntryWithChapters = get(),
             entryRepository = get(),
             downloadInteraction = { Injekt.get() },
+            capabilityReport = { Injekt.get() },
         )
     }
 

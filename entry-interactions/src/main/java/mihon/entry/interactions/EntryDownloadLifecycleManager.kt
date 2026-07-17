@@ -16,6 +16,7 @@ internal class EntryDownloadLifecycleManager(
     private val getEntryWithChapters: GetEntryWithChapters,
     entryRepository: EntryRepository,
     private val downloadInteraction: () -> EntryDownloadInteraction,
+    private val capabilityReport: () -> EntryCapabilityReport,
 ) : EntryDownloadLifecycleInteraction {
     private val ownerResolver = EntryDownloadOwnerResolver(entryRepository)
     private val eventMutex = Mutex()
@@ -111,7 +112,11 @@ internal class EntryDownloadLifecycleManager(
         val downloads = downloadInteraction()
         owners.forEach { owner ->
             if (isExcluded(owner.entry)) return@forEach
-            val eligible = if (downloadPreferences.removeBookmarkedChapters.get()) {
+            val protectsBookmarks = capabilityReport().supportsTypeWide(
+                owner.entry.type,
+                EntryCapabilityCatalog.BOOKMARKING,
+            )
+            val eligible = if (!protectsBookmarks || downloadPreferences.removeBookmarkedChapters.get()) {
                 owner.children
             } else {
                 owner.children.filterNot(EntryChapter::bookmark)

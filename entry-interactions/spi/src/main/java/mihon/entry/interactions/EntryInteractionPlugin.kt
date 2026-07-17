@@ -74,12 +74,12 @@ interface EntryDownloadProcessor {
         chapter: EntryChapter,
     ): EntryDownloadOptions? = null
     fun supportsBulkDownload(entry: Entry): Boolean
-    suspend fun resolveBulkDownloadCandidates(
+
+    /** Loads media-specific candidates before shared bulk-action selection is applied. */
+    suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
-        action: EntryBulkDownloadAction,
         candidates: List<EntryChapter>? = null,
-        memberEntryIds: List<Long> = emptyList(),
-    ): EntryBulkDownloadCandidateResult
+    ): List<EntryChapter>
     suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
     suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) = delete(entry, chapters)
