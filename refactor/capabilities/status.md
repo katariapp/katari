@@ -9,14 +9,15 @@ Updated: 2026-07-17
 - Preparation commit: `26c1bcedf` (`(docs): refactor workspace`)
 - Evidence inventory commit: `75c98e5b2` (`(docs): inventory capability evidence`)
 - Consumer and coverage commit: `18c927736` (`(docs): map capability consumers and coverage`)
+- Architecture decisions commit: `6d688b04a` (`(docs): record capability architecture decisions`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 0 — Capability atlas and design decisions
-- Milestone: Phase complete
-- State: Decisions accepted; awaiting explicit authorization to prepare and begin Phase 1
+- Phase: Phase 1 — Authoritative capability foundation
+- Milestone: 1.1 — Capability vocabulary and semantics
+- State: Complete; stopped for review before Milestone 1.2
 
 ## Completed
 
@@ -34,38 +35,47 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Evidence authority, derivation, support semantics, and contextual ownership decisions accepted
 - [x] Current product discrepancies classified and assigned to later phases
 - [x] Decision records accepted by the user
+- [x] Phase 1 split into four bounded implementation milestones
+- [x] Milestone 1.1 capability vocabulary and semantic invariants implemented
 
 ## Current Scope
 
-Phase 0 was planning and inventory only. It did not introduce the capability foundation or change runtime behavior.
+Milestone 1.1 introduces only the capability vocabulary, query-subject distinction, support outcomes, evidence model, and their semantic invariants in the Entry interaction API.
 
-The complete Phase 0 atlas and accepted expected-state classification are recorded in [`capability-atlas.md`](capability-atlas.md). The records under [`decisions/`](decisions/) are accepted architecture constraints for later phases.
+It must not connect the model to processor registration, enumerate production capability support, migrate consumers, generate documentation, or change runtime behavior. Those steps belong to Milestones 1.2–1.4 and later phases.
 
-## Accepted Milestone 0.3 Decisions
+## Phase 1 Milestones
 
-- Provider registration is authoritative for provider-backed capabilities; explicit intrinsic declarations are reserved for stable facts no provider can prove.
-- Universal behavior belongs to shared feature policy, contextual behavior composes runtime inputs, derived behavior is never another type opt-in, and presentation cannot own availability.
-- Support results distinguish supported, intentionally unsupported, not applicable, contextually unavailable, missing obligation, and unresolved.
-- Public source and tracker contracts remain authoritative external inputs rather than being copied into the type catalog.
-- Specialized media work is an explicit obligation selected by a feature rule; missing work fails validation instead of silently returning unsupported.
-- Anime migration remains supported and its public reference is stale.
-- Book downloads are production-supported; `downloadsEnabled` is a construction/testing seam rather than product capability state.
-- Anime child-group filtering remains intentionally unsupported; its registered no-op provider is not support evidence.
-- Book's Manga-style library-update notification fallback is an implementation bug; Book should receive shared behavior with explicit neutral/Book semantics.
+- 1.1: Capability vocabulary and support semantics
+- 1.2: Registration-derived evidence collection and validation
+- 1.3: Deterministic reports for real type compositions
+- 1.4: Compatibility, integration validation, and Phase 1 exit gate
 
-These decisions are Phase 1 preconditions and set later product behavior.
+Milestone 1.1 is complete. Milestone 1.2 has not started.
 
 ## Last Validation
 
-- `./gradlew --quiet spotlessApply` completed successfully on 2026-07-17 for the Milestone 0.3 records
-- Milestone 0.3 documentation: `git diff --check` passed on 2026-07-17
-- Inventory and graph searches covered processor registrations, support/default methods, consumers, tests, boundary rules, documentation claims, direct type gates, and source/tracker/context inputs
-- Only refactor workspace documentation changed; runtime behavior and public feature documentation were not modified
-- `checkEntryInteractionBoundaries` was not run because no boundary rule or runtime source changed
-- Runtime tests: not required for an evidence-only milestone
+- `./gradlew --quiet spotlessApply` completed successfully on 2026-07-17
+- `./gradlew --quiet :entry-interactions:api:testDebugUnitTest` passed, including eight new capability-model tests
+- `./gradlew --quiet checkEntryInteractionBoundaries` passed
+- `./gradlew --quiet :app:compileFossKotlin` passed
+- `./gradlew --quiet spotlessCheck` passed
+- `git diff --check` passed
+- Runtime behavior is unchanged: the new vocabulary has no production consumer or registry connection
 
-## Exact Next Action
+## Manifesto Comparison
 
-1. Split Phase 1 into reviewable implementation milestones.
-2. Record only the first bounded milestone as active.
-3. Begin that milestone after explicit user authorization.
+- Fundamental identity is separate from support outcomes and contains no derived feature combinations.
+- Type-wide and contextual queries cannot exchange subjects accidentally.
+- Supported, deliberate absence, contextual blockers, missing obligations, and unresolved state are explicit rather than boolean or null fallbacks.
+- A missing feature obligation cannot replace or downgrade a fundamental capability assessment.
+- This milestone centralizes semantic vocabulary only; it does not copy current per-type support into a new matrix.
+
+## Exact Next Action After Review
+
+Begin Milestone 1.2 only after explicit approval:
+
+1. Make processor registration contribute provider-backed evidence.
+2. Add exceptional intrinsic declarations at the type-composition boundary.
+3. Validate empty, duplicate, missing, contradictory, and contextual evidence without changing existing behavior.
+4. Stop before Milestone 1.3.

@@ -10,16 +10,46 @@ Create the capability vocabulary, support result, evidence model, and determinis
 - Capability evidence and scope decisions are accepted.
 - Public source/tracker contracts that remain external inputs are identified.
 
-## Scope
+## Milestone 1.1 — Capability Vocabulary and Semantics
 
-- [ ] Represent fundamental capability identity without storing derived combinations as new facts.
-- [ ] Represent type-wide and contextual subjects without conflating them.
-- [ ] Represent supported, intentionally unsupported, not applicable, and unresolved/missing obligations as agreed in Phase 0.
-- [ ] Use provider registration as evidence for provider-backed capabilities.
-- [ ] Add validation for duplicate, missing, and contradictory evidence.
-- [ ] Produce a deterministic capability report for registered content types.
-- [ ] Preserve existing support APIs as compatibility paths.
-- [ ] Add foundation and registry tests.
+- [x] Represent fundamental capability identity without storing derived combinations as new facts.
+- [x] Keep type-wide and contextual query subjects structurally distinct.
+- [x] Represent all six accepted support outcomes.
+- [x] Represent authoritative evidence, deliberate absence, contextual blockers, and missing obligations without relying on booleans or nulls.
+- [x] Enforce semantic invariants such as explicit owners, reasons, and contextual subjects.
+- [x] Add focused API tests for valid and invalid result construction.
+- [x] Do not connect the vocabulary to processor registration or production consumers yet.
+- [x] Stop and review the vocabulary before continuing.
+
+## Milestone 1.2 — Evidence Collection and Validation
+
+- [ ] Make provider registration contribute provider-backed capability evidence.
+- [ ] Add exceptional intrinsic declarations colocated with type composition.
+- [ ] Reject duplicate, missing, and contradictory evidence.
+- [ ] Keep contextual evaluators and external source/tracker evidence out of unconditional type support.
+- [ ] Add synthetic registry tests for valid, empty, duplicate, and contradictory compositions.
+- [ ] Preserve all existing interaction behavior and support APIs.
+- [ ] Stop and review evidence collection before continuing.
+
+## Milestone 1.3 — Deterministic Type Reports
+
+- [ ] Define the reviewed fundamental capability catalog used by current provider categories and intrinsic facts.
+- [ ] Assemble deterministic reports from authoritative evidence for every registered content type.
+- [ ] Represent accepted intentional absence and non-applicability explicitly rather than inferring them from fallbacks.
+- [ ] Surface unresolved or missing evidence without treating it as unsupported.
+- [ ] Verify Manga, Anime, and Book reports against the Phase 0 atlas.
+- [ ] Keep contextual support conditional and derived feature combinations out of the fundamental report.
+- [ ] Stop and review the reports before continuing.
+
+## Milestone 1.4 — Foundation Integration Gate
+
+- [ ] Expose the inspection/query foundation through the Entry interaction composition boundary.
+- [ ] Verify existing compatibility APIs and production behavior remain unchanged.
+- [ ] Add registry and production-composition coverage for every registered type.
+- [ ] Run the complete Phase 1 validation set.
+- [ ] Update the atlas with the implemented evidence owners and remaining migration work.
+- [ ] Review every Phase 1 exit gate and manifesto risk.
+- [ ] Stop before Phase 2.
 
 ## Non-Goals
 
