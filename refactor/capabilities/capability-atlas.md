@@ -1,6 +1,6 @@
 # Capability Atlas
 
-Status: Phase 1 authoritative capability foundation complete; production consumers remain on compatibility APIs
+Status: Phase 2 Bookmarking and Downloads vertical proof complete; later capability consumers remain to migrate
 
 This file records the current executable evidence for capability support. It is an inventory of facts to review, not a new source of behavioral truth and not a proposal for the final capability model.
 
@@ -217,7 +217,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 | Show partial child progress: all | Child-list progress labels for all three; shared progress state | Manga/Anime focused; generic consumer; Book label path weak | Matched with Book coverage gap. |
 | Apply smart library-update restrictions: all | Three registered update-eligibility processors with equivalent policy | No focused real-type tests | Matched by inspection; weakly enforced. |
 | Merge versions: Manga yes, Anime yes, Book no | Manga/Anime capability processors true; Book default false | Synthetic selection tests and Book negative only | Matched to executable behavior. |
-| Bookmark children: Manga only | Consumption support property | Manga positive, Book negative, Updates matrix; Anime absence weak | Matched. |
+| Bookmark children: Manga only | Bookmark provider evidence in the production capability report | Production composition, real-type plugin coverage, Updates policy, and the synthetic vertical contract | Matched and capability-derived. |
 | Show missing-child gaps: Manga only | Direct Manga gate in presentation code | `EntryTypePresentationTest` asserts all three outcomes | Matched, but presentation owns behavior. |
 | Filter by release group: Manga only | Manga child-group processor true; Anime registered false/no-op; Book absent | Synthetic registry tests; real type matrix weak | Matched by inspection. |
 | Migrate entry: Manga yes, Anime/Book no | Manga true, Anime true, Book false | Book negative/use-case tests; real Manga/Anime declarations not asserted | **Conflict: Anime executable support is true.** |
@@ -399,8 +399,8 @@ the legacy `supportsDownloads` result.
   authoritative evidence is migrated in Phase 3 or Phase 4.
 - Unresolved values do not satisfy the exit gate of the later phase that owns the capability. Phase 1 records those gaps;
   it does not classify them as completed or intentional absence.
-- Application actions, settings, policies, workers, presentation, shared contracts, and public documentation still use
-  compatibility paths until their assigned phases migrate them.
+- Application actions, settings, policies, workers, presentation, shared contracts, and public documentation outside the
+  completed Bookmarking and Downloads slice still use compatibility paths until their assigned phases migrate them.
 - Derived bookmark/download behavior is deliberately absent from the fundamental catalog and is the Phase 2 vertical
   proof.
 
@@ -439,3 +439,16 @@ Milestone 2.3 removes the remaining application and presentation duplication:
 - `EntryTypePresentation` no longer stores behavioral support for bookmarked downloads;
 - type-specific labels, icons, and plurals remain presentation metadata; and
 - synthetic Anime evidence activates the shared Updates and download-menu policies without Anime-specific UI changes.
+
+Milestone 2.4 closes the vertical proof:
+
+- one synthetic Anime bookmark-provider registration activates report support, mutation dispatch, application policy,
+  bookmarked candidate selection, cleanup protection, and the capability-selected vertical contract;
+- production composition proves Bookmarking and bookmarked-download applicability remain Manga-only;
+- bookmark eligibility and mutation use the distinct `EntryBookmarkInteraction`, removing the temporary consumption
+  compatibility facade; and
+- the content-type reference describes bookmarked bulk downloads and bookmark-aware cleanup as automatic consequences
+  of individual bookmark support.
+
+The contract is intentionally focused on this Phase 2 combination. The general capability-selected contract harness and
+comprehensive downloads contract remain assigned to Phase 6.

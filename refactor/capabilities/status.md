@@ -16,14 +16,15 @@ Updated: 2026-07-17
 - Production report commit: `8e03f7469` (`(feat): expose production capability reports`)
 - Bookmark provider commit: `5a3c13b37` (`(refactor): make bookmarking provider-backed`)
 - Bookmark/download policy commit: `d1b1d8b49` (`(refactor): derive bookmark download policy`)
+- Bookmark action availability commit: `4273281bd` (`(refactor): derive bookmark action availability`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
 - Phase: Phase 2 — Bookmarking and downloads vertical proof
-- Milestone: 2.3 — Application and presentation derivation
-- State: Complete; stopped before Milestone 2.4 with changes uncommitted
+- Milestone: 2.4 — Vertical contract and integration gate
+- State: Phase complete; stopped before Phase 3 with changes uncommitted
 
 ## Completed
 
@@ -50,18 +51,18 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Milestone 2.1 bookmark provider authority and compatibility dispatch completed
 - [x] Milestone 2.2 shared bookmark/download candidate and cleanup policy completed
 - [x] Milestone 2.3 capability-derived application and presentation availability completed
+- [x] Milestone 2.4 vertical contract, production projection, compatibility cleanup, and Phase 2 exit gate completed
 
 ## Current Scope
 
-Milestone 2.3 makes application availability follow the same capability evidence as runtime behavior.
+Phase 2 is complete. One synthetic Anime bookmark-provider registration now exercises the whole vertical consequence
+chain: report support, bookmark mutation, application policy, bookmarked candidate selection, cleanup protection, and
+capability-selected contract applicability.
 
-Entry and Updates bookmark actions read Bookmarking from `EntryCapabilityReport`. Entry and Library bookmarked-download
-menus use `EntryDownloadCapabilityPolicy`, which derives availability from Downloads + Bookmarking for single and mixed
-type selections. The same policy owns bookmark-aware cleanup applicability from Milestone 2.2.
-
-`EntryTypePresentation.downloadBookmarkedSupported` is removed. Type presentation still owns labels, icons, and plurals,
-but cannot independently hide or advertise bookmarked downloads. Production behavior remains Manga-only because no
-production capability evidence changed.
+Production composition proves Bookmarking and bookmarked-download applicability remain Manga-only. Bookmark operations
+use a distinct `EntryBookmarkInteraction`; the temporary consumption compatibility surface is removed. The public
+content-type reference retains the current Manga/Anime/Book results and describes the derived download consequences of
+individual bookmark support.
 
 ## Milestone Sequence
 
@@ -101,6 +102,14 @@ Phase 1 is complete. Phase 2 milestones are:
 - `./gradlew --quiet :entry-interactions:test :entry-interactions:spi:test :app:compileFossKotlin checkEntryInteractionBoundaries`
   passed for Milestone 2.3
 - `./gradlew --quiet spotlessApply` and `git diff --check` passed for Milestone 2.3
+- Full capability API, registry/lifecycle, Manga, Anime, and Book debug unit-test suites passed for the Phase 2 exit gate
+- Focused FOSS application tests passed for Updates bookmark availability, bookmarked-download menu actions, and
+  presentation metadata
+- The synthetic vertical contract passed with one Anime bookmark-provider registration and an unchanged Anime-typed
+  download provider
+- Production runtime composition asserts Bookmarking and bookmarked-download applicability are Manga-only
+- `./gradlew --quiet checkEntryInteractionBoundaries :app:compileFossKotlin spotlessCheck` passed for Milestone 2.4
+- `git diff --check` passed for Milestone 2.4
 
 ## Manifesto Comparison
 
@@ -115,7 +124,8 @@ Phase 1 is complete. Phase 2 milestones are:
 - Unresolved catalog entries remain visible migration blockers for their assigned later phases and are not treated as accepted absence.
 - No UI, settings, worker, policy, or public documentation behavior changed in Phase 1.
 - Bookmarking is now declared by one operational provider registration rather than a consumption boolean plus type no-ops.
-- The compatibility facade derives support from that registration, so it cannot disagree with capability evidence.
+- Bookmark eligibility and mutation dispatch through the provider-backed `EntryBookmarkInteraction`; the temporary
+  consumption compatibility facade is gone.
 - Derived download, cleanup, and application consequences remain feature-owned rather than being pulled into
   content-type plugins.
 - Production support remains Manga-only, and public capability documentation remains behaviorally accurate.
@@ -126,11 +136,13 @@ Phase 1 is complete. Phase 2 milestones are:
 - Entry, Updates, and Library availability now follows capability evidence rather than a compatibility support query or
   presentation flag.
 - Presentation retains terminology and imagery but no longer owns bookmarked-download behavior.
-- Public support remains unchanged, so the content-type reference remains accurate; projection verification is reserved
-  for the Phase 2 integration gate.
+- Public support remains unchanged, and the content-type reference now states that bookmark-based download behavior is
+  an automatic consequence rather than another content-type opt-in.
+- One synthetic provider registration selects and passes the complete vertical contract, so the common consequence chain
+  no longer depends on a contributor remembering each consumer.
+- No specialized bookmark/downloader obligation exists because shared child and download models satisfy the combination;
+  a future combination that needs media-specific work must surface that requirement explicitly.
 
 ## Exact Next Action After Review
 
-After explicit approval, commit Milestone 2.3 and complete only Milestone 2.4: add the end-to-end synthetic vertical
-contract, verify the production support projection, remove superseded Phase 2 internals where safe, update relevant
-documentation verification, and run the complete Phase 2 exit gate. Stop before Phase 3.
+After explicit approval, commit Milestone 2.4. Do not begin Phase 3 until the user explicitly asks to continue.

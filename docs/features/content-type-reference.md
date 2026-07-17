@@ -33,7 +33,8 @@ Status meanings:
 
 ::: info
 
-Bookmark-based bulk downloads are available when the content type supports individual bookmarks.
+Bookmark-based bulk downloads and bookmark-aware download cleanup are enabled automatically when the content type
+supports individual bookmarks. They do not require separate content-type download support.
 
 :::
 

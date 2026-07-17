@@ -124,7 +124,7 @@ interface EntryConsumptionProcessor {
 interface EntryBookmarkProcessor {
     val type: EntryType
 
-    fun canSetBookmarked(status: EntryConsumptionStatus, bookmarked: Boolean): Boolean {
+    fun canSetBookmarked(status: EntryBookmarkStatus, bookmarked: Boolean): Boolean {
         return status.bookmarked != bookmarked
     }
 

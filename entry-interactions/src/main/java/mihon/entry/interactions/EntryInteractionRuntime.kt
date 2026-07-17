@@ -159,6 +159,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryDownloadInteraction> { get<EntryInteractions>().download }
     addSingletonFactory<EntryCapabilityInteraction> { get<EntryInteractions>().capability }
     addSingletonFactory<EntryConsumptionInteraction> { get<EntryInteractions>().consumption }
+    addSingletonFactory<EntryBookmarkInteraction> { get<EntryInteractions>().bookmark }
     addSingletonFactory<EntryUpdateEligibilityInteraction> { get<EntryInteractions>().updateEligibility }
     addSingletonFactory<EntryProgressInteraction> { get<EntryInteractions>().progress }
     addSingletonFactory<EntryPlaybackPreferencesInteraction> { get<EntryInteractions>().playbackPreferences }

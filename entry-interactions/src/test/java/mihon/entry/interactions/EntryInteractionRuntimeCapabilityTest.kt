@@ -47,8 +47,10 @@ class EntryInteractionRuntimeCapabilityTest {
 
             val interactions = registrar.get<EntryInteractions>()
             val report = registrar.get<EntryCapabilityReport>()
+            val bookmarkInteraction = registrar.get<EntryBookmarkInteraction>()
 
             (interactions.capabilityReport === report) shouldBe true
+            (interactions.bookmark === bookmarkInteraction) shouldBe true
             report.types.map { it.entryType } shouldBe EntryType.entries
             EntryType.entries.forEach { entryType ->
                 interactions.download.supportsDownloads(entryType) shouldBe true
@@ -56,6 +58,12 @@ class EntryInteractionRuntimeCapabilityTest {
                     .entry(EntryCapabilityCatalog.DOWNLOADS)
                     .supported shouldBe true
             }
+            report.types.filter {
+                report.supportsTypeWide(it.entryType, EntryCapabilityCatalog.BOOKMARKING)
+            }.map { it.entryType } shouldBe listOf(EntryType.MANGA)
+            report.types.filter {
+                EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(report, it.entryType)
+            }.map { it.entryType } shouldBe listOf(EntryType.MANGA)
         } finally {
             Injekt = previousInjekt
             cacheDirectory.deleteRecursively()
@@ -101,6 +109,7 @@ private class ProductionCompositionRegistrar : DefaultRegistrar() {
         val productionBoundaryTypes = setOf(
             EntryInteractions::class.java,
             EntryCapabilityReport::class.java,
+            EntryBookmarkInteraction::class.java,
         )
     }
 }

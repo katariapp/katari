@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.updates
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
+import mihon.entry.interactions.EntryBookmarkStatus
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityEvidence
 import mihon.entry.interactions.EntryCapabilityEvidenceRecord
@@ -107,7 +108,7 @@ class UpdatesSelectionActionsTest {
 
     private fun canSetBookmarked(
         @Suppress("UNUSED_PARAMETER") entryType: EntryType,
-        status: EntryConsumptionStatus,
+        status: EntryBookmarkStatus,
         bookmarked: Boolean,
     ): Boolean {
         return status.bookmarked != bookmarked

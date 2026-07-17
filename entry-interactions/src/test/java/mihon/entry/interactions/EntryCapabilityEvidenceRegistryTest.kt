@@ -185,7 +185,11 @@ class EntryCapabilityEvidenceRegistryTest {
         composition.capabilityEvidence.records.map { it.capability } shouldBe listOf(
             EntryCapabilityCatalog.CONSUMPTION,
         )
-        composition.interactions.consumption.supportsBookmark(EntryType.ANIME) shouldBe false
+        composition.interactions.bookmark.canSetBookmarked(
+            EntryType.ANIME,
+            EntryBookmarkStatus(bookmarked = false),
+            bookmarked = true,
+        ) shouldBe false
         composition.capabilityReport.type(EntryType.ANIME)
             .entry(EntryCapabilityCatalog.BOOKMARKING)
             .value.shouldBeInstanceOf<EntryCapabilityReportValue.Outcome>()

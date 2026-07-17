@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryBookmarkInteraction
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryCapabilityInteraction
@@ -135,6 +136,7 @@ class EntryScreenModel(
     private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
+    private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
     private val entryContinueInteraction: EntryContinueInteraction = Injekt.get(),
     private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
     private val entryChildListInteraction: EntryChildListInteraction = Injekt.get(),
@@ -1274,7 +1276,7 @@ class EntryScreenModel(
         screenModelScope.launchIO {
             chapters.groupBy { it.entryId }.forEach { (memberEntryId, memberChapters) ->
                 val entry = entryRepository.getEntryById(memberEntryId) ?: return@forEach
-                entryConsumptionInteraction.setBookmarked(entry, memberChapters, bookmarked)
+                entryBookmarkInteraction.setBookmarked(entry, memberChapters, bookmarked)
             }
         }
         toggleAllSelection(false)

@@ -617,7 +617,7 @@ class EntryInteractionRegistryTest {
     }
 
     @Test
-    fun `bookmark compatibility is unavailable without a bookmark provider`() = runTest {
+    fun `bookmark interaction is unavailable without a bookmark provider`() = runTest {
         val processor = RecordingConsumptionProcessor(EntryType.ANIME)
         val interactions = createEntryInteractions(
             listOf(
@@ -627,13 +627,12 @@ class EntryInteractionRegistryTest {
             ),
         )
 
-        interactions.consumption.supportsBookmark(EntryType.ANIME) shouldBe false
-        interactions.consumption.canSetBookmarked(
+        interactions.bookmark.canSetBookmarked(
             EntryType.ANIME,
-            EntryConsumptionStatus(consumed = false, bookmarked = false, hasPartialProgress = false),
+            EntryBookmarkStatus(bookmarked = false),
             bookmarked = true,
         ) shouldBe false
-        interactions.consumption.setBookmarked(entry(EntryType.ANIME, id = 51L), listOf(chapter), bookmarked = true)
+        interactions.bookmark.setBookmarked(entry(EntryType.ANIME, id = 51L), listOf(chapter), bookmarked = true)
     }
 
     @Test
@@ -647,14 +646,13 @@ class EntryInteractionRegistryTest {
             ),
         )
 
-        interactions.consumption.supportsBookmark(EntryType.MANGA) shouldBe true
-        interactions.consumption.setBookmarked(entry(EntryType.MANGA, id = 52L), listOf(chapter), bookmarked = true)
+        interactions.bookmark.setBookmarked(entry(EntryType.MANGA, id = 52L), listOf(chapter), bookmarked = true)
 
         processor.bookmarkedEntryIds shouldBe listOf(52L)
     }
 
     @Test
-    fun `consumption capability dispatch selects processor by entry type`() {
+    fun `consumption and bookmark eligibility dispatch independently by entry type`() {
         val mangaProcessor = RecordingConsumptionProcessor(EntryType.MANGA, resetsPartialProgress = true)
         val animeProcessor = RecordingConsumptionProcessor(EntryType.ANIME)
         val mangaBookmarkProcessor = RecordingBookmarkProcessor(EntryType.MANGA)
@@ -670,10 +668,9 @@ class EntryInteractionRegistryTest {
 
         val unreadWithProgress = EntryConsumptionStatus(
             consumed = false,
-            bookmarked = false,
             hasPartialProgress = true,
         )
-        val bookmarked = unreadWithProgress.copy(bookmarked = true)
+        val bookmarked = EntryBookmarkStatus(bookmarked = true)
 
         interactions.consumption.canSetConsumed(
             EntryType.MANGA,
@@ -685,12 +682,12 @@ class EntryInteractionRegistryTest {
             unreadWithProgress,
             consumed = false,
         ) shouldBe false
-        interactions.consumption.canSetBookmarked(
+        interactions.bookmark.canSetBookmarked(
             EntryType.MANGA,
             bookmarked,
             bookmarked = false,
         ) shouldBe true
-        interactions.consumption.canSetBookmarked(
+        interactions.bookmark.canSetBookmarked(
             EntryType.ANIME,
             bookmarked,
             bookmarked = false,

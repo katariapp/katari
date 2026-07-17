@@ -15,6 +15,7 @@ interface EntryInteractions {
     val download: EntryDownloadInteraction
     val capability: EntryCapabilityInteraction
     val consumption: EntryConsumptionInteraction
+    val bookmark: EntryBookmarkInteraction
     val updateEligibility: EntryUpdateEligibilityInteraction
     val preview: EntryPreviewInteraction
     val immersive: EntryImmersiveInteraction
@@ -206,23 +207,31 @@ data class EntryMergeCapabilityItem(
 interface EntryConsumptionInteraction {
     fun canSetConsumed(entryType: EntryType, status: EntryConsumptionStatus, consumed: Boolean): Boolean
     suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
-    fun supportsBookmark(entryType: EntryType): Boolean
-    fun canSetBookmarked(entryType: EntryType, status: EntryConsumptionStatus, bookmarked: Boolean): Boolean
+}
+
+interface EntryBookmarkInteraction {
+    fun canSetBookmarked(entryType: EntryType, status: EntryBookmarkStatus, bookmarked: Boolean): Boolean
     suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
 }
 
 data class EntryConsumptionStatus(
     val consumed: Boolean,
-    val bookmarked: Boolean,
     val hasPartialProgress: Boolean,
 )
 
 fun EntryChapter.consumptionStatus(hasPartialProgress: Boolean = false): EntryConsumptionStatus {
     return EntryConsumptionStatus(
         consumed = read,
-        bookmarked = bookmark,
         hasPartialProgress = hasPartialProgress,
     )
+}
+
+data class EntryBookmarkStatus(
+    val bookmarked: Boolean,
+)
+
+fun EntryChapter.bookmarkStatus(): EntryBookmarkStatus {
+    return EntryBookmarkStatus(bookmarked = bookmark)
 }
 
 interface EntryUpdateEligibilityInteraction {

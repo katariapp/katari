@@ -10,6 +10,7 @@ import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookFailureReason
+import mihon.entry.interactions.EntryBookmarkStatus
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityReportEntry
 import mihon.entry.interactions.EntryCapabilityReportValue
@@ -81,11 +82,17 @@ class BookEntryInteractionPluginTest {
         assertTrue(
             interactions.consumption.canSetConsumed(
                 EntryType.BOOK,
-                EntryConsumptionStatus(consumed = false, bookmarked = false, hasPartialProgress = false),
+                EntryConsumptionStatus(consumed = false, hasPartialProgress = false),
                 consumed = true,
             ),
         )
-        assertFalse(interactions.consumption.supportsBookmark(EntryType.BOOK))
+        assertFalse(
+            interactions.bookmark.canSetBookmarked(
+                EntryType.BOOK,
+                EntryBookmarkStatus(bookmarked = false),
+                bookmarked = true,
+            ),
+        )
         assertFalse(interactions.download.supportsDownloads(EntryType.BOOK))
         assertFalse(interactions.capability.supportsMigration(entry))
         assertFalse(interactions.capability.supportsMerge(entry))

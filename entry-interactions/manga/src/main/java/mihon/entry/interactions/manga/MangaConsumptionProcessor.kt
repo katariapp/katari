@@ -6,6 +6,7 @@ import mihon.entry.interactions.EntryConsumptionProcessor
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.bookmarkStatus
 import mihon.entry.interactions.consumptionStatus
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -84,7 +85,7 @@ internal class MangaConsumptionProcessor(
     override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
         entry.requireManga()
         val chaptersToUpdate = chapters
-            .filter { canSetBookmarked(it.consumptionStatus(), bookmarked) }
+            .filter { canSetBookmarked(it.bookmarkStatus(), bookmarked) }
             .map { it.copy(bookmark = bookmarked) }
         if (chaptersToUpdate.isEmpty()) return
 

@@ -285,7 +285,8 @@ private class DefaultEntryInteractions(
     override val capability: EntryCapabilityInteraction =
         RegistryEntryCapabilityInteraction(capabilityProcessors, downloadProcessors)
     override val consumption: EntryConsumptionInteraction =
-        RegistryEntryConsumptionInteraction(consumptionProcessors, bookmarkProcessors)
+        RegistryEntryConsumptionInteraction(consumptionProcessors)
+    override val bookmark: EntryBookmarkInteraction = RegistryEntryBookmarkInteraction(bookmarkProcessors)
     override val updateEligibility: EntryUpdateEligibilityInteraction =
         RegistryEntryUpdateEligibilityInteraction(updateEligibilityProcessors)
     override val progress: EntryProgressInteraction = RegistryEntryProgressInteraction(progressProcessors)
@@ -708,7 +709,6 @@ private class RegistryEntryCapabilityInteraction(
 
 private class RegistryEntryConsumptionInteraction(
     private val consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
-    private val bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
 ) : EntryConsumptionInteraction {
     override fun canSetConsumed(entryType: EntryType, status: EntryConsumptionStatus, consumed: Boolean): Boolean {
         val processor = consumptionProcessors.requireProcessor("consumption", entryType)
@@ -720,14 +720,14 @@ private class RegistryEntryConsumptionInteraction(
         processor.requireMatchingEntryType("consumption", entry, consumptionProcessors.keys)
         processor.setConsumed(entry, chapters, consumed)
     }
+}
 
-    override fun supportsBookmark(entryType: EntryType): Boolean {
-        return entryType in bookmarkProcessors
-    }
-
+private class RegistryEntryBookmarkInteraction(
+    private val bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
+) : EntryBookmarkInteraction {
     override fun canSetBookmarked(
         entryType: EntryType,
-        status: EntryConsumptionStatus,
+        status: EntryBookmarkStatus,
         bookmarked: Boolean,
     ): Boolean {
         return bookmarkProcessors[entryType]?.canSetBookmarked(status, bookmarked) ?: false

@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryBookmarkInteraction
+import mihon.entry.interactions.EntryBookmarkStatus
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryConsumptionInteraction
@@ -65,6 +67,7 @@ import java.time.ZonedDateTime
 class UpdatesScreenModel(
     private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
+    private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
     private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
     private val getUpdates: GetUpdates = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
@@ -303,7 +306,7 @@ class UpdatesScreenModel(
         screenModelScope.launchNonCancellable {
             updates.entryChapterSelections()
                 .forEach { (entry, chapters) ->
-                    entryConsumptionInteraction.setBookmarked(entry, chapters, bookmark)
+                    entryBookmarkInteraction.setBookmarked(entry, chapters, bookmark)
                 }
         }
         toggleAllSelection(false)
@@ -313,7 +316,7 @@ class UpdatesScreenModel(
         return updates.hasBookmarkAction(
             bookmark = bookmark,
             capabilityReport = entryCapabilityReport,
-            canSetBookmarked = entryConsumptionInteraction::canSetBookmarked,
+            canSetBookmarked = entryBookmarkInteraction::canSetBookmarked,
         )
     }
 
@@ -530,7 +533,7 @@ data class UpdatesItem(
 internal fun List<UpdatesItem>.hasBookmarkAction(
     bookmark: Boolean,
     capabilityReport: EntryCapabilityReport,
-    canSetBookmarked: (entryType: EntryType, status: EntryConsumptionStatus, bookmarked: Boolean) -> Boolean,
+    canSetBookmarked: (entryType: EntryType, status: EntryBookmarkStatus, bookmarked: Boolean) -> Boolean,
 ): Boolean {
     val supportedUpdates = mapNotNull { it.update as? UpdateItem.EntryUpdate }
         .filter {
@@ -540,8 +543,8 @@ internal fun List<UpdatesItem>.hasBookmarkAction(
     return supportedUpdates.isNotEmpty() &&
         supportedUpdates.size == size &&
         when (bookmark) {
-            true -> supportedUpdates.any { canSetBookmarked(it.entryType, it.consumptionStatus(), true) }
-            false -> supportedUpdates.all { canSetBookmarked(it.entryType, it.consumptionStatus(), false) }
+            true -> supportedUpdates.any { canSetBookmarked(it.entryType, it.bookmarkStatus(), true) }
+            false -> supportedUpdates.all { canSetBookmarked(it.entryType, it.bookmarkStatus(), false) }
         }
 }
 
@@ -556,7 +559,10 @@ internal fun List<UpdatesItem>.hasConsumedAction(
 private fun UpdateItem.EntryUpdate.consumptionStatus(): EntryConsumptionStatus {
     return EntryConsumptionStatus(
         consumed = update.read,
-        bookmarked = update.bookmark,
         hasPartialProgress = !update.read && update.started,
     )
+}
+
+private fun UpdateItem.EntryUpdate.bookmarkStatus(): EntryBookmarkStatus {
+    return EntryBookmarkStatus(bookmarked = update.bookmark)
 }

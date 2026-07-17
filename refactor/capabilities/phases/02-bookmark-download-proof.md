@@ -46,16 +46,16 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 
 ## Milestone 2.4 — Vertical Contract and Integration Gate
 
-- [ ] Add an end-to-end synthetic configuration that grants Anime bookmark support without changing Anime download
+- [x] Add an end-to-end synthetic configuration that grants Anime bookmark support without changing Anime download
   implementation.
-- [ ] Verify mutation dispatch, UI policy, candidate selection, cleanup policy, reporting, and applicable contracts all
+- [x] Verify mutation dispatch, UI policy, candidate selection, cleanup policy, reporting, and applicable contracts all
   activate from that single registration.
-- [ ] Verify current production support remains Manga-only.
-- [ ] Remove superseded compatibility internals within the Phase 2 slice while retaining public compatibility APIs needed
+- [x] Verify current production support remains Manga-only.
+- [x] Remove superseded compatibility internals within the Phase 2 slice while retaining public compatibility APIs needed
   by later phases.
-- [ ] Update the atlas and relevant public documentation projection or verification.
-- [ ] Run the complete Phase 2 validation set and review every manifesto criterion for the vertical proof.
-- [ ] Stop before Phase 3.
+- [x] Update the atlas and relevant public documentation projection or verification.
+- [x] Run the complete Phase 2 validation set and review every manifesto criterion for the vertical proof.
+- [x] Stop before Phase 3.
 
 ## Non-Goals
 
@@ -135,3 +135,24 @@ change.
 
 Production behavior remains Manga-only because production capability evidence has not changed. No public capability
 documentation statement changed in this milestone; the internal atlas and status now describe the migrated authority.
+
+## Milestone 2.4 Completion Notes
+
+`BookmarkDownloadVerticalContractTest` composes an existing Anime download provider with one synthetic bookmark-provider
+registration. That single registration produces Bookmarking evidence and activates bookmark mutation eligibility and
+dispatch, the Downloads + Bookmarking application policy, bookmarked candidate selection, cleanup protection, report
+support, and selection of the shared vertical contract. The download provider receives only its unchanged candidate-pool
+request and contains no bookmark-specific branch.
+
+The production runtime-composition test now proves that Bookmarking and bookmarked-download applicability remain
+Manga-only for Manga, Anime, and Book. The public content-type reference keeps those current results while explaining
+that bookmarked bulk downloads and bookmark-aware cleanup are automatic consequences of individual bookmark support.
+
+The temporary bookmark compatibility surface on `EntryConsumptionInteraction` has been removed. Bookmark eligibility
+and mutation now use a distinct `EntryBookmarkInteraction` backed by the same bookmark-provider registration, while the
+consumption interaction retains only consumed/unconsumed behavior. No unrelated compatibility API was migrated.
+
+All capability foundation, registry, lifecycle, Manga, Anime, Book, and focused application policy/presentation tests
+passed, as did the interaction boundary check, FOSS application compilation, Spotless, and diff validation. Phase 2
+therefore demonstrates declare once, derive common consequences, and make the resulting contract applicable without a
+per-type download or presentation opt-in.
