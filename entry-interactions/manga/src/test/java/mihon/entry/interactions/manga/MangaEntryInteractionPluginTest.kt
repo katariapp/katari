@@ -531,7 +531,7 @@ class MangaEntryInteractionPluginTest {
         val download = MangaDownload(
             source = source(id = 2L, name = "Source"),
             entry = entry(EntryType.MANGA, id = 7L, title = "Entry"),
-            chapter = chapter(id = 9L, name = "Chapter 9", dateUpload = 123L, chapterNumber = 9.0),
+            chapter = chapter(id = 9L, entryId = 7L, name = "Chapter 9", dateUpload = 123L, chapterNumber = 9.0),
         ).apply {
             status = DownloadState.DOWNLOADING
             pages = listOf(
@@ -584,6 +584,30 @@ class MangaEntryInteractionPluginTest {
     }
 
     @Test
+    fun `manga merged downloads are queued under each real owner and start once`() = runTest {
+        val visible = entry(EntryType.MANGA, id = 1L, sourceId = 10L, profileId = 7L)
+        val member = entry(EntryType.MANGA, id = 2L, sourceId = 20L, profileId = 7L)
+        val visibleChapter = chapter(id = 11L, entryId = visible.id)
+        val memberChapter = chapter(id = 21L, entryId = member.id)
+        val manager = mockDownloadManager(chapterDownloaded = false)
+        val interactions = createEntryInteractions(
+            listOf(
+                mangaEntryInteractionPlugin(
+                    dependencies(downloadManager = manager, entries = listOf(member)),
+                ),
+            ),
+        )
+
+        interactions.download.download(visible, listOf(visibleChapter, memberChapter), startNow = false)
+
+        verify(exactly = 1) {
+            manager.downloadChapters(visible, listOf(visibleChapter), autoStart = false)
+            manager.downloadChapters(member, listOf(memberChapter), autoStart = false)
+            manager.startDownloads()
+        }
+    }
+
+    @Test
     fun `manga preview config follows manga preview preferences`() = runTest {
         val entryInteractionPreferences = EntryInteractionPreferences(InMemoryPreferenceStore())
         entryInteractionPreferences.enableMangaPreview.set(true)
@@ -609,6 +633,7 @@ class MangaEntryInteractionPluginTest {
         progressStates: List<EntryProgressState> = emptyList(),
         chapterDownloaded: Boolean = false,
         downloadManager: DownloadManager = mockDownloadManager(chapterDownloaded),
+        entries: List<Entry> = emptyList(),
         entryInteractionPreferences: EntryInteractionPreferences =
             EntryInteractionPreferences(InMemoryPreferenceStore()),
     ): MangaEntryInteractionRuntimeDependencies {
@@ -624,6 +649,11 @@ class MangaEntryInteractionPluginTest {
             downloadManager = downloadManager,
             downloadCache = mockDownloadCache(),
             sourceManager = mockSourceManager(),
+            entryRepository = mockk(relaxed = true) {
+                coEvery { getEntryById(any()) } answers {
+                    entries.firstOrNull { it.id == firstArg<Long>() }
+                }
+            },
             entryInteractionPreferences = entryInteractionPreferences,
         )
     }
@@ -689,8 +719,14 @@ class MangaEntryInteractionPluginTest {
         }
     }
 
-    private fun entry(type: EntryType, id: Long = 1L, title: String = "Entry"): Entry {
-        return Entry.create().copy(id = id, title = title, type = type)
+    private fun entry(
+        type: EntryType,
+        id: Long = 1L,
+        title: String = "Entry",
+        sourceId: Long = 1L,
+        profileId: Long = 1L,
+    ): Entry {
+        return Entry.create().copy(id = id, title = title, source = sourceId, profileId = profileId, type = type)
     }
 
     private fun chapter(

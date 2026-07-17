@@ -1,6 +1,7 @@
 package mihon.entry.interactions.anime
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.EntryDownloadIdentity
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
@@ -36,10 +37,8 @@ internal fun AnimeDownload.toEntryDownloadStatus(): EntryDownloadStatus {
 
 internal fun AnimeDownload.toEntryDownloadQueueItem(): EntryDownloadQueueItem {
     return EntryDownloadQueueItem(
-        entryType = EntryType.ANIME,
+        identity = EntryDownloadIdentity.from(anime, episode),
         state = status.toEntryDownloadState(),
-        entryId = anime.id,
-        childId = episode.id,
         title = anime.title,
         subtitle = episode.name,
         dateUpload = episode.dateUpload,

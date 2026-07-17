@@ -18,6 +18,7 @@ import mihon.entry.interactions.EntryDownloadOption
 import mihon.entry.interactions.EntryDownloadOptionGroup
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
+import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
@@ -38,6 +39,7 @@ internal class AnimeDownloadProcessor(
     private val dependencies: AnimeEntryInteractionRuntimeDependencies,
 ) : EntryDownloadProcessor {
     private val animeDownloadManager = dependencies.animeDownloadManager
+    private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
 
     override val type: EntryType = EntryType.ANIME
     override val changes: Flow<Unit> = combine(
@@ -116,22 +118,12 @@ internal class AnimeDownloadProcessor(
 
     override suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
         entry.requireAnime()
-        animeDownloadManager.queueEpisodes(
-            anime = entry,
-            episodes = chapters,
-            preferences = downloadPreferences(entry),
-            autoStart = autoStart,
-        )
+        queueByOwner(entry, chapters, autoStart) { owner -> downloadPreferences(owner) }
     }
 
     override suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean) {
         entry.requireAnime()
-        animeDownloadManager.queueEpisodes(
-            anime = entry,
-            episodes = chapters,
-            preferences = downloadPreferences(entry),
-            autoStart = false,
-        )
+        queueByOwner(entry, chapters, autoStart = false) { owner -> downloadPreferences(owner) }
         startQueuedDownloads(chapters, startNow)
     }
 
@@ -142,24 +134,19 @@ internal class AnimeDownloadProcessor(
         startNow: Boolean,
     ) {
         entry.requireAnime()
-        val currentPreferences = downloadPreferences(entry)
-        val persistedPreferences = currentPreferences.copy(
-            entryId = entry.id,
-            dubKey = selection.values.selectedValueOr(OPTION_DUB, currentPreferences.dubKey),
-            streamKey = selection.values.selectedValueOr(OPTION_STREAM, currentPreferences.streamKey),
-            subtitleKey = selection.values.selectedValueOr(OPTION_SUBTITLE, currentPreferences.subtitleKey),
-            qualityMode = selection.values[OPTION_QUALITY]
-                ?.let { runCatching { VideoDownloadQualityMode.valueOf(it) }.getOrNull() }
-                ?: currentPreferences.qualityMode,
-            updatedAt = System.currentTimeMillis(),
-        )
-        dependencies.downloadPreferencesRepository.upsert(persistedPreferences)
-        animeDownloadManager.queueEpisodes(
-            anime = entry,
-            episodes = chapters,
-            preferences = persistedPreferences,
-            autoStart = false,
-        )
+        queueByOwner(entry, chapters, autoStart = false) { owner ->
+            val currentPreferences = downloadPreferences(owner)
+            currentPreferences.copy(
+                entryId = owner.id,
+                dubKey = selection.values.selectedValueOr(OPTION_DUB, currentPreferences.dubKey),
+                streamKey = selection.values.selectedValueOr(OPTION_STREAM, currentPreferences.streamKey),
+                subtitleKey = selection.values.selectedValueOr(OPTION_SUBTITLE, currentPreferences.subtitleKey),
+                qualityMode = selection.values[OPTION_QUALITY]
+                    ?.let { runCatching { VideoDownloadQualityMode.valueOf(it) }.getOrNull() }
+                    ?: currentPreferences.qualityMode,
+                updatedAt = System.currentTimeMillis(),
+            ).also { dependencies.downloadPreferencesRepository.upsert(it) }
+        }
         startQueuedDownloads(chapters, startNow)
     }
 
@@ -336,6 +323,24 @@ internal class AnimeDownloadProcessor(
     private suspend fun downloadPreferences(entry: Entry): DownloadPreferences {
         return dependencies.downloadPreferencesRepository.getByEntryId(entry.id)
             ?: createDefaultVideoDownloadPreferences(entry.id)
+    }
+
+    private suspend fun queueByOwner(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        autoStart: Boolean,
+        preferences: suspend (Entry) -> DownloadPreferences,
+    ) {
+        val owners = ownerResolver.resolve(entry, chapters)
+        owners.forEach { owner ->
+            animeDownloadManager.queueEpisodes(
+                anime = owner.entry,
+                episodes = owner.children,
+                preferences = preferences(owner.entry),
+                autoStart = false,
+            )
+        }
+        if (autoStart && owners.isNotEmpty()) animeDownloadManager.startDownloads()
     }
 
     private fun startQueuedDownloads(chapters: List<EntryChapter>, startNow: Boolean) {

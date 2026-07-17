@@ -243,6 +243,40 @@ class AnimeEntryInteractionPluginTest {
     }
 
     @Test
+    fun `anime merged downloads use owner preferences and start once`() = runTest {
+        val visible = entry(EntryType.ANIME, id = 1L, sourceId = 10L, profileId = 7L)
+        val member = entry(EntryType.ANIME, id = 2L, sourceId = 20L, profileId = 7L)
+        val visibleEpisode = chapter(id = 11L, entryId = visible.id)
+        val memberEpisode = chapter(id = 21L, entryId = member.id)
+        val manager = mockAnimeDownloadManager(episodeDownloaded = false)
+        val interactions = createEntryInteractions(
+            listOf(
+                animeEntryInteractionPlugin(
+                    dependencies(entries = listOf(visible, member), animeDownloadManager = manager),
+                ),
+            ),
+        )
+
+        interactions.download.download(visible, listOf(visibleEpisode, memberEpisode), startNow = false)
+
+        verify(exactly = 1) {
+            manager.queueEpisodes(
+                anime = visible,
+                episodes = listOf(visibleEpisode),
+                preferences = match { it.entryId == visible.id },
+                autoStart = false,
+            )
+            manager.queueEpisodes(
+                anime = member,
+                episodes = listOf(memberEpisode),
+                preferences = match { it.entryId == member.id },
+                autoStart = false,
+            )
+            manager.startDownloads()
+        }
+    }
+
+    @Test
     fun `anime merged library progress keeps first member continue target`() {
         val calculator = animeEntryLibraryProgressCalculator(FakeEntryProgressRepository(emptyList()))
 
@@ -826,7 +860,7 @@ class AnimeEntryInteractionPluginTest {
     fun `anime download model maps to entry status queue item and group`() {
         val download = AnimeDownload(
             anime = entry(EntryType.ANIME, id = 7L, title = "Entry", sourceId = 2L),
-            episode = chapter(id = 9L, name = "Episode 9", dateUpload = 123L, chapterNumber = 9.0),
+            episode = chapter(id = 9L, entryId = 7L, name = "Episode 9", dateUpload = 123L, chapterNumber = 9.0),
             preferences = downloadPreferences(entryId = 7L),
         ).apply {
             status = AnimeDownload.State.RESOLVING
@@ -904,10 +938,11 @@ class AnimeEntryInteractionPluginTest {
         sourceManager: SourceManager = mockSourceManager(),
     ): AnimeEntryInteractionRuntimeDependencies {
         val entryChapterRepository = FakeEntryChapterRepository(chapters)
+        val entryRepository = fakeEntryRepository(entries)
         return AnimeEntryInteractionRuntimeDependencies(
             entryChapterRepository = entryChapterRepository,
             getEntryWithChapters = GetEntryWithChapters(
-                entryRepository = fakeEntryRepository(entries),
+                entryRepository = entryRepository,
                 entryChapterRepository = entryChapterRepository,
                 mergedEntryRepository = fakeMergedEntryRepository(merges),
             ),
@@ -918,6 +953,7 @@ class AnimeEntryInteractionPluginTest {
             downloadPreferences = mockk(relaxed = true),
             downloadPreferencesRepository = downloadPreferencesRepository,
             sourceManager = sourceManager,
+            entryRepository = entryRepository,
             entryInteractionPreferences = entryInteractionPreferences,
         )
     }
@@ -980,8 +1016,15 @@ class AnimeEntryInteractionPluginTest {
         id: Long = 1L,
         title: String = "Entry",
         sourceId: Long = 1L,
+        profileId: Long = 1L,
     ): Entry {
-        return Entry.create().copy(id = id, title = title, source = sourceId, type = type)
+        return Entry.create().copy(
+            id = id,
+            title = title,
+            source = sourceId,
+            profileId = profileId,
+            type = type,
+        )
     }
 
     private fun libraryItem(

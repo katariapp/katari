@@ -1,6 +1,7 @@
 package mihon.entry.interactions.book
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.EntryDownloadIdentity
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
@@ -31,10 +32,8 @@ internal fun BookDownload.toEntryDownloadStatus(): EntryDownloadStatus = EntryDo
 )
 
 internal fun BookDownload.toEntryDownloadQueueItem(): EntryDownloadQueueItem = EntryDownloadQueueItem(
-    entryType = EntryType.BOOK,
+    identity = EntryDownloadIdentity.from(entry, chapter),
     state = status.toEntryDownloadState(),
-    entryId = entry.id,
-    childId = chapter.id,
     title = entry.title,
     subtitle = chapter.name,
     dateUpload = chapter.dateUpload,

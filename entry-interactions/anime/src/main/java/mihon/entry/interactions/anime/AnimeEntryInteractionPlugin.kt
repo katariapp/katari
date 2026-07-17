@@ -9,6 +9,7 @@ import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
+import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.PlaybackPreferencesRepository
 import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
@@ -29,6 +30,7 @@ fun animeEntryInteractionPlugin(
             downloadPreferences = dependencies.downloadPreferences,
             downloadPreferencesRepository = dependencies.downloadPreferencesRepository,
             sourceManager = dependencies.sourceManager,
+            entryRepository = dependencies.entryRepository,
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
             historyRepository = dependencies.historyRepository,
         ),
@@ -102,6 +104,7 @@ data class AnimeEntryInteractionDependencies(
     val downloadPreferences: DownloadPreferences,
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
+    val entryRepository: EntryRepository,
     val entryInteractionPreferences: EntryInteractionPreferences,
     val historyRepository: HistoryRepository? = null,
 )
@@ -116,6 +119,7 @@ internal data class AnimeEntryInteractionRuntimeDependencies(
     val downloadPreferences: DownloadPreferences,
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
+    val entryRepository: EntryRepository,
     val entryInteractionPreferences: EntryInteractionPreferences,
     val historyRepository: HistoryRepository? = null,
 )

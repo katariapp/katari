@@ -12,6 +12,7 @@ import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
+import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
@@ -31,6 +32,7 @@ fun mangaEntryInteractionPlugin(
             downloadManager = Injekt.get(),
             downloadCache = Injekt.get(),
             sourceManager = dependencies.sourceManager,
+            entryRepository = Injekt.get(),
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
         ),
     )
@@ -115,5 +117,6 @@ internal data class MangaEntryInteractionRuntimeDependencies(
     val downloadManager: DownloadManager,
     val downloadCache: DownloadCache,
     val sourceManager: SourceManager,
+    val entryRepository: EntryRepository,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )

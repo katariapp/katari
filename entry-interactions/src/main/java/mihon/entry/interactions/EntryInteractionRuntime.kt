@@ -120,6 +120,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                         downloadPreferences = get(),
                         downloadPreferencesRepository = get(),
                         sourceManager = get(),
+                        entryRepository = get(),
                         entryInteractionPreferences = get<EntryInteractionPreferences>(),
                         historyRepository = get(),
                     ),

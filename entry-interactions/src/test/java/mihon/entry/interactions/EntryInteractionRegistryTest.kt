@@ -1042,10 +1042,14 @@ class EntryInteractionRegistryTest {
 
     private fun queueItem(type: EntryType, childId: Long): EntryDownloadQueueItem {
         return EntryDownloadQueueItem(
-            entryType = type,
+            identity = EntryDownloadIdentity(
+                profileId = 1L,
+                entryType = type,
+                entryId = 1L,
+                sourceId = 1L,
+                childId = childId,
+            ),
             state = EntryDownloadState.QUEUE,
-            entryId = 1L,
-            childId = childId,
             title = "Title",
             subtitle = "Subtitle",
             dateUpload = 0L,

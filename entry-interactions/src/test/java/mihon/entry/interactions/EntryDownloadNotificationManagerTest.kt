@@ -105,10 +105,14 @@ class EntryDownloadNotificationManagerTest {
     }
 
     private fun item() = EntryDownloadQueueItem(
-        entryType = EntryType.BOOK,
+        identity = EntryDownloadIdentity(
+            profileId = 1L,
+            entryType = EntryType.BOOK,
+            entryId = 42L,
+            sourceId = 1L,
+            childId = 11L,
+        ),
         state = EntryDownloadState.DOWNLOADING,
-        entryId = 42L,
-        childId = 11L,
         title = "Entry",
         subtitle = "Chapter",
         dateUpload = 0L,

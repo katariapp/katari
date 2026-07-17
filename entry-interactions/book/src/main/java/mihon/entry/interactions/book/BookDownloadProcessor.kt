@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadActionType
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
@@ -32,6 +33,7 @@ internal class BookDownloadProcessor(
 ) : EntryDownloadProcessor {
     private val manager: BookDownloadManager = dependencies.manager
     private val cache: BookDownloadCache = dependencies.cache
+    private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
@@ -218,14 +220,11 @@ internal class BookDownloadProcessor(
     }
 
     private suspend fun queueByOwner(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
-        val downloadsByOwner = chapters.groupBy(EntryChapter::entryId).mapNotNull { (ownerId, ownerChapters) ->
-            val owner = if (ownerId == entry.id) entry else dependencies.entryRepository.getEntryById(ownerId)
-            owner?.takeIf { it.type == EntryType.BOOK }?.let { it to ownerChapters }
+        val owners = ownerResolver.resolve(entry, chapters)
+        owners.forEach { owner ->
+            manager.queueBooks(owner.entry, owner.children, autoStart = false)
         }
-        downloadsByOwner.forEach { (owner, ownerChapters) ->
-            manager.queueBooks(owner, ownerChapters, autoStart = false)
-        }
-        if (autoStart && downloadsByOwner.isNotEmpty()) manager.startDownloads()
+        if (autoStart && owners.isNotEmpty()) manager.startDownloads()
     }
 
     private suspend fun isDownloadedByOwner(visibleEntry: Entry, chapter: EntryChapter): Boolean {

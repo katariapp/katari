@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.merge
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadActionType
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
@@ -23,6 +24,7 @@ internal class MangaDownloadProcessor(
     private val dependencies: MangaEntryInteractionRuntimeDependencies,
 ) : EntryDownloadProcessor {
     private val downloadManager = dependencies.downloadManager
+    private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
 
     override val type: EntryType = EntryType.MANGA
     override val changes: Flow<Unit> = combine(
@@ -107,12 +109,12 @@ internal class MangaDownloadProcessor(
 
     override suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
         entry.requireManga()
-        downloadManager.downloadChapters(entry, chapters, autoStart = autoStart)
+        queueByOwner(entry, chapters, autoStart)
     }
 
     override suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean) {
         entry.requireManga()
-        downloadManager.downloadChapters(entry, chapters, autoStart = false)
+        queueByOwner(entry, chapters, autoStart = false)
         if (startNow) {
             downloadManager.startDownloadsNow(chapters.map(EntryChapter::id))
         } else {
@@ -215,6 +217,14 @@ internal class MangaDownloadProcessor(
         downloadManager.cancelQueuedDownloads(listOf(download))
         download.status = DownloadState.NOT_DOWNLOADED
         return download.toEntryDownloadStatus().requireManga()
+    }
+
+    private suspend fun queueByOwner(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
+        val owners = ownerResolver.resolve(entry, chapters)
+        owners.forEach { owner ->
+            downloadManager.downloadChapters(owner.entry, owner.children, autoStart = false)
+        }
+        if (autoStart && owners.isNotEmpty()) downloadManager.startDownloads()
     }
 
     private suspend fun loadBulkDownloadCandidates(
