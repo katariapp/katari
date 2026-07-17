@@ -61,11 +61,15 @@ data class ApplicableFeatureIntegration(
  *
  * The feature owner defines the requirement. The affected content-type owner is responsible for supplying its adapter.
  */
+sealed interface FeatureObligation {
+    val responsibleOwner: ContributionOwner
+}
+
 data class SpecializedFeatureObligation(
-    val responsibleOwner: ContributionOwner,
+    override val responsibleOwner: ContributionOwner,
     val subject: FeatureIntegrationSubject,
     val requirement: SpecializedAdapterDefinition<*>,
-)
+) : FeatureObligation
 
 /**
  * An applicability edge from one content type to one feature-owned shared consequence.

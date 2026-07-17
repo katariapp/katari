@@ -206,6 +206,33 @@ class FeatureGraphAssemblyTest {
         effectless.message shouldContain "Unreachable feature integration effectless.integration"
     }
 
+    @Test
+    fun `contract fixture without a requiring behavioral contract is rejected`() {
+        val fixtureDefinition = contractFixtureDefinition<ExampleFixture>(
+            id = ContractFixtureId("example.fixture"),
+            owner = featureOwner,
+        )
+        val fixture = ContractFixture(fixtureDefinition, ExampleFixture())
+
+        val failure = shouldThrow<IllegalStateException> {
+            discoverAndAssembleFeatureGraph(
+                listOf(
+                    typeContributor(
+                        ContentTypeContribution(
+                            contentType = ContentTypeId("example"),
+                            owner = ContributionOwner("example.type"),
+                            providers = listOf(CapabilityProvider(alpha, AlphaProvider())),
+                            contractFixtures = listOf(fixture),
+                        ),
+                    ),
+                    featureContributor(alpha),
+                ),
+            )
+        }
+
+        failure.message shouldContain "Unreachable contract fixture example.fixture on example"
+    }
+
     private fun type(
         id: String,
         owner: ContributionOwner = ContributionOwner("$id.type"),
@@ -250,6 +277,8 @@ class FeatureGraphAssemblyTest {
         contentTypes.map { it.contentType } shouldContainExactly other.contentTypes.map { it.contentType }
         features.map { it.feature } shouldContainExactly other.features.map { it.feature }
         capabilities.map { it.id } shouldContainExactly other.capabilities.map { it.id }
+        contractFixtures.map { it.id } shouldContainExactly other.contractFixtures.map { it.id }
+        projections.map { it.id } shouldContainExactly other.projections.map { it.id }
     }
 
     private class AlphaProvider
@@ -259,4 +288,6 @@ class FeatureGraphAssemblyTest {
     private class BetaProvider
 
     private class ExampleAdapter
+
+    private class ExampleFixture
 }

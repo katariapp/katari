@@ -37,11 +37,11 @@ obligations. It is intentionally generic and may break production compilation at
 
 ## Milestone 3.4 — Contract and Projection Selection
 
-- [ ] Select feature-owned behavioral contracts from evaluated applicability.
-- [ ] Select developer and documentation projections from the same evaluated relationships.
-- [ ] Make missing required fixtures or projections explicit obligations rather than manual checklist items.
-- [ ] Verify that tests exercise selection mechanics and behavior, not duplicated capability values.
-- [ ] Stop before production boundary changes.
+- [x] Select feature-owned behavioral contracts from evaluated applicability.
+- [x] Select developer and documentation projections from the same evaluated relationships.
+- [x] Make missing required fixtures or projections explicit obligations rather than manual checklist items.
+- [x] Verify that tests exercise selection mechanics and behavior, not duplicated capability values.
+- [x] Stop before production boundary changes.
 
 ## Milestone 3.5 — Dependency Boundary and Migration Cut
 
@@ -140,3 +140,25 @@ Milestone 3.4.
 
 Anonymous tests cover expression composition, ordinary inapplicability, conditional context, specialized obligations,
 adapter completion, deterministic ordering, and multiple type edges referencing the same shared consequence instance.
+
+## Milestone 3.4 Completion Notes
+
+Artifact selection consumes the complete graph evaluation rather than asking capability questions again. It rejects a
+curated, duplicate, unexpected, or stale set of evaluated relationships. Only complete context-free applicable
+integrations select contracts or projections; inapplicable, conditional, and runtime-incomplete relationships select
+nothing.
+
+Feature-owned behavioral contracts are selected once per applicable content type while retaining the same executable
+contract object. Contracts can operate directly from matched providers and adapters. A contract declares a typed fixture
+requirement only for genuine media-specific validation input. Missing fixtures become obligations attributed to the
+affected content-type owner; a shared contract requires no empty per-type opt-in.
+
+Feature integrations declare typed projection requirements and may supply executable developer or documentation
+projection implementations. A missing implementation becomes one feature-owned obligation listing all applicable
+subjects it affects. Supplied projections create per-type selection edges to the same implementation object. Nothing in
+the kernel makes a contract, fixture, or projection channel universally mandatory.
+
+Anonymous tests prove that every complete compatible contribution selects and executes the same contract and projection
+objects, while unsupported and incomplete relationships do not. They also cover fixture ownership, aggregated missing
+projection obligations, deterministic ordering, ownership constraints, and rejection of a curated evaluation subset.
+No test restates which production type supports which capability.

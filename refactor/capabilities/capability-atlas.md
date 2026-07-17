@@ -546,3 +546,23 @@ rather than being instantiated per type. The graph describes applicability; it d
 
 Contract and projection selection remains absent. Milestone 3.4 will consume these evaluated relationships rather than
 reconstructing capability support independently.
+
+## Phase 3.4 Generic Contract and Projection Selection
+
+The kernel now selects feature-owned behavioral contracts and typed projection implementations directly from complete,
+context-free applicable relationships. Selection verifies that its evaluation covers the entire assembled graph; a
+caller cannot omit relationships to create a smaller manual contract or documentation matrix.
+
+Shared contracts use matched provider and adapter objects without per-type fixture declarations by default. When a
+contract genuinely needs media-specific validation input, it owns a typed fixture requirement and the content type may
+supply that fixture. Missing fixtures produce obligations assigned to the affected content-type owner and name every
+contract that needs them.
+
+Projection definitions express feature-owned developer or user-facing output requirements. Implementations remain
+opaque executable objects to the kernel. A missing shared implementation produces one feature-owned obligation listing
+all applicable subjects, while a supplied implementation is selected for each subject without being copied.
+
+Contracts, fixtures, and projection channels are all optional unless an owning feature contribution declares them. The
+architecture introduces no universal artifact list. Contract execution, developer-report rendering, documentation
+generation, and production validation remain Phase 7 work; Milestone 3.4 proves only generic automatic selection and
+owned failure semantics.

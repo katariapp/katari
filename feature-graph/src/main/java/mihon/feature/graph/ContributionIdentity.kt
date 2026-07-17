@@ -82,6 +82,16 @@ value class SpecializedAdapterId(val value: String) {
     override fun toString(): String = value
 }
 
+/** Stable identity of media-specific fixture input required by a feature-owned behavioral contract. */
+@JvmInline
+value class ContractFixtureId(val value: String) {
+    init {
+        validateStableId("Contract fixture id", value)
+    }
+
+    override fun toString(): String = value
+}
+
 private fun validateStableId(label: String, value: String) {
     require(STABLE_ID_PATTERN.matches(value)) {
         "$label must be a stable lowercase identifier: $value"

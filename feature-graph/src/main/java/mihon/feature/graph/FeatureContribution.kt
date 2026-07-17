@@ -60,11 +60,34 @@ interface SharedFeatureConsequence {
 /** Behavioral expectations selected automatically when an integration applies. */
 interface FeatureBehaviorContract {
     val id: FeatureArtifactId
+
+    /** Empty for shared contracts that can execute directly from matched providers and adapters. */
+    val fixtureRequirements: List<ContractFixtureDefinition<*>>
+        get() = emptyList()
 }
 
-/** Developer or user-facing projection selected from the same applicable integration. */
-interface FeatureProjection {
-    val id: FeatureArtifactId
+/** Feature-owned requirement for one executable developer or user-facing projection. */
+data class FeatureProjectionDefinition<P : Any>(
+    val id: FeatureArtifactId,
+    val owner: ContributionOwner,
+    val projectionType: KClass<P>,
+)
+
+inline fun <reified P : Any> featureProjectionDefinition(
+    id: FeatureArtifactId,
+    owner: ContributionOwner,
+): FeatureProjectionDefinition<P> = FeatureProjectionDefinition(id, owner, P::class)
+
+/** Executable projection implementation supplied against a feature-owned requirement. */
+data class FeatureProjection<P : Any>(
+    val definition: FeatureProjectionDefinition<P>,
+    val implementation: P,
+) {
+    init {
+        require(definition.projectionType.isInstance(implementation)) {
+            "Projection for ${definition.id} must implement ${definition.projectionType.qualifiedName}"
+        }
+    }
 }
 
 /**
@@ -80,14 +103,28 @@ data class FeatureIntegration(
     val specializedRequirements: List<SpecializedAdapterDefinition<*>> = emptyList(),
     val sharedConsequences: List<SharedFeatureConsequence> = emptyList(),
     val behavioralContracts: List<FeatureBehaviorContract> = emptyList(),
-    val projections: List<FeatureProjection> = emptyList(),
+    val projectionRequirements: List<FeatureProjectionDefinition<*>> = emptyList(),
+    val projections: List<FeatureProjection<*>> = emptyList(),
 ) {
     init {
         requireUnique("Context inputs for $id", contextInputs.map { it.id.value })
         requireUnique("Specialized requirements for $id", specializedRequirements.map { it.id.value })
         requireUnique("Shared consequences for $id", sharedConsequences.map { it.id.value })
         requireUnique("Behavioral contracts for $id", behavioralContracts.map { it.id.value })
-        requireUnique("Projections for $id", projections.map { it.id.value })
+        behavioralContracts.forEach { contract ->
+            requireUnique(
+                "Fixture requirements for ${contract.id}",
+                contract.fixtureRequirements.map { it.id.value },
+            )
+        }
+        requireUnique("Projection requirements for $id", projectionRequirements.map { it.id.value })
+        requireUnique("Projections for $id", projections.map { it.definition.id.value })
+        val requirementIds = projectionRequirements.mapTo(mutableSetOf()) { it.id }
+        projections.forEach { projection ->
+            require(projection.definition.id in requirementIds) {
+                "Projection ${projection.definition.id} on $id has no matching requirement"
+            }
+        }
     }
 }
 
@@ -107,6 +144,25 @@ data class FeatureContribution(
         integrations.flatMap { it.specializedRequirements }.forEach { requirement ->
             require(requirement.owner == owner) {
                 "Feature $feature cannot own specialized requirement ${requirement.id} declared by ${requirement.owner}"
+            }
+        }
+        integrations
+            .flatMap { it.behavioralContracts }
+            .flatMap { it.fixtureRequirements }
+            .forEach { requirement ->
+                require(requirement.owner == owner) {
+                    "Feature $feature cannot own contract fixture ${requirement.id} declared by ${requirement.owner}"
+                }
+            }
+        integrations.flatMap { it.projectionRequirements }.forEach { requirement ->
+            require(requirement.owner == owner) {
+                "Feature $feature cannot own projection requirement ${requirement.id} declared by ${requirement.owner}"
+            }
+        }
+        integrations.flatMap { it.projections }.forEach { projection ->
+            require(projection.definition.owner == owner) {
+                "Feature $feature cannot supply projection ${projection.definition.id} declared by " +
+                    projection.definition.owner
             }
         }
     }

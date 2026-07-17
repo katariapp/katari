@@ -60,6 +60,29 @@ data class SpecializedAdapter<A : Any>(
     }
 }
 
+/** Validation-only media fixture supplied when a feature-owned behavioral contract genuinely requires one. */
+data class ContractFixtureDefinition<F : Any>(
+    val id: ContractFixtureId,
+    val owner: ContributionOwner,
+    val fixtureType: KClass<F>,
+)
+
+inline fun <reified F : Any> contractFixtureDefinition(
+    id: ContractFixtureId,
+    owner: ContributionOwner,
+): ContractFixtureDefinition<F> = ContractFixtureDefinition(id, owner, F::class)
+
+data class ContractFixture<F : Any>(
+    val definition: ContractFixtureDefinition<F>,
+    val implementation: F,
+) {
+    init {
+        require(definition.fixtureType.isInstance(implementation)) {
+            "Fixture for ${definition.id} must implement ${definition.fixtureType.qualifiedName}"
+        }
+    }
+}
+
 /**
  * Everything a content type currently implements.
  *
@@ -71,6 +94,7 @@ data class ContentTypeContribution(
     val owner: ContributionOwner,
     val providers: List<CapabilityProvider<*>> = emptyList(),
     val specializedAdapters: List<SpecializedAdapter<*>> = emptyList(),
+    val contractFixtures: List<ContractFixture<*>> = emptyList(),
 ) {
     init {
         requireUnique(
@@ -80,6 +104,10 @@ data class ContentTypeContribution(
         requireUnique(
             label = "Specialized adapters for $contentType",
             ids = specializedAdapters.map { it.definition.id.value },
+        )
+        requireUnique(
+            label = "Contract fixtures for $contentType",
+            ids = contractFixtures.map { it.definition.id.value },
         )
     }
 }

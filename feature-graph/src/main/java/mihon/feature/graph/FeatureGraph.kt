@@ -11,6 +11,8 @@ data class FeatureGraph(
     val capabilities: List<CapabilityDefinition<*>>,
     val contextInputs: List<ContextInputDefinition<*>>,
     val specializedAdapters: List<SpecializedAdapterDefinition<*>>,
+    val contractFixtures: List<ContractFixtureDefinition<*>>,
+    val projections: List<FeatureProjectionDefinition<*>>,
 )
 
 fun assembleFeatureGraph(
@@ -36,6 +38,23 @@ fun assembleFeatureGraph(
             feature.integrations.flatMap { it.specializedRequirements }
         }
     }
+    val contractFixtureDefinitions = buildList {
+        discovered.contentTypes.flatMapTo(this) { type ->
+            type.contractFixtures.map { it.definition }
+        }
+        discovered.features.flatMapTo(this) { feature ->
+            feature.integrations
+                .flatMap { it.behavioralContracts }
+                .flatMap { it.fixtureRequirements }
+        }
+    }
+    val projectionDefinitions = buildList {
+        discovered.features.flatMapTo(this) { feature ->
+            feature.integrations.flatMap { integration ->
+                integration.projectionRequirements + integration.projections.map { it.definition }
+            }
+        }
+    }
 
     val capabilities = consistentDefinitions(
         label = "capability",
@@ -52,6 +71,16 @@ fun assembleFeatureGraph(
         definitions = specializedAdapterDefinitions,
         id = { it.id.value },
     )
+    val contractFixtures = consistentDefinitions(
+        label = "contract fixture",
+        definitions = contractFixtureDefinitions,
+        id = { it.id.value },
+    )
+    val projections = consistentDefinitions(
+        label = "projection",
+        definitions = projectionDefinitions,
+        id = { "${it.owner.value}:${it.id.value}" },
+    )
 
     validateReachability(discovered)
 
@@ -61,6 +90,8 @@ fun assembleFeatureGraph(
         capabilities = capabilities.sortedBy { it.id.value },
         contextInputs = contextInputs.sortedBy { it.id.value },
         specializedAdapters = specializedAdapters.sortedBy { it.id.value },
+        contractFixtures = contractFixtures.sortedBy { it.id.value },
+        projections = projections.sortedWith(compareBy({ it.owner.value }, { it.id.value })),
     )
 }
 
@@ -109,6 +140,11 @@ private fun validateReachability(discovered: DiscoveredFeatureGraphContributions
         .flatMap { it.integrations }
         .flatMap { it.specializedRequirements }
         .mapTo(mutableSetOf()) { it.id }
+    val requiredFixtures = discovered.features
+        .flatMap { it.integrations }
+        .flatMap { it.behavioralContracts }
+        .flatMap { it.fixtureRequirements }
+        .mapTo(mutableSetOf()) { it.id }
 
     discovered.contentTypes.forEach { type ->
         type.providers.forEach { provider ->
@@ -123,6 +159,12 @@ private fun validateReachability(discovered: DiscoveredFeatureGraphContributions
                     "no feature integration requires it"
             }
         }
+        type.contractFixtures.forEach { fixture ->
+            check(fixture.definition.id in requiredFixtures) {
+                "Unreachable contract fixture ${fixture.definition.id} on ${type.contentType}: " +
+                    "no behavioral contract requires it"
+            }
+        }
     }
 
     discovered.features.forEach { feature ->
@@ -130,7 +172,7 @@ private fun validateReachability(discovered: DiscoveredFeatureGraphContributions
             val hasEffect = integration.specializedRequirements.isNotEmpty() ||
                 integration.sharedConsequences.isNotEmpty() ||
                 integration.behavioralContracts.isNotEmpty() ||
-                integration.projections.isNotEmpty()
+                integration.projectionRequirements.isNotEmpty()
             check(hasEffect) {
                 "Unreachable feature integration ${integration.id} on ${feature.feature}: " +
                     "it contributes no consequence, specialized requirement, contract, or projection"

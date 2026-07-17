@@ -21,6 +21,7 @@ class ContributionSemanticsTest {
 
         contribution.providers shouldBe emptyList()
         contribution.specializedAdapters shouldBe emptyList()
+        contribution.contractFixtures shouldBe emptyList()
     }
 
     @Test
@@ -64,7 +65,11 @@ class ContributionSemanticsTest {
         )
         val consequence = consequence("combination.shared-policy")
         val contract = contract("combination.behavior")
-        val projection = projection("combination.reference")
+        val projectionDefinition = featureProjectionDefinition<ExampleProjection>(
+            id = FeatureArtifactId("combination.reference"),
+            owner = featureOwner,
+        )
+        val projection = FeatureProjection(projectionDefinition, ExampleProjection())
         val integration = FeatureIntegration(
             id = FeatureIntegrationId("combination.available"),
             prerequisites = allOf(
@@ -75,6 +80,7 @@ class ContributionSemanticsTest {
             specializedRequirements = listOf(adapter),
             sharedConsequences = listOf(consequence),
             behavioralContracts = listOf(contract),
+            projectionRequirements = listOf(projectionDefinition),
             projections = listOf(projection),
         )
 
@@ -89,6 +95,7 @@ class ContributionSemanticsTest {
         feature.integrations.single().specializedRequirements shouldContainExactly listOf(adapter)
         feature.integrations.single().sharedConsequences shouldContainExactly listOf(consequence)
         feature.integrations.single().behavioralContracts shouldContainExactly listOf(contract)
+        feature.integrations.single().projectionRequirements shouldContainExactly listOf(projectionDefinition)
         feature.integrations.single().projections shouldContainExactly listOf(projection)
     }
 
@@ -110,6 +117,62 @@ class ContributionSemanticsTest {
                         specializedRequirements = listOf(foreignRequirement),
                     ),
                 ),
+            )
+        }
+    }
+
+    @Test
+    fun `feature cannot claim foreign contract fixture or projection requirements`() {
+        val foreignOwner = ContributionOwner("other.feature")
+        val fixture = contractFixtureDefinition<ExampleFixture>(
+            id = ContractFixtureId("foreign.fixture"),
+            owner = foreignOwner,
+        )
+        val projection = featureProjectionDefinition<ExampleProjection>(
+            id = FeatureArtifactId("foreign.projection"),
+            owner = foreignOwner,
+        )
+
+        shouldThrow<IllegalArgumentException> {
+            FeatureContribution(
+                feature = FeatureId("combination"),
+                owner = featureOwner,
+                integrations = listOf(
+                    FeatureIntegration(
+                        id = FeatureIntegrationId("combination.available"),
+                        prerequisites = CapabilityExpression.Always,
+                        behavioralContracts = listOf(contract("combination.behavior", listOf(fixture))),
+                    ),
+                ),
+            )
+        }
+        shouldThrow<IllegalArgumentException> {
+            FeatureContribution(
+                feature = FeatureId("combination"),
+                owner = featureOwner,
+                integrations = listOf(
+                    FeatureIntegration(
+                        id = FeatureIntegrationId("combination.available"),
+                        prerequisites = CapabilityExpression.Always,
+                        projectionRequirements = listOf(projection),
+                    ),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `projection implementation requires an owned declared requirement`() {
+        val definition = featureProjectionDefinition<ExampleProjection>(
+            id = FeatureArtifactId("combination.reference"),
+            owner = featureOwner,
+        )
+
+        shouldThrow<IllegalArgumentException> {
+            FeatureIntegration(
+                id = FeatureIntegrationId("combination.available"),
+                prerequisites = CapabilityExpression.Always,
+                projections = listOf(FeatureProjection(definition, ExampleProjection())),
             )
         }
     }
@@ -171,12 +234,12 @@ class ContributionSemanticsTest {
         override val id = FeatureArtifactId(id)
     }
 
-    private fun contract(id: String) = object : FeatureBehaviorContract {
+    private fun contract(
+        id: String,
+        fixtures: List<ContractFixtureDefinition<*>> = emptyList(),
+    ) = object : FeatureBehaviorContract {
         override val id = FeatureArtifactId(id)
-    }
-
-    private fun projection(id: String) = object : FeatureProjection {
-        override val id = FeatureArtifactId(id)
+        override val fixtureRequirements = fixtures
     }
 
     private class AlphaProvider
@@ -186,4 +249,8 @@ class ContributionSemanticsTest {
     private class ExampleAdapter
 
     private class ExampleContext
+
+    private class ExampleProjection
+
+    private class ExampleFixture
 }
