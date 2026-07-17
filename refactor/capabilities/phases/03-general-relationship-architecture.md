@@ -20,11 +20,11 @@ obligations. It is intentionally generic and may break production compilation at
 
 ## Milestone 3.2 — Discovery and Graph Assembly
 
-- [ ] Discover content-type and feature contributions from their owning composition boundaries.
-- [ ] Build one graph without a central list of known types, capabilities, or features.
-- [ ] Reject duplicate identities, contradictory ownership, unowned relationships, and unreachable contributions.
-- [ ] Verify that adding a synthetic contribution changes assembly without editing an assembler registry.
-- [ ] Stop before graph evaluation.
+- [x] Discover content-type and feature contributions from their owning composition boundaries.
+- [x] Build one graph without a central list of known types, capabilities, or features.
+- [x] Reject duplicate identities, contradictory ownership, unowned relationships, and unreachable contributions.
+- [x] Verify that adding a synthetic contribution changes assembly without editing an assembler registry.
+- [x] Stop before graph evaluation.
 
 ## Milestone 3.3 — Evaluation and Obligations
 
@@ -105,3 +105,19 @@ Construction enforces stable identities, contribution-local uniqueness, and feat
 requirements. Cross-contribution validation is intentionally deferred to Milestone 3.2 graph assembly. Anonymous
 alpha/beta tests prove valid empty and one-provider types, relationship composition, context retention, adapter supply,
 and invalid ownership/identity cases without encoding current product names.
+
+## Milestone 3.2 Completion Notes
+
+Owner-scoped `FeatureGraphContributor` instances now submit content-type and feature contributions through a generic sink.
+The sink enforces top-level ownership, while the environment remains responsible only for installing contributor modules.
+The kernel contains no concrete contributor, type, capability, or feature registry.
+
+Assembly produces a deterministic `FeatureGraph` containing discovered types, features, and consistent distributed
+capability, context-input, and specialized-adapter definitions. Contributor ordering does not change graph ordering.
+Duplicate type/feature identities, contradictory definitions, foreign top-level ownership, unconsumed providers, unused
+adapters, and effectless integrations fail with actionable messages.
+
+Synthetic tests add types, providers, and feature contributions through an unchanged discovery/assembly pipeline and
+observe the graph expand automatically. A feature may prepare for a provider no current type implements. No prerequisite
+expression is evaluated and no obligation, consequence, contract, or projection is selected; those operations remain
+Milestones 3.3 and 3.4.

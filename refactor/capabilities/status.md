@@ -6,6 +6,7 @@ Updated: 2026-07-17
 
 - Branch: `features-arch-refactor`
 - Architecture reset commit: `666487574` (`(refactor): reset capability architecture direction`)
+- Contribution semantics commit: `d89e51693` (`(feat): define generic feature contributions`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -13,8 +14,8 @@ Updated: 2026-07-17
 ## Active Work
 
 - Phase: Phase 3 — General Relationship Architecture
-- Milestone: 3.1 — Contribution semantics and ownership
-- State: complete and uncommitted; stopped before Milestone 3.2 discovery and graph assembly
+- Milestone: 3.2 — Discovery and graph assembly
+- State: complete and uncommitted; stopped before Milestone 3.3 evaluation and obligations
 
 ## Why the Plan Was Reset
 
@@ -58,6 +59,9 @@ authority or weakening the architecture.
 - [x] Architecture reset committed in `666487574`
 - [x] Milestone 3.1 standalone generic contribution kernel implemented
 - [x] Decision `0007-contribution-semantics.md` accepted
+- [x] Milestone 3.1 committed in `d89e51693`
+- [x] Milestone 3.2 generic discovery and deterministic graph assembly implemented
+- [x] Decision `0008-contribution-discovery-and-assembly.md` accepted
 
 ## New Phase Sequence
 
@@ -86,23 +90,24 @@ graph.
 
 ## Current Working Tree Scope
 
-- New standalone `feature-graph` Android library with no production module dependencies.
-- Stable generic identities for contribution owners, content types, capabilities, features, integrations, context inputs,
-  specialized adapters, and feature artifacts.
-- `ContentTypeContribution` with zero or more typed capability providers and specialized adapters; every subset is valid.
-- `FeatureContribution` relationships containing positive capability expressions, typed context inputs, shared
-  executable consequences, specialized requirements, behavioral contracts, and projections.
-- Construction invariants for stable/local-unique identities and feature ownership of specialized requirements.
-- Anonymous alpha/beta semantic tests only; no discovery, evaluator, runtime DI, concrete type, or product capability.
-- Accepted decision `0007-contribution-semantics.md` and Phase 3.1 completion notes.
+- Owner-scoped `FeatureGraphContributor` and contribution sink discovery boundary.
+- Discovery rejects a contributor submitting a top-level contribution owned by another owner.
+- Deterministic `FeatureGraph` assembly for content types, features, capabilities, context inputs, and specialized adapter
+  definitions.
+- Cross-contribution rejection of duplicate type/feature identities and contradictory distributed definitions.
+- Reachability validation rejects provider capabilities with no consuming feature, supplied adapters with no feature
+  requirement, and feature integrations with no effect.
+- Features may declare relationships before any current type supplies the prerequisite provider.
+- Synthetic tests prove new types, providers, and features enter an unchanged discovery/assembly pipeline.
+- Accepted decision `0008-contribution-discovery-and-assembly.md` and Phase 3.2 completion notes.
 - No existing production source or consumer changed in this milestone.
 
 ## Last Validation
 
-- `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest` passed.
-- The new module's semantic tests cover empty and one-provider valid types, provider identity uniqueness, positive
-  prerequisite composition, typed context retention, specialized adapter supply and ownership, explicit unconditional
-  applicability, and stable identity validation.
+- `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest` passed during implementation.
+- Assembly tests cover expansion through unchanged contributors, deterministic ordering, owner scoping, duplicate
+  top-level contributions, contradictory definitions, unreachable providers/adapters/integrations, and features prepared
+  before their first provider.
 - Search confirms `feature-graph` contains no Manga, Anime, Book, Bookmarking, Downloads, Open, Continue, `EntryType`, or
   legacy capability-report references.
 - `./gradlew --quiet checkEntryInteractionBoundaries spotlessCheck` passed.
@@ -121,11 +126,15 @@ graph.
 - The decisive Phase 3 proof uses unknown synthetic contributions and rejects concrete product branches.
 - Phase 3.1 uses actual provider and executable artifact objects rather than building another descriptive support report.
 - The new kernel does not depend on or preserve the old catalog/report API.
+- Contributor installation is an environment concern; the graph kernel contains no concrete contributor registry.
+- Every supplied provider must connect to a feature-owned relationship, preventing capabilities from silently bypassing
+  the consequence graph.
+- Assembly records relationships without prematurely evaluating support or obligations.
 - Compilation pressure cannot justify dual authorities or fallback architecture.
 - The full architecture is app-wide and not limited to Bookmarking or Downloads.
 
 ## Exact Next Action After Review
 
-After explicit commit authorization, commit Milestone 3.1. Then begin only Milestone 3.2: discover content-type and
-feature contributions, assemble the generic graph, and validate cross-contribution identities. Stop before applicability
-evaluation and obligation materialization in Milestone 3.3.
+After explicit commit authorization, commit Milestone 3.2. Then begin only Milestone 3.3: evaluate capability expressions
+for each discovered type and materialize specialized obligations. Stop before selecting behavioral contracts or
+projections in Milestone 3.4.

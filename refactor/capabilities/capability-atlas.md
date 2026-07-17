@@ -323,6 +323,7 @@ These classifications apply the accepted decision records and guide the later im
 - `decisions/0005-current-product-outcomes.md`
 - `decisions/0006-architecture-before-migration.md`
 - `decisions/0007-contribution-semantics.md`
+- `decisions/0008-contribution-discovery-and-assembly.md`
 
 ## Discrepancies
 
@@ -511,3 +512,19 @@ Construction currently validates stable identities, local duplicates, and specia
 cross-contribution validation, graph assembly, applicability evaluation, and obligation materialization remain explicitly
 outside Milestone 3.1. Anonymous alpha/beta tests prove the semantics without using existing product types or capability
 names.
+
+## Phase 3.2 Generic Discovery and Assembly
+
+The kernel now accepts owner-scoped contributors through one generic sink. Contributors may supply any number of owned
+content-type or feature contributions; the sink rejects attempts to submit another owner's top-level contribution. The
+environment installs contributor modules, while the graph kernel remains unaware of their concrete identities.
+
+`FeatureGraph` assembly is deterministic across contributor order and coalesces identical distributed capability,
+context-input, and specialized-adapter definitions. It rejects duplicate content-type or feature identities,
+contradictory definitions, capability providers not consumed by any feature integration, specialized adapters no feature
+requires, and integrations that contribute no consequence, requirement, contract, or projection.
+
+Synthetic tests expand an existing discovery pipeline with new types, providers, and feature contributions without
+changing discovery or assembly code. Feature relationships may exist before their first supporting type. Assembly does
+not yet determine which relationships apply to which types and does not materialize obligations or select artifacts;
+that remains Phase 3.3 and Phase 3.4 work.
