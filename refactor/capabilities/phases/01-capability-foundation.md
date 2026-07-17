@@ -23,13 +23,13 @@ Create the capability vocabulary, support result, evidence model, and determinis
 
 ## Milestone 1.2 — Evidence Collection and Validation
 
-- [ ] Make provider registration contribute provider-backed capability evidence.
-- [ ] Add exceptional intrinsic declarations colocated with type composition.
-- [ ] Reject duplicate, missing, and contradictory evidence.
-- [ ] Keep contextual evaluators and external source/tracker evidence out of unconditional type support.
-- [ ] Add synthetic registry tests for valid, empty, duplicate, and contradictory compositions.
-- [ ] Preserve all existing interaction behavior and support APIs.
-- [ ] Stop and review evidence collection before continuing.
+- [x] Make provider registration contribute provider-backed capability evidence.
+- [x] Add exceptional intrinsic declarations colocated with type composition.
+- [x] Reject duplicate and contradictory evidence; leave missing facts unresolved instead of inferring absence.
+- [x] Keep contextual evaluators and external source/tracker evidence out of unconditional type support.
+- [x] Add synthetic registry tests for valid, empty, duplicate, and contradictory compositions.
+- [x] Preserve all existing interaction behavior and support APIs.
+- [x] Stop and review evidence collection before continuing.
 
 ## Milestone 1.3 — Deterministic Type Reports
 

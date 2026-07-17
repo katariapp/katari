@@ -19,10 +19,19 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 fun createEntryInteractions(
     plugins: List<EntryInteractionPlugin>,
-): EntryInteractions {
+): EntryInteractions = createEntryInteractionComposition(plugins).interactions
+
+data class EntryInteractionComposition(
+    val interactions: EntryInteractions,
+    val capabilityEvidence: EntryCapabilityEvidenceSnapshot,
+)
+
+fun createEntryInteractionComposition(
+    plugins: List<EntryInteractionPlugin>,
+): EntryInteractionComposition {
     val registry = DefaultEntryInteractionRegistry()
     plugins.forEach { it.register(registry) }
-    return registry.createEntryInteractions()
+    return registry.createComposition()
 }
 
 private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
@@ -39,17 +48,22 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     private val libraryFilterProcessors = mutableMapOf<EntryType, EntryLibraryFilterProcessor>()
     private val previewProcessors = mutableMapOf<EntryType, EntryPreviewInteraction>()
     private val immersiveProcessors = mutableMapOf<EntryType, EntryImmersiveProcessor>()
+    private val capabilityEvidence = mutableListOf<EntryCapabilityEvidenceRecord>()
+
+    override fun declareIntrinsicCapability(declaration: EntryIntrinsicCapabilityDeclaration) {
+        capabilityEvidence += declaration.evidenceRecord()
+    }
 
     override fun registerOpenProcessor(processor: EntryOpenProcessor) {
-        registerProcessor("open", processor.type, processor, openProcessors)
+        registerProcessor("open", processor.type, processor, openProcessors, ProviderCapabilities.OPEN)
     }
 
     override fun registerContinueProcessor(processor: EntryContinueProcessor) {
-        registerProcessor("continue", processor.type, processor, continueProcessors)
+        registerProcessor("continue", processor.type, processor, continueProcessors, ProviderCapabilities.CONTINUE)
     }
 
     override fun registerDownloadProcessor(processor: EntryDownloadProcessor) {
-        registerProcessor("download", processor.type, processor, downloadProcessors)
+        registerProcessor("download", processor.type, processor, downloadProcessors, ProviderCapabilities.DOWNLOADS)
     }
 
     override fun registerCapabilityProcessor(processor: EntryCapabilityProcessor) {
@@ -57,7 +71,13 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     }
 
     override fun registerConsumptionProcessor(processor: EntryConsumptionProcessor) {
-        registerProcessor("consumption", processor.type, processor, consumptionProcessors)
+        registerProcessor(
+            "consumption",
+            processor.type,
+            processor,
+            consumptionProcessors,
+            ProviderCapabilities.CONSUMPTION,
+        )
     }
 
     override fun registerUpdateEligibilityProcessor(processor: EntryUpdateEligibilityProcessor) {
@@ -65,15 +85,21 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     }
 
     override fun registerProgressProcessor(processor: EntryProgressProcessor) {
-        registerProcessor("progress", processor.type, processor, progressProcessors)
+        registerProcessor("progress", processor.type, processor, progressProcessors, ProviderCapabilities.PROGRESS)
     }
 
     override fun registerPlaybackPreferencesProcessor(processor: EntryPlaybackPreferencesProcessor) {
-        registerProcessor("playback preferences", processor.type, processor, playbackPreferencesProcessors)
+        registerProcessor(
+            "playback preferences",
+            processor.type,
+            processor,
+            playbackPreferencesProcessors,
+            ProviderCapabilities.PLAYBACK_PREFERENCES,
+        )
     }
 
     override fun registerChildListProcessor(processor: EntryChildListProcessor) {
-        registerProcessor("child list", processor.type, processor, childListProcessors)
+        registerProcessor("child list", processor.type, processor, childListProcessors, ProviderCapabilities.CHILD_LIST)
     }
 
     override fun registerChildGroupFilterProcessor(processor: EntryChildGroupFilterProcessor) {
@@ -85,42 +111,84 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     }
 
     override fun registerPreviewProcessor(processor: EntryPreviewProcessor) {
-        registerProcessor("preview", processor.type, processor, previewProcessors)
+        registerProcessor("preview", processor.type, processor, previewProcessors, ProviderCapabilities.PREVIEW)
     }
 
     override fun registerImmersiveProcessor(processor: EntryImmersiveProcessor) {
-        registerProcessor("immersive feed", processor.type, processor, immersiveProcessors)
-    }
-
-    fun createEntryInteractions(): EntryInteractions {
-        return DefaultEntryInteractions(
-            openProcessors = openProcessors.toMap(),
-            continueProcessors = continueProcessors.toMap(),
-            downloadProcessors = downloadProcessors.toMap(),
-            capabilityProcessors = capabilityProcessors.toMap(),
-            consumptionProcessors = consumptionProcessors.toMap(),
-            updateEligibilityProcessors = updateEligibilityProcessors.toMap(),
-            progressProcessors = progressProcessors.toMap(),
-            playbackPreferencesProcessors = playbackPreferencesProcessors.toMap(),
-            childListProcessors = childListProcessors.toMap(),
-            childGroupFilterProcessors = childGroupFilterProcessors.toMap(),
-            libraryFilterProcessors = libraryFilterProcessors.toMap(),
-            previewProcessors = previewProcessors.toMap(),
-            immersiveProcessors = immersiveProcessors.toMap(),
+        registerProcessor(
+            "immersive feed",
+            processor.type,
+            processor,
+            immersiveProcessors,
+            ProviderCapabilities.IMMERSIVE,
         )
     }
 
-    private fun <T> registerProcessor(
+    fun createComposition(): EntryInteractionComposition {
+        return EntryInteractionComposition(
+            interactions = DefaultEntryInteractions(
+                openProcessors = openProcessors.toMap(),
+                continueProcessors = continueProcessors.toMap(),
+                downloadProcessors = downloadProcessors.toMap(),
+                capabilityProcessors = capabilityProcessors.toMap(),
+                consumptionProcessors = consumptionProcessors.toMap(),
+                updateEligibilityProcessors = updateEligibilityProcessors.toMap(),
+                progressProcessors = progressProcessors.toMap(),
+                playbackPreferencesProcessors = playbackPreferencesProcessors.toMap(),
+                childListProcessors = childListProcessors.toMap(),
+                childGroupFilterProcessors = childGroupFilterProcessors.toMap(),
+                libraryFilterProcessors = libraryFilterProcessors.toMap(),
+                previewProcessors = previewProcessors.toMap(),
+                immersiveProcessors = immersiveProcessors.toMap(),
+            ),
+            capabilityEvidence = EntryCapabilityEvidenceSnapshot(capabilityEvidence),
+        )
+    }
+
+    private fun <T : Any> registerProcessor(
         category: String,
         type: EntryType,
         processor: T,
         processors: MutableMap<EntryType, T>,
+        capability: EntryFundamentalCapability? = null,
     ) {
         val previous = processors.putIfAbsent(type, processor)
         check(previous == null) {
             "Duplicate $category processor registered for EntryType $type. Registered types: " +
                 processors.registeredTypes()
         }
+        if (capability != null) {
+            capabilityEvidence += EntryCapabilityEvidenceRecord(
+                entryType = type,
+                capability = capability,
+                evidence = EntryCapabilityEvidence.ProviderRegistration(
+                    owner = PROVIDER_CAPABILITY_OWNER,
+                    provider = category,
+                ),
+            )
+        }
+    }
+}
+
+private val PROVIDER_CAPABILITY_OWNER = EntryCapabilityOwner("entry-interactions.registry")
+
+private object ProviderCapabilities {
+    val OPEN = typeWide("open")
+    val CONTINUE = typeWide("continue")
+    val DOWNLOADS = typeWide("downloads")
+    val CONSUMPTION = typeWide("consumption")
+    val PROGRESS = typeWide("progress")
+    val PLAYBACK_PREFERENCES = typeWide("playback-preferences")
+    val CHILD_LIST = typeWide("child-list")
+    val PREVIEW = contextual("preview")
+    val IMMERSIVE = contextual("immersive")
+
+    private fun typeWide(id: String): EntryFundamentalCapability {
+        return EntryFundamentalCapability(EntryCapabilityId(id), EntryCapabilityScope.TYPE_WIDE)
+    }
+
+    private fun contextual(id: String): EntryFundamentalCapability {
+        return EntryFundamentalCapability(EntryCapabilityId(id), EntryCapabilityScope.CONTEXTUAL)
     }
 }
 

@@ -112,6 +112,25 @@ class EntryCapabilityModelTest {
         }
     }
 
+    @Test
+    fun `external and contextual evidence cannot establish type-wide support`() {
+        val evidence = EntryCapabilityEvidence.External(owner, "Source implements preview contract")
+
+        shouldThrow<IllegalArgumentException> {
+            EntryCapabilityEvidenceRecord(
+                entryType = EntryType.ANIME,
+                capability = typeWideCapability,
+                evidence = evidence,
+            )
+        }
+
+        EntryCapabilityEvidenceRecord(
+            entryType = EntryType.ANIME,
+            capability = contextualCapability,
+            evidence = evidence,
+        ).evidence shouldBe evidence
+    }
+
     private data class ContextualEntrySubject(
         override val entryType: EntryType,
         val entryId: Long,

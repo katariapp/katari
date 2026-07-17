@@ -344,3 +344,18 @@ Milestones 0.1 and 0.2 establish the evidence inventory and dependency graph. Mi
 - expected outcomes and later phases for every discrepancy.
 
 Phase 0 is complete. Its accepted decisions are the preconditions for Phase 1, which must be split into reviewable implementation milestones before runtime work begins.
+
+## Phase 1 Foundation Progress
+
+Milestone 1.1 introduced the capability identity, query scope and subject distinction, structured evidence, six support outcomes, and construction invariants. It does not enumerate current type support or serve production consumers.
+
+Milestone 1.2 connects evidence collection to Entry interaction composition:
+
+- open, continue, downloads, consumption, progress, playback preferences, and child-list processor registration contribute type-wide provider evidence;
+- preview and immersive processor registration contribute contextual provider evidence, never unconditional type support;
+- intrinsic declarations are restricted to stable type-wide facts with an owner and reason;
+- duplicate authority, provider/intrinsic conflicts, and conflicting scopes fail composition;
+- capability processors, update-eligibility processors, child-group processors, and library-filter processors do not contribute support merely by registration because their current registration does not prove their sub-capabilities; and
+- empty or absent evidence remains valid input for the unresolved reporting work in Milestone 1.3 rather than being interpreted as intentional unsupported behavior.
+
+The existing `createEntryInteractions` API and runtime dispatch remain unchanged. The composed evidence snapshot is currently an inspection foundation only; production consumers and deterministic real-type reports have not migrated yet.

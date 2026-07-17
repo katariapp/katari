@@ -102,6 +102,85 @@ sealed interface EntryCapabilityEvidence {
     }
 }
 
+data class EntryIntrinsicCapabilityDeclaration(
+    val entryType: EntryType,
+    val capability: EntryFundamentalCapability,
+    val owner: EntryCapabilityOwner,
+    val reason: String,
+) {
+    init {
+        require(capability.scope == EntryCapabilityScope.TYPE_WIDE) {
+            "Intrinsic capability declarations must describe stable type-wide facts: ${capability.id}"
+        }
+        requireNonBlank("Intrinsic capability reason", reason)
+    }
+
+    fun evidenceRecord(): EntryCapabilityEvidenceRecord {
+        return EntryCapabilityEvidenceRecord(
+            entryType = entryType,
+            capability = capability,
+            evidence = EntryCapabilityEvidence.Intrinsic(owner, reason),
+        )
+    }
+}
+
+data class EntryCapabilityEvidenceRecord(
+    val entryType: EntryType,
+    val capability: EntryFundamentalCapability,
+    val evidence: EntryCapabilityEvidence,
+) {
+    init {
+        if (evidence is EntryCapabilityEvidence.Intrinsic) {
+            require(capability.scope == EntryCapabilityScope.TYPE_WIDE) {
+                "Intrinsic capability evidence must describe a stable type-wide fact: ${capability.id}"
+            }
+        }
+        if (evidence is EntryCapabilityEvidence.External || evidence is EntryCapabilityEvidence.Context) {
+            require(capability.scope == EntryCapabilityScope.CONTEXTUAL) {
+                "External and contextual evidence cannot establish unconditional type support: ${capability.id}"
+            }
+        }
+    }
+}
+
+class EntryCapabilityEvidenceSnapshot(
+    records: Iterable<EntryCapabilityEvidenceRecord>,
+) {
+    val records: List<EntryCapabilityEvidenceRecord> = records
+        .toList()
+        .also(::validateDefinitions)
+        .also(::validateAuthorities)
+        .sortedWith(compareBy({ it.entryType.ordinal }, { it.capability.id.value }))
+
+    private fun validateDefinitions(records: List<EntryCapabilityEvidenceRecord>) {
+        records.groupBy { it.capability.id }
+            .forEach { (id, definitions) ->
+                val scopes = definitions.mapTo(mutableSetOf()) { it.capability.scope }
+                check(scopes.size == 1) {
+                    "Contradictory capability definitions for $id: $scopes"
+                }
+            }
+    }
+
+    private fun validateAuthorities(records: List<EntryCapabilityEvidenceRecord>) {
+        records.groupBy { it.entryType to it.capability.id }
+            .filterValues { it.size > 1 }
+            .forEach { (key, authorities) ->
+                val evidenceKinds = authorities.map { it.evidence.kind }.toSet()
+                val conflict = if (evidenceKinds.size == 1) "Duplicate" else "Contradictory"
+                error("$conflict capability evidence for ${key.second} on EntryType ${key.first}: $evidenceKinds")
+            }
+    }
+}
+
+private val EntryCapabilityEvidence.kind: String
+    get() = when (this) {
+        is EntryCapabilityEvidence.ProviderRegistration -> "ProviderRegistration"
+        is EntryCapabilityEvidence.Intrinsic -> "Intrinsic"
+        is EntryCapabilityEvidence.External -> "External"
+        is EntryCapabilityEvidence.Context -> "Context"
+    }
+
 data class EntryCapabilityBlocker(
     val owner: EntryCapabilityOwner,
     val condition: String,
