@@ -5,15 +5,16 @@ Updated: 2026-07-17
 ## Repository Snapshot
 
 - Branch: `features-arch-refactor`
-- Latest committed implementation milestone: `e04b2481c` (`(refactor): derive download capabilities from providers`)
+- Architecture reset commit: `666487574` (`(refactor): reset capability architecture direction`)
+- Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: architecture reset before Phase 3 — General Relationship Architecture
-- Milestone: reset manifesto, phase order, and durable workspace
-- State: complete and uncommitted; stopped before Phase 3 Milestone 3.1 implementation
+- Phase: Phase 3 — General Relationship Architecture
+- Milestone: 3.1 — Contribution semantics and ownership
+- State: complete and uncommitted; stopped before Milestone 3.2 discovery and graph assembly
 
 ## Why the Plan Was Reset
 
@@ -54,6 +55,9 @@ authority or weakening the architecture.
   testing, and compilation principles
 - [x] Phase plan reordered around a general architecture kernel before production migration
 - [x] Accepted decision `0006-architecture-before-migration.md` recorded
+- [x] Architecture reset committed in `666487574`
+- [x] Milestone 3.1 standalone generic contribution kernel implemented
+- [x] Decision `0007-contribution-semantics.md` accepted
 
 ## New Phase Sequence
 
@@ -82,30 +86,27 @@ graph.
 
 ## Current Working Tree Scope
 
-- Documentation resets the manifesto, plan, phase files, atlas, decisions, and resume instructions.
-- The rejected completion-contract implementation and its tests are absent.
-- The later review also rejected structural mandatory operations: a future AUDIO type with only Open is a complete and
-  valid contribution, while all unsupported interactions remain unavailable.
-- Runtime production code is unchanged relative to `HEAD` by this reset.
-- Type plugin and production-runtime tests retain operational/identity assertions but no longer assert capability labels
-  that merely mirror provider registration.
-- The Bulk Downloads + Bookmarking wording correction remains because bulk selection depends on the bulk capability,
-  while cleanup protection depends on Bookmarking within download lifecycle policy.
-- `legacy-artifacts.md` now records which committed changes are retained behavior, retired authority, rehomed feature
-  logic, or reusable only after re-justification. Git history will not be rewritten.
+- New standalone `feature-graph` Android library with no production module dependencies.
+- Stable generic identities for contribution owners, content types, capabilities, features, integrations, context inputs,
+  specialized adapters, and feature artifacts.
+- `ContentTypeContribution` with zero or more typed capability providers and specialized adapters; every subset is valid.
+- `FeatureContribution` relationships containing positive capability expressions, typed context inputs, shared
+  executable consequences, specialized requirements, behavioral contracts, and projections.
+- Construction invariants for stable/local-unique identities and feature ownership of specialized requirements.
+- Anonymous alpha/beta semantic tests only; no discovery, evaluator, runtime DI, concrete type, or product capability.
+- Accepted decision `0007-contribution-semantics.md` and Phase 3.1 completion notes.
+- No existing production source or consumer changed in this milestone.
 
-## Validation for This Reset
+## Last Validation
 
-- `./gradlew --quiet spotlessApply` and `./gradlew --quiet spotlessCheck` completed successfully.
-- Focused debug unit-test tasks for the shared Entry interactions and Manga, Anime, and Book interaction modules passed
-  after removing duplicated capability assertions.
+- `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest` passed.
+- The new module's semantic tests cover empty and one-provider valid types, provider identity uniqueness, positive
+  prerequisite composition, typed context retention, specialized adapter supply and ownership, explicit unconditional
+  applicability, and stable identity validation.
+- Search confirms `feature-graph` contains no Manga, Anime, Book, Bookmarking, Downloads, Open, Continue, `EntryType`, or
+  legacy capability-report references.
+- `./gradlew --quiet checkEntryInteractionBoundaries spotlessCheck` passed.
 - `git diff --check` passed.
-- Every phase link in the rewritten plan resolves to an existing phase file.
-- The rejected completion-contract source and test files are absent, and searches found no obsolete phase links or claim
-  that per-type capability assertions are the completeness mechanism.
-- Focused compilation may be used to catch accidental test-edit damage, but a green application build is not an
-  architectural acceptance criterion.
-- No production implementation of Phase 3 begins in this milestone.
 
 ## Manifesto Comparison
 
@@ -118,12 +119,13 @@ graph.
   satisfied.
 - Tests no longer repeat current provider facts as completeness declarations.
 - The decisive Phase 3 proof uses unknown synthetic contributions and rejects concrete product branches.
+- Phase 3.1 uses actual provider and executable artifact objects rather than building another descriptive support report.
+- The new kernel does not depend on or preserve the old catalog/report API.
 - Compilation pressure cannot justify dual authorities or fallback architecture.
 - The full architecture is app-wide and not limited to Bookmarking or Downloads.
 
 ## Exact Next Action After Review
 
-After explicit commit authorization, commit this architecture reset. Then begin only Phase 3 Milestone 3.1: define the
-generic contribution semantics and ownership boundaries using anonymous synthetic concepts. Stop before implementing
-discovery in Milestone 3.2. Application compilation is not required for Milestone 3.1 unless its chosen module boundary
-is itself expected to compile at that point.
+After explicit commit authorization, commit Milestone 3.1. Then begin only Milestone 3.2: discover content-type and
+feature contributions, assemble the generic graph, and validate cross-contribution identities. Stop before applicability
+evaluation and obligation materialization in Milestone 3.3.

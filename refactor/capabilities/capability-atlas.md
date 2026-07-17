@@ -322,6 +322,7 @@ These classifications apply the accepted decision records and guide the later im
 - `decisions/0004-contextual-and-external-ownership.md`
 - `decisions/0005-current-product-outcomes.md`
 - `decisions/0006-architecture-before-migration.md`
+- `decisions/0007-contribution-semantics.md`
 
 ## Discrepancies
 
@@ -491,3 +492,22 @@ completeness applies only to feature relationships whose prerequisites are satis
 failures, and graph-selected behavioral contracts enforce those consequences. A partial type remains valid and absent
 providers create no obligation. Compilation may temporarily fail when the new dependency boundary exposes unported
 production code; those failures become explicit migration obligations for later phases.
+
+## Phase 3.1 Generic Contribution Semantics
+
+The new standalone `feature-graph` module establishes the target model without adapting current product types:
+
+- a content type has stable identity and may contribute zero or more typed capability-provider implementations;
+- a missing provider means unsupported and requires no explicit absence declaration;
+- capability definitions are owned beside their provider contracts rather than listed in a central catalog;
+- a feature owns integrations containing positive capability prerequisites, contextual inputs, shared executable
+  consequences, specialized adapter requirements, behavioral contracts, and projections;
+- specialized requirements are separate from prerequisites so missing adapters can become obligations only after the
+  feature applies; and
+- content types never enumerate consuming features except when they supply genuinely specialized adapters defined by
+  those features.
+
+Construction currently validates stable identities, local duplicates, and specialized-requirement ownership. Discovery,
+cross-contribution validation, graph assembly, applicability evaluation, and obligation materialization remain explicitly
+outside Milestone 3.1. Anonymous alpha/beta tests prove the semantics without using existing product types or capability
+names.

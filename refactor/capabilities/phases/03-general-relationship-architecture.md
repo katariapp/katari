@@ -8,15 +8,15 @@ obligations. It is intentionally generic and may break production compilation at
 
 ## Milestone 3.1 — Contribution Semantics and Ownership
 
-- [ ] Define a valid content-type contribution containing identity and zero or more interaction providers.
-- [ ] Define provider contributions without a separate support or absence declaration.
-- [ ] Define a feature contribution containing prerequisite expressions, contextual inputs, shared consequences,
+- [x] Define a valid content-type contribution containing identity and zero or more interaction providers.
+- [x] Define provider contributions without a separate support or absence declaration.
+- [x] Define a feature contribution containing prerequisite expressions, contextual inputs, shared consequences,
   specialized requirements, behavioral contracts, and projections.
-- [ ] Define ownership and identity rules for every contribution and relationship.
-- [ ] Define unsupported prerequisites, applicability, and incomplete downstream obligations without inferring them from
+- [x] Define ownership and identity rules for every contribution and relationship.
+- [x] Define unsupported prerequisites, applicability, and incomplete downstream obligations without inferring them from
   current types.
-- [ ] Prove the model is expressible using anonymous synthetic concepts only.
-- [ ] Stop before implementing discovery.
+- [x] Prove the model is expressible using anonymous synthetic concepts only.
+- [x] Stop before implementing discovery.
 
 ## Milestone 3.2 — Discovery and Graph Assembly
 
@@ -86,3 +86,22 @@ obligations. It is intentionally generic and may break production compilation at
 
 Ask whether an unknown future contribution would be discovered and all its consequences and missing obligations exposed
 without another curated edit. A feature-specific proof or green application build cannot substitute for that answer.
+
+## Milestone 3.1 Completion Notes
+
+The standalone `feature-graph` module defines only generic contribution semantics. It has no dependency on `EntryType`,
+Entry interactions, concrete content types, or known product capabilities.
+
+`ContentTypeContribution` accepts zero or more typed `CapabilityProvider` implementations and specialized adapters. No
+provider is mandatory, and there is no absence declaration. `CapabilityDefinition` is owned and defined beside its
+provider contract rather than added to a central catalog.
+
+`FeatureContribution` owns integrations containing positive capability expressions, typed contextual inputs, shared
+executable consequences, specialized adapter requirements, behavioral contracts, and projections. Missing prerequisites
+mean inapplicable; specialized requirements are structurally separate so Milestone 3.3 can turn missing adapters into
+obligations only after applicability is established.
+
+Construction enforces stable identities, contribution-local uniqueness, and feature ownership of specialized
+requirements. Cross-contribution validation is intentionally deferred to Milestone 3.2 graph assembly. Anonymous
+alpha/beta tests prove valid empty and one-provider types, relationship composition, context retention, adapter supply,
+and invalid ownership/identity cases without encoding current product names.
