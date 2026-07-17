@@ -2,174 +2,128 @@
 
 Updated: 2026-07-17
 
-## Repository State at Preparation
+## Repository Snapshot
 
 - Branch: `features-arch-refactor`
-- Manifesto commit: `394151edb` (`(chore): new manifesto`)
-- Preparation commit: `26c1bcedf` (`(docs): refactor workspace`)
-- Evidence inventory commit: `75c98e5b2` (`(docs): inventory capability evidence`)
-- Consumer and coverage commit: `18c927736` (`(docs): map capability consumers and coverage`)
-- Architecture decisions commit: `6d688b04a` (`(docs): record capability architecture decisions`)
-- Capability semantics commit: `471978d3d` (`(feat): define capability support semantics`)
-- Evidence composition commit: `a3ae2c6b5` (`(feat): collect capability evidence from composition`)
-- Deterministic report commit: `2c6e26a52` (`(feat): report composed entry capabilities`)
-- Production report commit: `8e03f7469` (`(feat): expose production capability reports`)
-- Bookmark provider commit: `5a3c13b37` (`(refactor): make bookmarking provider-backed`)
-- Bookmark/download policy commit: `d1b1d8b49` (`(refactor): derive bookmark download policy`)
-- Bookmark action availability commit: `4273281bd` (`(refactor): derive bookmark action availability`)
-- Bookmark/download proof commit: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
-- Retired download-parity manifesto commit: `677dd025a` (`(chore): remove no longer needed manifesto`)
-
-Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
+- Latest committed implementation milestone: `e04b2481c` (`(refactor): derive download capabilities from providers`)
+- Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
+- Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 3 — Core type-wide capability migration
-- Milestone: 3.1 — Downloads and bulk downloads
-- State: Complete and uncommitted; stopped before Milestone 3.2
+- Phase: architecture reset before Phase 3 — General Relationship Architecture
+- Milestone: reset manifesto, phase order, and durable workspace
+- State: complete and uncommitted; stopped before Phase 3 Milestone 3.1 implementation
 
-## Completed
+## Why the Plan Was Reset
 
-- [x] Feature capability problem formulated
-- [x] Capability manifesto written and committed
-- [x] Large refactor split into reviewable phases
-- [x] Durable workspace and resume protocol prepared
-- [x] Phase files and decision-record location prepared
-- [x] Processor registration, behavioral evidence, fallbacks, direct gates, and contextual inputs inventoried
-- [x] Evidence classified by provisional scope and owner without changing expected behavior
-- [x] Capability evidence mapped to screens, actions, policies, workers, settings, and integrations
-- [x] Registry, type-focused, consumer, boundary, and documentation coverage mapped
-- [x] Every content-type reference row traced to executable evidence and tests
-- [x] Duplicate facts, implemented capability combinations, and coverage gaps recorded
-- [x] Evidence authority, derivation, support semantics, and contextual ownership decisions accepted
-- [x] Current product discrepancies classified and assigned to later phases
-- [x] Decision records accepted by the user
-- [x] Phase 1 split into four bounded implementation milestones
-- [x] Milestone 1.1 capability vocabulary and semantic invariants implemented
-- [x] Milestone 1.2 registration-derived evidence and composition validation implemented
-- [x] Milestone 1.3 reviewed catalog and deterministic type reports implemented
-- [x] Milestone 1.4 production boundary, production composition coverage, and Phase 1 exit gate completed
-- [x] Phase 2 split into four bounded implementation milestones
-- [x] Milestone 2.1 bookmark provider authority and compatibility dispatch completed
-- [x] Milestone 2.2 shared bookmark/download candidate and cleanup policy completed
-- [x] Milestone 2.3 capability-derived application and presentation availability completed
-- [x] Milestone 2.4 vertical contract, production projection, compatibility cleanup, and Phase 2 exit gate completed
-- [x] Milestone 3.1 authoritative Downloads and Bulk Downloads evidence, consumer migration, and compatibility cleanup completed
+The prior sequence built an evidence/reporting foundation, completed a Bookmarking/Downloads vertical slice, and then
+began migrating production capabilities one group at a time. General feature discovery, relationship evaluation,
+specialized obligations, contract selection, and projections were deferred.
 
-## Current Scope
+That sequence produced an uncommitted hardcoded completion contract for Open, Continue, Bookmarking, Downloads, and Bulk
+Downloads. It also repeated provider registrations as per-type capability assertions. Both mechanisms required a future
+contributor to remember another list and therefore contradicted the manifesto. The contract and duplicate assertions were
+removed rather than expanded.
 
-Milestone 3.1 is complete. Download-provider registration is the single positive authority for Downloads and Bulk
-Downloads because every provider is required to supply the media-specific bulk candidate pool. The registry, Entry,
-Updates, Library, and library-update notifications consume the composed report; local-source, selection, and queue-size
-constraints remain with their owning features.
+The corrected rule is architecture first, production conformance second. Intermediate compile failures are acceptable
+when new boundaries expose unported code. Compilation must be restored by migrating that code, not by adding a parallel
+authority or weakening the architecture.
 
-The old download-support queries and constant per-downloader bulk-support declarations are removed. Bookmarked bulk
-downloads now compose Bulk Downloads + Bookmarking. Production Manga, Anime, and Book compositions support both facts,
-and reduced composition without a download provider leaves both unresolved. Runtime behavior and the public
-content-type documentation remain unchanged.
+## Durable Decisions
 
-## Milestone Sequence
+- Content types and features contribute through owned, discoverable boundaries.
+- A content type is valid with any subset of interaction providers; no interaction, including Open or Continue, is
+  mandatory for architectural validity.
+- Provider presence proves support and provider absence means unsupported without a separate absence declaration.
+- Features own prerequisites, contextual inputs, shared consequences, specialized obligations, behavioral contracts,
+  and projections.
+- Generic assembly and evaluation contain no concrete type, capability, or feature allowlist.
+- Tests verify architecture mechanics, shared behavior, and genuine media behavior; they do not restate declarations.
+- The existing report and Bookmarking/Downloads slice are prototypes and migration evidence, not protected architecture.
 
-- 1.1: Capability vocabulary and support semantics
-- 1.2: Registration-derived evidence collection and validation
-- 1.3: Deterministic reports for real type compositions
-- 1.4: Compatibility, integration validation, and Phase 1 exit gate
+## Completed Historical Work
 
-Phase 1 is complete. Phase 2 milestones are:
+- [x] Phase 0 evidence inventory, consumer graph, discrepancy review, and product decisions
+- [x] Phase 1 capability vocabulary, evidence composition, support outcomes, and deterministic report prototype
+- [x] Phase 2 Bookmarking provider split and Bookmarking/Downloads learning slice
+- [x] Initial download provider-authority migration committed in `e04b2481c`
+- [x] Incorrect uncommitted completion contract removed
+- [x] Per-type capability-label assertions introduced or retained for completion enforcement removed
+- [x] Manifesto expanded with architecture-before-migration, valid partial type support, provider-backed applicability,
+  testing, and compilation principles
+- [x] Phase plan reordered around a general architecture kernel before production migration
+- [x] Accepted decision `0006-architecture-before-migration.md` recorded
 
-- 2.1: Bookmark provider authority and compatibility dispatch
-- 2.2: Shared bookmark/download policy
-- 2.3: Application and presentation derivation
-- 2.4: Vertical contract and integration gate
+## New Phase Sequence
 
-Phase 2 is complete. Phase 3 milestones are:
+- Phase 3: General relationship architecture
+- Phase 4: Entry-type composition migration
+- Phase 5: Feature integration migration
+- Phase 6: Contextual and external integration
+- Phase 7: Graph-selected contracts, reporting, and documentation
+- Phase 8: Legacy removal, boundary enforcement, and build completion
 
-- 3.1: Downloads and bulk downloads
-- 3.2: Open and continue
-- 3.3: Consumption and progress
-- 3.4: Merge and migration
-- 3.5: Child-group and library filtering
-- 3.6: Playback preferences
-- 3.7: Update eligibility and Phase 3 exit gate
+Phase 3 milestones:
 
-## Last Validation
+- 3.1: Contribution semantics and ownership
+- 3.2: Discovery and graph assembly
+- 3.3: Evaluation and obligations
+- 3.4: Contract and projection selection
+- 3.5: Dependency boundary and migration cut
 
-- `./gradlew --quiet spotlessApply` completed successfully on 2026-07-17
-- `./gradlew --quiet :entry-interactions:api:testDebugUnitTest` passed, including seven deterministic-report/query tests
-- `./gradlew --quiet :entry-interactions:testDebugUnitTest` passed, including evidence/report composition, existing registry, and production runtime-composition tests
-- Focused Manga, Anime, and Book `EntryInteractionPluginTest` suites passed with type-report assertions
-- `./gradlew --quiet checkEntryInteractionBoundaries` passed
-- `./gradlew --quiet :app:compileFossKotlin` passed
-- `./gradlew --quiet spotlessCheck` passed
-- `git diff --check` passed
-- Production runtime composition reports Manga, Anime, and Book, with provider-backed download support for all three
-- Existing `createEntryInteractions` callers retain the same dispatch and compatibility behavior; application features currently have no report consumer
-- All Entry interaction API, registry, Manga, Anime, and Book module tests passed after the bookmark-provider split
-- `./gradlew --quiet :app:compileFossKotlin` and `checkEntryInteractionBoundaries` passed for Milestone 2.1
-- All Entry interaction API, registry, Manga, Anime, and Book module tests passed after the shared candidate-policy split
-- Synthetic Anime Bookmarking tests passed for shared candidate selection and cleanup protection
-- `./gradlew --quiet :app:compileFossKotlin`, `checkEntryInteractionBoundaries`, and `spotlessCheck` passed for Milestone 2.2
-- Focused API and application tests passed for shared download capability policy, Updates bookmark actions, download-menu
-  presentation, and unchanged type presentation metadata
-- Synthetic Anime Bookmarking evidence activates Updates and bookmarked-download menu availability without Anime UI or
-  downloader changes
-- `./gradlew --quiet :entry-interactions:test :entry-interactions:spi:test :app:compileFossKotlin checkEntryInteractionBoundaries`
-  passed for Milestone 2.3
-- `./gradlew --quiet spotlessApply` and `git diff --check` passed for Milestone 2.3
-- Full capability API, registry/lifecycle, Manga, Anime, and Book debug unit-test suites passed for the Phase 2 exit gate
-- Focused FOSS application tests passed for Updates bookmark availability, bookmarked-download menu actions, and
-  presentation metadata
-- The synthetic vertical contract passed with one Anime bookmark-provider registration and an unchanged Anime-typed
-  download provider
-- Production runtime composition asserts Bookmarking and bookmarked-download applicability are Manga-only
-- `./gradlew --quiet checkEntryInteractionBoundaries :app:compileFossKotlin spotlessCheck` passed for Milestone 2.4
-- `git diff --check` passed for Milestone 2.4
-- All Entry interaction API, registry, Manga, Anime, and Book debug unit-test suites passed for Milestone 3.1
-- Focused FOSS application tests passed for download-menu capability projection and Updates selection actions
-- Production runtime composition and real plugin tests assert Downloads and Bulk Downloads for Manga, Anime, and Book
-- `./gradlew --quiet :app:compileFossKotlin checkEntryInteractionBoundaries spotlessCheck` passed for Milestone 3.1
-- `git diff --check` passed for Milestone 3.1
+No Manga, Anime, Book, Bookmarking, Downloads, or other product-specific branch may enter the generic Phase 3 kernel.
+The phase uses anonymous synthetic contributions to prove unknown future participation.
+
+At Milestone 3.5, `EntryCapabilityCatalog`, `EntryCapabilityReport`, `supportsTypeWide`, legacy report assembly, explicit
+absence compensation, and production report DI exposure are removed rather than deprecated behind a working facade.
+Unported consumers may fail to compile and become migration obligations. The old report must not survive beside the
+graph.
+
+## Current Working Tree Scope
+
+- Documentation resets the manifesto, plan, phase files, atlas, decisions, and resume instructions.
+- The rejected completion-contract implementation and its tests are absent.
+- The later review also rejected structural mandatory operations: a future AUDIO type with only Open is a complete and
+  valid contribution, while all unsupported interactions remain unavailable.
+- Runtime production code is unchanged relative to `HEAD` by this reset.
+- Type plugin and production-runtime tests retain operational/identity assertions but no longer assert capability labels
+  that merely mirror provider registration.
+- The Bulk Downloads + Bookmarking wording correction remains because bulk selection depends on the bulk capability,
+  while cleanup protection depends on Bookmarking within download lifecycle policy.
+- `legacy-artifacts.md` now records which committed changes are retained behavior, retired authority, rehomed feature
+  logic, or reusable only after re-justification. Git history will not be rewritten.
+
+## Validation for This Reset
+
+- `./gradlew --quiet spotlessApply` and `./gradlew --quiet spotlessCheck` completed successfully.
+- Focused debug unit-test tasks for the shared Entry interactions and Manga, Anime, and Book interaction modules passed
+  after removing duplicated capability assertions.
+- `git diff --check` passed.
+- Every phase link in the rewritten plan resolves to an existing phase file.
+- The rejected completion-contract source and test files are absent, and searches found no obsolete phase links or claim
+  that per-type capability assertions are the completeness mechanism.
+- Focused compilation may be used to catch accidental test-edit damage, but a green application build is not an
+  architectural acceptance criterion.
+- No production implementation of Phase 3 begins in this milestone.
 
 ## Manifesto Comparison
 
-- The catalog contains fundamental facts only; automatic downloads, cleanup, update policy, and bookmark/download intersections are not new capability declarations.
-- Reports are built from composed evidence and accepted outcomes rather than a manually populated per-type support matrix.
-- Contextual providers produce conditional report entries and cannot become unconditional supported results.
-- Anime and Book bookmark absence and Anime child-group-filter absence are explicit owned product decisions.
-- Legacy facts whose current booleans are not yet authoritative evidence—such as merge, migration, and some filters—remain visibly unresolved for later migration.
-- Registration order does not affect report ordering or values.
-- Production inspection reuses the report created from operational plugin registration; it does not introduce another support matrix.
-- The production composition proves Book downloads from the actual enabled Book plugin path rather than a documentation or presentation flag.
-- Unresolved catalog entries remain visible migration blockers for their assigned later phases and are not treated as accepted absence.
-- No UI, settings, worker, policy, or public documentation behavior changed in Phase 1.
-- Bookmarking is now declared by one operational provider registration rather than a consumption boolean plus type no-ops.
-- Bookmark eligibility and mutation dispatch through the provider-backed `EntryBookmarkInteraction`; the temporary
-  consumption compatibility facade is gone.
-- Derived download, cleanup, and application consequences remain feature-owned rather than being pulled into
-  content-type plugins.
-- Production support remains Manga-only, and public capability documentation remains behaviorally accurate.
-- Bookmarked download selection is derived from Bulk Downloads + Bookmarking rather than separately implemented per downloader.
-- Cleanup consumes the same Bookmarking truth and keeps preference semantics in the feature that owns them.
-- A synthetic Anime provider receives both shared consequences without an Anime downloader change.
-- No new derived capability flag or per-type opt-in was introduced.
-- Entry, Updates, and Library availability now follows capability evidence rather than a compatibility support query or
-  presentation flag.
-- Presentation retains terminology and imagery but no longer owns bookmarked-download behavior.
-- Public support remains unchanged, and the content-type reference now states that bookmark-based download behavior is
-  an automatic consequence rather than another content-type opt-in.
-- One synthetic provider registration selects and passes the complete vertical contract, so the common consequence chain
-  no longer depends on a contributor remembering each consumer.
-- No specialized bookmark/downloader obligation exists because shared child and download models satisfy the combination;
-  a future combination that needs media-specific work must surface that requirement explicitly.
-- Download-provider registration is the only positive authority for Downloads and Bulk Downloads; a contributor does not
-  have to declare the same support in a processor, facade, presentation object, or application consumer.
-- Generic individual and bulk download consumers query the composed report while feature-owned contextual restrictions
-  remain local to the feature that evaluates them.
-- Manga, Anime, and Book production compositions support both download facts, preserving the reviewed product matrix
-  without a manually maintained per-type table.
+- The hardcoded capability list was removed, not repaired.
+- The revised plan builds generic discovery, relationships, obligations, contracts, and projections before more consumer
+  migration.
+- The old catalog/report authority is retired at the Phase 3.5 boundary cut, not deferred until final cleanup.
+- All interactions are provider-backed; current ubiquity does not make an operation mandatory for future types.
+- A missing provider creates no obligation. Obligations begin only after a feature's declared prerequisites are
+  satisfied.
+- Tests no longer repeat current provider facts as completeness declarations.
+- The decisive Phase 3 proof uses unknown synthetic contributions and rejects concrete product branches.
+- Compilation pressure cannot justify dual authorities or fallback architecture.
+- The full architecture is app-wide and not limited to Bookmarking or Downloads.
 
 ## Exact Next Action After Review
 
-After approval, commit Milestone 3.1 and complete only Milestone 3.2: make Open and Continue provider registration
-authoritative, migrate any support consumers, remove superseded compatibility queries, verify the production matrix, and
-stop before Milestone 3.3.
+After explicit commit authorization, commit this architecture reset. Then begin only Phase 3 Milestone 3.1: define the
+generic contribution semantics and ownership boundaries using anonymous synthetic concepts. Stop before implementing
+discovery in Milestone 3.2. Application compilation is not required for Milestone 3.1 unless its chosen module boundary
+is itself expected to compile at that point.

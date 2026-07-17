@@ -15,7 +15,8 @@ Anime migration is supported product behavior. The capability processor returns 
 Resolution:
 
 - Preserve Anime migration support.
-- Assert the real Manga/Anime/Book capability matrix during Phase 3.
+- Preserve the accepted Manga/Anime/Book outcomes through provider and feature behavior during Phases 4 and 5 without
+  creating a capability matrix.
 - Correct and later derive/verify the public reference in Phase 7.
 
 ### Book downloads
@@ -26,7 +27,7 @@ Resolution:
 
 - Phase 1 derives production download evidence from actual provider registration.
 - Tests must distinguish intentionally reduced fixtures from production composition.
-- Phase 6 makes every production-registered downloader enter the shared download contracts.
+- Phase 7 makes every applicable production downloader enter graph-selected shared download contracts.
 
 ### Anime child-group filtering
 
@@ -36,7 +37,7 @@ Resolution:
 
 - Preserve the unavailable user-facing result.
 - Record the absence explicitly under the agreed support semantics.
-- Phase 3 removes the ambiguity between an unsupported registered provider and a missing provider/default fallback.
+- Phase 4 removes the ambiguity between an unsupported registered provider and a missing provider/default fallback.
 
 ### Book library-update notifications
 
@@ -47,12 +48,13 @@ Resolution:
 - Preserve shared library-update notification behavior for Book.
 - Phase 5 derives common notification actions from update, consumption, open, and download capabilities.
 - Book receives explicit neutral/Book presentation rather than an implicit Manga fallback.
-- Phase 6 adds notification contract coverage for every applicable type.
+- Phase 7 adds notification contract coverage for every applicable type.
 
 ## Consequences
 
 - Phase 1 can model evidence without guessing whether the Book download seam is a product flag.
-- Phase 3 has an accepted migration and child-group matrix.
+- Phases 4 and 5 preserve the accepted migration and child-group outcomes through owned providers and feature
+  contributions, without a matrix.
 - Phase 5 has an explicit Book notification correction rather than treating the fallback as compatibility behavior.
 - Phase 7 can correct the Anime migration reference from accepted executable truth.
 
@@ -65,7 +67,7 @@ Resolution:
 
 ## Affected Capabilities and Phases
 
-- Migration and child-group filtering in Phase 3
+- Migration and child-group provider composition in Phase 4, followed by feature integration in Phase 5
 - Book notifications and derived action composition in Phase 5
-- Download contracts in Phase 6
+- Download contracts in Phase 7
 - Anime migration documentation in Phase 7

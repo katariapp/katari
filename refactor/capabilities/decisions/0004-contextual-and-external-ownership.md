@@ -48,6 +48,6 @@ SDK or tracker contract changes require their own compatibility decision. The in
 ## Affected Capabilities and Phases
 
 - Preview, immersive, related entries, latest feeds, tracking, download options, local/stub restrictions, and selection behavior
-- Phase 4 contextual composition
+- Phase 6 contextual composition
 - Phase 5 feature-owned derived actions
 - Phase 7 conditional reporting and documentation

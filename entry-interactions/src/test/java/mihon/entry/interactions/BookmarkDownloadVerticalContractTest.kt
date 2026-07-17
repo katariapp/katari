@@ -2,7 +2,6 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -41,16 +40,6 @@ class BookmarkDownloadVerticalContractTest {
         )
         val interactions = composition.interactions
         val report = composition.capabilityReport
-
-        report.supportsTypeWide(EntryType.ANIME, EntryCapabilityCatalog.BOOKMARKING) shouldBe true
-        report.type(EntryType.ANIME)
-            .entry(EntryCapabilityCatalog.BOOKMARKING)
-            .value.shouldBeInstanceOf<EntryCapabilityReportValue.Outcome>()
-            .result.shouldBeInstanceOf<EntrySupportResult.Supported>()
-        EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(report, EntryType.ANIME) shouldBe true
-        report.types.filter {
-            EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(report, it.entryType)
-        }.map { it.entryType } shouldBe listOf(EntryType.ANIME)
 
         val status = EntryBookmarkStatus(bookmarked = false)
         interactions.bookmark.canSetBookmarked(EntryType.ANIME, status, bookmarked = true) shouldBe true

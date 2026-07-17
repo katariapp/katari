@@ -1,5 +1,8 @@
 # Phase 2 — Bookmarking and Downloads Vertical Proof
 
+> Historical status: complete as a learning slice, not as the general architecture. It proved useful product rules but
+> did not prove discovery of unknown future types, capabilities, features, obligations, contracts, or projections.
+
 ## Objective
 
 Prove end-to-end capability composition using the known Bookmarks and Downloads integration gap.
@@ -26,7 +29,7 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 
 ## Milestone 2.2 — Shared Bookmark/Download Policy
 
-- [x] Derive bookmarked bulk-download applicability from Bookmarking + Downloads.
+- [x] Derive bookmarked bulk-download applicability from Bookmarking + Bulk Downloads.
 - [x] Move generic bookmarked-child selection into shared download policy.
 - [x] Remove downloader-specific bookmarked branches that exist only because bookmark support was absent.
 - [x] Derive bookmark-protected cleanup applicability from the same capability evidence while preserving its preference
@@ -38,7 +41,7 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 ## Milestone 2.3 — Application and Presentation Derivation
 
 - [x] Derive entry and Updates bookmark actions from Bookmarking.
-- [x] Derive bookmarked bulk-download action availability from Bookmarking + Downloads.
+- [x] Derive bookmarked bulk-download action availability from Bookmarking + Bulk Downloads.
 - [x] Remove `downloadBookmarkedSupported` as behavioral authority.
 - [x] Preserve labels and icons as presentation-only metadata.
 - [x] Add application policy and presentation coverage driven by capability evidence.
@@ -85,6 +88,9 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 
 This phase passes only if it demonstrates: declare once, derive common consequences, surface exceptional work.
 
+The later architecture review found that this criterion was necessary but insufficient. Phase 3 must now prove generic
+participation and obligation discovery before this feature-specific policy can be treated as a migration pattern.
+
 ## Milestone 2.1 Completion Notes
 
 `EntryBookmarkProcessor` registration is now the sole positive operational authority for Bookmarking. Consumption
@@ -124,7 +130,7 @@ eligibility still dispatch through the bookmark provider compatibility API, so c
 shared action applies while the provider owns the operation.
 
 `EntryDownloadCapabilityPolicy` is the shared owner for download consequences of Bookmarking. It derives bookmarked
-bulk-download availability from Downloads + Bookmarking for both single-type and mixed-type selections, and it also
+bulk-download availability from Bulk Downloads + Bookmarking for both single-type and mixed-type selections, and it also
 expresses the Bookmarking-derived cleanup protection introduced in Milestone 2.2. Entry and Library dropdowns consume
 that policy result.
 
@@ -140,7 +146,7 @@ documentation statement changed in this milestone; the internal atlas and status
 
 `BookmarkDownloadVerticalContractTest` composes an existing Anime download provider with one synthetic bookmark-provider
 registration. That single registration produces Bookmarking evidence and activates bookmark mutation eligibility and
-dispatch, the Downloads + Bookmarking application policy, bookmarked candidate selection, cleanup protection, report
+dispatch, the Bulk Downloads + Bookmarking application policy, bookmarked candidate selection, cleanup protection, report
 support, and selection of the shared vertical contract. The download provider receives only its unchanged candidate-pool
 request and contains no bookmark-specific branch.
 

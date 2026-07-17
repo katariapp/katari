@@ -1,6 +1,6 @@
 # Capability Atlas
 
-Status: Phase 3 Milestone 3.1 Downloads and Bulk Downloads migration complete; later capability groups remain to migrate
+Status: architecture-first reset complete; Phase 3 general relationship architecture is next
 
 This file records the current executable evidence for capability support. It is an inventory of facts to review, not a new source of behavioral truth and not a proposal for the final capability model.
 
@@ -185,19 +185,19 @@ Coverage is classified as **shared contract**, **type-focused**, **synthetic reg
 | Capability area | Existing coverage | Coverage conclusion |
 | --------------- | ----------------- | ------------------- |
 | Registry dispatch and absence | `EntryInteractionRegistryTest` covers missing-provider behavior, duplicate registration, type dispatch, mismatched types, and synthetic support results for most processor categories | Strong registry mechanics; it does not enumerate real plugins or prove cross-feature completeness. Update eligibility has no comparable registry-focused cases. |
-| Type plugin composition | `MangaEntryInteractionPluginTest`, `AnimeEntryInteractionPluginTest`, and `BookEntryInteractionPluginTest` exercise selected registrations | Uneven. Manga/Anime smoke tests touch continue/download; Book's plugin test intentionally constructs downloads disabled, so production Book composition is not covered as a complete plugin contract. |
-| Open and continue | Manga/Anime plugin tests; Book continue and `BookOpenProcessorTest`; notification action tests cover Manga/Anime opening | Type-focused behavior exists, but no shared all-supporting-types contract and no Book notification open-action case. |
-| Consumption and bookmarks | Manga, Anime, and Book plugin reports; registry bookmark-provider dispatch and validation; Updates selection consumer test | Positive, absent, duplicate, and contradictory bookmark authority is covered. Application consumers and shared cross-feature contracts have not migrated yet. |
-| Download core and queue | Type download manager/provider/store/downloader tests; registry dispatch; shared download job/runtime/notification tests | Strong media implementation and shared runtime coverage, but no single contract discovers all registered download types. |
-| Bulk downloads | Shared registry selection tests; Manga and Anime real-plugin tests; Book candidate-pool tests | Bookmarked selection has positive Manga, negative Anime, and synthetic Anime provider coverage. Broader capability-selected contracts remain Phase 6 work. |
+| Type plugin composition | Manga, Anime, and Book plugin tests exercise operational behavior and selected registrations | Capability-label assertions were removed during the architecture reset because they repeated provider declarations. Mandatory construction and generic discovery remain Phase 3 and Phase 4 work. |
+| Open and continue | Focused processor, notification, and real-type behavior tests | Provider registration is current evidence. All current types provide both, but that fact creates no architectural requirement for a future partial type. |
+| Consumption and bookmarks | Registry bookmark-provider dispatch and validation, media behavior tests, Updates selection consumer test, and the vertical behavioral proof | Positive provider and shared behavior paths are covered. Comprehensive graph-selected behavioral contracts remain Phase 7 work. |
+| Download core and queue | Type download manager/provider/store/downloader tests; registry dispatch; shared download job/runtime/notification tests | Operational behavior is covered unevenly. Provider-backed graph participation and comprehensive contracts remain Phase 3 through Phase 7 work. |
+| Bulk downloads | Shared registry selection tests; Manga and Anime behavior tests; Book candidate-pool tests | Bookmarked selection has positive Manga, negative Anime, and synthetic Anime provider coverage. Broader graph-selected contracts remain Phase 7 work. |
 | Automatic downloads | Anime and Book focused tests; `LibraryUpdateJobInteractionBoundaryTest` proves routing through the interaction | Manga automatic filtering lacks focused coverage; boundary test proves architecture, not behavior for every type. |
 | Mark-consumed cleanup | `EntryDownloadLifecycleManagerTest` iterates `EntryType.entries` and proves bookmark protection/category policy; Manga, Anime, and Book consumption tests prove lifecycle event emission; reader/player tests cover completion events | This is the closest current example of a shared cross-type contract. It is driven by enum values rather than declared capability providers and does not discover applicability from capability declarations. |
 | Download settings/options | Registry test preserves setting ownership; Anime plugin tests option resolution/persistence; settings dialog tests cover presentation mechanics | No contract connects declared setting capabilities to every settings surface. Manga-specific settings lookup is not challenged by tests. |
 | Migration and merge | Synthetic registry selection tests, Book negative plugin assertions, migration use-case tests, and entry/library merge flow tests | Real Manga/Anime positive capability declarations are not asserted by their plugin tests. Documentation disagreement for Anime is therefore not caught. |
-| Update eligibility and release-period filtering | Synthetic library-filter registry test | Type-specific smart-update policies have no focused tests despite three duplicated implementations. Real Manga/Anime/Book outside-release support is not covered as a capability matrix. |
+| Update eligibility and release-period filtering | Synthetic library-filter registry test | Type-specific smart-update policies have no focused tests despite three duplicated implementations. Current production outcomes are weakly covered; a capability matrix is not the intended remedy. |
 | Progress and child labels | Manga/Anime progress and label tests; Book progress snapshot/reader locator tests; generic entry-row label test; registry synthetic label dispatch | Book's `BookChildListProcessor.progressLabels` and Book library progress calculator lack focused tests. Shared progress-transfer expectations are not enumerated from declared providers. |
 | Playback preferences and backup | Anime plugin snapshot/restore/copy tests; backup creator test explicitly expects Anime-only gating | The test freezes a direct type check instead of proving that backup follows provider support. It would not begin covering a newly registered type automatically. |
-| Child-list and child-group behavior | Manga/Anime child-list tests; registry synthetic child-group tests | Book display/label behavior and real Manga/Anime child-group support matrix are weakly covered. Anime's all-no-op registered processor is not established as an intentional product decision. |
+| Child-list and child-group behavior | Manga/Anime child-list tests; registry synthetic child-group tests | Book display/label behavior and current child-group outcomes are weakly covered. Anime's all-no-op registered processor is not established as an intentional product decision. |
 | Preview | Manga preference/config test; Anime source-dependent support/load tests; registry dispatch; generic layout tests | Good focused evidence for current Manga/Anime behavior, but no shared contract links provider/source support to all entry and browse consumers. |
 | Immersive | Manga processor behavior; Anime renderer/preferences; feed-mode, browse-action, screen-model, and shared content tests | Source opt-in and UI mechanics are covered. Anime load/media resolution lacks a focused processor contract, and tests manually encode Manga/Anime/Book outcomes. |
 | Local source | Direct Manga validation in `LocalSource` and metadata conversion | Public reference claim has no focused Local-source content-type test. |
@@ -212,7 +212,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 
 | Reference claim | Executable evidence | Coverage | Result |
 | --------------- | ------------------- | -------- | ------ |
-| Continue from saved progress: all | Continue processors for Manga, Anime, and Book | Focused tests for all three | Matched; not a shared enumerated contract. |
+| Continue from saved progress: all | Continue processors for Manga, Anime, and Book | Focused tests for all three plus the production composition contract | Matched and enforced for every current `EntryType`. |
 | Mark individual children consumed/unconsumed: all | Consumption processors for all three | Focused tests for all three plus registry/consumer tests | Matched. |
 | Show partial child progress: all | Child-list progress labels for all three; shared progress state | Manga/Anime focused; generic consumer; Book label path weak | Matched with Book coverage gap. |
 | Apply smart library-update restrictions: all | Three registered update-eligibility processors with equivalent policy | No focused real-type tests | Matched by inspection; weakly enforced. |
@@ -321,6 +321,7 @@ These classifications apply the accepted decision records and guide the later im
 - `decisions/0003-support-result-semantics.md`
 - `decisions/0004-contextual-and-external-ownership.md`
 - `decisions/0005-current-product-outcomes.md`
+- `decisions/0006-architecture-before-migration.md`
 
 ## Discrepancies
 
@@ -328,10 +329,10 @@ Observed disagreements are recorded without changing implementation or public do
 
 | Capability | Conflicting statements | Expected behavior | Resolution phase | Status |
 | ---------- | ---------------------- | ----------------- | ---------------- | ------ |
-| Anime migration | `AnimeCapabilityProcessor` returns true; `docs/features/content-type-reference.md` describes migration as unavailable | Anime migration remains supported; documentation is stale | Capability matrix in Phase 3; docs projection/correction in Phase 7 | Accepted: documentation drift |
-| Book downloads as a registered capability | Production runtime enables the Book download plugin, but the plugin defaults `downloadsEnabled` to false and can be assembled without its provider | Production Book downloads are supported; the flag is a construction/testing seam | Registration evidence in Phase 1; production provider contracts in Phase 6 | Accepted: non-product ambiguity |
-| Anime child-group filtering | Anime registers a processor but the processor reports unsupported and implements empty/no-op behavior; Book expresses absence by not registering | Anime remains intentionally unsupported; registered no-op is not positive evidence | Explicit absence and provider cleanup in Phase 3 | Accepted: intentional absence with ambiguous representation |
-| Book library-update notification semantics | The shared update notifier supports the Book workflow but its notification type catalog defines only Manga and Anime, with Manga as the fallback | Book receives shared behavior with explicit neutral/Book semantics, never Manga fallback | Derived notification integration in Phase 5; contract in Phase 6 | Accepted: implementation bug |
+| Anime migration | `AnimeCapabilityProcessor` returns true; `docs/features/content-type-reference.md` describes migration as unavailable | Anime migration remains supported; documentation is stale | Provider/feature migration in Phases 4–5; docs projection/correction in Phase 7 | Accepted: documentation drift |
+| Book downloads as a registered capability | Production runtime enables the Book download plugin, but the plugin defaults `downloadsEnabled` to false and can be assembled without its provider | Production Book downloads are supported; the flag is a construction/testing seam | Registration evidence prototype in Phase 1; composition in Phase 4; contracts in Phase 7 | Accepted: non-product ambiguity |
+| Anime child-group filtering | Anime registers a processor but the processor reports unsupported and implements empty/no-op behavior; Book expresses absence by not registering | Anime remains intentionally unsupported; registered no-op is not positive evidence | Provider cleanup in Phase 4 and feature migration in Phase 5 | Accepted: intentional absence with ambiguous representation |
+| Book library-update notification semantics | The shared update notifier supports the Book workflow but its notification type catalog defines only Manga and Anime, with Manga as the fallback | Book receives shared behavior with explicit neutral/Book semantics, never Manga fallback | Derived notification integration in Phase 5; contract in Phase 7 | Accepted: implementation bug |
 
 ## Phase 0 Completion Summary
 
@@ -394,8 +395,8 @@ evidence.
 
 ### Remaining migration work
 
-- Merge, migration, library progress, download options, and filter facts remain unresolved until their
-  authoritative evidence is migrated in Phase 3 or Phase 4.
+- Merge, migration, library progress, download options, and filter facts remain unresolved in the report prototype until
+  their owners are migrated through Phases 4–6.
 - Unresolved values do not satisfy the exit gate of the later phase that owns the capability. Phase 1 records those gaps;
   it does not classify them as completed or intentional absence.
 - Application actions, settings, policies, workers, presentation, shared contracts, and public documentation outside the
@@ -449,7 +450,7 @@ Milestone 2.4 closes the vertical proof:
 - the content-type reference describes bookmarked bulk downloads and bookmark-aware cleanup as automatic consequences
   of individual bookmark support.
 
-## Phase 3 Core Type-Wide Migration Progress
+## Architecture Reset After the Initial Phase 3.1 Migration
 
 Milestone 3.1 makes download-provider registration the single positive authority for both Downloads and Bulk Downloads:
 
@@ -462,9 +463,31 @@ Milestone 3.1 makes download-provider registration the single positive authority
 - bookmarked bulk availability now composes the precise Bulk Downloads + Bookmarking facts; and
 - superseded download-support methods and per-downloader bulk-support constants have been removed.
 
-Production Manga, Anime, and Book compositions support both Downloads and Bulk Downloads. A composition without a
-download provider leaves both facts unresolved rather than creating an implicit absence. Product behavior and the public
-content-type matrix are unchanged.
+Production Manga, Anime, and Book currently register download providers. A composition without a provider leaves the
+prototype report unresolved rather than creating an implicit absence. Product behavior and public documentation did not
+change in the committed download migration.
 
-The contract is intentionally focused on this Phase 2 combination. The general capability-selected contract harness and
-comprehensive downloads contract remain assigned to Phase 6.
+The proposed next milestone attempted to enforce Open and Continue as required and Bookmarking, Downloads, and Bulk
+Downloads as optional through a hardcoded production completion contract. That design was rejected before commit and has
+been removed. It named only capabilities remembered so far, required future capabilities to be added manually, and was
+paired with real-type tests that repeated provider registration as support truth.
+
+The architecture review also exposed a sequencing error: the plan had deferred general contribution discovery, feature
+relationships, obligations, and contract selection until after capability-by-capability consumer migration. That made
+local completion lists and feature-specific policies likely even when each individual step appeared consistent.
+
+The corrected Phase 3 therefore migrates no further production capability. It first builds the generic architecture for
+owned contributions, discovery, graph evaluation, shared consequences, specialized obligations, contracts, and
+projections. Existing evidence reports and the Bookmarking/Downloads policy remain useful prototypes and behavioral
+input, but they are not protected as the final architecture.
+
+`legacy-artifacts.md` classifies committed results explicitly. Provider splits, shared operational behavior, removed
+support booleans, and behavioral tests are retained as migration input. The central catalog, type report,
+`supportsTypeWide`, explicit absence compensation, report assembly, and production report exposure are retired as
+authority at the Phase 3.5 dependency cut. Report-driven feature policies are rehomed through feature contributions.
+
+Capability-label assertions removed during this reset are not replaced. Support comes from provider presence, while
+completeness applies only to feature relationships whose prerequisites are satisfied. Generic discovery, obligation
+failures, and graph-selected behavioral contracts enforce those consequences. A partial type remains valid and absent
+providers create no obligation. Compilation may temporarily fail when the new dependency boundary exposes unported
+production code; those failures become explicit migration obligations for later phases.

@@ -1,5 +1,9 @@
 # Phase 1 — Authoritative Capability Foundation
 
+> Historical status: complete as an evidence/reporting prototype. Phase 3 may replace these shapes where they encourage
+> report-centric design, duplicated support assertions, or curated completion. This phase is not the general relationship
+> architecture.
+
 ## Objective
 
 Create the capability vocabulary, support result, evidence model, and deterministic query/reporting foundation without changing production consumers.
@@ -89,6 +93,6 @@ The production-composition test resolves the real Manga, Anime, and Book plugin 
 dependencies only. It verifies that all registered types are inspectable and that production-enabled Book downloads
 produce the same provider-backed support evidence as Manga and Anime downloads.
 
-Unresolved entries are intentionally not accepted as completed capability migrations. Phase 1 establishes the
-foundation and identifies those entries; their owning Phase 3 or Phase 4 exit gates remain blocked until authoritative
-evidence or an accepted absence replaces each unresolved result.
+Unresolved entries identify incomplete evidence in this prototype. They must not be converted into a centrally curated
+completion contract. The general relationship architecture decides how providers, deliberate absence, applicability,
+and obligations participate before production migration continues.

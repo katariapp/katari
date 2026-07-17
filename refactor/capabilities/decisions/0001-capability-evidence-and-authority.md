@@ -14,7 +14,8 @@ Capability authority follows the kind of evidence:
 
 - Registration of an operational provider is the authoritative evidence for a provider-backed fundamental capability. The same support fact must not also require a boolean declaration.
 - A stable type-wide fact may be declared explicitly only when no operational provider can prove it. Such intrinsic evidence must be colocated with type composition, uniquely owned, and validated against contradictory provider evidence.
-- Universal Entry behavior is shared feature policy, not a capability every type must opt into. A type-specific provider is justified only by a genuine specialization.
+- No interaction is required for type validity. Open, Continue, and every other interaction are supported only when their
+  provider exists; current ubiquity is not an architectural invariant.
 - Contextual support is evaluated from its runtime inputs and is not copied into the deterministic type-level report as unconditional support.
 - Derived behavior is computed by the consuming feature and is never stored as another fundamental capability declaration.
 - Presentation metadata owns wording, imagery, and layout choices only. It cannot authorize or suppress behavior.
@@ -25,6 +26,7 @@ The deterministic report is assembled from authoritative evidence. It is a proje
 ## Consequences
 
 - Registering a provider automatically contributes its provider-backed capability evidence.
+- Omitting a provider is a valid unsupported state and requires no separate absence declaration.
 - Constant false/no-op providers cannot masquerade as supported implementations.
 - Explicit intrinsic declarations remain possible but are exceptional and validated.
 - Separate provider systems, such as library progress calculators, must either contribute evidence through composition or be surfaced as missing obligations; they cannot remain an invisible second type catalog.
@@ -41,6 +43,6 @@ The deterministic report is assembled from authoritative evidence. It is a proje
 
 - All provider-backed and type-wide capabilities
 - Phase 1 foundation and deterministic reporting
-- Phase 3 core migration
+- Phase 4 entry-type composition migration
 - Phase 7 documentation projection
 - Phase 8 compatibility cleanup and enforcement

@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import android.app.Application
-import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -19,7 +18,7 @@ import java.nio.file.Files
 class EntryInteractionRuntimeCapabilityTest {
 
     @Test
-    fun `production runtime exposes composed capabilities for every content type`() {
+    fun `production runtime exposes its composed capability report`() {
         val previousInjekt = Injekt
         val registrar = ProductionCompositionRegistrar()
         val cacheDirectory = Files.createTempDirectory("katari-entry-runtime-capabilities").toFile()
@@ -51,21 +50,6 @@ class EntryInteractionRuntimeCapabilityTest {
 
             (interactions.capabilityReport === report) shouldBe true
             (interactions.bookmark === bookmarkInteraction) shouldBe true
-            report.types.map { it.entryType } shouldBe EntryType.entries
-            EntryType.entries.forEach { entryType ->
-                report.type(entryType)
-                    .entry(EntryCapabilityCatalog.DOWNLOADS)
-                    .supported shouldBe true
-                report.type(entryType)
-                    .entry(EntryCapabilityCatalog.BULK_DOWNLOADS)
-                    .supported shouldBe true
-            }
-            report.types.filter {
-                report.supportsTypeWide(it.entryType, EntryCapabilityCatalog.BOOKMARKING)
-            }.map { it.entryType } shouldBe listOf(EntryType.MANGA)
-            report.types.filter {
-                EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(report, it.entryType)
-            }.map { it.entryType } shouldBe listOf(EntryType.MANGA)
         } finally {
             Injekt = previousInjekt
             cacheDirectory.deleteRecursively()
@@ -115,6 +99,3 @@ private class ProductionCompositionRegistrar : DefaultRegistrar() {
         )
     }
 }
-
-private val EntryCapabilityReportEntry.supported: Boolean
-    get() = (value as? EntryCapabilityReportValue.Outcome)?.result is EntrySupportResult.Supported

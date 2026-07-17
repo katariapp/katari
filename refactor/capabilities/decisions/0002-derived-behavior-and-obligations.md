@@ -26,7 +26,8 @@ Contract selection, developer reporting, and user-facing documentation consume t
 ## Consequences
 
 - Bookmark actions follow bookmark support.
-- Bookmark-based download selection and cleanup follow Bookmarking plus Downloads, without downloader-specific opt-ins where shared child models are sufficient.
+- Bookmark-based download selection follows Bookmarking plus Bulk Downloads, while cleanup protection follows
+  Bookmarking within the download lifecycle, without downloader-specific opt-ins where shared child models are sufficient.
 - Selection actions compose fundamental capability evidence with selection constraints.
 - Source-backed actions compose type/provider evidence with source capability and local/stub restrictions.
 - A future capability declaration activates shared behavior and tests; it either succeeds or reports the exact missing specialized obligation.
@@ -42,7 +43,7 @@ Contract selection, developer reporting, and user-facing documentation consume t
 ## Affected Capabilities and Phases
 
 - Bookmarking and downloads in Phase 2
-- Selection and contextual composition in Phase 4
+- Selection and contextual composition in Phase 6
 - Remaining cross-feature integrations in Phase 5
-- Capability-selected contracts in Phase 6
+- Graph-selected contracts in Phase 7
 - Reporting and documentation in Phase 7

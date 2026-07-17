@@ -1,251 +1,351 @@
-# Feature Capability Refactor Plan
+# Feature Capability Architecture Plan
 
 ## Objective
 
-Implement the architecture described by the [Feature Capability Manifesto](../capability-manifesto.md): a fundamental capability is declared or proven once, common consequences are derived by their owning features, exceptional type-specific obligations become immediately visible, and completeness no longer depends on developer memory.
+Build the architecture described by the [Feature Capability Manifesto](../capability-manifesto.md) before continuing
+capability-by-capability migration.
 
-This is an incremental migration. Existing behavior remains available through compatibility paths until its consumers and contracts have moved.
+The architecture must discover content types, fundamental capabilities, feature integrations, derived consequences,
+specialized obligations, behavioral contracts, and projections from their owning contributions. Adding a future type,
+capability, or feature must change the evaluated relationship graph without adding it to a second central allowlist.
 
-## Architectural Constraints
+Compilation is not the organizing constraint during the architectural migration. Intermediate compile failures are
+acceptable when they expose code that has not yet been moved behind the new boundaries. The build becomes green by
+making the code conform to the architecture, not by weakening the architecture to preserve the old code.
 
-- Provider registration should be evidence of provider-backed support rather than requiring a duplicate support declaration.
-- Fundamental capability facts and derived feature behavior must remain distinct.
-- Type-wide support must not absorb source-, entry-, selection-, or integration-dependent conditions.
-- Presentation metadata owns wording and imagery, not behavioral availability.
-- Source and tracker contracts remain authoritative for capabilities they own.
-- Shared feature policy owns behavior that can be expressed through shared models.
-- Genuine media, storage, reader/player, backup, and compatibility differences remain in their existing boundaries.
-- Unsupported behavior must be intentional and distinguishable from forgotten work.
-- Each phase stops for review before the next begins.
+## Why the Previous Sequence Was Wrong
+
+The previous plan introduced evidence and reports, proved one Bookmarking/Downloads slice, and then began migrating
+capabilities individually. The general feature-integration graph, obligation model, and graph-selected contracts were
+deferred until later phases.
+
+That order allowed each migration to create local completion logic. A hardcoded list of Open, Continue, Bookmarking,
+Downloads, and Bulk Downloads was briefly introduced as a production completion contract. It required a contributor to
+remember to add the next capability and therefore reproduced the original problem. Repeated type tests also restated
+provider registration as capability truth.
+
+The correction is not a larger list. The correction is to build the general relationship architecture first and make all
+later migrations use it.
+
+## Non-Negotiable Architectural Properties
+
+### One discoverable contribution model
+
+- Content types contribute their identity, zero or more interaction providers, media-specific adapters, and presentation
+  vocabulary.
+- Features contribute capability requirements, shared consequences, contextual inputs, specialized obligations,
+  behavioral contracts, and projections.
+- The graph assembler discovers both sides. It does not know about Manga, Anime, Book, or a curated subset of features.
+- Adding a contribution automatically changes graph evaluation.
+
+### No interaction is intrinsically mandatory
+
+- A type contribution is valid with any subset of interaction providers, including only one during early development.
+- Open and Continue are provider-backed capabilities like Downloads, Bookmarking, and future interactions.
+- Their presence on every current production type does not make them an architectural requirement for future types.
+- Product release requirements, if any, are separate explicit policies and do not define type validity.
+
+### Optional capabilities are provider-backed
+
+- Operational provider registration is authoritative evidence.
+- A provider may prove multiple genuine capabilities when it implements those contracts.
+- Provider absence means unsupported and requires no parallel absence declaration.
+- No per-type support matrix repeats provider-presence facts.
+
+### Features own the relationship graph
+
+- A feature declares the capability expression and contextual inputs it consumes.
+- It declares the shared behavior it supplies automatically.
+- It declares any specialized adapter or fixture that compatible media must provide.
+- It declares the behavioral contracts and projections selected when the integration applies.
+- Content types do not opt into every consuming feature.
+
+### Obligations are first-class graph results
+
+- A satisfied capability expression activates its shared consequences automatically.
+- Missing specialized work produces an actionable obligation associated with its owner and affected type.
+- Missing prerequisites make the relationship inapplicable; they do not make the type invalid and do not create an
+  obligation.
+- Missing UI, worker, policy, contract fixture, or projection participation is not represented as generic unsupported.
+- Unreachable, contradictory, duplicate, and unowned graph contributions fail evaluation.
+
+### Context is not flattened
+
+- Source-, entry-, selection-, preference-, platform-, and external-integration inputs remain contextual.
+- The graph can represent conditional feature applicability without turning it into type-wide support.
+- Existing source and tracker contracts remain authoritative inputs.
+
+### Tests do not become another truth source
+
+- Infrastructure tests verify contribution discovery, graph evaluation, obligation generation, and failure semantics.
+- Shared behavioral contracts are selected by evaluated graph applicability.
+- Type tests verify genuine media behavior and specialized adapters.
+- Tests do not repeat lists of which types support which capabilities.
+
+### Compilation is an outcome
+
+- Architecture milestones may leave known compile failures while consumers and providers are unported.
+- Failures must be recorded as migration obligations, not hidden with fallback flags or duplicate facades.
+- A phase may require structural validation without requiring application compilation.
+- Full compilation becomes mandatory only after the affected dependency path has been migrated.
+
+## Architectural Target
+
+The final dependency direction is:
+
+1. Entry-type contributions provide identity and whatever fundamental interaction providers currently exist.
+2. Feature contributions declare capability expressions, contextual inputs, consequences, specialized requirements,
+   contracts, and projections.
+3. A generic assembler discovers contributions and builds the relationship graph.
+4. A generic evaluator determines applicable integrations and emits obligations.
+5. Runtime consumers, validation, behavioral contracts, developer reporting, and documentation consume evaluated graph
+   results rather than maintaining their own type gates.
+
+Neither the assembler nor evaluator contains capability-specific or entry-type-specific lists.
 
 ## Phase Sequence
 
-### Phase 0 — Capability Atlas and Design Decisions
+### Phase 0 — Capability Atlas and Product Decisions — Complete
 
-Build a reviewed map of existing capability evidence, duplicated declarations, consumers, tests, documentation, and contextual inputs.
+The existing atlas and accepted product decisions remain useful input. They describe current evidence, consumers,
+contextual inputs, discrepancies, and expected outcomes.
 
-Classify each fact as type-wide, provider-backed, contextual, external, derived, presentation-only, or a compatibility boundary. Record discrepancies without changing runtime behavior.
-
-Primary outcome:
-
-- A complete capability atlas
-- Agreed expected behavior for current inconsistencies
-- Accepted design decisions needed by Phase 1
-
-Exit gate:
-
-- Every known capability has an owner and scope.
-- Every content-type reference row maps to executable evidence.
-- Duplicated support facts are identified.
-- Contextual support is separated from type-wide support.
-- Discrepancies are assigned an expected behavior and later resolution phase.
+Their role is diagnostic. The atlas is not the executable architecture and must not become a support matrix used by
+runtime code.
 
 See [`phases/00-capability-atlas.md`](phases/00-capability-atlas.md).
 
-### Phase 1 — Authoritative Capability Foundation
+### Phase 1 — Evidence and Reporting Prototype — Complete, Subject to Replacement
 
-Introduce the capability vocabulary, structured support result, evidence model, and query surface without migrating production consumers.
+The existing capability vocabulary, evidence records, support outcomes, deterministic report, and provider-derived
+facts remain available as experimental components.
 
-Provider-backed capabilities must be derived from provider registration. Explicit declarations are reserved for intrinsic facts not proven by a provider. Compatibility APIs remain unchanged.
-
-Primary outcome:
-
-- A deterministic capability report for every registered content type
-- Validation of duplicate, missing, or contradictory evidence
-- No user-visible behavior change
-
-Exit gate:
-
-- Registered types produce deterministic capability reports.
-- Provider registration and capability evidence cannot contradict each other.
-- Support results distinguish supported, intentional absence, and non-applicability.
-- Existing APIs and behavior remain unchanged.
+They are not protected as the final design. Phase 3 may replace them where they encourage a report-centric architecture,
+manual completion lists, or duplicated support assertions.
 
 See [`phases/01-capability-foundation.md`](phases/01-capability-foundation.md).
 
-### Phase 2 — Bookmarking and Downloads Vertical Proof
+### Phase 2 — Bookmarking/Downloads Learning Slice — Complete, Not the General Architecture
 
-Prove the architecture with the known `Bookmarks + Downloads` intersection.
+The slice proved valuable product rules:
 
-Bookmark support must become the single fundamental fact. Bookmarked bulk download, bookmark actions, and bookmark-protected cleanup must be derived from it and the surrounding feature capabilities.
+- Bookmark providers are independent from consumption providers.
+- Shared features can derive common bookmark/download behavior.
+- Presentation flags must not authorize behavior.
+- Synthetic capability evidence can expose shared consequences.
 
-Production support remains unchanged during the proof: Manga supports bookmarks; Anime and Book do not.
-
-Primary outcome:
-
-- A synthetic downloadable content type gaining bookmarks automatically receives every common bookmark/download integration
-- Duplicated presentation and download opt-ins are removed for this slice
-
-Exit gate:
-
-- Bookmark support is represented once.
-- Download-bookmarked behavior is derived.
-- Presentation cannot independently enable or hide it.
-- A test configuration adding Anime bookmark support activates the expected UI policy, candidate selection, cleanup policy, and contracts without changing Anime download code.
+It did not prove that unknown future features enter a general relationship graph. Its feature-specific policy and tests
+are migration input, not the architecture template.
 
 See [`phases/02-bookmark-download-proof.md`](phases/02-bookmark-download-proof.md).
 
-### Phase 3 — Core Type-Wide Capability Migration
+### Phase 3 — General Relationship Architecture
 
-Migrate stable Entry interaction capabilities whose support is type-wide or directly proven by processor registration.
+Build the architecture kernel before migrating another real capability group.
 
-Candidate areas include open/continue, consumption, progress, downloads, bulk download, bookmarks, merge, migration, child-group behavior, library filtering, playback preferences, and update eligibility.
+Primary work:
 
-Each capability moves with its consumers and tests so that dual truth is not left behind.
-
-Primary outcome:
-
-- Type-wide support is no longer repeated across processors, capability booleans, and presentation
-- The runtime support matrix agrees with reviewed product intent
-
-Exit gate:
-
-- Migrated capabilities have one evidence source.
-- Generic UI consumers use the capability query surface.
-- No migrated behavioral support remains in presentation metadata.
-- Manga, Anime, and Book outcomes are covered by matrix tests.
-
-See [`phases/03-core-capability-migration.md`](phases/03-core-capability-migration.md).
-
-### Phase 4 — Contextual and External Capability Composition
-
-Compose source-, entry-, selection-, and external-integration inputs without turning them into static type claims.
-
-Candidate areas include preview, immersive browsing, related entries, latest feeds, local/stub restrictions, tracker support, entry-specific download options, and selection-specific merge/migration actions.
-
-Primary outcome:
-
-- Shared queries explain support using the relevant runtime context
-- Existing source and tracker contracts remain authoritative inputs
+- Define a valid entry-type contribution with zero or more independently discoverable interaction providers.
+- Define generic fundamental-provider contributions without duplicated support declarations.
+- Define feature contributions containing prerequisite expressions, contextual inputs, shared consequences, specialized
+  obligations, behavioral contracts, and projections.
+- Build contribution discovery, graph assembly, evaluation, and actionable obligation reporting.
+- Reject duplicate, contradictory, unowned, unreachable, and manually curated participation.
+- Demonstrate the mechanism with anonymous synthetic types, capabilities, and features rather than known product names.
+- Establish module and dependency boundaries before adapting existing consumers.
+- Retire the central catalog/report authority at the dependency cut rather than carrying it beside the new graph.
 
 Exit gate:
 
-- Contextual results identify their enabling or blocking evidence.
-- Source-dependent behavior is not reported as universally type-supported.
-- Screens no longer duplicate the same source/type composition.
-- Extension and tracker compatibility is preserved.
+- The assembler/evaluator contains no Manga, Anime, Book, Bookmarking, Downloads, or other product-specific branches.
+- Adding a synthetic type, capability provider, or feature contribution changes the graph without another registry edit.
+- A synthetic feature automatically selects shared consequences and contracts for every compatible synthetic type.
+- Missing specialized work produces an actionable obligation.
+- A synthetic type with only one provider remains valid; absent capabilities are unsupported and create no obligation.
+- No central completion allowlist or per-type capability matrix exists.
+- `EntryCapabilityCatalog`, `EntryCapabilityReport`, and `supportsTypeWide` are removed at the Phase 3.5 boundary cut;
+  they do not survive as deprecated production facades.
+- The milestone may finish with documented compile failures caused by unported production code.
 
-See [`phases/04-contextual-capabilities.md`](phases/04-contextual-capabilities.md).
+See [`phases/03-general-relationship-architecture.md`](phases/03-general-relationship-architecture.md).
 
-### Phase 5 — Remaining Derived Feature Integrations
+### Phase 4 — Entry-Type Composition Migration
 
-Move cross-feature implications into shared feature policy.
+Move real Manga, Anime, and Book composition onto the architectural boundary.
 
-Each derived behavior must identify its fundamental requirements, common policy, and any genuine specialized provider requirement. Examples include download settings, merge actions, tracking actions, immersive actions, preview actions, and missing-child presentation.
+Primary work:
 
-Primary outcome:
-
-- Feature combinations are computed rather than stored as additional opt-ins
-- Specialized obligations become explicit
-
-Exit gate:
-
-- Derived support is not independently declared.
-- Adding fundamental evidence activates every common consequence.
-- Specialized requirements produce actionable unsupported results.
-- Silent feature-specific omissions are removed in migrated scope.
-
-See [`phases/05-derived-integrations.md`](phases/05-derived-integrations.md).
-
-### Phase 6 — Capability-Driven Feature Contracts
-
-Create the enforcement layer that automatically subjects supporting content types and capability combinations to shared behavioral expectations.
-
-Downloads is the first comprehensive contract target because its product policy has already been unified. Further contracts cover consumption, bookmarks, merge/migration, preview, immersive browsing, and filtering.
-
-Primary outcome:
-
-- Capability claims automatically select relevant shared contracts
-- Missing fixtures or required adapters fail clearly
+- Contribute Open, Continue, and every other existing interaction through the same provider-backed model.
+- Preserve genuine media-specific implementations and adapters.
+- Replace provider registration and composition patterns superseded by the generic contribution model.
+- Let compile errors enumerate old consumers and providers that still violate the boundary.
 
 Exit gate:
 
-- Fundamental and derived support select applicable contract scenarios.
-- Declaring support cannot silently avoid shared behavioral tests.
-- Type-specific tests remain focused on genuine media behavior.
-- Failure messages identify the missing capability obligation.
+- Every production entry type is composed through the same generic contribution contract.
+- Any subset of providers forms a valid contribution.
+- Capability support comes from providers, not explicit absence declarations or a matrix.
+- The generic architecture remains unaware of concrete entry types.
+- The Entry interaction composition path compiles; unrelated application consumers may remain unported.
 
-See [`phases/06-feature-contracts.md`](phases/06-feature-contracts.md).
+See [`phases/04-entry-type-composition-migration.md`](phases/04-entry-type-composition-migration.md).
 
-### Phase 7 — Documentation and Capability Reporting
+### Phase 5 — Feature Integration Migration
 
-Make user-facing capability documentation a projection of executable product truth and provide a developer-readable integration report.
+Move UI, policies, workers, settings, notifications, and cross-feature behavior into feature-owned graph contributions.
 
-The documentation path must remain deterministic and must not require starting the Android application or resolving live sources.
+Primary work:
 
-Primary outcome:
-
-- `content-type-reference.md` is generated or verified from capability metadata
-- Contributors can inspect fundamental, contextual, derived, and unmet support
-
-Exit gate:
-
-- Validation fails when documentation disagrees with executable capability metadata.
-- Supported, unavailable, and source-dependent states are represented.
-- Reports show affected types, automatic consequences, and specialized obligations.
-- Public documentation remains user-facing rather than exposing provider internals.
-
-See [`phases/07-documentation-reporting.md`](phases/07-documentation-reporting.md).
-
-### Phase 8 — Compatibility Removal and Boundary Enforcement
-
-Remove superseded support APIs and duplicated facts after every consumer has migrated. Strengthen automated boundary enforcement against new ad hoc capability gates while preserving legitimate media and compatibility branches.
-
-Primary outcome:
-
-- The capability architecture is the only support authority in migrated scope
-- Future omissions are prevented by validation rather than convention
+- Use the atlas to identify feature ownership, not to create a migration allowlist.
+- Migrate each feature as a contribution with prerequisites, consequences, obligations, contracts, and projections.
+- Replace direct type checks, presentation support flags, compatibility facades, and local capability queries.
+- Make shared consequences operate over every compatible entry type discovered by the graph.
+- Keep feature vocabulary and imagery in presentation-owned metadata.
 
 Exit gate:
 
-- Superseded `supports…` APIs and behavioral presentation flags are removed.
+- Migrated features receive applicable types from graph evaluation.
+- Adding a compatible provider activates the migrated feature without editing that feature or the content type again.
+- Missing specialized adapters and consumer paths are explicit obligations.
+- No migrated feature keeps its own support matrix.
+
+See [`phases/05-feature-integration-migration.md`](phases/05-feature-integration-migration.md).
+
+### Phase 6 — Contextual and External Integration
+
+Add source, entry, selection, preference, platform, tracker, and other external inputs to the same feature graph without
+flattening them into type-wide facts.
+
+Primary work:
+
+- Model contextual subjects and blockers.
+- Preserve existing source and tracker ownership.
+- Migrate preview, immersive, download options, related entries, latest feeds, local/stub restrictions, and selection
+  constraints.
+- Represent genuine media-specific adapters as obligations selected by feature applicability.
+
+Exit gate:
+
+- Contextual results name their enabling evidence and blockers.
+- Features consume evaluated contextual integrations rather than rebuilding conditions in screens.
+- Source-dependent behavior is never reported as unconditional type support.
+- External integration contracts remain authoritative.
+
+See [`phases/06-contextual-and-external-integration.md`](phases/06-contextual-and-external-integration.md).
+
+### Phase 7 — Graph-Selected Behavioral Contracts and Projections
+
+Complete behavioral enforcement, developer reporting, and documentation projection using the graph declarations already
+owned by features.
+
+Primary work:
+
+- Execute shared contracts selected by evaluated feature applicability.
+- Require specialized fixtures only when an applicable feature declares them.
+- Remove type tests that merely restate capability declarations.
+- Produce developer reports listing automatic consequences and unmet obligations.
+- Generate or verify user-facing capability documentation from projections owned by the same feature contributions.
+
+Exit gate:
+
+- Supporting types automatically enter every applicable shared behavioral contract.
+- Missing fixtures or specialized adapters fail with actionable obligations.
+- Reports answer which types, features, consequences, and obligations are involved.
+- Public documentation cannot drift from evaluated product truth.
+
+See [`phases/07-contracts-reporting-and-documentation.md`](phases/07-contracts-reporting-and-documentation.md).
+
+### Phase 8 — Legacy Removal, Boundary Enforcement, and Build Completion
+
+Remove residual compatibility code and complete enforcement after the central catalog/report authority was already
+retired at the Phase 3.5 boundary cut and production contributions and consumers have migrated.
+
+Primary work:
+
+- Remove residual support APIs, presentation flags, migration adapters, and compatibility paths.
+- Strengthen module boundaries against new type gates and parallel support declarations.
+- Resolve remaining compile failures by moving code into architectural conformance.
+- Run full product validation only after the architecture owns the complete dependency path.
+
+Exit gate:
+
+- The application compiles because production code follows the architecture.
+- No fallback or duplicated authority exists solely to preserve the migration.
 - Generic feature code does not branch directly on content type.
-- Legitimate storage, backup, source compatibility, and media branches remain explicitly allowed.
-- A simulated new capability automatically reaches behavior, presentation, contracts, reporting, and documentation.
-- Every manifesto success criterion is reviewed and full validation passes.
+- A simulated unknown type, capability, and feature automatically enter graph evaluation, obligations, contracts,
+  reporting, and documentation.
+- Every manifesto failure mode and success criterion is reviewed.
+- Full CI-style validation passes.
 
-See [`phases/08-enforcement-cleanup.md`](phases/08-enforcement-cleanup.md).
+See [`phases/08-legacy-removal-and-build-completion.md`](phases/08-legacy-removal-and-build-completion.md).
 
 ## Milestone Protocol
 
-Every phase can contain multiple milestones. `status.md` identifies the only active milestone.
+Every milestone must answer these questions before implementation:
+
+1. Does this change extend the general contribution/graph/evaluation model, or only name current capabilities?
+2. Would an unknown future type, capability, or feature participate without another curated edit?
+3. Is a feature owner declaring its consequences, or is a central coordinator learning feature-specific behavior?
+4. Are tests verifying machinery or behavior, or merely restating declarations?
+5. Is compilation pressure introducing a second authority, fallback, or compatibility shape that violates the target?
+
+If any answer is unfavorable, stop and redesign before editing production consumers.
 
 At each milestone:
 
-1. Inspect current Git state and durable workspace files.
-2. Restate active scope and non-goals.
-3. Implement only the active checklist.
-4. Run focused tests.
-5. Run required integration, boundary, compilation, or documentation checks.
-6. Compare the changes against the manifesto.
-7. Update the atlas, decisions, phase checklist, and status.
+1. Inspect Git state, manifesto, plan, status, and the active phase.
+2. State the architectural invariant being established.
+3. Implement only that invariant and the minimum proof required to challenge it.
+4. Record known compile failures as migration obligations when compilation is not an exit gate.
+5. Run structural checks and architecture-mechanism tests appropriate to the phase.
+6. Compare the result with every manifesto rejection test.
+7. Update decisions, phase state, and status.
 8. Stop before the next milestone.
 
-## Validation Ladder
+## Validation Policy
 
-Use validation in proportion to the active phase:
+Validation serves the architecture; it does not define capability truth.
+
+Always appropriate:
 
 - `git diff --check`
-- Focused unit tests for changed capability owners and consumers
-- Entry interaction API, registry, and type-module unit tests
-- Application unit tests for migrated UI or policy
-- `./gradlew --quiet checkEntryInteractionBoundaries`
-- `./gradlew --quiet :app:compileFossKotlin`
-- `./gradlew --quiet spotlessCheck`
-- Documentation build and capability-reference verification when documentation infrastructure changes
-- Broader CI-style validation at integration and final milestones
+- Formatting for changed files
+- Focused tests of generic graph mechanics and failure semantics
+- Focused behavioral tests for genuine media implementations
+- Static dependency and boundary checks that apply to migrated modules
 
-The exact commands and results belong in `status.md` at each milestone.
+Conditionally appropriate:
 
-## Main Risks
+- Module compilation when the module is expected to conform at the current milestone
+- Application compilation only after the affected consumer path has been migrated
+- Existing legacy tests only when they do not freeze architecture that is being replaced
 
-- **Capability explosion:** storing every feature combination as another capability
-- **False centralization:** replacing scattered booleans with a central set of duplicated booleans
-- **Lost context:** representing source- or entry-dependent support as type-wide
-- **Circular ownership:** making content types aware of every consuming feature
-- **Big-bang migration:** removing compatibility paths before consumers move
-- **Documentation authority:** allowing documentation to authorize behavior instead of reflect it
-- **False confidence:** treating a capability matrix as a substitute for behavioral contracts
-- **Over-classification:** forcing media formats, backup schemas, or compatibility branches into feature capability policy
+Not acceptable as completion evidence:
 
-Each phase review must explicitly check for these risks.
+- Per-type capability assertion matrices
+- Tests that repeat provider registration as `supports == true`
+- A green build achieved through duplicate compatibility paths
+- Passing one feature-specific vertical slice without generic discovery proof
+
+Every known failing command must be recorded with the architectural obligation that keeps it failing. Build restoration is
+required by Phase 8, not used to constrain Phase 3's design.
+
+## Main Risks and Rejection Rules
+
+- **Curated participation:** reject any architecture requiring a second list of known capabilities, types, or features.
+- **Accidental mandatory behavior:** reject treating support shared by all current types as part of future type validity.
+- **Feature-specific kernel:** reject generic modules that contain Bookmarking, Downloads, Manga, Anime, Book, or other
+  product-specific policy.
+- **Report-centric design:** reject a read-only matrix presented as the architecture when features and obligations do not
+  participate.
+- **Test duplication:** reject capability-value assertions that repeat provider presence or current type outcomes.
+- **Compile-first compromise:** reject compatibility code whose only purpose is to keep old consumers compiling across a
+  boundary that should break.
+- **Consumer-first migration:** reject moving more screens or workers before the graph can discover feature consequences.
+- **Capability explosion:** reject derived feature combinations represented as new type opt-ins.
+- **Lost context:** reject source-, entry-, selection-, or integration-dependent facts flattened into type-wide support.
+- **Circular ownership:** reject content types that enumerate the features consuming them.
+- **Premature generalization from a slice:** reject assuming one successful feature policy proves unknown features are
+  automatically covered.
+
+These rules override the convenience of incremental compilation and local feature completion.

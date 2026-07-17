@@ -39,6 +39,11 @@ The desired relationship is:
 
 Developer memory must not be the mechanism that connects a capability to its actions, settings, policies, presentation, documentation, or tests.
 
+This requires an application-wide relationship model, not a collection of capability-specific fixes. Content-type
+contributions, feature integrations, derived consequences, specialized obligations, behavioral contracts, and
+projections must participate in one discoverable architecture. A solution that works only because a central list names
+the capabilities or integrations considered so far has moved the memory problem; it has not solved it.
+
 ## Fundamental and Derived Capabilities
 
 Katari must distinguish between capabilities a content type genuinely implements and behaviors that emerge when capabilities are combined.
@@ -59,6 +64,40 @@ The application should have one authoritative answer to whether a content type s
 
 Labels, icons, and media terminology may vary without redefining behavioral support.
 
+The same rule applies to applicability and integration ownership. They must not be reconstructed from the current Manga,
+Anime, and Book matrix or repeated in tests.
+
+### Architecture precedes migration
+
+The general mechanism that connects content-type contributions to feature consequences must exist before capabilities
+are migrated one at a time.
+
+A vertical slice may demonstrate a problem or validate the general mechanism, but it must not become a collection of
+special cases that is later mistaken for the architecture. Capability-by-capability migration cannot be allowed to invent
+its own completion lists, policies, or test matrices while the common relationship model is deferred.
+
+### Participation is discovered, not curated
+
+Every registered content type, fundamental capability, feature integration, derived rule, specialized obligation,
+contract, and projection must enter the relationship model through its owning contribution.
+
+There must be no manually curated list of "capabilities covered by the architecture," "types that should be tested," or
+"features that consume this capability." Adding a new contribution must change the evaluated graph automatically. If a
+new capability, type, or feature can exist without the architecture noticing it, the architecture is incomplete.
+
+### Partial support is valid
+
+A content type is valid with any subset of interaction providers. No interaction is intrinsically required merely
+because every current type happens to implement it. Open and Continue are subject to the same rule as Downloads,
+Bookmarking, or any future interaction.
+
+Provider presence proves support. Provider absence means that the type does not currently support that interaction; it
+does not make the type invalid or incomplete and does not require a separate absence declaration. A new type may begin
+with one provider and gain more over time.
+
+If the product imposes a release requirement such as every shipped type supporting a particular interaction, that is a
+separate explicit product policy. It is not part of architectural type validity.
+
 ### Features own their implications
 
 The feature that understands a relationship between capabilities must own that relationship.
@@ -73,15 +112,24 @@ The number of obligations should grow with genuine media differences, not with e
 
 ### Missing work must be visible before release
 
-Declaring support must cause every applicable behavioral expectation to become checkable. If a required integration is absent, development or validation should fail clearly and identify the missing obligation.
+Declaring support must cause every applicable behavioral expectation to become checkable. If satisfied prerequisites
+make an integration applicable and required follow-on work is absent, development or validation should fail clearly and
+identify the missing obligation.
 
-Silently omitting an action, returning unsupported from one path, or relying on a future manual audit is not an acceptable completeness mechanism.
+Silently omitting behavior from an already applicable integration or relying on a future manual audit is not an
+acceptable completeness mechanism. The absence of the prerequisite provider itself is ordinary unsupported behavior,
+not an incomplete integration.
 
 ### Shared behavior is tested as a contract
 
 When multiple content types claim the same capability, they inherit the same observable expectations. Those expectations should be exercised against every applicable type, including expectations created by combinations of capabilities.
 
 Type-specific tests remain necessary for specialized media behavior, but they do not replace shared feature contracts.
+
+Tests must not restate provider registration as assertions that a type "supports" a capability. Infrastructure tests
+verify graph construction and failure semantics. Shared contracts verify feature behavior selected by the graph.
+Type-specific tests verify genuine media behavior. A test matrix that repeats declarations is another source of truth and
+must not be treated as completeness enforcement.
 
 ### Presentation follows behavior
 
@@ -95,11 +143,46 @@ User-facing capability documentation remains valuable, but it should reflect the
 
 The content type reference is a projection of product truth, not a substitute for enforcing it.
 
-### Unsupported behavior is explicit
+### Unsupported behavior follows provider absence
 
-Not every capability belongs to every content type. Absence is valid when the concept is meaningless, impossible, or intentionally out of scope.
+Not every capability belongs to every content type. A missing provider means the type does not currently support that
+capability. This is a valid state whether the capability is meaningless, deferred, or simply not implemented yet.
 
-Such absence should be deliberate and explainable. It must be distinguishable from an integration that was simply never considered.
+The architecture does not require roadmap intent to be encoded as an absence declaration. It must instead distinguish
+between a missing prerequisite, which makes a feature inapplicable, and missing follow-on work after all prerequisites
+are present, which is an actionable obligation.
+
+### Compilation follows architecture
+
+During migration, a compiling application is not evidence that the architecture is correct. Compatibility shims,
+fallbacks, and duplicated gates can preserve compilation while preserving the original problem.
+
+The architectural model and dependency direction take priority. It is acceptable for intermediate work to expose compile
+failures while old code is being made to conform. Those failures identify migration obligations; they must not be hidden
+by weakening the architecture. Successful compilation is an outcome of completing the architectural migration, not the
+constraint that shapes the architecture.
+
+## Failure Modes This Work Must Reject
+
+The following are not acceptable intermediate architectures:
+
+- A central allowlist naming only the capabilities currently being migrated.
+- A per-type matrix that repeats facts already proven by operational providers.
+- Treating operations implemented by every current type as mandatory for all future types.
+- Tests that assert capability labels instead of testing infrastructure or behavior.
+- A feature-specific policy presented as the general capability mechanism.
+- Migrating consumers before the architecture can discover consumers and obligations generally.
+- Preserving compilation by keeping parallel authorities, silent fallbacks, or temporary flags with no removal path.
+- Treating the successful completion of one vertical slice as proof that future features participate automatically.
+- Deferring the relationship graph, obligation model, or contract-selection mechanism until after most features have
+  already been migrated by hand.
+
+At every milestone the decisive question is not "does this feature now work?" It is:
+
+> If an unknown future content type, capability, or feature were contributed through its proper owner, would the
+> architecture discover all applicable consequences and expose all missing obligations without another curated edit?
+
+If the answer is no, the work is not aligned with this manifesto.
 
 ## What Feature Completeness Means
 
@@ -115,6 +198,7 @@ It is complete when:
 - Settings and background policies apply to every relevant type.
 - Shared contracts exercise all applicable content types and capability combinations.
 - User-facing support documentation agrees with the executable result.
+- The architecture discovers the feature and its relationships without adding it to a second completion list.
 
 Completeness is therefore a property the project can evaluate, not a conclusion a contributor reaches from memory.
 
@@ -137,6 +221,7 @@ When a new feature is introduced:
 - It applies shared behavior to every compatible content type.
 - It makes exceptional media requirements explicit.
 - It does not require editing every content type merely to opt into behavior that can already be derived.
+- Its owned integration declaration automatically enters graph evaluation, contracts, reporting, and projections.
 
 From a contributor's perspective, the project should answer:
 
@@ -155,18 +240,30 @@ This work is successful when:
 - A fundamental capability is declared once rather than repeated across behavior, presentation, and documentation.
 - Common cross-feature integrations are derived from capabilities instead of separately opted into per content type.
 - Declaring support automatically subjects the content type to every relevant shared contract.
-- Missing required adaptations are detected during development or validation with an actionable explanation.
+- Missing required adaptations are detected after their feature prerequisites are satisfied, with an actionable
+  explanation.
 - Adding support to one content type does not require a manual search for every screen, setting, worker, policy, and menu that may depend on it.
 - Adding a shared feature does not require type-specific changes where existing capabilities already provide enough information.
 - Presentation cannot advertise behavior that is absent or hide behavior that is available because of a duplicated support flag.
-- Unsupported combinations are deliberate and distinguishable from forgotten integrations.
+- Missing providers yield ordinary unsupported behavior, while forgotten downstream integrations are distinguishable
+  once their prerequisites are satisfied.
 - The content type reference remains aligned without serving as the primary enforcement mechanism.
 - Feature releases no longer depend on follow-up fixes for related behaviors that were discoverable from already declared capabilities.
+- No central allowlist or test matrix determines which capabilities, content types, or feature integrations participate.
+- A content type with only one interaction provider remains valid, and unsupported features remain unavailable without
+  separate absence declarations.
+- Removing every duplicated capability assertion from type tests does not weaken completeness enforcement.
+- The architecture can be established before the application compiles, and compilation is restored by moving code into
+  conformance rather than compromising the architecture.
 
 ## Non-Goals
 
-This manifesto does not prescribe a registry format, class hierarchy, annotation system, code-generation strategy, build task, documentation generator, or migration sequence.
+This manifesto does not prescribe a registry format, class hierarchy, annotation system, code-generation strategy,
+build task, or documentation generator. It does prescribe the dependency direction and sequencing constraint: the
+discoverable relationship architecture must precede broad feature migration.
 
 It does not require identical capabilities for Manga, Anime, and Book. It does not eliminate media-specific implementations where the media genuinely differs. It does not require every possible feature combination to exist.
 
-It also does not remove the need for design judgment. The project must still decide whether a behavior is fundamental, derived, intentionally unsupported, or specialized. The requirement is that once this decision is made, its consequences become systematic and verifiable rather than dependent on memory.
+It also does not remove the need for design judgment. The project must still decide whether behavior is fundamental,
+derived, contextual, or specialized. The requirement is that once support exists, its consequences become systematic
+and verifiable rather than dependent on memory.
