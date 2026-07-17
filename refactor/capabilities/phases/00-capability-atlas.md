@@ -25,13 +25,13 @@ Establish a reviewed current-state map before introducing a capability abstracti
 
 ## Milestone 0.2 — Consumer and Coverage Graph
 
-- [ ] Map every inventoried fact to screens, actions, settings, policies, workers, and integrations.
-- [ ] Map focused, registry, boundary, and application tests.
-- [ ] Map every row in `docs/features/content-type-reference.md` to evidence and tests.
-- [ ] Identify duplicate support facts and independently maintained UI flags.
-- [ ] Identify feature combinations currently implemented per type.
-- [ ] Record undocumented executable capabilities and documented claims without evidence.
-- [ ] Stop and review the consumer graph before continuing.
+- [x] Map every inventoried fact to screens, actions, settings, policies, workers, and integrations.
+- [x] Map focused, registry, boundary, and application tests.
+- [x] Map every row in `docs/features/content-type-reference.md` to evidence and tests.
+- [x] Identify duplicate support facts and independently maintained UI flags.
+- [x] Identify feature combinations currently implemented per type.
+- [x] Record undocumented executable capabilities and documented claims without evidence.
+- [x] Stop and review the consumer graph before continuing.
 
 ## Milestone 0.3 — Expected State and Decisions
 
