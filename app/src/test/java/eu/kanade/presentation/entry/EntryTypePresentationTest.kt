@@ -103,8 +103,6 @@ class EntryTypePresentationTest {
         presentation.badgeIcon shouldBe Icons.Outlined.Book
         presentation.smallIcon shouldBe R.drawable.ic_book_24dp
         presentation.coverOverlayIcon shouldNotBe null
-        presentation.downloadBookmarkedSupported shouldBe false
-
         val mangaPresentation = EntryType.MANGA.entryTypePresentation()
         presentation.badgeIcon shouldNotBe mangaPresentation.badgeIcon
         presentation.smallIcon shouldNotBe mangaPresentation.smallIcon

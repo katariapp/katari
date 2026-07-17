@@ -568,7 +568,7 @@ private class RegistryEntryDownloadInteraction(
         if (!processor.supportsBulkDownload(entry)) return EntryBulkDownloadCandidateResult.Unsupported
         if (
             action.type == EntryBulkDownloadActionType.BOOKMARKED &&
-            !supportsBookmarkedBulkDownloads(entry.type)
+            !EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(capabilityReport, entry.type)
         ) {
             return EntryBulkDownloadCandidateResult.Unsupported
         }
@@ -576,11 +576,6 @@ private class RegistryEntryDownloadInteraction(
         return EntryBulkDownloadCandidateResult.Supported(
             pool.selectBulkDownloadCandidates(entry, action, memberEntryIds),
         )
-    }
-
-    private fun supportsBookmarkedBulkDownloads(entryType: EntryType): Boolean {
-        return capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.DOWNLOADS) &&
-            capabilityReport.supportsTypeWide(entryType, EntryCapabilityCatalog.BOOKMARKING)
     }
 
     override suspend fun filterAutoDownloadCandidates(

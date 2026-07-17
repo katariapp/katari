@@ -15,14 +15,15 @@ Updated: 2026-07-17
 - Deterministic report commit: `2c6e26a52` (`(feat): report composed entry capabilities`)
 - Production report commit: `8e03f7469` (`(feat): expose production capability reports`)
 - Bookmark provider commit: `5a3c13b37` (`(refactor): make bookmarking provider-backed`)
+- Bookmark/download policy commit: `d1b1d8b49` (`(refactor): derive bookmark download policy`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
 - Phase: Phase 2 — Bookmarking and downloads vertical proof
-- Milestone: 2.2 — Shared bookmark/download policy
-- State: Complete; stopped before Milestone 2.3 with changes uncommitted
+- Milestone: 2.3 — Application and presentation derivation
+- State: Complete; stopped before Milestone 2.4 with changes uncommitted
 
 ## Completed
 
@@ -48,19 +49,19 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Phase 2 split into four bounded implementation milestones
 - [x] Milestone 2.1 bookmark provider authority and compatibility dispatch completed
 - [x] Milestone 2.2 shared bookmark/download candidate and cleanup policy completed
+- [x] Milestone 2.3 capability-derived application and presentation availability completed
 
 ## Current Scope
 
-Milestone 2.2 moves bookmark/download implications into shared download feature policy without changing application
-presentation.
+Milestone 2.3 makes application availability follow the same capability evidence as runtime behavior.
 
-Manga registers the provider and thereby produces Bookmarking evidence. Anime and Book do not register one and keep
-their accepted explicit intentional-absence outcomes. Bulk download and cleanup are now derived; UI and presentation
-behavior remains reserved for Milestone 2.3.
+Entry and Updates bookmark actions read Bookmarking from `EntryCapabilityReport`. Entry and Library bookmarked-download
+menus use `EntryDownloadCapabilityPolicy`, which derives availability from Downloads + Bookmarking for single and mixed
+type selections. The same policy owns bookmark-aware cleanup applicability from Milestone 2.2.
 
-Download processors now load media-specific candidate pools, while shared policy selects Next, Unread, or Bookmarked.
-Bookmarked applicability derives from Downloads + Bookmarking. Cleanup protection derives from Bookmarking and retains
-the existing preference override. No specialized bookmark/downloader adapter was required.
+`EntryTypePresentation.downloadBookmarkedSupported` is removed. Type presentation still owns labels, icons, and plurals,
+but cannot independently hide or advertise bookmarked downloads. Production behavior remains Manga-only because no
+production capability evidence changed.
 
 ## Milestone Sequence
 
@@ -93,6 +94,13 @@ Phase 1 is complete. Phase 2 milestones are:
 - All Entry interaction API, registry, Manga, Anime, and Book module tests passed after the shared candidate-policy split
 - Synthetic Anime Bookmarking tests passed for shared candidate selection and cleanup protection
 - `./gradlew --quiet :app:compileFossKotlin`, `checkEntryInteractionBoundaries`, and `spotlessCheck` passed for Milestone 2.2
+- Focused API and application tests passed for shared download capability policy, Updates bookmark actions, download-menu
+  presentation, and unchanged type presentation metadata
+- Synthetic Anime Bookmarking evidence activates Updates and bookmarked-download menu availability without Anime UI or
+  downloader changes
+- `./gradlew --quiet :entry-interactions:test :entry-interactions:spi:test :app:compileFossKotlin checkEntryInteractionBoundaries`
+  passed for Milestone 2.3
+- `./gradlew --quiet spotlessApply` and `git diff --check` passed for Milestone 2.3
 
 ## Manifesto Comparison
 
@@ -108,17 +116,21 @@ Phase 1 is complete. Phase 2 milestones are:
 - No UI, settings, worker, policy, or public documentation behavior changed in Phase 1.
 - Bookmarking is now declared by one operational provider registration rather than a consumption boolean plus type no-ops.
 - The compatibility facade derives support from that registration, so it cannot disagree with capability evidence.
-- Derived download and cleanup consequences remain feature-owned rather than being pulled into content-type plugins; UI
-  migration remains isolated in Milestone 2.3.
+- Derived download, cleanup, and application consequences remain feature-owned rather than being pulled into
+  content-type plugins.
 - Production support remains Manga-only, and public capability documentation remains behaviorally accurate.
 - Bookmarked download selection is derived from Downloads + Bookmarking rather than separately implemented per downloader.
 - Cleanup consumes the same Bookmarking truth and keeps preference semantics in the feature that owns them.
 - A synthetic Anime provider receives both shared consequences without an Anime downloader change.
 - No new derived capability flag or per-type opt-in was introduced.
-- Application presentation still duplicates bookmarked action availability and is the bounded scope of Milestone 2.3.
+- Entry, Updates, and Library availability now follows capability evidence rather than a compatibility support query or
+  presentation flag.
+- Presentation retains terminology and imagery but no longer owns bookmarked-download behavior.
+- Public support remains unchanged, so the content-type reference remains accurate; projection verification is reserved
+  for the Phase 2 integration gate.
 
 ## Exact Next Action After Review
 
-After explicit approval, commit Milestone 2.2 and complete only Milestone 2.3: derive entry, Updates, and bookmarked bulk
-download action visibility from capability evidence and remove `downloadBookmarkedSupported` as behavioral authority.
-Stop before the Phase 2 integration gate.
+After explicit approval, commit Milestone 2.3 and complete only Milestone 2.4: add the end-to-end synthetic vertical
+contract, verify the production support projection, remove superseded Phase 2 internals where safe, update relevant
+documentation verification, and run the complete Phase 2 exit gate. Stop before Phase 3.

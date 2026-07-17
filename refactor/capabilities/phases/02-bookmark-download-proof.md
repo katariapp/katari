@@ -37,12 +37,12 @@ Prove end-to-end capability composition using the known Bookmarks and Downloads 
 
 ## Milestone 2.3 — Application and Presentation Derivation
 
-- [ ] Derive entry and Updates bookmark actions from Bookmarking.
-- [ ] Derive bookmarked bulk-download action availability from Bookmarking + Downloads.
-- [ ] Remove `downloadBookmarkedSupported` as behavioral authority.
-- [ ] Preserve labels and icons as presentation-only metadata.
-- [ ] Add application policy and presentation coverage driven by capability evidence.
-- [ ] Stop before the Phase 2 integration gate.
+- [x] Derive entry and Updates bookmark actions from Bookmarking.
+- [x] Derive bookmarked bulk-download action availability from Bookmarking + Downloads.
+- [x] Remove `downloadBookmarkedSupported` as behavioral authority.
+- [x] Preserve labels and icons as presentation-only metadata.
+- [x] Add application policy and presentation coverage driven by capability evidence.
+- [x] Stop before the Phase 2 integration gate.
 
 ## Milestone 2.4 — Vertical Contract and Integration Gate
 
@@ -116,3 +116,22 @@ unsupported Anime behavior, synthetic Anime support, and preference override sem
 
 Application action visibility and `downloadBookmarkedSupported` remain unchanged for Milestone 2.3. Production behavior
 therefore remains Manga-only at the UI boundary.
+
+## Milestone 2.3 Completion Notes
+
+Entry and Updates bookmark actions now read Bookmarking from the composed capability report. Bookmark mutation and
+eligibility still dispatch through the bookmark provider compatibility API, so capability evidence decides whether the
+shared action applies while the provider owns the operation.
+
+`EntryDownloadCapabilityPolicy` is the shared owner for download consequences of Bookmarking. It derives bookmarked
+bulk-download availability from Downloads + Bookmarking for both single-type and mixed-type selections, and it also
+expresses the Bookmarking-derived cleanup protection introduced in Milestone 2.2. Entry and Library dropdowns consume
+that policy result.
+
+`EntryTypePresentation.downloadBookmarkedSupported` has been removed. Presentation retains type-specific labels, icons,
+and plurals, but no longer stores this behavioral fact. Evidence-driven tests show synthetic Anime Bookmarking support
+activating Updates bookmark actions and the bookmarked download menu option without an Anime-specific presentation
+change.
+
+Production behavior remains Manga-only because production capability evidence has not changed. No public capability
+documentation statement changed in this milestone; the internal atlas and status now describe the migrated authority.

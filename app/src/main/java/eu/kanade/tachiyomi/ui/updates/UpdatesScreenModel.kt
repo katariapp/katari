@@ -32,6 +32,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryConsumptionInteraction
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadInteraction
@@ -63,6 +65,7 @@ import java.time.ZonedDateTime
 class UpdatesScreenModel(
     private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
+    private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
     private val getUpdates: GetUpdates = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getMergedEntry: GetMergedEntry = Injekt.get(),
@@ -309,7 +312,7 @@ class UpdatesScreenModel(
     fun hasBookmarkAction(updates: List<UpdatesItem>, bookmark: Boolean): Boolean {
         return updates.hasBookmarkAction(
             bookmark = bookmark,
-            supportsBookmark = entryConsumptionInteraction::supportsBookmark,
+            capabilityReport = entryCapabilityReport,
             canSetBookmarked = entryConsumptionInteraction::canSetBookmarked,
         )
     }
@@ -526,11 +529,13 @@ data class UpdatesItem(
 
 internal fun List<UpdatesItem>.hasBookmarkAction(
     bookmark: Boolean,
-    supportsBookmark: (EntryType) -> Boolean,
+    capabilityReport: EntryCapabilityReport,
     canSetBookmarked: (entryType: EntryType, status: EntryConsumptionStatus, bookmarked: Boolean) -> Boolean,
 ): Boolean {
     val supportedUpdates = mapNotNull { it.update as? UpdateItem.EntryUpdate }
-        .filter { supportsBookmark(it.entryType) }
+        .filter {
+            capabilityReport.supportsTypeWide(it.entryType, EntryCapabilityCatalog.BOOKMARKING)
+        }
 
     return supportedUpdates.isNotEmpty() &&
         supportedUpdates.size == size &&

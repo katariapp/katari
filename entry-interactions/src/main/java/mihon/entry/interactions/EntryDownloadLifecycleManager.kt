@@ -112,9 +112,9 @@ internal class EntryDownloadLifecycleManager(
         val downloads = downloadInteraction()
         owners.forEach { owner ->
             if (isExcluded(owner.entry)) return@forEach
-            val protectsBookmarks = capabilityReport().supportsTypeWide(
+            val protectsBookmarks = EntryDownloadCapabilityPolicy.protectsBookmarkedDownloads(
+                capabilityReport(),
                 owner.entry.type,
-                EntryCapabilityCatalog.BOOKMARKING,
             )
             val eligible = if (!protectsBookmarks || downloadPreferences.removeBookmarkedChapters.get()) {
                 owner.children

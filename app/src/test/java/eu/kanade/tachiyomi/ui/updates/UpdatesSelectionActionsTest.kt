@@ -2,14 +2,24 @@ package eu.kanade.tachiyomi.ui.updates
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityEvidence
+import mihon.entry.interactions.EntryCapabilityEvidenceRecord
+import mihon.entry.interactions.EntryCapabilityEvidenceSnapshot
+import mihon.entry.interactions.EntryCapabilityOutcomeSnapshot
+import mihon.entry.interactions.EntryCapabilityOwner
+import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadState
+import mihon.entry.interactions.createEntryCapabilityReport
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.EntryCover
 import tachiyomi.domain.updates.model.UpdateItem
 import tachiyomi.domain.updates.model.UpdatesWithRelations
 
 class UpdatesSelectionActionsTest {
+
+    private val productionBookmarkReport = bookmarkReport(EntryType.MANGA)
 
     @Test
     fun `bookmark action is only available for manga selection`() {
@@ -22,17 +32,17 @@ class UpdatesSelectionActionsTest {
 
         mangaOnly.hasBookmarkAction(
             bookmark = true,
-            supportsBookmark = ::supportsBookmark,
+            capabilityReport = productionBookmarkReport,
             canSetBookmarked = ::canSetBookmarked,
         ) shouldBe true
         animeOnly.hasBookmarkAction(
             bookmark = true,
-            supportsBookmark = ::supportsBookmark,
+            capabilityReport = productionBookmarkReport,
             canSetBookmarked = ::canSetBookmarked,
         ) shouldBe false
         mixed.hasBookmarkAction(
             bookmark = true,
-            supportsBookmark = ::supportsBookmark,
+            capabilityReport = productionBookmarkReport,
             canSetBookmarked = ::canSetBookmarked,
         ) shouldBe false
     }
@@ -54,19 +64,31 @@ class UpdatesSelectionActionsTest {
 
         bookmarkedManga.hasBookmarkAction(
             bookmark = false,
-            supportsBookmark = ::supportsBookmark,
+            capabilityReport = productionBookmarkReport,
             canSetBookmarked = ::canSetBookmarked,
         ) shouldBe true
         partiallyBookmarkedManga.hasBookmarkAction(
             bookmark = false,
-            supportsBookmark = ::supportsBookmark,
+            capabilityReport = productionBookmarkReport,
             canSetBookmarked = ::canSetBookmarked,
         ) shouldBe false
         mixed.hasBookmarkAction(
             bookmark = false,
-            supportsBookmark = ::supportsBookmark,
+            capabilityReport = productionBookmarkReport,
             canSetBookmarked = ::canSetBookmarked,
         ) shouldBe false
+    }
+
+    @Test
+    fun `anime bookmark evidence activates the shared selection action`() {
+        val animeOnly = listOf(updateItem(20, EntryType.ANIME, bookmark = false))
+        val syntheticReport = bookmarkReport(EntryType.MANGA, EntryType.ANIME)
+
+        animeOnly.hasBookmarkAction(
+            bookmark = true,
+            capabilityReport = syntheticReport,
+            canSetBookmarked = ::canSetBookmarked,
+        ) shouldBe true
     }
 
     @Test
@@ -83,16 +105,31 @@ class UpdatesSelectionActionsTest {
         partialManga.hasConsumedAction(consumed = false, canSetConsumed = ::canSetConsumed) shouldBe true
     }
 
-    private fun supportsBookmark(entryType: EntryType): Boolean {
-        return entryType == EntryType.MANGA
-    }
-
     private fun canSetBookmarked(
-        entryType: EntryType,
+        @Suppress("UNUSED_PARAMETER") entryType: EntryType,
         status: EntryConsumptionStatus,
         bookmarked: Boolean,
     ): Boolean {
-        return supportsBookmark(entryType) && status.bookmarked != bookmarked
+        return status.bookmarked != bookmarked
+    }
+
+    private fun bookmarkReport(vararg supportedTypes: EntryType): EntryCapabilityReport {
+        return createEntryCapabilityReport(
+            registeredTypes = EntryType.entries,
+            evidence = EntryCapabilityEvidenceSnapshot(
+                supportedTypes.map { entryType ->
+                    EntryCapabilityEvidenceRecord(
+                        entryType = entryType,
+                        capability = EntryCapabilityCatalog.BOOKMARKING,
+                        evidence = EntryCapabilityEvidence.ProviderRegistration(
+                            owner = EntryCapabilityOwner("updates-test"),
+                            provider = "bookmark-provider",
+                        ),
+                    )
+                },
+            ),
+            outcomes = EntryCapabilityOutcomeSnapshot(emptyList()),
+        )
     }
 
     private fun canSetConsumed(

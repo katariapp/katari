@@ -107,7 +107,7 @@ Defaults are executable statements of absence and can hide missing work when tre
 
 | Gate | Provisional scope | Current evidence and owner | Concern |
 | ---- | ----------------- | -------------------------- | ------- |
-| `EntryTypePresentation.downloadBookmarkedSupported` | Behavioral fact stored in presentation | Manga true; Anime, Book, and Generic false; used to decide whether the bookmarked bulk-download action is shown | Duplicates the runtime outcome of bookmark and download behavior. Presentation currently decides behavioral availability. |
+| Bookmarked download menu availability | Derived application policy | Entry and Library obtain availability from `EntryDownloadCapabilityPolicy`; the dropdown receives the derived result | Downloads + Bookmarking now has one feature-owned behavioral answer; type presentation contributes wording only. |
 | `missingChildCount(EntryType, ...)` | Type-wide behavioral gate | Application presentation code calculates gaps only for Manga | A direct `EntryType.MANGA` check owns availability outside the interaction model. Whether this is fundamental, derived, or intentional is unresolved. |
 | Download settings capability lookup | Type-wide behavioral/presentation gate | Settings screen reads `settingCapabilities()[EntryType.MANGA]` specifically | The settings surface assumes Manga owns configurable download settings even though the API returns a map by type. |
 | Library-update notification type | Type-wide behavioral routing and presentation | `LibraryUpdateNotifier.EntryUpdateNotificationType` defines Manga and Anime; `from(entry)` falls back to Manga for Book or any unlisted type | Book receives Manga notification channel/group IDs and chapter/read terminology instead of an explicit Book result. Whether notification semantics should be derived or specialized is unresolved. |
@@ -154,10 +154,10 @@ This graph records where the inventoried facts currently have consequences. It i
 | Download setting capabilities | Download settings screen | Settings visibility for packaging, splitting, and parallelism | Currently queried only for Manga, despite the API returning capabilities by type. |
 | Download options | Entry child download action and options dialog | Anime stream/dub/subtitle/quality selection | Anime preference persistence and source/media resolution. |
 | Bulk download | Entry and library bulk menus; library-update notification download action | Selection availability excludes local items; entry action excludes local/stub sources | Candidate resolution stays type-specific; `EntryCapabilityInteraction` duplicates the download support query for UI consumers. |
-| Bookmarked bulk download | Entry/library download dropdown | `EntryTypePresentation.downloadBookmarkedSupported` independently hides or shows the menu item | Runtime candidate selection now derives Downloads + Bookmarking correctly; presentation remains a duplicate authority until Milestone 2.3. |
+| Bookmarked bulk download | Entry/library download dropdown | `EntryDownloadCapabilityPolicy` derives availability from Downloads + Bookmarking for each affected selection | The same feature-owned rule now controls UI availability and runtime applicability. |
 | Automatic downloads | Library-update worker | No direct UI beyond download/category preferences | Worker asks each downloader to filter new items, queues without starting, then starts the shared runtime once. |
 | Consumption | Entry child selection/swipes, Updates selection, library selection | Notification mark-consumed action; tracking sync can mark children consumed | Every type processor reports `MarkedConsumed` to shared download lifecycle policy. |
-| Bookmarking | Entry multi-select and swipe action; Updates selection action | Bookmarked library/child filters and bookmarked-download menu presentation | Shared download lifecycle protects bookmarked downloads for every `EntryType`, even though only Manga declares bookmark mutation support. |
+| Bookmarking | Entry multi-select and swipe action; Updates selection action | Bookmarked library/child filters and capability-derived bookmarked-download menu availability | Shared download lifecycle protects bookmarked downloads only when the type report supports Bookmarking. |
 | Download cleanup | No independent capability surface | Delete actions in entry, updates, migration, and cache maintenance | Shared lifecycle handles marked-consumed cleanup and completion cleanup; media downloaders own physical deletion/cleanup. |
 | Migration | Entry overflow action, library selection, migration configuration/list/search | Migration flags include remove downloads and data transfer | Migration use case copies progress and playback preferences, chapters, categories, tracks, settings, and optional data after capability checks. |
 | Merge | Entry add/manage-merge actions and library selection | Merge target/dialog eligibility | Shared selection policy requires same type and valid merge shape; child lists, continue, downloads, progress, and library summaries are merge-aware independently. |
@@ -225,7 +225,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 | Bulk download children: all | All three download processors return true | Anime/Book focused; Manga candidate coverage weak | Matched. |
 | Automatically download new children: all | All three implement automatic candidate filtering; library worker dispatches generically | Anime/Book focused; Manga gap; boundary routing test | Matched with uneven coverage. |
 | Delete downloads after marking consumed: all | Shared lifecycle plus per-type event emission | Shared lifecycle iterates every enum type; Manga/Anime/Book event tests | Matched and mostly shared. |
-| Bookmark-based bulk downloads follow bookmark support | Manga currently has both; Anime/Book have neither and reject the action | Shared policy derives Downloads + Bookmarking; presentation still has a separate flag | Runtime behavior is derived and enforced; UI authority migrates in Milestone 2.3. |
+| Bookmark-based bulk downloads follow bookmark support | Manga currently has both; Anime/Book have neither and reject the action | Shared policy derives Downloads + Bookmarking for runtime and application availability | Matched; synthetic Anime Bookmarking activates candidate selection and presentation without Anime downloader or presentation changes. |
 | Preview: Manga yes, Anime source-dependent, Book no | Manga preview provider; Anime requires `EntryPreviewSource`; Book absent | Focused Manga/Anime and registry tests | Matched. |
 | Immersive: Manga/Anime source-dependent, Book no | Source immersive opt-in plus Manga/Anime processors; Book absent | Manga processor, Anime renderer, and shared UI tests | Matched at product level; Anime load coverage is incomplete. |
 | Bundled Local source: Manga only | Local source requires and produces Manga entries | No focused content-type contract test | Matched by inspection; weak coverage. |
@@ -236,7 +236,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 
 | Concept | Independent representations that must currently agree |
 | ------- | ----------------------------------------------------- |
-| Bookmarked downloads | Bookmark provider registration; shared Downloads + Bookmarking candidate policy; presentation `downloadBookmarkedSupported`; dropdown visibility; documentation callout; capability-aware lifecycle protection. |
+| Bookmarked downloads | Bookmark provider registration feeds the report; shared download policy derives candidate applicability, dropdown visibility, and lifecycle protection; documentation remains a projection. |
 | Bulk download | Download processor support; capability facade forwarding; entry/library selection predicates; notification action predicate; local/stub exclusions. |
 | Download configuration | Per-downloader setting-capability set; settings screen Manga-only lookup; individual settings visibility; downloader preference consumption. |
 | Migration/merge | Capability processor booleans; selection rules; entry/library action visibility; migration use-case guards; public reference. |
@@ -246,14 +246,14 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 | Preview | Processor registration; source interface for Anime; preference/config state; entry and browse availability; long-press fallback; documentation. |
 | Immersive | Source opt-in; type renderer support; load-time media requirements; feed/catalog modes; long-press action; tests with manual type outcomes; documentation. |
 | Tracking | Per-tracker supported types; entry action; library filters; sync/search guards; documentation. |
-| Type presentation | Central vocabulary/icons plus behavioral `downloadBookmarkedSupported`; notification vocabulary is maintained in a separate two-type enum. |
+| Type presentation | Central vocabulary, icons, and plurals; notification vocabulary is maintained in a separate two-type enum. Bookmarked-download behavioral authority has been removed from presentation. |
 | Type composition | Interaction plugins, library progress calculator list, tracker/source metadata, notification type list, backup branches, and boundary allowlists each maintain their own view of relevant types. |
 
 ## Implemented Capability Combinations
 
 | Combination | Manga | Anime | Book | Current enforcement |
 | ----------- | ----- | ----- | ---- | ------------------- |
-| Downloads + bookmarks: bulk bookmarked items | Derived and implemented | Not applicable today, shared policy returns unsupported | Not applicable today, shared policy returns unsupported | Shared policy composes Downloads + Bookmarking; presentation flag remains to migrate. |
+| Downloads + bookmarks: bulk bookmarked items | Derived and implemented | Not applicable today, shared policy returns unsupported and hides the action | Not applicable today, shared policy returns unsupported and hides the action | Shared policy composes Downloads + Bookmarking for runtime and UI; synthetic Anime support activates both. |
 | Downloads + bookmarks: cleanup protection | Derived and implemented | Activates automatically with synthetic Bookmarking support | Activates automatically with synthetic Bookmarking support | Shared lifecycle consults Bookmarking evidence and preference policy. |
 | Downloads + consumption: delete-after-consumed | Implemented | Implemented | Implemented | Shared lifecycle policy plus type event emission. |
 | Downloads + library updates: automatic download | Implemented | Implemented | Implemented | Shared worker orchestration, type-specific candidate filters. |
@@ -271,7 +271,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 - No shared contract instantiates every real content-type provider claiming open, continue, download, bulk download, consumption, bookmark, migration, merge, update, progress, preview, or immersive support.
 - `EntryType.entries` is used by one strong shared lifecycle test, but enum membership is not the same as capability applicability.
 - The content reference is entirely hand-maintained. Anime migration already demonstrates that executable support and documentation can disagree without validation failing.
-- The bookmark-based bulk-download rule is executable in shared runtime policy; application presentation and documentation verification have not yet been driven from it.
+- The bookmark-based bulk-download rule drives shared runtime and application presentation; public documentation verification remains assigned to the Phase 2 integration gate.
 - Book's update notification fallback, Book partial-progress label path, Book library progress calculator, Manga bulk/automatic-download policies, real update-eligibility matrices, and Anime immersive loading have missing or weak focused coverage.
 - `checkEntryInteractionBoundaries` protects module ownership but cannot detect forgotten UI, policy, worker, backup, notification, test, or documentation integrations.
 - Several tests preserve manual type matrices or direct type gates. They can remain green when a type gains a capability because the test inputs do not discover that declaration.
@@ -282,7 +282,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 - Processor registration is useful provider evidence but is not a universal capability declaration. Capability, consumption, child-group, library-filter, preview, and immersive processors all contain meaningful sub-capability or contextual checks.
 - The same absence is represented by missing providers, default-false methods, explicit `Unsupported` values, empty results, no-ops, presentation booleans, and direct type checks.
 - Some facts that look type-wide are contextual. Anime preview depends on the source, immersive loading depends on resolvable media, tracking depends on the tracker, and selection actions depend on the whole selection.
-- Downloading bookmarked children is now derived in shared download policy; presentation remains the last independent runtime authority for this combination.
+- Downloading bookmarked children and exposing its menu action are both derived by shared download policy; presentation owns terminology only.
 - Presentation and documentation already contain support statements independent from executable processor behavior.
 - Cross-feature routing can omit a type even when the underlying workflow is shared: Book update notifications currently fall through to Manga-specific notification semantics.
 - Compatibility, media format, storage, and vocabulary branches must remain visible but outside the capability catalog unless they independently gate a user-facing feature.
@@ -430,4 +430,12 @@ Milestone 2.2 moves bookmark/download implications into the download feature:
 - the existing remove-bookmarked preference retains its override semantics.
 
 No specialized bookmark/downloader adapter is required by the current shared models, so no missing specialized obligation
-exists for this combination. Application and presentation authority remains for Milestone 2.3.
+exists for this combination.
+
+Milestone 2.3 removes the remaining application and presentation duplication:
+
+- Entry and Updates bookmark actions read Bookmarking support from the composed report;
+- Entry and Library bookmarked-download actions use the shared Downloads + Bookmarking policy;
+- `EntryTypePresentation` no longer stores behavioral support for bookmarked downloads;
+- type-specific labels, icons, and plurals remain presentation metadata; and
+- synthetic Anime evidence activates the shared Updates and download-menu policies without Anime-specific UI changes.
