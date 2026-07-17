@@ -7,6 +7,7 @@ Updated: 2026-07-17
 - Branch: `features-arch-refactor`
 - Architecture reset commit: `666487574` (`(refactor): reset capability architecture direction`)
 - Contribution semantics commit: `d89e51693` (`(feat): define generic feature contributions`)
+- Discovery and assembly commit: `03d0b6422` (`(feat): assemble discovered feature graph`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -14,8 +15,8 @@ Updated: 2026-07-17
 ## Active Work
 
 - Phase: Phase 3 — General Relationship Architecture
-- Milestone: 3.2 — Discovery and graph assembly
-- State: complete and uncommitted; stopped before Milestone 3.3 evaluation and obligations
+- Milestone: 3.3 — Evaluation and obligations
+- State: complete and uncommitted; stopped before Milestone 3.4 contract and projection selection
 
 ## Why the Plan Was Reset
 
@@ -62,6 +63,9 @@ authority or weakening the architecture.
 - [x] Milestone 3.1 committed in `d89e51693`
 - [x] Milestone 3.2 generic discovery and deterministic graph assembly implemented
 - [x] Decision `0008-contribution-discovery-and-assembly.md` accepted
+- [x] Milestone 3.2 committed in `03d0b6422`
+- [x] Milestone 3.3 generic evaluation and specialized obligations implemented
+- [x] Decision `0009-evaluation-and-specialized-obligations.md` accepted
 
 ## New Phase Sequence
 
@@ -90,26 +94,24 @@ graph.
 
 ## Current Working Tree Scope
 
-- Owner-scoped `FeatureGraphContributor` and contribution sink discovery boundary.
-- Discovery rejects a contributor submitting a top-level contribution owned by another owner.
-- Deterministic `FeatureGraph` assembly for content types, features, capabilities, context inputs, and specialized adapter
-  definitions.
-- Cross-contribution rejection of duplicate type/feature identities and contradictory distributed definitions.
-- Reachability validation rejects provider capabilities with no consuming feature, supplied adapters with no feature
-  requirement, and feature integrations with no effect.
-- Features may declare relationships before any current type supplies the prerequisite provider.
-- Synthetic tests prove new types, providers, and features enter an unchanged discovery/assembly pipeline.
-- Accepted decision `0008-contribution-discovery-and-assembly.md` and Phase 3.2 completion notes.
+- Generic `Always`, `Provided`, `AllOf`, and `AnyOf` evaluation against actual content-type providers.
+- Deterministic per-type/per-integration outcomes for inapplicable, conditional, incomplete, and applicable relationships.
+- Missing capability prerequisites produce no obligation and do not make a partial type invalid.
+- Unresolved contextual inputs retain pending specialized requirements without prematurely emitting obligations.
+- Missing specialized adapters on statically applicable integrations produce obligations attributed to the affected
+  content-type owner.
+- Applicable relationships expose matched providers/adapters and per-type edges to feature-owned shared consequences.
+- Multiple type edges retain the same shared consequence instance, preserving single-gate coordinator architecture.
+- Accepted decision `0009-evaluation-and-specialized-obligations.md` and Phase 3.3 completion notes.
 - No existing production source or consumer changed in this milestone.
 
 ## Last Validation
 
 - `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest` passed during implementation.
-- Assembly tests cover expansion through unchanged contributors, deterministic ordering, owner scoping, duplicate
-  top-level contributions, contradictory definitions, unreachable providers/adapters/integrations, and features prepared
-  before their first provider.
-- Search confirms `feature-graph` contains no Manga, Anime, Book, Bookmarking, Downloads, Open, Continue, `EntryType`, or
-  legacy capability-report references.
+- Evaluation tests cover positive expression composition, ordinary inapplicability, contextual conditionality,
+  specialized obligations, adapter completion, deterministic ordering, and shared-consequence instance identity.
+- Search confirms the new evaluator and tests contain no concrete product type, feature, `EntryType`, or legacy
+  capability-report references.
 - `./gradlew --quiet checkEntryInteractionBoundaries spotlessCheck` passed.
 - `git diff --check` passed.
 
@@ -130,11 +132,17 @@ graph.
 - Every supplied provider must connect to a feature-owned relationship, preventing capabilities from silently bypassing
   the consequence graph.
 - Assembly records relationships without prematurely evaluating support or obligations.
+- Evaluation applies every discovered relationship without a product matrix or feature-specific branch.
+- Missing prerequisites remain ordinary unsupported behavior; only missing specialized work after applicability creates
+  an obligation.
+- Context is retained as conditional instead of being guessed or flattened into type-wide support.
+- Per-type applicability edges reference one feature-owned shared consequence, preserving single-gate coordinators.
+- Contracts and projections remain unselected until Milestone 3.4.
 - Compilation pressure cannot justify dual authorities or fallback architecture.
 - The full architecture is app-wide and not limited to Bookmarking or Downloads.
 
 ## Exact Next Action After Review
 
-After explicit commit authorization, commit Milestone 3.2. Then begin only Milestone 3.3: evaluate capability expressions
-for each discovered type and materialize specialized obligations. Stop before selecting behavioral contracts or
-projections in Milestone 3.4.
+Review Milestone 3.3 evaluation semantics and proposed decision `0009`. After explicit approval, mark the decision
+accepted and commit Milestone 3.3. Then begin only Milestone 3.4: select behavioral contracts and projections from these
+evaluated relationships without reconstructing capability support.

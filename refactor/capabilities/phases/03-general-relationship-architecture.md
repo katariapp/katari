@@ -28,12 +28,12 @@ obligations. It is intentionally generic and may break production compilation at
 
 ## Milestone 3.3 — Evaluation and Obligations
 
-- [ ] Evaluate capability expressions and contextual requirements generically.
-- [ ] Activate feature-owned shared consequences for every compatible type.
-- [ ] Emit actionable specialized obligations with the responsible owner and affected subject.
-- [ ] Keep deliberate non-applicability distinct from missing implementation.
-- [ ] Reject feature-specific branches in the evaluator.
-- [ ] Stop before contract and projection selection.
+- [x] Evaluate capability expressions and contextual requirements generically.
+- [x] Activate feature-owned shared consequences for every compatible type.
+- [x] Emit actionable specialized obligations with the responsible owner and affected subject.
+- [x] Keep deliberate non-applicability distinct from missing implementation.
+- [x] Reject feature-specific branches in the evaluator.
+- [x] Stop before contract and projection selection.
 
 ## Milestone 3.4 — Contract and Projection Selection
 
@@ -121,3 +121,22 @@ Synthetic tests add types, providers, and feature contributions through an uncha
 observe the graph expand automatically. A feature may prepare for a provider no current type implements. No prerequisite
 expression is evaluated and no obligation, consequence, contract, or projection is selected; those operations remain
 Milestones 3.3 and 3.4.
+
+## Milestone 3.3 Completion Notes
+
+The generic evaluator derives one result for every discovered content-type and feature-integration pair. Positive
+`Always`, `Provided`, `AllOf`, and `AnyOf` expressions are evaluated only from contributed providers. A missing provider
+produces inapplicability without an obligation; no current operation is treated as mandatory for type validity.
+
+Satisfied capability prerequisites lead to one of three distinct states. Integrations with unresolved contextual inputs
+remain conditional, retaining pending specialized requirements without prematurely turning them into failures. Missing
+specialized adapters on statically applicable integrations produce actionable obligations attributed to the affected
+content-type owner. Complete integrations become applicable and expose their matched provider and adapter objects.
+
+Every applicable content-type/integration pair creates edges to its feature-owned shared consequences. The edges retain
+the original consequence object, so multiple types can point to one single-gate coordinator without evaluation copying,
+instantiating, or routing through it. Behavioral contracts and projections are not selected; that boundary remains
+Milestone 3.4.
+
+Anonymous tests cover expression composition, ordinary inapplicability, conditional context, specialized obligations,
+adapter completion, deterministic ordering, and multiple type edges referencing the same shared consequence instance.

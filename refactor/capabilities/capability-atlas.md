@@ -528,3 +528,21 @@ Synthetic tests expand an existing discovery pipeline with new types, providers,
 changing discovery or assembly code. Feature relationships may exist before their first supporting type. Assembly does
 not yet determine which relationships apply to which types and does not materialize obligations or select artifacts;
 that remains Phase 3.3 and Phase 3.4 work.
+
+## Phase 3.3 Generic Evaluation and Obligations
+
+The assembled graph is now evaluated across every discovered content type and feature integration without a product
+matrix or feature-specific evaluator branch. `Always`, `Provided`, `AllOf`, and `AnyOf` prerequisites use the actual
+provider contributions. Missing prerequisites are ordinary inapplicability and create no obligation.
+
+Satisfied prerequisites produce separate conditional, incomplete, and applicable states. Context-bearing integrations
+remain conditional until Phase 6 supplies their real source, entry, selection, preference, platform, or external inputs.
+Missing specialized adapters become actionable obligations only for statically applicable integrations and identify the
+affected content type, its responsible owner, the feature relationship, and the feature-owned requirement.
+
+Applicable integrations produce per-type edges to their shared consequences while retaining the exact feature-owned
+consequence object. This lets a notification manager or another single-gate coordinator remain one shared runtime object
+rather than being instantiated per type. The graph describes applicability; it does not become an event-routing layer.
+
+Contract and projection selection remains absent. Milestone 3.4 will consume these evaluated relationships rather than
+reconstructing capability support independently.
