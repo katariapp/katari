@@ -18,7 +18,7 @@ Every capability or capability-like gate is provisionally classified as one of:
 - **Presentation-only:** vocabulary or imagery with no authority over behavior
 - **Compatibility boundary:** a legitimate type or format distinction that is not feature capability gating
 
-These classifications are provisional until Milestone 0.3. In particular, processor registration can prove that a provider exists without proving every behavioral sub-capability exposed by that provider.
+These inventory classifications are interpreted by the accepted Milestone 0.3 decisions. In particular, processor registration can prove that a provider exists without proving every behavioral sub-capability exposed by that provider.
 
 ## Evidence Boundaries
 
@@ -286,7 +286,41 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 - Cross-feature routing can omit a type even when the underlying workflow is shared: Book update notifications currently fall through to Manga-specific notification semantics.
 - Compatibility, media format, storage, and vocabulary branches must remain visible but outside the capability catalog unless they independently gate a user-facing feature.
 
-These are inventory findings, not accepted architecture decisions. Milestone 0.3 will decide which facts are fundamental, derived, contextual, intentionally unsupported, or specialized.
+These inventory findings are interpreted by the accepted Milestone 0.3 architecture decisions below.
+
+## Accepted Expected-State Classification
+
+These classifications apply the accepted decision records and guide the later implementation phases.
+
+| Area | Expected classification and authority | Later phase |
+| ---- | ------------------------------------- | ----------- |
+| Open, continue, downloads, bulk download, consumption, progress transfer, playback preferences, merge, and migration | Provider-backed fundamental behavior. Operational registration is evidence; constant support declarations must not duplicate it. Sub-capabilities that require distinct behavior need distinct evidence. | 1 and 3 |
+| Bookmarking | Provider-backed fundamental behavior because mutation/persistence is real type work. Current outcome is Manga supported; Anime and Book intentionally unsupported. | 1–3 |
+| Update eligibility | Shared universal Entry policy for the current common restrictions, with specialized providers only if a real type difference appears. Three equivalent processors are duplication, not three independent capability decisions. | 3 |
+| Library progress summary and child-list construction | Provider-backed behavior. Their providers must contribute to the same inspected type composition instead of remaining separate invisible type lists. | 1 and 3 |
+| Child-group filtering | Provider-backed when operational. Manga supported; Anime intentionally unsupported; Book absence must be explicitly classified rather than inferred from registry fallback. | 3 |
+| Outside-release-period library filtering | Type-wide feature-policy support with one authoritative evidence source. Preserve Manga/Book supported and Anime unsupported until a separate product decision changes it. | 3 |
+| Download setting capabilities | Fundamental media-transfer facts only where a setting corresponds to real specialized behavior. Settings visibility is derived by the settings feature. | 3 and 5 |
+| Download options | Entry/source/selection-dependent composition over a download provider and resolvable media. Anime currently supplies the specialized option resolver. | 4 |
+| Bookmark actions, bookmarked downloads, and bookmark cleanup protection | Derived from Bookmarking plus the surrounding feature capability. Shared feature policy owns the consequence; missing specialized work is an obligation. | 2 |
+| Automatic downloads and consumption cleanup | Shared feature policy plus a downloader/consumption provider. Media-specific candidate or storage behavior remains specialized; applicability is not another type opt-in. | 3, 5, and 6 |
+| Preview | Contextual composition of preview provider, source/media evidence, entry state, and preference. Enabled state is not fundamental support. | 4 and 5 |
+| Immersive browsing | Contextual composition of source opt-in, type renderer, entry media, and platform/runtime state. | 4 and 5 |
+| Related entries, latest feeds, source home/settings/WebView, and source supported types | External source-owned inputs. They are composed by features and are not duplicated as type capabilities. | 4 |
+| Tracking | External tracker-owned type support composed with the entry and tracker state. | 4 and 5 |
+| Local/stub, selection, preference, platform, and renderer conditions | Contextual blockers or enablers reported by the owning query, never negative type capabilities. | 4 |
+| Missing-child gaps | Derived presentation/child-list behavior. Manga-only current behavior is preserved, but availability must not remain a direct presentation type gate. | 5 |
+| Library-update notification semantics and actions | Derived from update participation, open/consumption/download capabilities, and presentation vocabulary. Book's Manga fallback is a missing integration. | 5 and 6 |
+| Labels, icons, nouns, and history/progress wording | Presentation-only. They may vary by type but cannot establish behavioral support. | 3, 5, and 8 |
+| Backup wire defaults, legacy conversions, media formats, reader/player internals | Compatibility or media boundaries. Current capability consumers inside backup/migration must query authoritative evidence, while genuine format branches remain local. | 3, 4, and 8 |
+
+## Accepted Decision Records
+
+- `decisions/0001-capability-evidence-and-authority.md`
+- `decisions/0002-derived-behavior-and-obligations.md`
+- `decisions/0003-support-result-semantics.md`
+- `decisions/0004-contextual-and-external-ownership.md`
+- `decisions/0005-current-product-outcomes.md`
 
 ## Discrepancies
 
@@ -294,11 +328,19 @@ Observed disagreements are recorded without changing implementation or public do
 
 | Capability | Conflicting statements | Expected behavior | Resolution phase | Status |
 | ---------- | ---------------------- | ----------------- | ---------------- | ------ |
-| Anime migration | `AnimeCapabilityProcessor` returns true; `docs/features/content-type-reference.md` describes migration as unavailable | Unresolved | 0.3 decision, later implementation/docs phase | Open |
-| Book downloads as a registered capability | Production runtime enables the Book download plugin, but the plugin defaults `downloadsEnabled` to false and can be assembled without its provider | Unresolved: construction seam versus meaningful optional capability | 0.3 decision | Open |
-| Anime child-group filtering | Anime registers a processor but the processor reports unsupported and implements empty/no-op behavior; Book expresses absence by not registering | Unresolved: explicit unsupported provider versus missing provider | 0.3 decision | Open |
-| Book library-update notification semantics | The shared update notifier supports the Book workflow but its notification type catalog defines only Manga and Anime, with Manga as the fallback | Unresolved: derive shared behavior and type presentation, or add an explicit specialized obligation | 0.3 decision, later implementation phase | Open |
+| Anime migration | `AnimeCapabilityProcessor` returns true; `docs/features/content-type-reference.md` describes migration as unavailable | Anime migration remains supported; documentation is stale | Capability matrix in Phase 3; docs projection/correction in Phase 7 | Accepted: documentation drift |
+| Book downloads as a registered capability | Production runtime enables the Book download plugin, but the plugin defaults `downloadsEnabled` to false and can be assembled without its provider | Production Book downloads are supported; the flag is a construction/testing seam | Registration evidence in Phase 1; production provider contracts in Phase 6 | Accepted: non-product ambiguity |
+| Anime child-group filtering | Anime registers a processor but the processor reports unsupported and implements empty/no-op behavior; Book expresses absence by not registering | Anime remains intentionally unsupported; registered no-op is not positive evidence | Explicit absence and provider cleanup in Phase 3 | Accepted: intentional absence with ambiguous representation |
+| Book library-update notification semantics | The shared update notifier supports the Book workflow but its notification type catalog defines only Manga and Anime, with Manga as the fallback | Book receives shared behavior with explicit neutral/Book semantics, never Manga fallback | Derived notification integration in Phase 5; contract in Phase 6 | Accepted: implementation bug |
 
 ## Phase 0 Completion Summary
 
-Not yet complete. Milestones 0.1 and 0.2 establish the evidence inventory and dependency graph. Expected-state review and design decisions remain in Milestone 0.3.
+Milestones 0.1 and 0.2 establish the evidence inventory and dependency graph. Milestone 0.3 accepts:
+
+- evidence authority based on provider registration, exceptional intrinsic declarations, and feature-owned derivation;
+- distinct supported, intentional absence, not-applicable, contextual, missing-obligation, and unresolved semantics;
+- preservation of public source/tracker ownership;
+- reviewed classifications for every inventoried capability area; and
+- expected outcomes and later phases for every discrepancy.
+
+Phase 0 is complete. Its accepted decisions are the preconditions for Phase 1, which must be split into reviewable implementation milestones before runtime work begins.

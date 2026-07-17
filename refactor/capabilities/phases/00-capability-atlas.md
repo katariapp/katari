@@ -35,14 +35,14 @@ Establish a reviewed current-state map before introducing a capability abstracti
 
 ## Milestone 0.3 — Expected State and Decisions
 
-- [ ] Review every discrepancy with product behavior as the deciding concern.
-- [ ] Mark each discrepancy as implementation bug, documentation drift, intentional absence, or unresolved.
-- [ ] Decide how provider-backed, intrinsic, contextual, derived, and presentation-only facts are evidenced.
-- [ ] Decide how intentional unsupported and not-applicable results differ.
-- [ ] Decide which public source/tracker capability contracts remain external inputs.
-- [ ] Record accepted decisions under `../decisions/`.
-- [ ] Assign each discrepancy to a later resolution phase.
-- [ ] Complete the Phase 0 summary in the atlas.
+- [x] Review every discrepancy with product behavior as the deciding concern.
+- [x] Mark each discrepancy as implementation bug, documentation drift, intentional absence, or non-product ambiguity, pending approval.
+- [x] Propose how provider-backed, intrinsic, contextual, derived, and presentation-only facts are evidenced.
+- [x] Propose how intentional unsupported and not-applicable results differ.
+- [x] Propose which public source/tracker capability contracts remain external inputs.
+- [x] Mark the proposed records under `../decisions/` accepted after user approval.
+- [x] Assign each discrepancy to a later resolution phase.
+- [x] Complete the Phase 0 summary in the atlas.
 
 ## Exit Gate
 
