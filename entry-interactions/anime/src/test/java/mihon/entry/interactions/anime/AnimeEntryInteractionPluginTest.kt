@@ -17,6 +17,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -32,6 +33,9 @@ import kotlinx.coroutines.test.runTest
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityReportEntry
+import mihon.entry.interactions.EntryCapabilityReportValue
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
@@ -48,9 +52,11 @@ import mihon.entry.interactions.EntryPlaybackQualityMode
 import mihon.entry.interactions.EntryProgressResourceMapping
 import mihon.entry.interactions.EntryProgressSnapshot
 import mihon.entry.interactions.EntryProgressStateSnapshot
+import mihon.entry.interactions.EntrySupportResult
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
 import mihon.entry.interactions.anime.download.model.AnimeDownload
+import mihon.entry.interactions.createEntryInteractionComposition
 import mihon.entry.interactions.createEntryInteractions
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import org.junit.jupiter.api.Test
@@ -103,6 +109,29 @@ class AnimeEntryInteractionPluginTest {
 
         continued?.id shouldBe 10L
         status.state shouldBe EntryDownloadState.DOWNLOADED
+    }
+
+    @Test
+    fun `plugin composition reports authoritative anime capabilities and accepted absences`() {
+        val composition = createEntryInteractionComposition(
+            listOf(animeEntryInteractionPlugin(dependencies())),
+        )
+        val report = composition.capabilityReport.type(EntryType.ANIME)
+
+        report.entry(EntryCapabilityCatalog.DOWNLOADS).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.PLAYBACK_PREFERENCES)
+            .outcome()
+            .shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.PREVIEW)
+            .value
+            .shouldBeInstanceOf<EntryCapabilityReportValue.Conditional>()
+        report.entry(EntryCapabilityCatalog.BOOKMARKING)
+            .outcome()
+            .shouldBeInstanceOf<EntrySupportResult.IntentionallyUnsupported>()
+        report.entry(EntryCapabilityCatalog.CHILD_GROUP_FILTERING)
+            .outcome()
+            .shouldBeInstanceOf<EntrySupportResult.IntentionallyUnsupported>()
+        report.entry(EntryCapabilityCatalog.MIGRATION).outcome().shouldBeInstanceOf<EntrySupportResult.Unresolved>()
     }
 
     @Test
@@ -1005,6 +1034,10 @@ class AnimeEntryInteractionPluginTest {
             entryRepository = entryRepository,
             entryInteractionPreferences = entryInteractionPreferences,
         )
+    }
+
+    private fun EntryCapabilityReportEntry.outcome(): EntrySupportResult {
+        return (value as EntryCapabilityReportValue.Outcome).result
     }
 
     private fun mockAnimeDownloadManager(episodeDownloaded: Boolean): AnimeDownloadManager {

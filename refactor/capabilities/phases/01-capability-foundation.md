@@ -33,13 +33,13 @@ Create the capability vocabulary, support result, evidence model, and determinis
 
 ## Milestone 1.3 — Deterministic Type Reports
 
-- [ ] Define the reviewed fundamental capability catalog used by current provider categories and intrinsic facts.
-- [ ] Assemble deterministic reports from authoritative evidence for every registered content type.
-- [ ] Represent accepted intentional absence and non-applicability explicitly rather than inferring them from fallbacks.
-- [ ] Surface unresolved or missing evidence without treating it as unsupported.
-- [ ] Verify Manga, Anime, and Book reports against the Phase 0 atlas.
-- [ ] Keep contextual support conditional and derived feature combinations out of the fundamental report.
-- [ ] Stop and review the reports before continuing.
+- [x] Define the reviewed fundamental capability catalog used by current provider categories and intrinsic facts.
+- [x] Assemble deterministic reports from authoritative evidence for every registered content type.
+- [x] Represent accepted intentional absence and non-applicability explicitly rather than inferring them from fallbacks.
+- [x] Surface unresolved or missing evidence without treating it as unsupported.
+- [x] Verify Manga, Anime, and Book reports against the Phase 0 atlas.
+- [x] Keep contextual support conditional and derived feature combinations out of the fundamental report.
+- [x] Stop and review the reports before continuing.
 
 ## Milestone 1.4 — Foundation Integration Gate
 

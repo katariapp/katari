@@ -10,10 +10,16 @@ import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookFailureReason
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityReportEntry
+import mihon.entry.interactions.EntryCapabilityReportValue
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
-import mihon.entry.interactions.createEntryInteractions
+import mihon.entry.interactions.EntryDownloadProcessor
+import mihon.entry.interactions.EntryInteractionPlugin
+import mihon.entry.interactions.EntrySupportResult
+import mihon.entry.interactions.createEntryInteractionComposition
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -57,7 +63,7 @@ class BookEntryInteractionPluginTest {
         val progressRepository = mockk<EntryProgressRepository> {
             coEvery { getByEntryId(1L) } returns emptyList()
         }
-        val interactions = createEntryInteractions(
+        val composition = createEntryInteractionComposition(
             listOf(
                 bookEntryInteractionPlugin(
                     BookEntryInteractionDependencies(
@@ -68,6 +74,7 @@ class BookEntryInteractionPluginTest {
                 ),
             ),
         )
+        val interactions = composition.interactions
         val entry = entry()
 
         assertEquals(chapter, interactions.continueEntry.findNext(entry))
@@ -82,6 +89,29 @@ class BookEntryInteractionPluginTest {
         assertFalse(interactions.download.supportsDownloads(EntryType.BOOK))
         assertFalse(interactions.capability.supportsMigration(entry))
         assertFalse(interactions.capability.supportsMerge(entry))
+        val report = composition.capabilityReport.type(EntryType.BOOK)
+        assertTrue(report.entry(EntryCapabilityCatalog.OPEN).outcome() is EntrySupportResult.Supported)
+        assertTrue(
+            report.entry(EntryCapabilityCatalog.BOOKMARKING).outcome() is
+                EntrySupportResult.IntentionallyUnsupported,
+        )
+        assertTrue(report.entry(EntryCapabilityCatalog.DOWNLOADS).outcome() is EntrySupportResult.Unresolved)
+    }
+
+    @Test
+    fun `book report follows production download provider registration`() {
+        val downloadProcessor = mockk<EntryDownloadProcessor>(relaxed = true) {
+            io.mockk.every { type } returns EntryType.BOOK
+        }
+        val composition = createEntryInteractionComposition(
+            listOf(EntryInteractionPlugin { it.registerDownloadProcessor(downloadProcessor) }),
+        )
+
+        assertTrue(
+            composition.capabilityReport.type(EntryType.BOOK)
+                .entry(EntryCapabilityCatalog.DOWNLOADS)
+                .outcome() is EntrySupportResult.Supported,
+        )
     }
 
     @Test
@@ -239,6 +269,10 @@ class BookEntryInteractionPluginTest {
         title = "Book",
         type = EntryType.BOOK,
     )
+
+    private fun EntryCapabilityReportEntry.outcome(): EntrySupportResult {
+        return (value as EntryCapabilityReportValue.Outcome).result
+    }
 
     private fun chapter(
         id: Long = 10L,

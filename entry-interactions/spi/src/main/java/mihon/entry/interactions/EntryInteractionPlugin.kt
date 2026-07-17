@@ -193,6 +193,7 @@ fun interface EntryInteractionPlugin {
 
 interface EntryInteractionRegistry {
     fun declareIntrinsicCapability(declaration: EntryIntrinsicCapabilityDeclaration)
+    fun declareCapabilityOutcome(declaration: EntryCapabilityOutcomeDeclaration)
     fun registerOpenProcessor(processor: EntryOpenProcessor)
     fun registerContinueProcessor(processor: EntryContinueProcessor)
     fun registerDownloadProcessor(processor: EntryDownloadProcessor)

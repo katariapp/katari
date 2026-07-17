@@ -8,6 +8,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -20,6 +21,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityReportEntry
+import mihon.entry.interactions.EntryCapabilityReportValue
 import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
@@ -33,6 +37,8 @@ import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.entry.interactions.EntryProgressResourceMapping
+import mihon.entry.interactions.EntrySupportResult
+import mihon.entry.interactions.createEntryInteractionComposition
 import mihon.entry.interactions.createEntryInteractions
 import mihon.entry.interactions.manga.download.DownloadCache
 import mihon.entry.interactions.manga.download.DownloadManager
@@ -77,6 +83,24 @@ class MangaEntryInteractionPluginTest {
 
         continued?.id shouldBe 10L
         status.state shouldBe EntryDownloadState.DOWNLOADED
+    }
+
+    @Test
+    fun `plugin composition reports authoritative manga capabilities`() {
+        val composition = createEntryInteractionComposition(
+            listOf(mangaEntryInteractionPlugin(dependencies())),
+        )
+        val report = composition.capabilityReport.type(EntryType.MANGA)
+
+        report.entry(EntryCapabilityCatalog.OPEN).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.BOOKMARKING).outcome().shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.DOWNLOAD_ARCHIVE_PACKAGING)
+            .outcome()
+            .shouldBeInstanceOf<EntrySupportResult.Supported>()
+        report.entry(EntryCapabilityCatalog.PREVIEW)
+            .value
+            .shouldBeInstanceOf<EntryCapabilityReportValue.Conditional>()
+        report.entry(EntryCapabilityCatalog.MERGE).outcome().shouldBeInstanceOf<EntrySupportResult.Unresolved>()
     }
 
     @Test
@@ -666,6 +690,10 @@ class MangaEntryInteractionPluginTest {
             },
             entryInteractionPreferences = entryInteractionPreferences,
         )
+    }
+
+    private fun EntryCapabilityReportEntry.outcome(): EntrySupportResult {
+        return (value as EntryCapabilityReportValue.Outcome).result
     }
 
     private fun mangaConsumptionProcessor(

@@ -359,3 +359,18 @@ Milestone 1.2 connects evidence collection to Entry interaction composition:
 - empty or absent evidence remains valid input for the unresolved reporting work in Milestone 1.3 rather than being interpreted as intentional unsupported behavior.
 
 The existing `createEntryInteractions` API and runtime dispatch remain unchanged. The composed evidence snapshot is currently an inspection foundation only; production consumers and deterministic real-type reports have not migrated yet.
+
+Milestone 1.3 adds the reviewed fundamental catalog and deterministic type reports. The catalog includes provider-backed core interactions, distinct download-setting facts, contextual download options, bookmarking, library progress, filtering, merge/migration, preview, and immersive capability. Universal policy and derived combinations remain outside it.
+
+Current report interpretation is deliberately stricter than current fallback behavior:
+
+- provider evidence produces supported type-wide results;
+- preview and immersive provider evidence produces conditional results;
+- Manga bookmark and download-setting support follows positive processor evidence;
+- Anime and Book bookmark absence and Anime child-group-filter absence are explicit owned decisions;
+- missing catalog evidence produces an unresolved result, never implicit unsupported; and
+- merge, migration, bulk download, library progress, download options, and filter facts remain unresolved where their current APIs do not yet provide authoritative composition evidence.
+
+Manga, Anime, and Book plugin tests assert their current report projections. Book downloads report supported whenever the production download provider is present; omitting that provider in the existing construction/testing seam leaves the fact unresolved instead of misclassifying Book downloads as intentionally unsupported.
+
+The report is deterministic across plugin registration order and rejects evidence outside the reviewed catalog or any positive-evidence/explicit-absence conflict. It remains available only from `EntryInteractionComposition`; normal production callers still receive the unchanged `EntryInteractions` facade until Milestone 1.4.

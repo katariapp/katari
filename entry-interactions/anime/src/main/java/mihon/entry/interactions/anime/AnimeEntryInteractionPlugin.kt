@@ -1,8 +1,13 @@
 package mihon.entry.interactions.anime
 
+import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryCapabilityOutcomeDeclaration
+import mihon.entry.interactions.EntryCapabilityOwner
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
+import mihon.entry.interactions.EntrySupportResult
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
 import mihon.entry.interactions.settings.EntryInteractionPreferences
@@ -45,6 +50,26 @@ internal fun animeEntryInteractionPlugin(
     dependencies: AnimeEntryInteractionRuntimeDependencies,
 ): EntryInteractionPlugin {
     return EntryInteractionPlugin { registry ->
+        registry.declareCapabilityOutcome(
+            EntryCapabilityOutcomeDeclaration(
+                entryType = EntryType.ANIME,
+                capability = EntryCapabilityCatalog.BOOKMARKING,
+                result = EntrySupportResult.IntentionallyUnsupported(
+                    owner = ANIME_CAPABILITY_OWNER,
+                    reason = "Anime bookmark persistence is not supported in the current product",
+                ),
+            ),
+        )
+        registry.declareCapabilityOutcome(
+            EntryCapabilityOutcomeDeclaration(
+                entryType = EntryType.ANIME,
+                capability = EntryCapabilityCatalog.CHILD_GROUP_FILTERING,
+                result = EntrySupportResult.IntentionallyUnsupported(
+                    owner = ANIME_CAPABILITY_OWNER,
+                    reason = "Anime child-group filtering is intentionally outside current product scope",
+                ),
+            ),
+        )
         val openProcessor = AnimeOpenProcessor()
         registry.registerOpenProcessor(openProcessor)
         registry.registerCapabilityProcessor(AnimeCapabilityProcessor())
@@ -100,6 +125,8 @@ internal fun animeEntryInteractionPlugin(
         )
     }
 }
+
+private val ANIME_CAPABILITY_OWNER = EntryCapabilityOwner("entry-interactions.anime")
 
 data class AnimeEntryInteractionDependencies(
     val entryChapterRepository: EntryChapterRepository,

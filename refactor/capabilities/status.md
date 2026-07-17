@@ -11,14 +11,15 @@ Updated: 2026-07-17
 - Consumer and coverage commit: `18c927736` (`(docs): map capability consumers and coverage`)
 - Architecture decisions commit: `6d688b04a` (`(docs): record capability architecture decisions`)
 - Capability semantics commit: `471978d3d` (`(feat): define capability support semantics`)
+- Evidence composition commit: `a3ae2c6b5` (`(feat): collect capability evidence from composition`)
 
 Always verify the current branch, `HEAD`, working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
 - Phase: Phase 1 — Authoritative capability foundation
-- Milestone: 1.2 — Evidence collection and validation
-- State: Complete; stopped for review before Milestone 1.3
+- Milestone: 1.3 — Deterministic type reports
+- State: Complete; stopped for review before Milestone 1.4
 
 ## Completed
 
@@ -39,12 +40,13 @@ Always verify the current branch, `HEAD`, working tree, and recent commits befor
 - [x] Phase 1 split into four bounded implementation milestones
 - [x] Milestone 1.1 capability vocabulary and semantic invariants implemented
 - [x] Milestone 1.2 registration-derived evidence and composition validation implemented
+- [x] Milestone 1.3 reviewed catalog and deterministic type reports implemented
 
 ## Current Scope
 
-Milestone 1.2 connects authoritative evidence to Entry interaction composition without changing dispatch or existing support APIs.
+Milestone 1.3 defines the reviewed fundamental capability catalog and projects composed evidence into deterministic per-type reports.
 
-Operational provider registrations contribute evidence only where registration proves the fundamental capability. Intrinsic declarations are an exceptional type-composition mechanism for stable facts with no provider. Contextual providers remain conditional, and absent evidence remains unresolved rather than becoming implicit unsupported behavior.
+The report distinguishes supported, conditional, explicitly unavailable, not applicable, and unresolved facts. It is available from the composition result for validation and tests but is not yet exposed through the production `EntryInteractions` facade or consumed by application features.
 
 ## Phase 1 Milestones
 
@@ -53,35 +55,35 @@ Operational provider registrations contribute evidence only where registration p
 - 1.3: Deterministic reports for real type compositions
 - 1.4: Compatibility, integration validation, and Phase 1 exit gate
 
-Milestone 1.2 is complete. Milestone 1.3 has not started.
+Milestone 1.3 is complete. Milestone 1.4 has not started.
 
 ## Last Validation
 
 - `./gradlew --quiet spotlessApply` completed successfully on 2026-07-17
-- `./gradlew --quiet :entry-interactions:api:testDebugUnitTest` passed, including nine capability-model tests
-- `./gradlew --quiet :entry-interactions:testDebugUnitTest` passed, including nine evidence-composition tests and all 53 existing registry tests
-- Focused Manga, Anime, and Book `EntryInteractionPluginTest` suites passed
+- `./gradlew --quiet :entry-interactions:api:testDebugUnitTest` passed, including six deterministic-report tests
+- `./gradlew --quiet :entry-interactions:testDebugUnitTest` passed, including twelve evidence/report composition tests and all existing registry tests
+- Focused Manga, Anime, and Book `EntryInteractionPluginTest` suites passed with type-report assertions
 - `./gradlew --quiet checkEntryInteractionBoundaries` passed
 - `./gradlew --quiet :app:compileFossKotlin` passed
 - `./gradlew --quiet spotlessCheck` passed
 - `git diff --check` passed
-- Existing `createEntryInteractions` callers retain the same API and dispatch behavior
+- Existing `createEntryInteractions` callers retain the same API and dispatch behavior; reports currently have no production consumer
 
 ## Manifesto Comparison
 
-- Registering an operational provider now supplies evidence automatically instead of requiring a parallel type support flag.
-- Intrinsic evidence is restricted to stable type-wide facts and conflicts with provider authority for the same fact.
-- Preview and immersive registrations remain contextual evidence; external/context evidence cannot establish unconditional type support.
-- Registration of capability wrappers, universal update policy, and sub-capability processors does not masquerade as support.
-- Empty composition remains valid, so missing evidence can be reported as unresolved in Milestone 1.3 rather than guessed as intentional absence.
-- No derived feature combination or per-type boolean matrix was introduced.
+- The catalog contains fundamental facts only; automatic downloads, cleanup, update policy, and bookmark/download intersections are not new capability declarations.
+- Reports are built from composed evidence and accepted outcomes rather than a manually populated per-type support matrix.
+- Contextual providers produce conditional report entries and cannot become unconditional supported results.
+- Anime and Book bookmark absence and Anime child-group-filter absence are explicit owned product decisions.
+- Legacy facts whose current booleans are not yet authoritative evidence—such as merge, migration, bulk download, and some filters—remain visibly unresolved for later migration.
+- Registration order does not affect report ordering or values.
 
 ## Exact Next Action After Review
 
-Begin Milestone 1.3 only after explicit approval:
+Begin Milestone 1.4 only after explicit approval:
 
-1. Define the complete reviewed fundamental capability catalog from the Phase 0 atlas.
-2. Add explicit accepted absence and non-applicability records where registration cannot supply evidence.
-3. Produce deterministic Manga, Anime, and Book capability reports from the composed evidence.
-4. Surface missing facts as unresolved and keep contextual capabilities conditional.
-5. Stop before Milestone 1.4.
+1. Expose the report/query foundation through the production Entry interaction composition boundary.
+2. Verify compatibility APIs and application behavior remain unchanged.
+3. Add production-composition coverage for every registered type, including production-enabled Book downloads.
+4. Resolve or explicitly carry forward every Phase 1 exit-gate gap.
+5. Run the complete Phase 1 validation set, update the atlas, and stop before Phase 2.

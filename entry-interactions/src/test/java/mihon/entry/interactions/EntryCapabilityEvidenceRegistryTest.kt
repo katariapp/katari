@@ -52,7 +52,7 @@ class EntryCapabilityEvidenceRegistryTest {
 
     @Test
     fun `intrinsic declaration contributes explicit type-wide evidence`() {
-        val declaration = intrinsicDeclaration("publication-resources")
+        val declaration = intrinsicDeclaration("outside-release-period-filtering")
 
         val composition = createEntryInteractionComposition(
             listOf(EntryInteractionPlugin { it.declareIntrinsicCapability(declaration) }),
@@ -78,7 +78,7 @@ class EntryCapabilityEvidenceRegistryTest {
 
     @Test
     fun `duplicate intrinsic authority fails composition`() {
-        val declaration = intrinsicDeclaration("publication-resources")
+        val declaration = intrinsicDeclaration("outside-release-period-filtering")
 
         val error = shouldThrow<IllegalStateException> {
             createEntryInteractionComposition(
@@ -90,7 +90,7 @@ class EntryCapabilityEvidenceRegistryTest {
         }
 
         error.message shouldBe
-            "Duplicate capability evidence for publication-resources on EntryType BOOK: [Intrinsic]"
+            "Duplicate capability evidence for outside-release-period-filtering on EntryType BOOK: [Intrinsic]"
     }
 
     @Test
@@ -169,6 +169,85 @@ class EntryCapabilityEvidenceRegistryTest {
         )
 
         composition.capabilityEvidence.records shouldBe emptyList()
+    }
+
+    @Test
+    fun `positive provider sub-capabilities contribute their own catalog evidence`() {
+        val consumptionProcessor = mockk<EntryConsumptionProcessor>(relaxed = true) {
+            every { type } returns EntryType.MANGA
+            every { supportsBookmark } returns true
+        }
+        val downloadProcessor = mockk<EntryDownloadProcessor>(relaxed = true) {
+            every { type } returns EntryType.MANGA
+            every { settingCapabilities } returns setOf(
+                EntryDownloadSettingCapability.ARCHIVE_PACKAGING,
+                EntryDownloadSettingCapability.PARALLEL_ITEM_TRANSFERS,
+            )
+        }
+
+        val composition = createEntryInteractionComposition(
+            listOf(
+                EntryInteractionPlugin { registry ->
+                    registry.registerConsumptionProcessor(consumptionProcessor)
+                    registry.registerDownloadProcessor(downloadProcessor)
+                },
+            ),
+        )
+
+        composition.capabilityEvidence.records.map { it.capability }.toSet() shouldBe setOf(
+            EntryCapabilityCatalog.BOOKMARKING,
+            EntryCapabilityCatalog.CONSUMPTION,
+            EntryCapabilityCatalog.DOWNLOADS,
+            EntryCapabilityCatalog.DOWNLOAD_ARCHIVE_PACKAGING,
+            EntryCapabilityCatalog.DOWNLOAD_PARALLEL_ITEM_TRANSFERS,
+        )
+    }
+
+    @Test
+    fun `explicit absence appears in the type report without positive evidence`() {
+        val declaration = EntryCapabilityOutcomeDeclaration(
+            entryType = EntryType.ANIME,
+            capability = EntryCapabilityCatalog.BOOKMARKING,
+            result = EntrySupportResult.IntentionallyUnsupported(owner, "Not in current product scope"),
+        )
+
+        val composition = createEntryInteractionComposition(
+            listOf(EntryInteractionPlugin { it.declareCapabilityOutcome(declaration) }),
+        )
+
+        composition.capabilityOutcomes.declarations shouldBe listOf(declaration)
+        val value = composition.capabilityReport.type(EntryType.ANIME)
+            .entry(EntryCapabilityCatalog.BOOKMARKING)
+            .value as EntryCapabilityReportValue.Outcome
+        value.result shouldBe declaration.result
+    }
+
+    @Test
+    fun `positive evidence and explicit absence fail composition`() {
+        val processor = mockk<EntryConsumptionProcessor>(relaxed = true) {
+            every { type } returns EntryType.MANGA
+            every { supportsBookmark } returns true
+        }
+
+        shouldThrow<IllegalStateException> {
+            createEntryInteractionComposition(
+                listOf(
+                    EntryInteractionPlugin { registry ->
+                        registry.registerConsumptionProcessor(processor)
+                        registry.declareCapabilityOutcome(
+                            EntryCapabilityOutcomeDeclaration(
+                                entryType = EntryType.MANGA,
+                                capability = EntryCapabilityCatalog.BOOKMARKING,
+                                result = EntrySupportResult.IntentionallyUnsupported(
+                                    owner,
+                                    "Contradictory synthetic absence",
+                                ),
+                            ),
+                        )
+                    },
+                ),
+            )
+        }
     }
 
     private fun intrinsicDeclaration(id: String): EntryIntrinsicCapabilityDeclaration {
