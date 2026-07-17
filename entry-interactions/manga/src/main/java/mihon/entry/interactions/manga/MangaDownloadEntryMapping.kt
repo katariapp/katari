@@ -2,6 +2,9 @@ package mihon.entry.interactions.manga
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryDownloadIdentity
+import mihon.entry.interactions.EntryDownloadPhase
+import mihon.entry.interactions.EntryDownloadPresentation
+import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
 import mihon.entry.interactions.EntryDownloadState
@@ -40,8 +43,25 @@ internal fun MangaDownload.toEntryDownloadQueueItem(): EntryDownloadQueueItem {
         chapterNumber = chapter.chapterNumber,
         progress = totalProgress,
         progressMax = pages?.size?.times(100) ?: 100,
-        progressText = pages?.let { "$downloadedImages/${it.size}" }.orEmpty(),
+        presentation = EntryDownloadPresentation(
+            phase = status.toEntryDownloadPhase(),
+            progress = if (status == DownloadState.DOWNLOADING) {
+                pages?.let { EntryDownloadProgress.Units(downloadedImages, it.size) }
+                    ?: EntryDownloadProgress.None
+            } else {
+                EntryDownloadProgress.None
+            },
+            failure = failure.takeIf { status == DownloadState.ERROR },
+        ),
     )
+}
+
+private fun DownloadState.toEntryDownloadPhase(): EntryDownloadPhase = when (this) {
+    DownloadState.NOT_DOWNLOADED -> EntryDownloadPhase.IDLE
+    DownloadState.QUEUE -> EntryDownloadPhase.QUEUED
+    DownloadState.DOWNLOADING -> EntryDownloadPhase.TRANSFERRING
+    DownloadState.DOWNLOADED -> EntryDownloadPhase.COMPLETED
+    DownloadState.ERROR -> EntryDownloadPhase.FAILED
 }
 
 internal fun DownloadState.toEntryDownloadState(): EntryDownloadState {

@@ -95,6 +95,15 @@ class EntryDownloadNotificationManagerTest {
                 getMergedEntry = getMergedEntry,
                 presenter = presenter,
                 scope = scope,
+                messageResolver = { message ->
+                    when (message) {
+                        is EntryDownloadMessage.Text -> message.value
+                        is EntryDownloadMessage.Resource -> when (message.resource) {
+                            tachiyomi.i18n.MR.strings.download_progress_percent -> "${message.args.single()}%"
+                            else -> message.resource.resourceId.toString()
+                        }
+                    }
+                },
             ),
             presenter = presenter,
             queue = queue,
@@ -119,7 +128,10 @@ class EntryDownloadNotificationManagerTest {
         chapterNumber = 1.0,
         progress = 25,
         progressMax = 100,
-        progressText = "25%",
+        presentation = EntryDownloadPresentation(
+            phase = EntryDownloadPhase.TRANSFERRING,
+            progress = EntryDownloadProgress.Percent(25),
+        ),
     )
 
     private fun group(item: EntryDownloadQueueItem) = EntryDownloadQueueGroup(

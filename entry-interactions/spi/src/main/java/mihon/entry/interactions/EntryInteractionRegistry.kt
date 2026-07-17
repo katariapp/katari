@@ -363,6 +363,10 @@ private class RegistryEntryDownloadInteraction(
         return entryType in processors
     }
 
+    override fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>> {
+        return processors.mapValues { (_, processor) -> processor.settingCapabilities }
+    }
+
     override suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
         val processor = processors.requireProcessor("download", entry.type)
         processor.requireMatchingEntryType("download", entry, processors.keys)

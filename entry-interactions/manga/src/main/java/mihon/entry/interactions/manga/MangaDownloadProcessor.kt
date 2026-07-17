@@ -13,6 +13,7 @@ import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
+import mihon.entry.interactions.EntryDownloadSettingCapability
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
 import mihon.entry.interactions.manga.download.model.DownloadState
@@ -23,6 +24,12 @@ import tachiyomi.domain.entry.service.sortedForReading
 internal class MangaDownloadProcessor(
     private val dependencies: MangaEntryInteractionRuntimeDependencies,
 ) : EntryDownloadProcessor {
+    override val settingCapabilities = setOf(
+        EntryDownloadSettingCapability.ARCHIVE_PACKAGING,
+        EntryDownloadSettingCapability.TALL_IMAGE_SPLITTING,
+        EntryDownloadSettingCapability.PARALLEL_SOURCE_TRANSFERS,
+        EntryDownloadSettingCapability.PARALLEL_ITEM_TRANSFERS,
+    )
     private val downloadManager = dependencies.downloadManager
     private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
 

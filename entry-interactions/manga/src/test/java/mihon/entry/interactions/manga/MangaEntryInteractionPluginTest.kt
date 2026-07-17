@@ -26,6 +26,8 @@ import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadPhase
+import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryOpenOptions
@@ -522,7 +524,7 @@ class MangaEntryInteractionPluginTest {
     fun `manga download model maps to entry status and queue item`() {
         val download = MangaDownload(
             source = source(id = 2L, name = "Source"),
-            entry = entry(EntryType.MANGA, id = 7L, title = "Entry"),
+            entry = entry(EntryType.MANGA, id = 7L, title = "Entry", sourceId = 2L),
             chapter = chapter(id = 9L, entryId = 7L, name = "Chapter 9", dateUpload = 123L, chapterNumber = 9.0),
         ).apply {
             status = DownloadState.DOWNLOADING
@@ -551,7 +553,8 @@ class MangaEntryInteractionPluginTest {
         item.subtitle shouldBe "Chapter 9"
         item.progress shouldBe 150
         item.progressMax shouldBe 200
-        item.progressText shouldBe "1/2"
+        item.presentation.phase shouldBe EntryDownloadPhase.TRANSFERRING
+        item.presentation.progress shouldBe EntryDownloadProgress.Units(completed = 1, total = 2)
         groups.map { it.sourceName }.shouldContainExactly("Source")
     }
 

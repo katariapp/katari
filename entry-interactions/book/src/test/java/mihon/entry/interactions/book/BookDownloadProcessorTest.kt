@@ -12,9 +12,14 @@ import kotlinx.coroutines.test.runTest
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryDownloadMessage
+import mihon.entry.interactions.EntryDownloadPhase
+import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
+import mihon.entry.interactions.book.download.model.BookDownload
+import mihon.entry.interactions.book.download.model.BookDownloadFailure
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
@@ -26,6 +31,26 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 class BookDownloadProcessorTest {
+    @Test
+    fun `book queue mapping emits shared phase progress and localized failure semantics`() {
+        val transferring = BookDownload(entry(1L, 10L), chapter(11L, 1L, 1.0)).apply {
+            status = BookDownload.State.DOWNLOADING
+            progress = 35
+        }.toEntryDownloadQueueItem()
+        val failed = BookDownload(entry(1L, 10L), chapter(11L, 1L, 1.0)).apply {
+            status = BookDownload.State.ERROR
+            failure = BookDownloadFailure(BookDownloadFailure.Reason.NETWORK, "raw transport failure")
+        }.toEntryDownloadQueueItem()
+
+        assertEquals(EntryDownloadPhase.TRANSFERRING, transferring.presentation.phase)
+        assertEquals(EntryDownloadProgress.Percent(35), transferring.presentation.progress)
+        assertEquals(EntryDownloadPhase.FAILED, failed.presentation.phase)
+        assertEquals(
+            EntryDownloadMessage.Resource(tachiyomi.i18n.MR.strings.download_notifier_book_network_error),
+            failed.presentation.failure,
+        )
+    }
+
     @Test
     fun `merged downloads are queued against each child owner and start once`() = runTest {
         val visible = entry(id = 1L, source = 10L)

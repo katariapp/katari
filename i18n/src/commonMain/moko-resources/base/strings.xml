@@ -647,6 +647,7 @@
     <string name="pref_webtoon_disable_zoom_out">Disable zoom out</string>
 
       <!-- Downloads section -->
+    <string name="pref_category_manga_downloads">Manga downloads</string>
     <string name="pref_category_delete_chapters">Delete items</string>
     <string name="pref_remove_after_marked_as_read">After manually marked as seen</string>
     <string name="pref_remove_after_read">After seeing automatically delete</string>
@@ -1341,6 +1342,12 @@
     <string name="download_queue_error">Couldn\'t download items. You can try again in the downloads section</string>
     <string name="download_insufficient_space">Couldn\'t download items due to low storage space</string>
     <string name="download_queue_size_warning">Warning: large bulk downloads may lead to sources becoming slower and/or blocking %s. Tap to learn more.</string>
+    <string name="download_state_queued">Queued</string>
+    <string name="download_state_resolving">Preparing…</string>
+    <string name="download_state_downloading">Downloading…</string>
+    <string name="download_state_finalizing">Finalizing…</string>
+    <string name="download_progress_percent">%1$d%%</string>
+    <string name="download_progress_units">%1$d/%2$d</string>
 
     <!-- Library update service notifications -->
     <string name="notification_updating_progress">Updating library… (%s)</string>
@@ -1422,6 +1429,7 @@
     <string name="download_notifier_stream_expired">Stream URL expired</string>
     <string name="download_notifier_unsupported_stream">Source only provides an unsupported stream format</string>
     <string name="download_notifier_insufficient_storage">Insufficient storage space</string>
+    <string name="download_notifier_storage_error">Unable to store the download</string>
     <string name="download_notifier_stream_network_error">Network error while resolving download stream</string>
     <string name="download_notifier_book_content_unavailable">Book content is not available</string>
     <string name="download_notifier_book_unsupported_format">No installed reader supports this book format</string>

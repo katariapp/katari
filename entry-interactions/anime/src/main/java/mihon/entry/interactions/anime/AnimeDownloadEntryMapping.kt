@@ -3,6 +3,9 @@ package mihon.entry.interactions.anime
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryDownloadIdentity
 import mihon.entry.interactions.EntryDownloadMessage
+import mihon.entry.interactions.EntryDownloadPhase
+import mihon.entry.interactions.EntryDownloadPresentation
+import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
 import mihon.entry.interactions.EntryDownloadState
@@ -45,15 +48,27 @@ internal fun AnimeDownload.toEntryDownloadQueueItem(): EntryDownloadQueueItem {
         chapterNumber = episode.chapterNumber,
         progress = progress,
         progressMax = 100,
-        progressText = when (status) {
-            AnimeDownload.State.ERROR -> failure?.message ?: failure?.reason?.name ?: "Error"
-            AnimeDownload.State.DOWNLOADED -> "Downloaded"
-            AnimeDownload.State.RESOLVING -> "Resolving"
-            AnimeDownload.State.DOWNLOADING -> "$progress%"
-            AnimeDownload.State.QUEUE -> "Queued"
-            AnimeDownload.State.NOT_DOWNLOADED -> ""
-        },
+        presentation = EntryDownloadPresentation(
+            phase = status.toEntryDownloadPhase(),
+            progress = if (status == AnimeDownload.State.DOWNLOADING) {
+                EntryDownloadProgress.Percent(progress)
+            } else {
+                EntryDownloadProgress.None
+            },
+            failure = failure
+                ?.takeIf { status == AnimeDownload.State.ERROR }
+                ?.toEntryDownloadMessage(),
+        ),
     )
+}
+
+private fun AnimeDownload.State.toEntryDownloadPhase(): EntryDownloadPhase = when (this) {
+    AnimeDownload.State.NOT_DOWNLOADED -> EntryDownloadPhase.IDLE
+    AnimeDownload.State.QUEUE -> EntryDownloadPhase.QUEUED
+    AnimeDownload.State.RESOLVING -> EntryDownloadPhase.RESOLVING
+    AnimeDownload.State.DOWNLOADING -> EntryDownloadPhase.TRANSFERRING
+    AnimeDownload.State.DOWNLOADED -> EntryDownloadPhase.COMPLETED
+    AnimeDownload.State.ERROR -> EntryDownloadPhase.FAILED
 }
 
 internal fun AnimeDownload.State.toEntryDownloadState(): EntryDownloadState {
@@ -69,7 +84,6 @@ internal fun AnimeDownload.State.toEntryDownloadState(): EntryDownloadState {
 }
 
 internal fun AnimeDownloadFailure.toEntryDownloadMessage(): EntryDownloadMessage {
-    message?.takeIf(String::isNotBlank)?.let { return EntryDownloadMessage.Text(it) }
     val resource = when (reason) {
         AnimeDownloadFailure.Reason.SOURCE_NOT_FOUND -> MR.strings.download_notifier_source_not_available
         AnimeDownloadFailure.Reason.EPISODE_NOT_FOUND -> MR.strings.download_notifier_episode_not_found

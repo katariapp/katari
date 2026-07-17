@@ -71,7 +71,7 @@ class DownloadQueueScreenModel(
                     DownloadQueueHeaderItem(
                         DownloadQueueHeaderModel(
                             id = group.sourceId,
-                            contentType = group.entryType.toDownloadQueueContentType(),
+                            entryType = group.entryType,
                             title = group.sourceName,
                             count = group.items.size,
                         ),

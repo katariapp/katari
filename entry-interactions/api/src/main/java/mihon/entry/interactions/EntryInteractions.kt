@@ -73,6 +73,7 @@ interface EntryDownloadInteraction {
     fun cancelQueuedDownloads(items: List<EntryDownloadQueueItem>)
 
     fun supportsDownloads(entryType: EntryType): Boolean
+    fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>>
 
     suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean = true)
     suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean = false)
@@ -173,6 +174,13 @@ enum class EntryBulkDownloadActionType {
     NEXT,
     UNREAD,
     BOOKMARKED,
+}
+
+enum class EntryDownloadSettingCapability {
+    ARCHIVE_PACKAGING,
+    TALL_IMAGE_SPLITTING,
+    PARALLEL_SOURCE_TRANSFERS,
+    PARALLEL_ITEM_TRANSFERS,
 }
 
 sealed interface EntryBulkDownloadCandidateResult {

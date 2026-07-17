@@ -38,6 +38,8 @@ import mihon.entry.interactions.EntryChildProgressRequest
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadOptionSelection
+import mihon.entry.interactions.EntryDownloadPhase
+import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryOpenOptions
@@ -921,7 +923,8 @@ class AnimeEntryInteractionPluginTest {
         item.subtitle shouldBe "Episode 9"
         item.progress shouldBe 30
         item.progressMax shouldBe 100
-        item.progressText shouldBe "Resolving"
+        item.presentation.phase shouldBe EntryDownloadPhase.RESOLVING
+        item.presentation.progress shouldBe EntryDownloadProgress.None
         groups.map { it.sourceName }.shouldContainExactly("Source")
     }
 

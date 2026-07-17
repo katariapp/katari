@@ -23,6 +23,7 @@ interface EntryContinueProcessor {
 
 interface EntryDownloadProcessor {
     val type: EntryType
+    val settingCapabilities: Set<EntryDownloadSettingCapability> get() = emptySet()
     val changes: Flow<Unit>
     val isInitializing: Flow<Boolean>
     val isRunning: Flow<Boolean>

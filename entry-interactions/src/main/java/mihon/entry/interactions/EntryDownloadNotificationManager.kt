@@ -22,6 +22,7 @@ internal class EntryDownloadNotificationManager(
     private val getMergedEntry: GetMergedEntry,
     private val presenter: EntryDownloadNotificationPresenter = AndroidEntryDownloadNotifier(context),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+    private val messageResolver: (EntryDownloadMessage) -> String = { it.resolve(context) },
 ) : EntryDownloadForegroundNotificationProvider {
     private var started = false
 
@@ -66,7 +67,7 @@ internal class EntryDownloadNotificationManager(
     }
 
     private suspend fun showProgress(item: EntryDownloadQueueItem) {
-        val progressText = item.progressText.takeIf(String::isNotBlank)
+        val progressText = item.presentation.description()?.let(messageResolver)
         val subtitle = listOfNotNull(item.subtitle.takeIf(String::isNotBlank), progressText)
             .joinToString(" • ")
             .ifBlank { null }
@@ -95,14 +96,14 @@ internal class EntryDownloadNotificationManager(
                             .ifBlank {
                                 context.stringResource(tachiyomi.i18n.MR.strings.download_notifier_downloader_title)
                             },
-                        message = event.message.resolve(context),
+                        message = messageResolver(event.message),
                         entryId = event.entryId?.let { getMergedEntry.awaitVisibleTargetId(it) },
                     ),
                 )
             }
             is EntryDownloadEvent.Warning -> {
                 presenter.showWarning(
-                    reason = event.message.resolve(context),
+                    reason = messageResolver(event.message),
                     timeout = event.timeoutMillis,
                     contentIntent = event.helpUrl?.let { actions.openUrl(context, it) },
                 )
@@ -115,11 +116,4 @@ internal class EntryDownloadNotificationManager(
         val isRunning: Boolean,
         val isPaused: Boolean,
     )
-}
-
-private fun EntryDownloadMessage.resolve(context: Context): String {
-    return when (this) {
-        is EntryDownloadMessage.Text -> value
-        is EntryDownloadMessage.Resource -> context.stringResource(resource, *args.toTypedArray())
-    }
 }

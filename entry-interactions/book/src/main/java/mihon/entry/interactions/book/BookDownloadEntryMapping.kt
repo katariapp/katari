@@ -3,6 +3,9 @@ package mihon.entry.interactions.book
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryDownloadIdentity
 import mihon.entry.interactions.EntryDownloadMessage
+import mihon.entry.interactions.EntryDownloadPhase
+import mihon.entry.interactions.EntryDownloadPresentation
+import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadQueueGroup
 import mihon.entry.interactions.EntryDownloadQueueItem
 import mihon.entry.interactions.EntryDownloadState
@@ -40,15 +43,27 @@ internal fun BookDownload.toEntryDownloadQueueItem(): EntryDownloadQueueItem = E
     chapterNumber = chapter.chapterNumber,
     progress = progress,
     progressMax = 100,
-    progressText = when (status) {
-        BookDownload.State.ERROR -> failure?.message ?: failure?.reason?.name ?: "Error"
-        BookDownload.State.DOWNLOADED -> "Downloaded"
-        BookDownload.State.RESOLVING -> "Resolving"
-        BookDownload.State.DOWNLOADING -> "$progress%"
-        BookDownload.State.QUEUE -> "Queued"
-        BookDownload.State.NOT_DOWNLOADED -> ""
-    },
+    presentation = EntryDownloadPresentation(
+        phase = status.toEntryDownloadPhase(),
+        progress = if (status == BookDownload.State.DOWNLOADING) {
+            EntryDownloadProgress.Percent(progress)
+        } else {
+            EntryDownloadProgress.None
+        },
+        failure = failure
+            ?.takeIf { status == BookDownload.State.ERROR }
+            ?.toEntryDownloadMessage(),
+    ),
 )
+
+private fun BookDownload.State.toEntryDownloadPhase(): EntryDownloadPhase = when (this) {
+    BookDownload.State.NOT_DOWNLOADED -> EntryDownloadPhase.IDLE
+    BookDownload.State.QUEUE -> EntryDownloadPhase.QUEUED
+    BookDownload.State.RESOLVING -> EntryDownloadPhase.RESOLVING
+    BookDownload.State.DOWNLOADING -> EntryDownloadPhase.TRANSFERRING
+    BookDownload.State.DOWNLOADED -> EntryDownloadPhase.COMPLETED
+    BookDownload.State.ERROR -> EntryDownloadPhase.FAILED
+}
 
 internal fun BookDownload.State.toEntryDownloadState(): EntryDownloadState = when (this) {
     BookDownload.State.NOT_DOWNLOADED -> EntryDownloadState.NOT_DOWNLOADED
@@ -61,7 +76,6 @@ internal fun BookDownload.State.toEntryDownloadState(): EntryDownloadState = whe
 }
 
 internal fun BookDownloadFailure.toEntryDownloadMessage(): EntryDownloadMessage {
-    message?.takeIf(String::isNotBlank)?.let { return EntryDownloadMessage.Text(it) }
     val resource = when (reason) {
         BookDownloadFailure.Reason.SOURCE_NOT_FOUND -> MR.strings.download_notifier_source_not_available
         BookDownloadFailure.Reason.CONTENT_UNAVAILABLE -> MR.strings.download_notifier_book_content_unavailable

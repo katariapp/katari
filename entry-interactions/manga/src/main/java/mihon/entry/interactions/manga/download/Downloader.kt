@@ -160,14 +160,14 @@ internal class Downloader(
     /**
      * Stops the downloader.
      */
-    fun stop(reason: String? = null) {
+    fun stop(reason: EntryDownloadMessage? = null) {
         cancelDownloaderJob()
         queueState.value
             .filter { it.status == DownloadState.DOWNLOADING }
             .forEach { it.status = DownloadState.ERROR }
 
         if (reason != null) {
-            reportWarning(EntryDownloadMessage.Text(reason))
+            reportWarning(reason)
             return
         }
 
@@ -265,7 +265,7 @@ internal class Downloader(
         } catch (e: Throwable) {
             if (e is CancellationException) throw e
             logcat(LogPriority.ERROR, e)
-            reportError(e.message)
+            reportError()
             stop()
         }
     }
@@ -326,11 +326,9 @@ internal class Downloader(
                     maxDownloadsFromSource > CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD
                 ) {
                     reportWarning(
-                        message = EntryDownloadMessage.Text(
-                            context.stringResource(
-                                MR.strings.download_queue_size_warning,
-                                context.stringResource(MR.strings.app_name),
-                            ),
+                        message = EntryDownloadMessage.Resource(
+                            resource = MR.strings.download_queue_size_warning,
+                            args = listOf(context.stringResource(MR.strings.app_name)),
                         ),
                         timeoutMillis = WARNING_NOTIF_TIMEOUT_MS,
                         helpUrl = HELP_WARNING_URL,
@@ -346,19 +344,19 @@ internal class Downloader(
      * @param download the chapter to be downloaded.
      */
     private suspend fun downloadChapter(download: MangaDownload) {
-        val mangaDir = provider.getEntryDir(download.entry.title, download.source).getOrElse { e ->
+        val mangaDir = provider.getEntryDir(download.entry.title, download.source).getOrElse {
+            reportError(EntryDownloadMessage.Resource(MR.strings.download_notifier_storage_error), download)
             download.status = DownloadState.ERROR
-            reportError(e.message, download)
             return
         }
 
         val availSpace = DiskUtil.getAvailableStorageSpace(mangaDir)
         if (availSpace != -1L && availSpace < MIN_DISK_SPACE) {
-            download.status = DownloadState.ERROR
             reportError(
-                context.stringResource(MR.strings.download_insufficient_space),
+                EntryDownloadMessage.Resource(MR.strings.download_notifier_insufficient_storage),
                 download,
             )
+            download.status = DownloadState.ERROR
             return
         }
 
@@ -430,8 +428,8 @@ internal class Downloader(
             if (error is CancellationException) throw error
             // If the page list threw, it will resume here
             logcat(LogPriority.ERROR, error)
+            reportError(download = download)
             download.status = DownloadState.ERROR
-            reportError(error.message, download)
         }
     }
 
@@ -478,19 +476,22 @@ internal class Downloader(
             // Mark this page as error and allow to download the remaining
             page.progress = 0
             page.status = Page.State.Error(e)
-            reportError(e.message, download)
+            reportError(download = download)
         }
     }
 
-    private fun reportError(message: String?, download: MangaDownload? = null) {
+    private fun reportError(
+        message: EntryDownloadMessage = EntryDownloadMessage.Resource(MR.strings.download_notifier_unknown_error),
+        download: MangaDownload? = null,
+    ) {
+        download?.failure = message
         _events.tryEmit(
             EntryDownloadEvent.Error(
                 entryType = EntryType.MANGA,
                 entryId = download?.entry?.id,
                 title = download?.entry?.title,
                 subtitle = download?.chapter?.name,
-                message = message?.takeIf(String::isNotBlank)?.let(EntryDownloadMessage::Text)
-                    ?: EntryDownloadMessage.Resource(MR.strings.download_notifier_unknown_error),
+                message = message,
             ),
         )
     }

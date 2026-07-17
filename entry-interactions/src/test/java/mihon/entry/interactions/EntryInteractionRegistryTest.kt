@@ -69,6 +69,7 @@ class EntryInteractionRegistryTest {
         val entry = entry(EntryType.BOOK)
 
         interactions.download.supportsDownloads(EntryType.BOOK) shouldBe false
+        interactions.download.settingCapabilities() shouldBe emptyMap()
         interactions.download.supportsDownloadOptions(entry) shouldBe false
         interactions.download.supportsBulkDownload(entry) shouldBe false
         interactions.download.resolveDownloadOptions(context, entry, chapter).shouldBeNull()
@@ -94,6 +95,28 @@ class EntryInteractionRegistryTest {
         interactions.download.delete(entry, listOf(chapter))
         interactions.download.deleteEntryDownloads(entry)
         interactions.download.renameEntry(entry, "Renamed")
+    }
+
+    @Test
+    fun `download setting capabilities retain their media owner`() {
+        val interactions = createEntryInteractions(
+            listOf(
+                EntryInteractionPlugin { registry ->
+                    registry.registerDownloadProcessor(
+                        RecordingDownloadProcessor(
+                            type = EntryType.MANGA,
+                            settingCapabilities = setOf(EntryDownloadSettingCapability.ARCHIVE_PACKAGING),
+                        ),
+                    )
+                    registry.registerDownloadProcessor(RecordingDownloadProcessor(EntryType.ANIME))
+                },
+            ),
+        )
+
+        interactions.download.settingCapabilities() shouldBe mapOf(
+            EntryType.MANGA to setOf(EntryDownloadSettingCapability.ARCHIVE_PACKAGING),
+            EntryType.ANIME to emptySet(),
+        )
     }
 
     @Test
@@ -1056,7 +1079,6 @@ class EntryInteractionRegistryTest {
             chapterNumber = 1.0,
             progress = 0,
             progressMax = 100,
-            progressText = "",
         )
     }
 
@@ -1138,6 +1160,7 @@ class EntryInteractionRegistryTest {
     private open class RecordingDownloadProcessor(
         open override val type: EntryType,
         private val bulkDownloadSupported: Boolean = true,
+        override val settingCapabilities: Set<EntryDownloadSettingCapability> = emptySet(),
     ) : EntryDownloadProcessor {
         override val events: Flow<EntryDownloadEvent> = emptyFlow()
         override val changes: Flow<Unit> = emptyFlow()
