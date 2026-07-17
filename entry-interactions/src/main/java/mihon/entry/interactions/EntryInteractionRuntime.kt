@@ -58,6 +58,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryPageImageCache> { dependencies.pageImageCache }
     addSingletonFactory<EntryReaderIncognitoState> { dependencies.readerIncognitoState }
     addSingletonFactory<EntryReaderTracking> { dependencies.readerTracking }
+    addSingletonFactory<EntryDownloadWorkController> { DefaultEntryDownloadWorkController(app) }
 
     addSingletonFactory { MangaReaderSettingsProvider(dependencies.profilePreferenceStore) }
     addSingletonFactory { ReaderBasePreferences(dependencies.basePreferenceStore) }

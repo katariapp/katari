@@ -59,6 +59,9 @@ interface EntryDownloadInteraction {
     fun queueProgressUpdates(): Flow<EntryDownloadQueueItem>
     fun events(): Flow<EntryDownloadEvent>
 
+    /** Runs every media-specific downloader until its current queue is idle. Runtime use only. */
+    suspend fun runDownloadsUntilIdle()
+
     fun startDownloads()
     fun pauseDownloads()
     fun clearQueue()

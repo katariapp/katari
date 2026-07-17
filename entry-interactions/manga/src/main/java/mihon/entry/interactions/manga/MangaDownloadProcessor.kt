@@ -53,6 +53,10 @@ internal class MangaDownloadProcessor(
             .map { download -> download.toEntryDownloadQueueItem().requireManga() }
     }
 
+    override suspend fun runDownloadsUntilIdle() {
+        downloadManager.runDownloadsUntilIdle()
+    }
+
     override fun startDownloads() {
         downloadManager.startDownloads()
     }

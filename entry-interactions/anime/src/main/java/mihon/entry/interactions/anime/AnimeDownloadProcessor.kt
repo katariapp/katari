@@ -68,6 +68,10 @@ internal class AnimeDownloadProcessor(
             .map { download -> download.toEntryDownloadQueueItem().requireAnime() }
     }
 
+    override suspend fun runDownloadsUntilIdle() {
+        animeDownloadManager.runDownloadsUntilIdle()
+    }
+
     override fun startDownloads() {
         animeDownloadManager.startDownloads()
     }

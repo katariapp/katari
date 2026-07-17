@@ -657,7 +657,7 @@ class MangaEntryInteractionPluginTest {
         val queueState = MutableStateFlow<List<MangaDownload>>(emptyList())
         return mockk(relaxed = true) {
             every { this@mockk.queueState } returns queueState
-            every { this@mockk.isDownloaderRunning } returns flowOf(false)
+            every { this@mockk.isDownloaderRunning } returns MutableStateFlow(false)
             every { this@mockk.statusFlow() } returns emptyFlow()
             every { this@mockk.progressFlow() } returns emptyFlow()
             every { this@mockk.getQueuedDownloadOrNull(any()) } returns null

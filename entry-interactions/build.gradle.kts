@@ -18,6 +18,7 @@ dependencies {
     implementation(projects.entryInteractions.anime)
     implementation(projects.entryInteractions.book)
     implementation(libs.androidx.core)
+    implementation(libs.androidx.work)
     implementation(libs.injekt)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.bundles.coil)

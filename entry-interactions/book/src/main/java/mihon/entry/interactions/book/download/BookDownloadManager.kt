@@ -7,7 +7,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +29,7 @@ import kotlinx.coroutines.sync.Mutex
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadQueuePolicy
+import mihon.entry.interactions.EntryDownloadWorkController
 import mihon.entry.interactions.book.download.model.BookDownload
 import mihon.entry.interactions.book.download.model.BookDownloadFailure
 import mihon.entry.interactions.book.toEntryDownloadMessage
@@ -42,9 +46,8 @@ internal class BookDownloadManager(
     private val downloader: BookDownloader = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val store: BookDownloadStore = BookDownloadStore(context),
-    private val workController: BookDownloadWorkController = DefaultBookDownloadWorkController,
+    private val workController: EntryDownloadWorkController = Injekt.get(),
 ) {
-    private val appContext = context.applicationContext
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val queueMutationLock = Any()
     private val processorMutex = Mutex()
@@ -61,7 +64,7 @@ internal class BookDownloadManager(
     private var activeChapterId: Long? = null
 
     @Volatile
-    private var pauseRequested = false
+    private var activeDownloadJob: Job? = null
 
     init {
         scope.launch {
@@ -76,7 +79,6 @@ internal class BookDownloadManager(
 
     fun startDownloads() {
         if (queueState.value.isEmpty()) return
-        pauseRequested = false
         queueState.value.forEach { download ->
             if (download.status != BookDownload.State.RESOLVING && download.status != BookDownload.State.DOWNLOADING) {
                 download.failure = null
@@ -84,16 +86,14 @@ internal class BookDownloadManager(
             }
         }
         rewriteStoredQueue()
-        if (!_isRunning.value) workController.start(appContext)
+        if (!_isRunning.value) workController.start()
     }
 
     fun pauseDownloads() {
         val hasQueuedDownloads = synchronized(queueMutationLock) {
             if (_queueState.value.isEmpty()) {
-                pauseRequested = false
                 false
             } else {
-                pauseRequested = true
                 _queueState.value
                     .filter {
                         it.status == BookDownload.State.RESOLVING ||
@@ -105,22 +105,20 @@ internal class BookDownloadManager(
                 true
             }
         }
-        workController.stop(appContext)
+        workController.stop()
         synchronized(queueMutationLock) {
             if (!hasQueuedDownloads || _queueState.value.isEmpty()) {
-                pauseRequested = false
                 _isRunning.value = false
             }
         }
     }
 
     fun clearQueue() {
-        workController.stop(appContext)
+        workController.stop()
         synchronized(queueMutationLock) {
             _queueState.value = emptyList()
             store.clear()
         }
-        pauseRequested = false
         _isRunning.value = false
     }
 
@@ -155,18 +153,14 @@ internal class BookDownloadManager(
 
     fun removeFromQueue(chapterIds: Collection<Long>) {
         if (chapterIds.isEmpty()) return
-        val wasRunning = _isRunning.value
         val removesActiveDownload = activeChapterId in chapterIds
-        if (removesActiveDownload) workController.stop(appContext)
         synchronized(queueMutationLock) {
             _queueState.update { current -> current.filterNot { it.chapter.id in chapterIds } }
             rewriteStoredQueueLocked()
         }
+        if (removesActiveDownload) activeDownloadJob?.cancel()
         if (queueState.value.isEmpty()) {
             _isRunning.value = false
-        } else if (wasRunning && removesActiveDownload) {
-            _isRunning.value = false
-            startDownloads()
         }
     }
 
@@ -187,6 +181,7 @@ internal class BookDownloadManager(
 
     suspend fun runDownloads() {
         initialized.await()
+        if (queueState.value.isEmpty()) return
         processorMutex.lock()
         _isRunning.value = true
         try {
@@ -194,7 +189,15 @@ internal class BookDownloadManager(
                 val next = queueState.value.firstOrNull { it.status == BookDownload.State.QUEUE } ?: break
                 activeChapterId = next.chapter.id
                 try {
-                    val failure = downloader.download(next)
+                    val failure = coroutineScope {
+                        val job = async { downloader.download(next) }
+                        activeDownloadJob = job
+                        try {
+                            job.await()
+                        } finally {
+                            if (activeDownloadJob === job) activeDownloadJob = null
+                        }
+                    }
                     if (failure == null) {
                         synchronized(queueMutationLock) {
                             _queueState.update { current -> current.filterNot { it.chapter.id == next.chapter.id } }
@@ -208,9 +211,12 @@ internal class BookDownloadManager(
                         reportError(next)
                     }
                 } catch (error: CancellationException) {
-                    next.status = BookDownload.State.QUEUE
-                    rewriteStoredQueue()
-                    throw error
+                    if (queueState.value.any { it.chapter.id == next.chapter.id }) {
+                        next.status = BookDownload.State.QUEUE
+                        rewriteStoredQueue()
+                        throw error
+                    }
+                    continue
                 } catch (error: Exception) {
                     next.progress = 0
                     next.failure = BookDownloadFailure(BookDownloadFailure.Reason.UNKNOWN, error.message)

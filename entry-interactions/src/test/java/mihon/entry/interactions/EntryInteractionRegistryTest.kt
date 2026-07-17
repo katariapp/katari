@@ -821,6 +821,28 @@ class EntryInteractionRegistryTest {
     }
 
     @Test
+    fun `shared download runtime runs every media processor until idle`() = runTest {
+        val mangaProcessor = RecordingDownloadProcessor(EntryType.MANGA)
+        val animeProcessor = RecordingDownloadProcessor(EntryType.ANIME)
+        val bookProcessor = RecordingDownloadProcessor(EntryType.BOOK)
+        val interactions = createEntryInteractions(
+            listOf(
+                EntryInteractionPlugin { registry ->
+                    registry.registerDownloadProcessor(mangaProcessor)
+                    registry.registerDownloadProcessor(animeProcessor)
+                    registry.registerDownloadProcessor(bookProcessor)
+                },
+            ),
+        )
+
+        interactions.download.runDownloadsUntilIdle()
+
+        mangaProcessor.runtimeRuns shouldBe 1
+        animeProcessor.runtimeRuns shouldBe 1
+        bookProcessor.runtimeRuns shouldBe 1
+    }
+
+    @Test
     fun `source rename delegates to all download processors`() {
         val mangaProcessor = RecordingDownloadProcessor(EntryType.MANGA)
         val animeProcessor = RecordingDownloadProcessor(EntryType.ANIME)
@@ -1130,12 +1152,17 @@ class EntryInteractionRegistryTest {
         val statusRequests = mutableListOf<Long>()
         val cancelledSingleIds = mutableListOf<Long>()
         val renamedSources = mutableListOf<Pair<UnifiedSource, UnifiedSource>>()
+        var runtimeRuns = 0
 
         override fun updates(): Flow<EntryDownloadStatus> = emptyFlow()
 
         override fun queueStatusUpdates(): Flow<EntryDownloadQueueItem> = emptyFlow()
 
         override fun queueProgressUpdates(): Flow<EntryDownloadQueueItem> = emptyFlow()
+
+        override suspend fun runDownloadsUntilIdle() {
+            runtimeRuns += 1
+        }
 
         override fun startDownloads() = Unit
 

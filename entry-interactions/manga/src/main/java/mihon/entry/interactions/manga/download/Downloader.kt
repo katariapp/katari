@@ -13,6 +13,7 @@ import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.DiskUtil.NOMEDIA_FILE
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -106,6 +107,9 @@ internal class Downloader(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var downloaderJob: Job? = null
+    private val _isRunningFlow = MutableStateFlow(false)
+    val isRunningFlow = _isRunningFlow.asStateFlow()
+    private val initialized = CompletableDeferred<Unit>()
 
     /**
      * Whether the downloader is running.
@@ -121,8 +125,12 @@ internal class Downloader(
 
     init {
         launchNow {
-            val chapters = async { store.restore() }
-            addAllToQueue(chapters.await())
+            try {
+                val chapters = async { store.restore() }
+                addAllToQueue(chapters.await())
+            } finally {
+                initialized.complete(Unit)
+            }
         }
     }
 
@@ -138,10 +146,12 @@ internal class Downloader(
         }
 
         val pending = queueState.value.filter { it.status != DownloadState.DOWNLOADED }
+        if (pending.isEmpty()) return false
         pending.forEach { if (it.status != DownloadState.QUEUE) it.status = DownloadState.QUEUE }
 
         isPaused = false
 
+        _isRunningFlow.value = true
         launchDownloaderJob()
 
         return pending.isNotEmpty()
@@ -162,8 +172,6 @@ internal class Downloader(
         }
 
         isPaused = false
-
-        DownloadJob.stop(context)
     }
 
     /**
@@ -192,7 +200,7 @@ internal class Downloader(
     private fun launchDownloaderJob() {
         if (isRunning) return
 
-        downloaderJob = scope.launch {
+        val job = scope.launch {
             val activeDownloadsFlow = combine(
                 queueState,
                 downloadPreferences.parallelSourceLimit.changes(),
@@ -236,6 +244,11 @@ internal class Downloader(
                 }
             }
         }
+        downloaderJob = job
+        job.invokeOnCompletion {
+            _isRunningFlow.value = false
+            if (downloaderJob === job) downloaderJob = null
+        }
     }
 
     private fun CoroutineScope.launchDownloadJob(download: MangaDownload) = launchIO {
@@ -263,6 +276,15 @@ internal class Downloader(
     private fun cancelDownloaderJob() {
         downloaderJob?.cancel()
         downloaderJob = null
+        _isRunningFlow.value = false
+    }
+
+    suspend fun awaitIdle() {
+        downloaderJob?.join()
+    }
+
+    suspend fun awaitInitialized() {
+        initialized.await()
     }
 
     /**
@@ -314,7 +336,6 @@ internal class Downloader(
                         helpUrl = HELP_WARNING_URL,
                     )
                 }
-                DownloadJob.start(context)
             }
         }
     }

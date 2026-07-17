@@ -3,6 +3,9 @@ package mihon.entry.interactions
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -300,6 +303,13 @@ private class RegistryEntryDownloadInteraction(
 
     override fun events(): Flow<EntryDownloadEvent> {
         return processors.values.map { it.events }.merged()
+    }
+
+    override suspend fun runDownloadsUntilIdle() = coroutineScope {
+        processors.values
+            .map { processor -> async { processor.runDownloadsUntilIdle() } }
+            .awaitAll()
+        Unit
     }
 
     override fun startDownloads() {

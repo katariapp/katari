@@ -33,6 +33,9 @@ interface EntryDownloadProcessor {
     fun queueStatusUpdates(): Flow<EntryDownloadQueueItem>
     fun queueProgressUpdates(): Flow<EntryDownloadQueueItem>
 
+    /** Runs this media-specific downloader until its current queue is idle. */
+    suspend fun runDownloadsUntilIdle()
+
     fun startDownloads()
     fun pauseDownloads()
     fun clearQueue()

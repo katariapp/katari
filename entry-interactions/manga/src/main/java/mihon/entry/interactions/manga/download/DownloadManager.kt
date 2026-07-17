@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import logcat.LogPriority
 import mihon.entry.interactions.EntryDownloadQueuePolicy
+import mihon.entry.interactions.EntryDownloadWorkController
 import mihon.entry.interactions.manga.download.model.DownloadState
 import mihon.entry.interactions.manga.download.model.MangaDownload
 import tachiyomi.core.common.i18n.stringResource
@@ -45,6 +46,7 @@ internal class DownloadManager(
     private val downloadPreferences: DownloadPreferences = Injekt.get(),
     private val downloader: Downloader = Downloader(context, provider, cache),
     private val pendingDeleter: DownloadPendingDeleter = DownloadPendingDeleter(context),
+    private val workController: EntryDownloadWorkController = Injekt.get(),
 ) {
 
     val isRunning: Boolean
@@ -55,23 +57,25 @@ internal class DownloadManager(
     val events
         get() = downloader.events
 
-    // For use by DownloadService only
-    fun downloaderStart() = downloader.start()
-    fun downloaderStop(reason: String? = null) = downloader.stop(reason)
-
     val isDownloaderRunning
-        get() = DownloadJob.isRunningFlow(context)
+        get() = downloader.isRunningFlow
 
     /**
      * Tells the downloader to begin downloads.
      */
     fun startDownloads() {
         if (downloader.isRunning) return
+        if (queueState.value.isNotEmpty()) workController.start()
+    }
 
-        if (DownloadJob.isRunning(context)) {
-            downloader.start()
-        } else {
-            DownloadJob.start(context)
+    suspend fun runDownloadsUntilIdle() {
+        downloader.awaitInitialized()
+        if (!downloader.start()) return
+        try {
+            downloader.awaitIdle()
+        } catch (error: kotlinx.coroutines.CancellationException) {
+            downloader.pause()
+            throw error
         }
     }
 
@@ -79,16 +83,16 @@ internal class DownloadManager(
      * Tells the downloader to pause downloads.
      */
     fun pauseDownloads() {
+        workController.stop()
         downloader.pause()
-        downloader.stop()
     }
 
     /**
      * Empties the download queue.
      */
     fun clearQueue() {
+        workController.stop()
         downloader.clearQueue()
-        downloader.stop()
     }
 
     /**
@@ -131,6 +135,7 @@ internal class DownloadManager(
      */
     fun downloadChapters(manga: Entry, chapters: List<EntryChapter>, autoStart: Boolean = true) {
         downloader.queueChapters(manga, chapters, autoStart)
+        if (autoStart && !downloader.isRunning && queueState.value.isNotEmpty()) workController.start()
     }
 
     /**
@@ -144,7 +149,7 @@ internal class DownloadManager(
             addAll(0, downloads)
             reorderQueue(this)
         }
-        if (!DownloadJob.isRunning(context)) startDownloads()
+        startDownloads()
     }
 
     /**

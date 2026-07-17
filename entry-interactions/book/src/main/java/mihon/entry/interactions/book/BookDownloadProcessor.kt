@@ -63,6 +63,10 @@ internal class BookDownloadProcessor(
     override fun queueProgressUpdates(): Flow<EntryDownloadQueueItem> =
         manager.progressFlow().map(BookDownload::toEntryDownloadQueueItem)
 
+    override suspend fun runDownloadsUntilIdle() {
+        manager.runDownloads()
+    }
+
     override fun startDownloads() = manager.startDownloads()
 
     override fun pauseDownloads() = manager.pauseDownloads()
