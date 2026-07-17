@@ -14,14 +14,14 @@ Establish a reviewed current-state map before introducing a capability abstracti
 
 ## Milestone 0.1 — Evidence Inventory
 
-- [ ] Inventory every Entry interaction processor category and registration by content type.
-- [ ] Inventory `supports…` methods and capability-like properties.
-- [ ] Inventory explicit `Unsupported`, no-op, and default-false behavior.
-- [ ] Inventory presentation fields that influence behavioral availability.
-- [ ] Inventory direct `EntryType` checks that gate user-facing features.
-- [ ] Inventory source, tracker, local/stub, platform, entry, and selection inputs.
-- [ ] Add each fact to `../capability-atlas.md` with a provisional scope and owner.
-- [ ] Stop and review the evidence inventory before continuing.
+- [x] Inventory every Entry interaction processor category and registration by content type.
+- [x] Inventory `supports…` methods and capability-like properties.
+- [x] Inventory explicit `Unsupported`, no-op, and default-false behavior.
+- [x] Inventory presentation fields that influence behavioral availability.
+- [x] Inventory direct `EntryType` checks that gate user-facing features.
+- [x] Inventory source, tracker, local/stub, platform, entry, and selection inputs.
+- [x] Add each fact to `../capability-atlas.md` with a provisional scope and owner.
+- [x] Stop and review the evidence inventory before continuing.
 
 ## Milestone 0.2 — Consumer and Coverage Graph
 
