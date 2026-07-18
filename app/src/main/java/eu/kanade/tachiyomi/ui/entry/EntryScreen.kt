@@ -241,7 +241,7 @@ class EntryScreen(
                 scope.launch {
                     continueReading(context, screenModel, successState.entry)
                 }
-            },
+            }.takeIf { screenModel.isContinueApplicable(successState.entry) },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = screenModel::showCoverDialog,
             onShareClicked = { shareEntry(context, successState.entry, screenModel.source) }.takeIf {

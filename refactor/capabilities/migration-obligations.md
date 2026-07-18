@@ -39,6 +39,13 @@ SPI boundary is not an exit gate for Phase 3.5.
 - No application production consumer injects `EntryOpenInteraction` directly.
 - Full application validation remains blocked by the independent Download Lifecycle obligation below.
 
+### Resolved in F02: Continue feature ownership
+
+- The Continue provider is consumed by the `entry-continue` contribution.
+- Entry, Library, and History availability and dispatch use the graph-derived Continue coordinator.
+- Applicable no-next state is distinct from provider absence through the structured feature result.
+- No application production consumer imports `EntryContinueInteraction` directly.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -66,7 +73,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
   content-type plugins that contribute themselves. F01 now installs the Open contributor; providers belonging to
-  F02–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
+  F03–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
 

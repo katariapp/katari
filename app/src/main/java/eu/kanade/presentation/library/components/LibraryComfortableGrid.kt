@@ -24,6 +24,7 @@ internal fun LibraryComfortableGrid(
     onClick: (LibraryItem) -> Unit,
     onLongClick: (LibraryItem) -> Unit,
     onClickContinueReading: ((LibraryItem) -> Unit)?,
+    isContinueReadingAvailable: (LibraryItem) -> Boolean,
     searchQuery: String?,
     onGlobalSearchClicked: () -> Unit,
     displaySettings: LibraryDisplaySettings,
@@ -82,7 +83,11 @@ internal fun LibraryComfortableGrid(
                 onLongClick = { onLongClick(libraryItem) },
                 onClick = { onClick(libraryItem) },
                 continueReadingProgress = libraryItem.progressFraction.takeIf { libraryItem.hasInProgress },
-                onClickContinueReading = if (onClickContinueReading != null && libraryItem.canContinue) {
+                onClickContinueReading = if (
+                    onClickContinueReading != null &&
+                    isContinueReadingAvailable(libraryItem) &&
+                    libraryItem.canContinue
+                ) {
                     { onClickContinueReading(libraryItem) }
                 } else {
                     null

@@ -32,7 +32,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import mihon.entry.interactions.EntryContinueInteraction
+import mihon.entry.interactions.EntryContinueFeature
+import mihon.entry.interactions.EntryContinueResult
 import mihon.feature.migration.dialog.MigrateEntryDialog
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.domain.history.model.HistoryItem
@@ -68,7 +69,7 @@ data object HistoryTab : Tab {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
-        val entryContinueInteraction = remember { Injekt.get<EntryContinueInteraction>() }
+        val entryContinueFeature = remember { Injekt.get<EntryContinueFeature>() }
         val screenModel = rememberScreenModel { HistoryScreenModel() }
         val state by screenModel.state.collectAsState()
 
@@ -81,10 +82,11 @@ data object HistoryTab : Tab {
                     navigator.push(EntryScreen(screenModel.getVisibleEntryId(item.historyItem.entryId)))
                 }
             },
+            canResume = { item -> entryContinueFeature.isApplicable(item.historyItem.entryType) },
             onClickResume = { item ->
                 scope.launch {
                     val entry = screenModel.getEntryById(item.historyItem.entryId) ?: return@launch
-                    entryContinueInteraction.continueEntry(context, entry)
+                    entryContinueFeature.continueEntry(context, entry)
                 }
             },
             onClickDelete = { history -> screenModel.setDialog(HistoryScreenModel.Dialog.Delete(history)) },
@@ -178,11 +180,16 @@ data object HistoryTab : Tab {
                     return@collectLatest
                 }
 
-                val chapter = entryContinueInteraction.continueEntry(context, entry)
-                if (chapter == null) {
-                    snackbarHostState.showSnackbar(
-                        context.stringResource(entry.type.entryTypePresentation().noNextChildLabel),
-                    )
+                when (entryContinueFeature.continueEntry(context, entry)) {
+                    EntryContinueResult.Inapplicable -> {
+                        snackbarHostState.showSnackbar(context.stringResource(MR.strings.no_next_item))
+                    }
+                    EntryContinueResult.NoNext -> {
+                        snackbarHostState.showSnackbar(
+                            context.stringResource(entry.type.entryTypePresentation().noNextChildLabel),
+                        )
+                    }
+                    is EntryContinueResult.Opened -> Unit
                 }
             }
         }

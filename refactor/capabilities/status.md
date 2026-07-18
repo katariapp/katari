@@ -22,6 +22,7 @@ Updated: 2026-07-18
 - Phase 4 completion: `17726de20` (`(refactor): replace interaction registry`)
 - Runtime-bridge boundary correction: `4b517ed53` (`(fix): discover entry runtime module bridges`)
 - F01 Open completion: `106fec52e` (`(refactor): migrate open feature integration`)
+- Architecture Gate 5.0: `83b2f93e7` (`(refactor): enforce feature-facing entry boundary`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -30,7 +31,7 @@ Updated: 2026-07-18
 
 - Phase: Phase 5 — Feature Integration Migration
 - Milestone: `F02` — Continue
-- State: Architecture Gate 5.0 approved; F02 not started
+- State: complete; awaiting explicit instruction before F03
 
 ## Why the Plan Was Reset
 
@@ -154,6 +155,10 @@ authority or weakening the architecture.
 - [x] Boundary validation derives every public SPI type instead of naming current interaction facades
 - [x] Application-facing API validation rejects raw `Entry*Interaction` contracts generically
 - [x] Decision `0019-feature-facing-application-boundary.md` reviewed and accepted
+- [x] Architecture Gate 5.0 committed in `83b2f93e7`
+- [x] F02 Continue owner, prerequisite, result semantics, and complete consumer disposition recorded
+- [x] Entry, Library, and History Continue surfaces migrated behind one graph-derived coordinator
+- [x] Synthetic provider, no-next, and valid-absence Continue proofs added
 
 Focused F01 validation:
 
@@ -173,6 +178,17 @@ Focused Architecture Gate 5.0 validation:
   neither SPI nor Feature Graph.
 - Boundary validation intentionally fails on 24 application production files using 13 raw facade types. Open is absent
   from that list because F01 already consumes its feature contract.
+
+Focused F02 validation:
+
+- `spotlessApply`, Entry-interactions API/SPI compilation, and `git diff --check` pass.
+- Focused synthetic Continue tests are present. Their Gradle task reaches the previously recorded Download Lifecycle
+  report/policy compile failures before test execution; it reports no F02 production-source error.
+- No application production source imports `EntryContinueInteraction`.
+- Root compilation reaches only the previously recorded Download Lifecycle report/policy errors; it reports no Continue
+  migration error.
+- Full application compilation and a clean boundary check remain intentionally deferred while F03–F27 raw consumers are
+  inaccessible.
 
 ## New Phase Sequence
 
@@ -348,6 +364,13 @@ Approved on 2026-07-18:
   empty contribution remains valid and produces no action or obligation.
 - Every current Open consumer in the migration census has an explicit disposition. Entry-detail navigation and Continue
   are retained outside F01 because they are different behavior, not silently omitted Open consequences.
+- F02 derives Continue applicability from the selected Continue consequence and matched provider object without a type
+  list or mandatory-provider rule.
+- Entry, Library, and History use the same application feature gate; per-item presentation does not reconstruct support
+  from unread counts, progress state, or the current production type set.
+- `Inapplicable` and `NoNext` are separate outcomes, so valid provider absence is not mislabeled as provider state.
+- A synthetic unknown contribution receives next-child dispatch automatically; absence remains valid and produces no
+  specialized obligation.
 - Architecture Gate 5.0 makes feature ownership an enforceable dependency direction rather than a naming preference.
 - Application consumers can see feature contracts and shared models but cannot see raw provider dispatch, the
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
@@ -396,5 +419,4 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Inventory and migrate `F02` Continue behind a feature-owned application contract. Stop after the complete F02 consumer
-disposition and manifesto review; do not begin `F03`.
+Do not begin `F03` until explicitly instructed to continue.

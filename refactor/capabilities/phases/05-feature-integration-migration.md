@@ -14,8 +14,9 @@ approved split makes it smaller.
 Current progress:
 
 - [x] `F01` — Open committed in `106fec52e`. See [`../features/F01-open.md`](../features/F01-open.md).
-- [x] `5.0` — Application feature-access boundary completed.
-- [ ] `F02`–`F27` — Not started.
+- [x] `5.0` — Application feature-access boundary committed in `83b2f93e7`.
+- [x] `F02` — Continue complete. See [`../features/F02-continue.md`](../features/F02-continue.md).
+- [ ] `F03`–`F27` — Not started.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

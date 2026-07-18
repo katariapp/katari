@@ -3,7 +3,6 @@ package mihon.entry.interactions
 import android.app.PendingIntent
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.feature.graph.ApplicableFeatureIntegration
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
@@ -51,23 +50,11 @@ internal class DefaultEntryOpenFeature(
     evaluation: FeatureGraphEvaluation,
     private val interaction: EntryOpenInteraction,
 ) : EntryOpenFeature {
-    private val applicableSubjects = evaluation.sharedConsequences
-        .asSequence()
-        .filter { applicability ->
-            applicability.subject.feature == ENTRY_OPEN_FEATURE_ID &&
-                applicability.subject.integration == ENTRY_OPEN_INTEGRATION_ID &&
-                applicability.consequence.id == ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID
-        }
-        .map { it.subject }
-        .toSet()
-
-    private val applicableTypes = evaluation.integrations
-        .asSequence()
-        .filterIsInstance<ApplicableFeatureIntegration>()
-        .filter { it.subject in applicableSubjects }
-        .flatMap { evaluated -> evaluated.matchedProviders.asSequence() }
-        .mapNotNull { provider -> provider.implementation as? EntryOpenProcessor }
-        .mapTo(mutableSetOf(), EntryOpenProcessor::type)
+    private val applicableTypes = evaluation.applicableProviderTypes<EntryOpenProcessor>(
+        feature = ENTRY_OPEN_FEATURE_ID,
+        integration = ENTRY_OPEN_INTEGRATION_ID,
+        consequence = ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID,
+    )
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes
 

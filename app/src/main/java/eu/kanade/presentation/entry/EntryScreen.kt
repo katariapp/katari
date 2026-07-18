@@ -108,7 +108,7 @@ fun EntryScreen(
 
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
-    onContinueReading: () -> Unit,
+    onContinueReading: (() -> Unit)?,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -281,7 +281,7 @@ private fun EntryScreenSmallImpl(
 
     onFilterClicked: () -> Unit,
     onRefresh: () -> Unit,
-    onContinueReading: () -> Unit,
+    onContinueReading: (() -> Unit)?,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -395,26 +395,28 @@ private fun EntryScreenSmallImpl(
         },
         snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            val isFABVisible = remember(chapters) {
-                chapters.fastAny { !it.chapter.read } && !isAnySelected
+            onContinueReading?.let { continueAction ->
+                val isFABVisible = remember(chapters) {
+                    chapters.fastAny { !it.chapter.read } && !isAnySelected
+                }
+                SmallExtendedFloatingActionButton(
+                    text = {
+                        val isReading = remember(state.chapters) {
+                            state.chapters.fastAny { it.chapter.read }
+                        }
+                        Text(
+                            text = stringResource(if (isReading) MR.strings.action_resume else MR.strings.action_start),
+                        )
+                    },
+                    icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
+                    onClick = continueAction,
+                    expanded = chapterListState.shouldExpandFAB(),
+                    modifier = Modifier.animateFloatingActionButton(
+                        visible = isFABVisible,
+                        alignment = Alignment.BottomEnd,
+                    ),
+                )
             }
-            SmallExtendedFloatingActionButton(
-                text = {
-                    val isReading = remember(state.chapters) {
-                        state.chapters.fastAny { it.chapter.read }
-                    }
-                    Text(
-                        text = stringResource(if (isReading) MR.strings.action_resume else MR.strings.action_start),
-                    )
-                },
-                icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = isFABVisible,
-                    alignment = Alignment.BottomEnd,
-                ),
-            )
         },
     ) { contentPadding ->
         val topPadding = contentPadding.calculateTopPadding()
@@ -572,7 +574,7 @@ fun EntryScreenLargeImpl(
 
     onFilterButtonClicked: () -> Unit,
     onRefresh: () -> Unit,
-    onContinueReading: () -> Unit,
+    onContinueReading: (() -> Unit)?,
     onSearch: (query: String, global: Boolean) -> Unit,
 
     // For cover dialog
@@ -684,28 +686,30 @@ fun EntryScreenLargeImpl(
         },
         snackbarHost = { AppSnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
-            val isFABVisible = remember(chapters) {
-                chapters.fastAny { !it.chapter.read } && !isAnySelected
+            onContinueReading?.let { continueAction ->
+                val isFABVisible = remember(chapters) {
+                    chapters.fastAny { !it.chapter.read } && !isAnySelected
+                }
+                SmallExtendedFloatingActionButton(
+                    text = {
+                        val isReading = remember(state.chapters) {
+                            state.chapters.fastAny { it.chapter.read }
+                        }
+                        Text(
+                            text = stringResource(
+                                if (isReading) MR.strings.action_resume else MR.strings.action_start,
+                            ),
+                        )
+                    },
+                    icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
+                    onClick = continueAction,
+                    expanded = chapterListState.shouldExpandFAB(),
+                    modifier = Modifier.animateFloatingActionButton(
+                        visible = isFABVisible,
+                        alignment = Alignment.BottomEnd,
+                    ),
+                )
             }
-            SmallExtendedFloatingActionButton(
-                text = {
-                    val isReading = remember(state.chapters) {
-                        state.chapters.fastAny { it.chapter.read }
-                    }
-                    Text(
-                        text = stringResource(
-                            if (isReading) MR.strings.action_resume else MR.strings.action_start,
-                        ),
-                    )
-                },
-                icon = { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = null) },
-                onClick = onContinueReading,
-                expanded = chapterListState.shouldExpandFAB(),
-                modifier = Modifier.animateFloatingActionButton(
-                    visible = isFABVisible,
-                    alignment = Alignment.BottomEnd,
-                ),
-            )
         },
     ) { contentPadding ->
         PullRefresh(

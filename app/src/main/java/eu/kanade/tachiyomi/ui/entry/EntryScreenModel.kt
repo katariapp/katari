@@ -69,7 +69,7 @@ import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryChildProgressRequest
 import mihon.entry.interactions.EntryConsumptionInteraction
-import mihon.entry.interactions.EntryContinueInteraction
+import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadInteraction
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
@@ -137,7 +137,7 @@ class EntryScreenModel(
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
     private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
-    private val entryContinueInteraction: EntryContinueInteraction = Injekt.get(),
+    private val entryContinueFeature: EntryContinueFeature = Injekt.get(),
     private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
     private val entryChildListInteraction: EntryChildListInteraction = Injekt.get(),
     private val entryChildGroupFilterInteraction: EntryChildGroupFilterInteraction = Injekt.get(),
@@ -1004,19 +1004,13 @@ class EntryScreenModel(
     }
 
     /**
-     * Returns the next unread chapter or null if everything is read.
-     */
-    suspend fun getNextUnreadChapter(): EntryChapter? {
-        val entry = entry ?: getEntry.await(entryId) ?: return null
-        return entryContinueInteraction.findNext(entry)
-    }
-
-    /**
      * Continues reading/watching the next chapter/episode for the entry.
      */
     suspend fun continueEntry(context: Context, entry: Entry) {
-        entryContinueInteraction.continueEntry(context, entry)
+        entryContinueFeature.continueEntry(context, entry)
     }
+
+    fun isContinueApplicable(entry: Entry): Boolean = entryContinueFeature.isApplicable(entry.type)
 
     private fun getBulkDownloadCandidateItems(): List<EntryChapterList.Item> {
         val chapterItems = if (skipFiltered) filteredChapters.orEmpty() else allChapters.orEmpty()

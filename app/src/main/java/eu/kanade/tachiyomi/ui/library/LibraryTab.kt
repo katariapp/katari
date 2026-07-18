@@ -58,7 +58,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryCapabilityReport
-import mihon.entry.interactions.EntryContinueInteraction
+import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadCapabilityPolicy
 import mihon.feature.migration.config.MigrationConfigScreen
 import mihon.feature.profiles.core.ProfileManager
@@ -102,7 +102,7 @@ data object LibraryTab : Tab {
         val profileManager = remember { Injekt.get<ProfileManager>() }
         val activeProfile by profileManager.activeProfile.collectFlowAsState()
         val visibleProfiles by profileManager.visibleProfiles.collectFlowAsState()
-        val entryContinueInteraction = remember { Injekt.get<EntryContinueInteraction>() }
+        val entryContinueFeature = remember { Injekt.get<EntryContinueFeature>() }
         val entryCapabilityReport = remember { Injekt.get<EntryCapabilityReport>() }
 
         val screenModel = rememberScreenModel { LibraryScreenModel(context.applicationContext) }
@@ -250,10 +250,13 @@ data object LibraryTab : Tab {
                         },
                         onContinueReadingClicked = { item: LibraryItem ->
                             scope.launchIO {
-                                entryContinueInteraction.continueEntry(context, item.entry)
+                                entryContinueFeature.continueEntry(context, item.entry)
                             }
                             Unit
                         }.takeIf { state.showContinueButton },
+                        isContinueReadingAvailable = { item ->
+                            entryContinueFeature.isApplicable(item.entry.type)
+                        },
                         onToggleSelection = screenModel::toggleSelection,
                         onToggleRangeSelection = { page, item ->
                             screenModel.toggleRangeSelection(page, item)

@@ -109,7 +109,10 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryInteractionComposition> {
         createEntryInteractionComposition(
             plugins = typeRuntimeContributions.map(EntryTypeRuntimeContribution::plugin),
-            featureContributors = listOf(EntryOpenFeatureContributor),
+            featureContributors = listOf(
+                EntryOpenFeatureContributor,
+                EntryContinueFeatureContributor,
+            ),
         )
     }
     addSingletonFactory<EntryOpenFeature> {
@@ -117,6 +120,13 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         DefaultEntryOpenFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.open,
+        )
+    }
+    addSingletonFactory<EntryContinueFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryContinueFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.continueEntry,
         )
     }
     addSingletonFactory {
