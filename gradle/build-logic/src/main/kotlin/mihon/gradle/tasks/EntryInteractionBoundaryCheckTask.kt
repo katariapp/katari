@@ -223,6 +223,14 @@ private class EntryInteractionBoundaryRules(
 
         checkTypeModulePublicApis(findings)
         checkApplicationApiDispatchContracts(findings)
+        findings += checkEntryMergeBoundaries(sourceIndex.files.map(KotlinSourceFile::toEntryMergeBoundarySource))
+            .map { finding ->
+                Finding(
+                    relativePath = finding.relativePath,
+                    lineNumber = finding.lineNumber,
+                    reason = finding.reason,
+                )
+            }
 
         return findings
     }
@@ -858,6 +866,28 @@ private data class KotlinSourceFile(
             )
         }
     }
+}
+
+private fun KotlinSourceFile.toEntryMergeBoundarySource(): EntryMergeBoundarySource {
+    val referenceLines = buildMap {
+        imports.forEach { import ->
+            val name = import.importedFqName?.substringAfterLast(".") ?: return@forEach
+            putIfAbsent(name, import.lineNumber)
+        }
+        references.forEach { reference -> putIfAbsent(reference.name, reference.lineNumber) }
+    }
+    return EntryMergeBoundarySource(
+        relativePath = relativePath,
+        content = content,
+        declarations = topLevelDeclarations.map { declaration ->
+            EntryMergeBoundaryDeclaration(
+                name = declaration.name,
+                isPublic = declaration.isPublic,
+                lineNumber = declaration.lineNumber,
+            )
+        },
+        references = referenceLines,
+    )
 }
 
 private data class KotlinImport(

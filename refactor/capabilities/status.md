@@ -38,9 +38,19 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12` — Merge restart planning
-- State: the rejected combined F12 implementation is isolated on `salvage/f12-merge-audit`; the active branch is clean at
-  the last accepted milestone. F12 will execute sequentially as `F12.1`–`F12.7`; F11 remains pending.
+- Milestone: `F12.1` — Merge contract and ownership boundary
+- State: F12.1 is implemented and awaiting architectural review. It defines the application intent/result/projection
+  contract, segregated explicit-profile host reads, and enforceable raw-authority boundary. It does not change Merge
+  persistence or migrate a production consumer. F12.2–F12.7 and F11 remain pending.
+
+Focused F12.1 validation:
+
+- `spotlessApply`, Entry-interactions API/root debug Kotlin compilation, and build-logic tests pass.
+- Permanent Kotlin sources and validation messages use product architecture vocabulary; the `F12` identifier exists
+  only in refactor planning records.
+- The boundary census intentionally fails on exactly 45 findings: 42 raw Merge authority references assigned to
+  F12.3–F12.6 and three transitional capability-facade references shared with F11.
+- No persistence implementation or application consumer behavior changed in F12.1.
 
 ## Why the Plan Was Reset
 
@@ -609,6 +619,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Begin F12.1 only after review of the sequential F12 plan. Establish and enforce the intent/projection/host ownership
-boundary before persistence changes or consumer migration. Use one agent and stop after the milestone for architectural
-review.
+Begin F12.2 only after F12.1 architectural approval. Define explicit-profile snapshot, transaction, failure, and
+non-database consequence semantics before adding a write-capable host port or changing persistence. Use one agent and
+stop after the milestone for a product and architecture decision review.

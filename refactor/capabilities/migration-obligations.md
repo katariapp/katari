@@ -24,6 +24,26 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ## Active Obligations
 
+### Exposed by F12.1: raw Merge authority and host ownership
+
+- The application-facing F12 contract now accepts user intent and returns owned editor/workflow projections; it exposes
+  neither a general membership query nor group CRUD.
+- Candidate, navigation, Library grouping, and backup reads have purpose-specific application contracts. Child-owner
+  and Download-owner projections are root-internal so application screens cannot use them as a membership shortcut.
+  Profile lifecycle and F11 replacement APIs remain absent until F12.2 defines snapshot and transaction semantics.
+- The segregated host boundary makes profile selection explicit. Mutation, transaction, snapshot, and compensation
+  semantics remain deliberately absent until F12.2 decides them.
+- Boundary validation reports 42 existing F12 raw-authority references. They cover the legacy Domain model, repository,
+  interactors, and data implementation; application composition; Entry, Library, Catalogue, History, Updates, and
+  notification consumers; backup/restore; profile lifecycle; F11 migration cooperation; download notification; and
+  Book/Manga ownership paths. These are assigned to F12.3–F12.6 and are not allowlisted compatibility paths.
+- Three transitional `EntryCapabilityInteraction` references remain assigned jointly to F11/F12. F12.3 removes the
+  Merge half; F11 retains responsibility for Migration.
+- Existing F12 host ports may be used only by the root F12 coordinator and a segregated application adapter. Raw domain
+  authorities cannot cross either the application contract or host contract.
+- F12.1 intentionally leaves the application boundary check failing on this migration queue. Restoring compilation by
+  exporting raw membership or weakening the rule is not an acceptable resolution.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.

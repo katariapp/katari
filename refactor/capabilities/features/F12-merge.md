@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: planned; no production implementation is active on `features-arch-refactor`
+Status: F12.1 contract boundary implemented; awaiting architectural review before F12.2
 
 ## Architectural Classification
 
@@ -64,6 +64,35 @@ Exit gate: the intended dependency direction is enforceable even if existing con
 
 Review request: approve the public intents/projections, host ownership, and prohibited API surface before persistence or
 consumer migration begins.
+
+Completion record:
+
+- `EntryMergeFeature` exposes only preparation and execution of user intent. It does not expose membership lookup,
+  group CRUD, provider dispatch, or persistence models.
+- The editor receives a purpose-specific projection and an opaque edit reference. Ordering, target selection, and
+  explicit removals remain caller choices; authoritative membership, validation, transitions, and consequences remain
+  F12 decisions.
+- Existing consumer families have named, segregated projection roles rather than one reusable group service:
+
+  | Consumer purpose | F12.1 boundary |
+  | --- | --- |
+  | Duplicate and merge target surfaces | Merge-aware candidate results without membership rows. |
+  | History, Updates, notifications, and Entry destinations | Visible-Entry navigation projection for an explicit profile-scoped subject. |
+  | Library loading and collapse | Grouping only over the Library population supplied by the caller. |
+  | Backup creation | Read-only backup projection; restore semantics remain an F12.2 decision. |
+  | Child List, reader/playback, and metadata refresh | Root-internal ordered-owner projection consumed by their feature coordinators, not application screens. |
+  | Download ownership and cache state | Root-internal Download projection, including profile observation, consumed only by Download coordinators. |
+  | Profile move/delete and F11 replacement | Explicitly reserved for F12.2 snapshot and transaction decisions; no provisional CRUD contract exists. |
+
+- The coordinator/host boundary is isolated under `mihon.entry.interactions.host` and selects an explicit profile before
+  any read. F12.2 deliberately owns mutation, transaction, snapshot, and failure semantics, so no provisional write
+  port was added in F12.1.
+- Build validation prevents ordinary application consumers from accessing F12 host ports, prevents raw legacy Merge
+  authorities from crossing the F12 API, and confines persistence adaptation to a segregated app host adapter.
+- The new boundary exposes 42 existing raw F12 references plus three transitional F11/F12 capability-facade references.
+  The raw queue includes the legacy Domain model/repository/interactors and data implementation, not only application
+  callers. They are the migration queue for F12.3–F12.6 and F11, not exceptions to the boundary.
+- No Merge persistence behavior or application consumer was changed in this milestone.
 
 ### F12.2 — Profile, transaction, and failure semantics
 
@@ -141,6 +170,8 @@ status to F12.
 
 ## Manifesto Review
 
-The plan declares Merge once as a shared workflow, derives optional cross-feature consequences from their real
-providers, makes profile and transaction obligations explicit before implementation, prevents consumers from rebuilding
-membership behavior, and uses no content-type matrix or mandatory provider.
+F12.1 declares Merge once as a shared workflow, gives application code a workflow contract rather than a support flag or
+raw authority, and establishes a boundary through which optional consequences can later be derived from their real
+providers. It uses no content-type matrix, mandatory provider, or caller-owned completion checklist. The intentionally
+unresolved transaction and persistence details remain an explicit F12.2 decision rather than being hidden in a
+compiling compatibility implementation.
