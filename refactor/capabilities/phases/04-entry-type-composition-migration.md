@@ -11,6 +11,14 @@ register, including type-owned artifacts currently outside the interaction regis
 
 ## Milestones
 
+- [x] 4.1 — Give every production plugin one owned type contribution and migrate Open/Continue provider identity without
+  making either provider mandatory.
+- [ ] 4.2 — Decompose and migrate the remaining operational provider contracts in `T04`–`T21`.
+- [ ] 4.3 — Join type-owned runtime artifacts and parallel composition paths in `T22`–`T27`.
+- [ ] 4.4 — Remove superseded registration paths, reconcile the test harness, and close the Phase 4 exit gate.
+
+Phase-level checks:
+
 - [ ] Port Open, Continue, and every other operational implementation through the same provider-contribution mechanism.
 - [ ] Account for every `T01`–`T27` row; record a completion, deliberate deferral, or corrected classification.
 - [ ] Preserve valid partial compositions and verify that omitting a provider means unsupported.

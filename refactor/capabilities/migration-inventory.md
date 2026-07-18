@@ -67,6 +67,15 @@ Every discovered item receives one of these outcomes:
 Phase 4 must migrate the actual provider shape, not mechanically wrap every existing processor. Several current
 processors contain multiple independently meaningful capabilities or registered no-op sub-capabilities.
 
+Migration progress:
+
+- Milestone 4.1 implements `T01`–`T03` in the working tree: each production plugin owns one content-type contribution,
+  and its Open and Continue processor objects are both operational implementations and graph providers. Provider-owned
+  installation derives operational dispatch from that contribution without a second type-module registration.
+- `T04`–`T21` remain unported until their provider contracts are decomposed without flattening optional behavior or
+  registered no-ops into false capability claims.
+- `T22`–`T27` remain unported type-owned artifact and runtime-composition work.
+
 | ID | Provider or composition fact | Current evidence | Required migration outcome |
 | --- | --- | --- | --- |
 | `T01` | Content-type identity and ownership | Manga, Anime, and Book plugin factories | Each plugin contributes one owned `ContentTypeContribution`; any provider subset remains valid. |

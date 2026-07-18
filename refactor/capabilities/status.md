@@ -11,15 +11,18 @@ Updated: 2026-07-18
 - Evaluation and obligations commit: `0a578b784` (`(feat): evaluate feature relationships`)
 - Contract and projection selection commit: `f1e66f671` (`(feat): select feature contracts and projections`)
 - Phase 3 completion: `c795c505c` (`(refactor): complete feature graph architecture`)
+- Migration-readiness commit: `7ab311608` (`(docs): update migration plan`)
+- Latest upstream reconciliation: `5e3f948b4` (`Merge branch 'upcoming' into features-arch-refactor`)
+- Milestone 4.1 commit: `(refactor): migrate entry provider identity`
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Pre-Phase 4 — Migration Readiness
-- Milestone: exhaustive migration census and boundary classification
-- State: census documented and classifications approved; awaiting commit authorization; Phase 4 has not started
+- Phase: Phase 4 — Entry-Type Composition Migration
+- Milestone: 4.1 — Owned type identity and Open/Continue provider migration
+- State: Milestone 4.1 committed; Phase 4.2 has not started
 
 ## Why the Plan Was Reset
 
@@ -80,6 +83,15 @@ authority or weakening the architecture.
 - [x] Type (`T01`–`T27`), feature (`F01`–`F27`), and contextual/external (`C01`–`C24`) migration registers recorded
 - [x] Direct type gates, parallel provider lists, tests, reporting, documentation, and audited non-migration boundaries
   classified in `migration-inventory.md`
+- [x] Migration-readiness milestone committed in `7ab311608`
+- [x] Upstream `upcoming` merged in `5e3f948b4`; working tree verified clean before Phase 4
+- [x] Milestone 4.1 gives Manga, Anime, and Book one owned content-type contribution each
+- [x] Open and Continue provider definitions live beside their SPI contracts
+- [x] Open/Continue are declared once in each contribution; provider-owned installation derives operational dispatch
+- [x] Provider-to-plugin `EntryType` identity is validated generically without a concrete type list
+- [x] Graph content-type identity is derived from `EntryType` rather than repeated as a type-owned string
+- [x] Decision `0012-entry-plugin-provider-identity.md` accepted
+- [x] Milestone 4.1 committed as `(refactor): migrate entry provider identity`
 
 ## New Phase Sequence
 
@@ -122,7 +134,13 @@ beside the graph.
 - A complete anonymous acceptance test proves future complete, incomplete, and partial types through unchanged discovery,
   evaluation, consequence, obligation, contract, and projection paths.
 - Accepted decision `0011-production-boundary-cut.md` and Phase 3.5 completion notes.
-- Uncommitted migration-readiness documentation only; no Phase 4 production migration has started.
+- Milestone 4.1 production and refactor-workspace changes are uncommitted; Phase 4.2 has not started.
+- Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
+- Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
+  declaration exists, and type plugins contain no separate Open/Continue registry call.
+- `T04`–`T21` processors remain operational-only migration obligations; `T22`–`T27` type artifacts remain unported.
+- No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
+  blocked until real feature owners contribute relationships in their owning phase.
 
 ## Pre-Phase 4 Census Findings
 
@@ -174,6 +192,10 @@ Approved on 2026-07-18:
   boundary-build-logic files with `EntryType`, one separate type-provider registry for library progress, and 16 source
   capability contracts or capability-bearing contracts.
 - `git diff --check` passes for the migration-readiness documentation.
+- Milestone 4.1 ran `./gradlew --quiet spotlessApply` successfully.
+- `:entry-interactions:spi:compileDebugKotlin` reaches only the five previously recorded Phase 5 deleted-report errors;
+  downstream type-module compilation remains blocked by that expected SPI failure.
+- No new compiler error was reported in the migrated provider contract before the known failure boundary.
 
 ## Manifesto Comparison
 
@@ -216,9 +238,17 @@ Approved on 2026-07-18:
   tests, and documentation are explicit feature consequences rather than a later informal audit.
 - The migration inventory is a temporary control surface with completion dispositions, not a new runtime allowlist or
   capability authority.
+- Milestone 4.1 uses operational provider instances as graph evidence and derives their dispatch registration; it does
+  not repeat support or participation in a matrix or second type-module call.
+- The common plugin/provider boundary permits any provider subset and contains no Open/Continue requirement.
+- Concrete type identity remains type-owned, while validation contains no Manga, Anime, or Book branch.
+- Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
+- Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
+  reachability or old tests.
 
 ## Exact Next Action After Review
 
-Commit this migration-readiness milestone only when explicitly authorized. Do not start Phase 4 in the same milestone.
-A later, separate authorization may start the first bounded `T01`–`T27` Phase 4 milestone; do not migrate feature
-consumers.
+Review Milestone 4.1 and proposed decision `0012`. Feedback is needed only if the provider identity, partial-support
+semantics, or deliberate refusal to add dummy reachability differs from the intended architecture; no product decision
+is required. If approved, mark the decision accepted and commit Milestone 4.1 when explicitly authorized. Do not start
+Milestone 4.2 in the same step.

@@ -6,24 +6,57 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import mihon.feature.graph.CapabilityId
+import mihon.feature.graph.ContentTypeContribution
+import mihon.feature.graph.ContentTypeId
+import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.capabilityDefinition
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
-interface EntryOpenProcessor {
+interface EntryInteractionProvider {
     val type: EntryType
+}
+
+interface EntryInteractionDispatchProvider : EntryInteractionProvider {
+    fun install(registry: EntryInteractionRegistry)
+}
+
+interface EntryOpenProcessor : EntryInteractionDispatchProvider {
+    override fun install(registry: EntryInteractionRegistry) {
+        registry.registerOpenProcessor(this)
+    }
+
     fun open(context: Context, entry: Entry, chapter: EntryChapter, options: EntryOpenOptions)
     fun pendingIntent(context: Context, entry: Entry, chapter: EntryChapter, options: EntryOpenOptions): PendingIntent
 }
 
-interface EntryContinueProcessor {
-    val type: EntryType
+interface EntryContinueProcessor : EntryInteractionDispatchProvider {
+    override fun install(registry: EntryInteractionRegistry) {
+        registry.registerContinueProcessor(this)
+    }
+
     suspend fun findNext(entry: Entry): EntryChapter?
     fun open(context: Context, entry: Entry, chapter: EntryChapter)
 }
 
-interface EntryDownloadProcessor {
-    val type: EntryType
+private val ENTRY_INTERACTION_CONTRACT_OWNER = ContributionOwner("entry-interactions")
+
+fun EntryType.toContentTypeId(): ContentTypeId = ContentTypeId(name.lowercase())
+
+val EntryOpenCapability = capabilityDefinition<EntryOpenProcessor>(
+    id = CapabilityId("entry.open"),
+    owner = ENTRY_INTERACTION_CONTRACT_OWNER,
+)
+
+val EntryContinueCapability = capabilityDefinition<EntryContinueProcessor>(
+    id = CapabilityId("entry.continue"),
+    owner = ENTRY_INTERACTION_CONTRACT_OWNER,
+)
+
+interface EntryDownloadProcessor : EntryInteractionProvider {
     val settingCapabilities: Set<EntryDownloadSettingCapability> get() = emptySet()
     val changes: Flow<Unit>
     val isInitializing: Flow<Boolean>
@@ -100,16 +133,14 @@ interface EntryDownloadProcessor {
     fun cancelQueuedDownload(chapterId: Long): EntryDownloadStatus?
 }
 
-interface EntryCapabilityProcessor {
-    val type: EntryType
+interface EntryCapabilityProcessor : EntryInteractionProvider {
 
     fun supportsMigration(entry: Entry): Boolean = false
 
     fun supportsMerge(entry: Entry): Boolean = false
 }
 
-interface EntryConsumptionProcessor {
-    val type: EntryType
+interface EntryConsumptionProcessor : EntryInteractionProvider {
 
     fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
         return when (consumed) {
@@ -121,8 +152,7 @@ interface EntryConsumptionProcessor {
     suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
 }
 
-interface EntryBookmarkProcessor {
-    val type: EntryType
+interface EntryBookmarkProcessor : EntryInteractionProvider {
 
     fun canSetBookmarked(status: EntryBookmarkStatus, bookmarked: Boolean): Boolean {
         return status.bookmarked != bookmarked
@@ -131,13 +161,11 @@ interface EntryBookmarkProcessor {
     suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
 }
 
-interface EntryUpdateEligibilityProcessor {
-    val type: EntryType
+interface EntryUpdateEligibilityProcessor : EntryInteractionProvider {
     fun evaluate(request: EntryUpdateEligibilityRequest): EntryUpdateEligibility
 }
 
-interface EntryProgressProcessor {
-    val type: EntryType
+interface EntryProgressProcessor : EntryInteractionProvider {
     suspend fun snapshot(entry: Entry): EntryProgressSnapshot
     suspend fun restore(entry: Entry, snapshot: EntryProgressSnapshot)
     suspend fun copy(
@@ -147,20 +175,17 @@ interface EntryProgressProcessor {
     )
 }
 
-interface EntryPlaybackPreferencesProcessor {
-    val type: EntryType
+interface EntryPlaybackPreferencesProcessor : EntryInteractionProvider {
     suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot?
     suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot)
     suspend fun copy(sourceEntry: Entry, targetEntry: Entry)
 }
 
-interface EntryImmersiveProcessor : EntryImmersiveInteraction {
-    val type: EntryType
+interface EntryImmersiveProcessor : EntryImmersiveInteraction, EntryInteractionProvider {
     override fun preloadRadius(entryType: EntryType): Int
 }
 
-interface EntryChildListProcessor {
-    val type: EntryType
+interface EntryChildListProcessor : EntryInteractionProvider {
     fun sortedForReading(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
     fun sortedForDisplay(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
     fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow>
@@ -169,8 +194,7 @@ interface EntryChildListProcessor {
     ): Flow<Map<Long, EntryChildProgressLabel>> = flowOf(emptyMap())
 }
 
-interface EntryChildGroupFilterProcessor {
-    val type: EntryType
+interface EntryChildGroupFilterProcessor : EntryInteractionProvider {
 
     fun supports(entry: Entry): Boolean
     fun shouldApplyFilter(entry: Entry): Boolean
@@ -181,17 +205,46 @@ interface EntryChildGroupFilterProcessor {
     suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>)
 }
 
-interface EntryLibraryFilterProcessor {
-    val type: EntryType
+interface EntryLibraryFilterProcessor : EntryInteractionProvider {
     fun supportsOutsideReleasePeriodFilter(entry: Entry): Boolean
 }
 
-interface EntryPreviewProcessor : EntryPreviewInteraction {
-    val type: EntryType
-}
+interface EntryPreviewProcessor : EntryPreviewInteraction, EntryInteractionProvider
 
 interface EntryInteractionPlugin : FeatureGraphContributor {
-    fun register(registry: EntryInteractionRegistry)
+    val type: EntryType
+    val contentTypeContribution: ContentTypeContribution
+
+    override val owner: ContributionOwner
+        get() = contentTypeContribution.owner
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(contentTypeContribution)
+    }
+
+    fun validateContribution() {
+        require(contentTypeContribution.contentType == type.toContentTypeId()) {
+            "Entry interaction plugin $type must contribute content type ${type.toContentTypeId()}, not " +
+                contentTypeContribution.contentType
+        }
+        contentTypeContribution.providers.forEach { provider ->
+            val interactionProvider = provider.implementation as? EntryInteractionProvider ?: return@forEach
+            require(interactionProvider.type == type) {
+                "Entry interaction plugin $type cannot contribute ${provider.capability.id} for " +
+                    interactionProvider.type
+            }
+        }
+    }
+
+    fun installContributedProviders(registry: EntryInteractionRegistry) {
+        contentTypeContribution.providers.forEach { provider ->
+            (provider.implementation as? EntryInteractionDispatchProvider)?.install(registry)
+        }
+    }
+
+    fun register(registry: EntryInteractionRegistry) {
+        installContributedProviders(registry)
+    }
 }
 
 interface EntryInteractionRegistry {

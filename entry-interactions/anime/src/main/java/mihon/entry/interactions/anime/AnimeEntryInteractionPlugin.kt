@@ -1,11 +1,19 @@
 package mihon.entry.interactions.anime
 
+import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
+import mihon.entry.interactions.EntryInteractionRegistry
+import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
 import mihon.entry.interactions.settings.EntryInteractionPreferences
+import mihon.entry.interactions.toContentTypeId
+import mihon.feature.graph.CapabilityProvider
+import mihon.feature.graph.ContentTypeContribution
+import mihon.feature.graph.ContributionOwner
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
@@ -44,60 +52,70 @@ fun animeEntryInteractionPlugin(
 internal fun animeEntryInteractionPlugin(
     dependencies: AnimeEntryInteractionRuntimeDependencies,
 ): EntryInteractionPlugin {
-    return EntryInteractionPlugin { registry ->
-        val openProcessor = AnimeOpenProcessor()
-        registry.registerOpenProcessor(openProcessor)
-        registry.registerCapabilityProcessor(AnimeCapabilityProcessor())
-        registry.registerChildListProcessor(
-            AnimeChildListProcessor(
-                entryProgressRepository = dependencies.entryProgressRepository,
+    val openProcessor = AnimeOpenProcessor()
+    val continueProcessor = AnimeContinueProcessor(
+        getEntryWithChapters = dependencies.getEntryWithChapters,
+        entryProgressRepository = dependencies.entryProgressRepository,
+        openProcessor = openProcessor,
+    )
+    return object : EntryInteractionPlugin {
+        override val type = EntryType.ANIME
+        override val contentTypeContribution = ContentTypeContribution(
+            contentType = type.toContentTypeId(),
+            owner = ContributionOwner("entry-interactions.anime"),
+            providers = listOf(
+                CapabilityProvider(EntryOpenCapability, openProcessor),
+                CapabilityProvider(EntryContinueCapability, continueProcessor),
             ),
         )
-        registry.registerContinueProcessor(
-            AnimeContinueProcessor(
-                getEntryWithChapters = dependencies.getEntryWithChapters,
-                entryProgressRepository = dependencies.entryProgressRepository,
-                openProcessor = openProcessor,
-            ),
-        )
-        registry.registerDownloadProcessor(
-            AnimeDownloadProcessor(
-                dependencies = dependencies,
-            ),
-        )
-        registry.registerConsumptionProcessor(
-            AnimeConsumptionProcessor(
-                entryProgressRepository = dependencies.entryProgressRepository,
-                downloadLifecycle = dependencies.downloadLifecycle,
-            ),
-        )
-        registry.registerUpdateEligibilityProcessor(AnimeUpdateEligibilityProcessor())
-        registry.registerProgressProcessor(
-            AnimeProgressProcessor(
-                entryProgressRepository = dependencies.entryProgressRepository,
-                entryChapterRepository = dependencies.entryChapterRepository,
-            ),
-        )
-        registry.registerPlaybackPreferencesProcessor(
-            AnimePlaybackPreferencesProcessor(
-                playbackPreferencesRepository = dependencies.playbackPreferencesRepository,
-            ),
-        )
-        registry.registerChildGroupFilterProcessor(AnimeChildGroupFilterProcessor())
-        registry.registerLibraryFilterProcessor(AnimeLibraryFilterProcessor())
-        registry.registerPreviewProcessor(
-            AnimePreviewInteraction(
-                entryInteractionPreferences = dependencies.entryInteractionPreferences,
-                sourceManager = dependencies.sourceManager,
-            ),
-        )
-        registry.registerImmersiveProcessor(
-            AnimeImmersiveProcessor(
-                entryProgressRepository = dependencies.entryProgressRepository,
-                historyRepository = dependencies.historyRepository,
-                resolveVideoStream = { Injekt.get() },
-            ),
-        )
+
+        override fun register(registry: EntryInteractionRegistry) {
+            installContributedProviders(registry)
+            registry.registerCapabilityProcessor(AnimeCapabilityProcessor())
+            registry.registerChildListProcessor(
+                AnimeChildListProcessor(
+                    entryProgressRepository = dependencies.entryProgressRepository,
+                ),
+            )
+            registry.registerDownloadProcessor(
+                AnimeDownloadProcessor(
+                    dependencies = dependencies,
+                ),
+            )
+            registry.registerConsumptionProcessor(
+                AnimeConsumptionProcessor(
+                    entryProgressRepository = dependencies.entryProgressRepository,
+                    downloadLifecycle = dependencies.downloadLifecycle,
+                ),
+            )
+            registry.registerUpdateEligibilityProcessor(AnimeUpdateEligibilityProcessor())
+            registry.registerProgressProcessor(
+                AnimeProgressProcessor(
+                    entryProgressRepository = dependencies.entryProgressRepository,
+                    entryChapterRepository = dependencies.entryChapterRepository,
+                ),
+            )
+            registry.registerPlaybackPreferencesProcessor(
+                AnimePlaybackPreferencesProcessor(
+                    playbackPreferencesRepository = dependencies.playbackPreferencesRepository,
+                ),
+            )
+            registry.registerChildGroupFilterProcessor(AnimeChildGroupFilterProcessor())
+            registry.registerLibraryFilterProcessor(AnimeLibraryFilterProcessor())
+            registry.registerPreviewProcessor(
+                AnimePreviewInteraction(
+                    entryInteractionPreferences = dependencies.entryInteractionPreferences,
+                    sourceManager = dependencies.sourceManager,
+                ),
+            )
+            registry.registerImmersiveProcessor(
+                AnimeImmersiveProcessor(
+                    entryProgressRepository = dependencies.entryProgressRepository,
+                    historyRepository = dependencies.historyRepository,
+                    resolveVideoStream = { Injekt.get() },
+                ),
+            )
+        }
     }
 }
 

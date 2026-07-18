@@ -41,12 +41,25 @@ fun createEntryInteractionComposition(
     plugins: List<EntryInteractionPlugin>,
     featureContributors: List<FeatureGraphContributor>,
 ): EntryInteractionComposition {
+    validateEntryInteractionPlugins(plugins)
     val featureGraph = discoverAndAssembleFeatureGraph(plugins + featureContributors)
     val featureGraphEvaluation = evaluateFeatureGraph(featureGraph)
     val featureArtifacts = selectFeatureArtifacts(featureGraph, featureGraphEvaluation)
     val registry = DefaultEntryInteractionRegistry()
     plugins.forEach { it.register(registry) }
     return registry.createComposition(featureGraph, featureGraphEvaluation, featureArtifacts)
+}
+
+private fun validateEntryInteractionPlugins(plugins: List<EntryInteractionPlugin>) {
+    plugins.forEach(EntryInteractionPlugin::validateContribution)
+    plugins.groupBy(EntryInteractionPlugin::type)
+        .filterValues { it.size > 1 }
+        .forEach { (type, duplicates) ->
+            error(
+                "Duplicate Entry interaction plugin for $type from " +
+                    duplicates.map { it.owner }.distinct().sortedBy { it.value },
+            )
+        }
 }
 
 private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
