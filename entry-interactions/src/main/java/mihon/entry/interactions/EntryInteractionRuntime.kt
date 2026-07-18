@@ -238,6 +238,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         DefaultEntryDownloadMaintenanceFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.download,
+            ownership = get(),
         )
     }
     addSingletonFactory<EntryConsumptionFeature> {
@@ -360,7 +361,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             context = app,
             downloads = get<EntryDownloadRuntimeCoordinator>(),
             actions = dependencies.notificationActions,
-            getMergedEntry = get(),
+            ownership = get(),
         )
     }
     addSingletonFactory<EntryDownloadForegroundNotificationProvider> { get<EntryDownloadNotificationManager>() }

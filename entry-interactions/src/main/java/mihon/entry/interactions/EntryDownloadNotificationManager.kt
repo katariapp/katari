@@ -12,13 +12,12 @@ import mihon.entry.interactions.download.notification.EntryDownloadNotificationP
 import mihon.entry.interactions.download.notification.EntryDownloadProgressNotification
 import mihon.entry.interactions.download.notification.entryDownloadForegroundNotification
 import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.domain.entry.interactor.GetMergedEntry
 
 internal class EntryDownloadNotificationManager(
     private val context: Context,
     private val downloads: EntryDownloadRuntimeCoordinator,
     private val actions: EntryDownloadNotificationActions,
-    private val getMergedEntry: GetMergedEntry,
+    private val ownership: EntryMergeDownloadOwnershipProjection,
     private val presenter: EntryDownloadNotificationPresenter = AndroidEntryDownloadNotifier(context),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val messageResolver: (EntryDownloadMessage) -> String = { it.resolve(context) },
@@ -66,20 +65,24 @@ internal class EntryDownloadNotificationManager(
     }
 
     private suspend fun showProgress(item: EntryDownloadQueueItem) {
+        val destination = ownership.resolveDownloadOwners(EntryMergeSubject(item.profileId, item.entryId))
         val progressText = item.presentation.description()?.let(messageResolver)
         val subtitle = listOfNotNull(item.subtitle.takeIf(String::isNotBlank), progressText)
             .joinToString(" • ")
             .ifBlank { null }
         presenter.showProgress(
             EntryDownloadProgressNotification(
-                entryType = item.entryType,
+                destination = EntryDownloadEntryIdentity(
+                    profileId = destination.profileId,
+                    entryType = item.entryType,
+                    entryId = destination.visibleEntryId,
+                ),
                 title = item.title,
                 text = subtitle,
                 hiddenTitle = progressText,
                 maximum = item.progressMax.coerceAtLeast(1),
                 current = item.progress,
                 indeterminate = item.progress <= 0,
-                entryId = getMergedEntry.awaitVisibleTargetId(item.entryId),
             ),
         )
     }
@@ -87,16 +90,24 @@ internal class EntryDownloadNotificationManager(
     private suspend fun handleEvent(event: EntryDownloadEvent) {
         when (event) {
             is EntryDownloadEvent.Error -> {
+                val destination = event.entryIdentity?.let {
+                    ownership.resolveDownloadOwners(EntryMergeSubject(it.profileId, it.entryId))
+                }
                 presenter.showError(
                     EntryDownloadErrorNotification(
-                        entryType = event.entryType,
+                        destination = destination?.let {
+                            EntryDownloadEntryIdentity(
+                                profileId = it.profileId,
+                                entryType = event.entryType,
+                                entryId = it.visibleEntryId,
+                            )
+                        },
                         title = listOfNotNull(event.title, event.subtitle)
                             .joinToString(": ")
                             .ifBlank {
                                 context.stringResource(tachiyomi.i18n.MR.strings.download_notifier_downloader_title)
                             },
                         message = messageResolver(event.message),
-                        entryId = event.entryId?.let { getMergedEntry.awaitVisibleTargetId(it) },
                     ),
                 )
             }

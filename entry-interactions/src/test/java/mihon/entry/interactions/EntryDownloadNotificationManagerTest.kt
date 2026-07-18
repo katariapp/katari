@@ -4,6 +4,7 @@ import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -17,7 +18,6 @@ import mihon.entry.interactions.download.notification.EntryDownloadErrorNotifica
 import mihon.entry.interactions.download.notification.EntryDownloadNotificationPresenter
 import mihon.entry.interactions.download.notification.EntryDownloadProgressNotification
 import org.junit.jupiter.api.Test
-import tachiyomi.domain.entry.interactor.GetMergedEntry
 
 class EntryDownloadNotificationManagerTest {
     @Test
@@ -31,10 +31,10 @@ class EntryDownloadNotificationManagerTest {
         fixture.state.value = EntryDownloadRuntimeState(queue = listOf(group(item())), isRunning = true)
         runCurrent()
 
-        progress.captured.entryType shouldBe EntryType.BOOK
-        progress.captured.entryId shouldBe 42L
+        progress.captured.destination shouldBe EntryDownloadEntryIdentity(1L, EntryType.BOOK, 42L)
         progress.captured.title shouldBe "Entry"
         progress.captured.text shouldBe "Chapter • 25%"
+        coVerify { fixture.ownership.resolveDownloadOwners(EntryMergeSubject(1L, 42L)) }
 
         fixture.state.value = fixture.state.value.copy(isPaused = true)
         runCurrent()
@@ -53,7 +53,11 @@ class EntryDownloadNotificationManagerTest {
         fixture.events.emit(
             EntryDownloadEvent.Error(
                 entryType = EntryType.ANIME,
-                entryId = 7L,
+                entryIdentity = EntryDownloadEntryIdentity(
+                    profileId = 3L,
+                    entryType = EntryType.ANIME,
+                    entryId = 7L,
+                ),
                 title = "Series",
                 subtitle = "Episode",
                 message = EntryDownloadMessage.Text("Failure"),
@@ -61,10 +65,10 @@ class EntryDownloadNotificationManagerTest {
         )
         runCurrent()
 
-        error.captured.entryType shouldBe EntryType.ANIME
-        error.captured.entryId shouldBe 7L
+        error.captured.destination shouldBe EntryDownloadEntryIdentity(3L, EntryType.ANIME, 7L)
         error.captured.title shouldBe "Series: Episode"
         error.captured.message shouldBe "Failure"
+        coVerify { fixture.ownership.resolveDownloadOwners(EntryMergeSubject(3L, 7L)) }
     }
 
     private fun fixture(scope: CoroutineScope): Fixture {
@@ -79,15 +83,18 @@ class EntryDownloadNotificationManagerTest {
             every { events() } returns events
         }
         val presenter = mockk<EntryDownloadNotificationPresenter>(relaxed = true)
-        val getMergedEntry = mockk<GetMergedEntry> {
-            coEvery { awaitVisibleTargetId(any()) } answers { firstArg() }
+        val ownership = mockk<EntryMergeDownloadOwnershipProjection> {
+            coEvery { resolveDownloadOwners(any()) } answers {
+                val subject = firstArg<EntryMergeSubject>()
+                EntryMergeDownloadOwners(subject.profileId, subject.entryId, emptyList())
+            }
         }
         return Fixture(
             manager = EntryDownloadNotificationManager(
                 context = mockk<Context>(relaxed = true),
                 downloads = downloads,
                 actions = mockk(relaxed = true),
-                getMergedEntry = getMergedEntry,
+                ownership = ownership,
                 presenter = presenter,
                 scope = scope,
                 messageResolver = { message ->
@@ -101,6 +108,7 @@ class EntryDownloadNotificationManagerTest {
                 },
             ),
             presenter = presenter,
+            ownership = ownership,
             state = stateFlow,
             events = events,
         )
@@ -137,6 +145,7 @@ class EntryDownloadNotificationManagerTest {
     private data class Fixture(
         val manager: EntryDownloadNotificationManager,
         val presenter: EntryDownloadNotificationPresenter,
+        val ownership: EntryMergeDownloadOwnershipProjection,
         val state: MutableStateFlow<EntryDownloadRuntimeState>,
         val events: MutableSharedFlow<EntryDownloadEvent>,
     )

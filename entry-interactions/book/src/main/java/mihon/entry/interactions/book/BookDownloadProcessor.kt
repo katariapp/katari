@@ -2,13 +2,9 @@ package mihon.entry.interactions.book
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryBulkDownloadCandidateProcessor
 import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
@@ -31,13 +27,6 @@ internal class BookDownloadProcessor(
     private val manager: BookDownloadManager = dependencies.manager
     private val cache: BookDownloadCache = dependencies.cache
     private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    init {
-        scope.launch {
-            dependencies.mergedEntryRepository.subscribeAll().collect(cache::updateMergedEntries)
-        }
-    }
 
     override val type: EntryType = EntryType.BOOK
     override val changes: Flow<Unit> = merge(
@@ -131,7 +120,7 @@ internal class BookDownloadProcessor(
 
     override suspend fun deleteEntryDownloads(entry: Entry) {
         entry.requireBook()
-        manager.deleteEntryDownloads(entry, cache.memberEntryIds(entry.id))
+        manager.deleteEntryDownloads(entry)
     }
 
     override fun hasDownloads(entry: Entry): Boolean = getDownloadCount(entry) > 0
@@ -200,5 +189,4 @@ internal data class BookDownloadProcessorDependencies(
     val sourceManager: tachiyomi.domain.source.service.SourceManager,
     val entryRepository: EntryRepository,
     val getEntryWithChapters: tachiyomi.domain.entry.interactor.GetEntryWithChapters,
-    val mergedEntryRepository: tachiyomi.domain.entry.repository.MergedEntryRepository,
 )

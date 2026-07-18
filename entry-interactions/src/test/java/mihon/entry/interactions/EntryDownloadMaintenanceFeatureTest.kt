@@ -43,7 +43,8 @@ class EntryDownloadMaintenanceFeatureTest {
 
     @Test
     fun `provider absence is valid and distinct from an entry with no downloads`() = runTest {
-        val featureWithoutProvider = featureFor()
+        val ownership = mockk<EntryMergeDownloadOwnershipProjection>(relaxed = true)
+        val featureWithoutProvider = featureFor(ownership = ownership)
 
         featureWithoutProvider.inspectEntry(entry) shouldBe
             EntryDownloadMaintenanceInspection.Inapplicable(EntryType.BOOK)
@@ -51,6 +52,7 @@ class EntryDownloadMaintenanceFeatureTest {
             EntryDownloadMaintenanceResult.Inapplicable(setOf(EntryType.BOOK))
         featureWithoutProvider.invalidateCaches() shouldBe EntryDownloadMaintenanceResult.NoParticipants
         featureWithoutProvider.renameSource(mockk(), mockk()) shouldBe EntryDownloadMaintenanceResult.NoParticipants
+        coVerify(exactly = 0) { ownership.resolveDownloadOwners(any()) }
 
         val processor = processor()
         every { processor.hasDownloads(entry) } returns false
@@ -59,8 +61,30 @@ class EntryDownloadMaintenanceFeatureTest {
         featureWithEmptyStorage.inspectEntry(entry) shouldBe EntryDownloadMaintenanceInspection.NoDownloads
     }
 
+    @Test
+    fun `merged download maintenance visits each concrete owner`() = runTest {
+        val member = entry.copy(id = 8L, url = "/member")
+        val processor = processor()
+        every { processor.hasDownloads(entry) } returns false
+        every { processor.hasDownloads(member) } returns true
+        val feature = featureFor(
+            EntryDownloadCapability.bind(processor),
+            owners = listOf(entry, member),
+        )
+
+        feature.inspectEntry(entry) shouldBe EntryDownloadMaintenanceInspection.HasDownloads
+        feature.removeEntryDownloads(entry) shouldBe EntryDownloadMaintenanceResult.Performed
+
+        verify(exactly = 1) { processor.hasDownloads(entry) }
+        verify(exactly = 1) { processor.hasDownloads(member) }
+        coVerify(exactly = 1) { processor.deleteEntryDownloads(entry) }
+        coVerify(exactly = 1) { processor.deleteEntryDownloads(member) }
+    }
+
     private fun featureFor(
         vararg bindings: EntryInteractionProviderBinding<*>,
+        owners: List<Entry> = listOf(entry),
+        ownership: EntryMergeDownloadOwnershipProjection? = null,
     ): EntryDownloadMaintenanceFeature {
         val plugins = bindings
             .takeIf { it.isNotEmpty() }
@@ -73,6 +97,13 @@ class EntryDownloadMaintenanceFeatureTest {
         return DefaultEntryDownloadMaintenanceFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.download,
+            ownership = ownership ?: mockk {
+                coEvery { resolveDownloadOwners(any()) } returns EntryMergeDownloadOwners(
+                    profileId = entry.profileId,
+                    visibleEntryId = entry.id,
+                    orderedOwners = owners,
+                )
+            },
         )
     }
 

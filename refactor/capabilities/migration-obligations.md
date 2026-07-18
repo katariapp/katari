@@ -86,6 +86,19 @@ SPI boundary is not an exit gate for Phase 3.5.
   Library/backup/profile lifecycle consumers, and five F11 Migration consumers, including its two narrow Merge
   cooperation calls. No F12.4 consumer remains.
 
+### Resolved in F12.5: Download ownership and notification identity
+
+- Download maintenance derives ordered concrete owners through the root-internal Merge projection only after the real
+  Download provider makes the operation applicable. Merge does not authorize Download for a type without that provider.
+- Book Download code no longer imports raw Merge models/repositories or maintains a membership index. Its cache, count,
+  and deletion operations are scoped to one concrete owner; shared Download coordination owns merged aggregation.
+- Queue and error events retain explicit profile and real-owner identity. Rendered notification destinations retain the
+  originating profile and visible Entry together rather than passing unrelated optional IDs.
+- New notification navigation and actions cross the profile selection/authentication gate before dispatch. Legacy
+  installed payloads use one named global-ID compatibility lookup and never fall back to the active profile.
+- The active boundary queue is exactly 12 findings: seven F12.6 Library/backup/profile lifecycle consumers and five F11
+  Migration consumers, including its two narrow Merge cooperation calls. No F12.5 raw consumer remains.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.

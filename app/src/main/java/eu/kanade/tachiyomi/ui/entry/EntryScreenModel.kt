@@ -886,7 +886,7 @@ class EntryScreenModel(
     /**
      * Returns true if the entry has any downloads.
      */
-    private fun hasDownloads(): Boolean {
+    private suspend fun hasDownloads(): Boolean {
         val entry = successState?.entry ?: return false
         return downloadMaintenance.inspectEntry(entry) == EntryDownloadMaintenanceInspection.HasDownloads
     }

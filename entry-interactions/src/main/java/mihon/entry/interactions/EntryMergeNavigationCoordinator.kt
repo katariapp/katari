@@ -12,6 +12,11 @@ internal class EntryMergeNavigationCoordinator(
         return EntryMergeNavigationProjection(subject, membership?.targetEntryId ?: subject.entryId)
     }
 
+    override suspend fun resolveLegacyNotification(entryId: Long): EntryMergeNavigationProjection? {
+        val entry = host.resolveLegacyNotificationEntry(entryId) ?: return null
+        return resolveNavigation(EntryMergeSubject(entry.profileId, entry.id))
+    }
+
     override fun observeNavigation(subject: EntryMergeSubject): Flow<EntryMergeNavigationProjection> {
         return host.profile(subject.profileId).observeMembership(subject.entryId).map { membership ->
             EntryMergeNavigationProjection(subject, membership?.targetEntryId ?: subject.entryId)

@@ -75,6 +75,11 @@ FROM entries
 WHERE _id = :id
 AND profile_id = :profileId;
 
+getEntryByIdAcrossProfiles:
+SELECT *
+FROM entries
+WHERE _id = :id;
+
 getEntryByUrlAndSource:
 SELECT *
 FROM entries

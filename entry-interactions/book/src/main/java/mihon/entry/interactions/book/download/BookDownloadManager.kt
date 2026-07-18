@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import mihon.entry.interactions.EntryDownloadEntryIdentity
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadQueuePolicy
@@ -237,7 +238,7 @@ internal class BookDownloadManager(
         _events.tryEmit(
             EntryDownloadEvent.Error(
                 entryType = EntryType.BOOK,
-                entryId = download.entry.id,
+                entryIdentity = EntryDownloadEntryIdentity.from(download.entry),
                 title = download.entry.title,
                 subtitle = download.chapter.name,
                 message = download.failure?.toEntryDownloadMessage()
@@ -257,13 +258,13 @@ internal class BookDownloadManager(
         cache.remove(deletedKeys)
     }
 
-    suspend fun deleteEntryDownloads(entry: Entry, memberEntryIds: Set<Long> = setOf(entry.id)) {
-        removeFromQueue(queueState.value.filter { it.entry.id in memberEntryIds }.map { it.chapter.id })
+    suspend fun deleteEntryDownloads(entry: Entry) {
+        removeFromQueue(queueState.value.filter { it.entry.id == entry.id }.map { it.chapter.id })
         cache.ensureInitialized()
         val deletedKeys = cache.packages.value.values
             .filter {
                 (it.manifest.sourceId == entry.source && it.manifest.entryUrl == entry.url) ||
-                    it.manifest.entryId in memberEntryIds
+                    it.manifest.entryId == entry.id
             }
             .mapNotNull { download ->
                 download.manifest.packageKey.takeIf {

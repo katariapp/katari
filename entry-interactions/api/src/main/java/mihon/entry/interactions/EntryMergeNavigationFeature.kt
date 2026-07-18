@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 interface EntryMergeNavigationFeature {
     suspend fun resolveNavigation(subject: EntryMergeSubject): EntryMergeNavigationProjection
 
+    /** Compatibility path for installed notification payloads that contain only a globally unique Entry ID. */
+    suspend fun resolveLegacyNotification(entryId: Long): EntryMergeNavigationProjection?
+
     fun observeNavigation(subject: EntryMergeSubject): Flow<EntryMergeNavigationProjection>
 }
 

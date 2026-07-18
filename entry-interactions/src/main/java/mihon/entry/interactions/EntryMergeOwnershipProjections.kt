@@ -38,23 +38,17 @@ internal class EntryMergeDownloadOwnershipCoordinator(
     private val host: EntryMergeHost,
 ) : EntryMergeDownloadOwnershipProjection {
     override suspend fun resolveDownloadOwners(subject: EntryMergeSubject): EntryMergeDownloadOwners {
-        val membership = host.profile(subject.profileId).membership(subject.entryId)
+        val profile = host.profile(subject.profileId)
+        val membership = profile.membership(subject.entryId)
+        val ownerIds = membership?.orderedEntryIds ?: listOf(subject.entryId)
+        val owners = profile.entries(ownerIds)
+        check(owners.map { it.id } == ownerIds) {
+            "Download ownership projection could not resolve every Merge owner"
+        }
         return EntryMergeDownloadOwners(
             profileId = subject.profileId,
             visibleEntryId = membership?.targetEntryId ?: subject.entryId,
-            orderedOwnerEntryIds = membership?.orderedEntryIds ?: listOf(subject.entryId),
+            orderedOwners = owners,
         )
-    }
-
-    override fun observeDownloadOwnerships(profileId: Long): Flow<List<EntryMergeDownloadOwners>> {
-        return host.profile(profileId).observeMemberships().map { memberships ->
-            memberships.map { membership ->
-                EntryMergeDownloadOwners(
-                    profileId = profileId,
-                    visibleEntryId = membership.targetEntryId,
-                    orderedOwnerEntryIds = membership.orderedEntryIds,
-                )
-            }
-        }
     }
 }

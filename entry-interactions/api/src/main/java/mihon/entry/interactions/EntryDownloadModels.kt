@@ -59,6 +59,20 @@ data class EntryDownloadIdentity(
     }
 }
 
+data class EntryDownloadEntryIdentity(
+    val profileId: Long,
+    val entryType: EntryType,
+    val entryId: Long,
+) {
+    companion object {
+        fun from(entry: Entry) = EntryDownloadEntryIdentity(
+            profileId = entry.profileId,
+            entryType = entry.type,
+            entryId = entry.id,
+        )
+    }
+}
+
 data class EntryDownloadQueueItem(
     val identity: EntryDownloadIdentity,
     val state: EntryDownloadState,
@@ -158,11 +172,17 @@ sealed interface EntryDownloadMessage {
 sealed interface EntryDownloadEvent {
     data class Error(
         val entryType: EntryType,
-        val entryId: Long?,
+        val entryIdentity: EntryDownloadEntryIdentity?,
         val title: String?,
         val subtitle: String?,
         val message: EntryDownloadMessage,
-    ) : EntryDownloadEvent
+    ) : EntryDownloadEvent {
+        init {
+            require(entryIdentity == null || entryIdentity.entryType == entryType) {
+                "Download error identity type must match the event type"
+            }
+        }
+    }
 
     data class Warning(
         val message: EntryDownloadMessage,

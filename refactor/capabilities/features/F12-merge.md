@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1–F12.3 committed; F12.4 implemented and awaiting review
+Status: F12.1–F12.4 committed; F12.5 implemented and awaiting review
 
 ## Architectural Classification
 
@@ -217,9 +217,41 @@ Observable review points:
   context.
 - Preserve every independent Download applicability rule; Merge does not authorize Download behavior.
 
+Implemented result:
+
+- The root Download maintenance coordinator first evaluates the real Download provider, then asks the internal Merge
+  ownership projection for ordered concrete owners. Whole-Entry inspection and removal visit those owners through the
+  ordinary Download dispatch; Merge never creates Download applicability.
+- Book's cache and processor no longer subscribe to raw membership or maintain a second merge index. Book count and
+  deletion now describe one concrete media owner, matching Manga and Anime; merged aggregation is shared and therefore
+  cannot be double-counted or forgotten by a future Download provider.
+- Queue items and downloader errors carry structured profile-scoped ownership. The notification manager resolves one
+  structured visible destination and the Android presenter cannot construct an Entry action from an ID without its
+  profile.
+- Newly created Entry-details, child-open, mark-consumed, and Download notification actions route through the app's
+  profile selection and authentication boundary before dispatch. Switching profiles after notification creation does
+  not retarget the action.
+- Installed legacy child and action payloads without a profile use the named compatibility resolver approved in the
+  profile decision. It resolves a globally unique Entry ID across profiles and rejects missing identity; it never reads
+  the active profile as a fallback.
+- The obsolete Book support-label test and merge-index tests were removed. Shared tests exercise concrete-owner
+  aggregation, profile-scoped notification identity, legacy identity recovery, and Android action propagation.
+- Focused root/Book/notification tests, lower production compilation, SQLDelight migration verification, module
+  formatting, and build-logic tests pass. The boundary census now intentionally reports exactly 12 remaining findings:
+  seven assigned to F12.6 and five assigned to F11.
+
 Exit gate: merged downloads retain profile and real media ownership without Download code reconstructing membership.
 
 Review request: verify identity and user-visible navigation semantics, especially during profile switching.
+
+Observable review points:
+
+- A merged Entry reports/removes downloads by visiting every real owner once, while each media-specific provider remains
+  unaware of membership.
+- Progress and error notifications open the visible merged target in the originating profile, including after a profile
+  switch and with the normal profile-unlock gate.
+- Library-update child, consumption, and Download actions retain the profile captured when the notification was built.
+- Legacy installed payloads keep a narrow compatibility route without restoring ambient-profile or raw Merge access.
 
 ### F12.6 — Library state, metadata, backup, and profile lifecycle
 
@@ -262,6 +294,8 @@ consumers: base participation is discovered from content-type composition, optio
 its provider, and the obsolete authority is removed even though this exposes compile failures. F12.4 makes application
 surfaces consume feature-owned intent and projections and gives lower Domain aggregation only purpose-specific downward
 ports implemented by the same coordinator. Availability comes from preparation, not a duplicated type gate; behavior
-tests exercise shared ordering, ownership changes, and grouping rather than restating support declarations. No completed
-milestone uses a content-type matrix, mandatory provider, caller-owned completion checklist, ambient profile, or
-compiling compatibility implementation.
+tests exercise shared ordering, ownership changes, and grouping rather than restating support declarations. F12.5
+derives merged Download ownership only after provider applicability, removes Book's duplicate membership truth, and
+routes structured notification identity through the normal profile gate. No completed milestone uses a content-type
+matrix, mandatory provider, caller-owned completion checklist, ambient profile, or compiling compatibility
+implementation.

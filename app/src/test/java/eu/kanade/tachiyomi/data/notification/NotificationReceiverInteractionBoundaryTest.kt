@@ -22,7 +22,7 @@ class NotificationReceiverInteractionBoundaryTest {
         assertActionRoutesTo(
             source,
             "ACTION_OPEN_EPISODE",
-            """openChild\(context, intent\.legacyEpisodeOpenChildPayload\(\)\)""",
+            """openLegacyChild\(context, intent\.legacyEpisodeOpenChildPayload\(\)\)""",
         )
         assertActionRoutesTo(source, "ACTION_OPEN_CHILD", """openChild\(context, intent\.openChildPayload\(\)\)""")
         assertActionRoutesTo(
@@ -30,16 +30,8 @@ class NotificationReceiverInteractionBoundaryTest {
             "ACTION_OPEN_CHAPTER",
             """openLegacyChild\(context, intent\.legacyChapterOpenChildPayload\(\)\)""",
         )
-        assertTrue(
-            source.contains(
-                "entryActionHandler.openChild(context, payload.visibleEntryId, payload.ownerEntryId, payload.childId)",
-            ),
-        )
-        assertTrue(
-            source.contains(
-                "entryActionHandler.openChild(context, visibleEntryId, payload.ownerEntryId, payload.childId)",
-            ),
-        )
+        assertTrue(source.contains("profileId = payload.profileId"))
+        assertTrue(source.contains("entryMergeNavigationFeature.resolveLegacyNotification(payload.ownerEntryId)"))
 
         assertActionRoutesTo(source, "ACTION_MARK_AS_READ", """markConsumed\(intent\.legacyChapterUrlsPayload\(\)\)""")
         assertActionRoutesTo(
@@ -48,8 +40,8 @@ class NotificationReceiverInteractionBoundaryTest {
             """markConsumed\(intent\.legacyEpisodeIdsPayload\(\)\)""",
         )
         assertActionRoutesTo(source, "ACTION_MARK_CONSUMED", """markConsumed\(intent\.childIdsPayload\(\)\)""")
-        assertTrue(source.contains("entryActionHandler.markConsumed(entryId, childIds)"))
-        assertTrue(source.contains("entryActionHandler.markConsumed(entryId, childUrls)"))
+        assertTrue(source.contains("entryActionHandler.markConsumed(profileId, entryId, childIds)"))
+        assertTrue(source.contains("entryActionHandler.markConsumed(profileId, entryId, childUrls)"))
         assertTrue(source.contains("entryConsumptionFeature.setConsumed(entry, chapters, consumed = true)"))
 
         assertActionRoutesTo(
@@ -58,8 +50,8 @@ class NotificationReceiverInteractionBoundaryTest {
             """downloadChildren\(intent\.legacyChapterUrlsPayload\(\)\)""",
         )
         assertActionRoutesTo(source, "ACTION_DOWNLOAD_CHILDREN", """downloadChildren\(intent\.childIdsPayload\(\)\)""")
-        assertTrue(source.contains("entryActionHandler.downloadChildren(entryId, childIds)"))
-        assertTrue(source.contains("entryActionHandler.downloadChildren(entryId, childUrls)"))
+        assertTrue(source.contains("entryActionHandler.downloadChildren(profileId, entryId, childIds)"))
+        assertTrue(source.contains("entryActionHandler.downloadChildren(profileId, entryId, childUrls)"))
         assertTrue(source.contains("entryDownloadActionFeature.download("))
 
         assertFalse(source.contains("import eu.kanade.tachiyomi.source.entry.EntryType"))

@@ -60,7 +60,7 @@ sealed interface EntryPartialProgressPresentation {
     data class Fixed(val label: StringResource) : EntryPartialProgressPresentation
 }
 
-/** Vocabulary consumed by F24; notification routing, identity, actions, and applicability remain F24-owned. */
+/** Vocabulary for library-update notifications; routing, identity, actions, and applicability remain notification-owned. */
 data class EntryUpdateNotificationVocabulary(
     val channelLabel: StringResource,
     val summaryTitle: StringResource,

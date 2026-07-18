@@ -18,7 +18,7 @@ interface EntryDownloadMaintenanceFeature {
         newTitle: String,
     ): EntryDownloadMaintenanceResult
 
-    fun inspectEntry(entry: Entry): EntryDownloadMaintenanceInspection
+    suspend fun inspectEntry(entry: Entry): EntryDownloadMaintenanceInspection
 
     suspend fun removeEntryDownloads(entry: Entry): EntryDownloadMaintenanceResult
 }

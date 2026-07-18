@@ -12,6 +12,9 @@ import tachiyomi.domain.entry.model.Entry
 interface EntryMergeHost {
     fun profile(profileId: Long): EntryMergeProfileHost
 
+    /** Resolves an old notification payload that predates explicit profile identity. */
+    suspend fun resolveLegacyNotificationEntry(entryId: Long): Entry?
+
     suspend fun pendingConsequences(limit: Int): List<EntryMergePendingConsequence>
 
     suspend fun acknowledgeConsequence(consequenceId: String)

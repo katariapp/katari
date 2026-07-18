@@ -73,6 +73,7 @@ internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContrib
 internal class DefaultEntryDownloadMaintenanceFeature(
     evaluation: FeatureGraphEvaluation,
     private val interaction: EntryDownloadInteraction,
+    private val ownership: EntryMergeDownloadOwnershipProjection,
 ) : EntryDownloadMaintenanceFeature {
     private val cacheTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
@@ -122,11 +123,12 @@ internal class DefaultEntryDownloadMaintenanceFeature(
         return EntryDownloadMaintenanceResult.Performed
     }
 
-    override fun inspectEntry(entry: Entry): EntryDownloadMaintenanceInspection {
+    override suspend fun inspectEntry(entry: Entry): EntryDownloadMaintenanceInspection {
         if (entry.type !in removalTypes) {
             return EntryDownloadMaintenanceInspection.Inapplicable(entry.type)
         }
-        return if (interaction.hasDownloads(entry)) {
+        val owners = ownership.resolveDownloadOwners(entry.mergeSubject()).orderedOwners
+        return if (owners.any(interaction::hasDownloads)) {
             EntryDownloadMaintenanceInspection.HasDownloads
         } else {
             EntryDownloadMaintenanceInspection.NoDownloads
@@ -135,7 +137,9 @@ internal class DefaultEntryDownloadMaintenanceFeature(
 
     override suspend fun removeEntryDownloads(entry: Entry): EntryDownloadMaintenanceResult {
         if (entry.type !in removalTypes) return inapplicable(entry.type)
-        interaction.deleteEntryDownloads(entry)
+        ownership.resolveDownloadOwners(entry.mergeSubject()).orderedOwners.forEach {
+            interaction.deleteEntryDownloads(it)
+        }
         return EntryDownloadMaintenanceResult.Performed
     }
 
@@ -145,3 +149,5 @@ internal class DefaultEntryDownloadMaintenanceFeature(
 
     private fun inapplicable(types: Set<EntryType>) = EntryDownloadMaintenanceResult.Inapplicable(types)
 }
+
+private fun Entry.mergeSubject() = EntryMergeSubject(profileId, id)

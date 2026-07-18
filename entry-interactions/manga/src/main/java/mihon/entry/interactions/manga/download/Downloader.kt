@@ -41,6 +41,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import logcat.LogPriority
 import mihon.core.archive.ZipWriter
+import mihon.entry.interactions.EntryDownloadEntryIdentity
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadQueuePolicy
@@ -488,7 +489,7 @@ internal class Downloader(
         _events.tryEmit(
             EntryDownloadEvent.Error(
                 entryType = EntryType.MANGA,
-                entryId = download?.entry?.id,
+                entryIdentity = download?.entry?.let(EntryDownloadEntryIdentity::from),
                 title = download?.entry?.title,
                 subtitle = download?.chapter?.name,
                 message = message,

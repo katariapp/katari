@@ -25,6 +25,32 @@ import tachiyomi.domain.entry.model.Entry
 
 class EntryMergeFeatureTest {
     @Test
+    fun `download ownership projection returns ordered concrete owners for the explicit profile`() = runTest {
+        val entries = listOf(entry(1L, "one"), entry(2L, "two"))
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
+        val projection = EntryMergeDownloadOwnershipCoordinator(FakeEntryMergeHost(entries, listOf(membership)))
+
+        projection.resolveDownloadOwners(EntryMergeSubject(7L, 2L)) shouldBe EntryMergeDownloadOwners(
+            profileId = 7L,
+            visibleEntryId = 1L,
+            orderedOwners = entries,
+        )
+    }
+
+    @Test
+    fun `legacy notification resolution recovers profile without ambient state`() = runTest {
+        val entries = listOf(entry(1L, "one"), entry(2L, "two"))
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
+        val navigation = EntryMergeNavigationCoordinator(FakeEntryMergeHost(entries, listOf(membership)))
+
+        navigation.resolveLegacyNotification(2L) shouldBe EntryMergeNavigationProjection(
+            requestedSubject = EntryMergeSubject(7L, 2L),
+            visibleEntryId = 1L,
+        )
+        navigation.resolveLegacyNotification(99L) shouldBe null
+    }
+
+    @Test
     fun `migration replacement transfers one member and dissolves a depleted source group`() {
         val replacements = replacementGroups(
             currentEntryId = 2L,
@@ -190,6 +216,8 @@ class EntryMergeFeatureTest {
     ) : EntryMergeHost {
         private val entriesById = entries.filter { it.id > 0L }.associateBy(Entry::id)
         val transitions = mutableListOf<EntryMergeHostTransition>()
+
+        override suspend fun resolveLegacyNotificationEntry(entryId: Long): Entry? = entriesById[entryId]
 
         override fun profile(profileId: Long): EntryMergeProfileHost {
             return object : EntryMergeProfileHost {

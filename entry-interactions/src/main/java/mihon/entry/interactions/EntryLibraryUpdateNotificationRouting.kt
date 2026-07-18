@@ -3,7 +3,7 @@ package mihon.entry.interactions
 import eu.kanade.tachiyomi.source.entry.EntryType
 
 /**
- * Frozen Android identity compatibility for notification routes that shipped before F24.
+ * Frozen Android identity compatibility for routes that shipped before generic library-update notifications.
  *
  * This is not a support catalog. New content types always use derived routing and must never be added here.
  */

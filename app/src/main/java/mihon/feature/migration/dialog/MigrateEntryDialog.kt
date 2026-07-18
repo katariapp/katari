@@ -131,7 +131,7 @@ private class MigrateEntryDialogScreenModel(
     private val migrateEntry: MigrateEntryUseCase = Injekt.get(),
 ) : StateScreenModel<MigrateEntryDialogScreenModel.State>(State()) {
 
-    fun init(current: Entry, target: Entry) {
+    suspend fun init(current: Entry, target: Entry) {
         val applicableFlags = buildList {
             MigrationFlag.entries.forEach {
                 val applicable = when (it) {

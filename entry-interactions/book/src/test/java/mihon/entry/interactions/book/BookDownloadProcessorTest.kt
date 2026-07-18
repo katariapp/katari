@@ -22,7 +22,6 @@ import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.entry.repository.MergedEntryRepository
 import tachiyomi.domain.source.service.SourceManager
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -80,14 +79,13 @@ class BookDownloadProcessorTest {
     }
 
     @Test
-    fun `deleting a merged entry includes every indexed member`() = runTest {
-        val visible = entry(id = 1L, source = 10L)
+    fun `deleting an entry delegates only its concrete ownership`() = runTest {
+        val entry = entry(id = 1L, source = 10L)
         val fixture = fixture()
-        every { fixture.cache.memberEntryIds(visible.id) } returns setOf(1L, 2L)
 
-        fixture.processor.deleteEntryDownloads(visible)
+        fixture.processor.deleteEntryDownloads(entry)
 
-        coVerify(exactly = 1) { fixture.manager.deleteEntryDownloads(visible, setOf(1L, 2L)) }
+        coVerify(exactly = 1) { fixture.manager.deleteEntryDownloads(entry) }
     }
 
     @Test
@@ -127,9 +125,6 @@ class BookDownloadProcessorTest {
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
             coEvery { awaitChapters(any(), any(), any()) } returns chapters
         }
-        val mergedEntryRepository = mockk<MergedEntryRepository> {
-            every { subscribeAll() } returns flowOf(emptyList())
-        }
         val processor = BookDownloadProcessor(
             BookDownloadProcessorDependencies(
                 manager = manager,
@@ -137,7 +132,6 @@ class BookDownloadProcessorTest {
                 sourceManager = mockk<SourceManager>(),
                 entryRepository = entryRepository,
                 getEntryWithChapters = getEntryWithChapters,
-                mergedEntryRepository = mergedEntryRepository,
             ),
         )
         return ProcessorFixture(processor, manager, cache)

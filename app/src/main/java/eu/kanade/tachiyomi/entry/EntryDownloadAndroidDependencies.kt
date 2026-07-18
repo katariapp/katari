@@ -5,7 +5,6 @@ import android.content.Context
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
 import eu.kanade.tachiyomi.data.notification.NotificationHandler
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
-import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryDownloadNotificationActions
 import mihon.entry.interactions.EntryPageImageCache
 import java.io.File
@@ -27,8 +26,8 @@ class AppEntryDownloadNotificationActions : EntryDownloadNotificationActions {
         return NotificationReceiver.clearDownloadsPendingBroadcast(context)
     }
 
-    override fun openEntry(context: Context, entryType: EntryType, entryId: Long): PendingIntent {
-        return NotificationReceiver.openEntryPendingActivity(context, entryId)
+    override fun openEntry(context: Context, profileId: Long, entryId: Long): PendingIntent {
+        return NotificationReceiver.openEntryPendingActivity(context, profileId, entryId)
     }
 
     override fun openUrl(context: Context, url: String): PendingIntent {

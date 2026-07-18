@@ -20,6 +20,12 @@ internal class AppEntryMergeHost(
 ) : EntryMergeHost {
     override fun profile(profileId: Long): EntryMergeProfileHost = ProfileHost(profileId)
 
+    override suspend fun resolveLegacyNotificationEntry(entryId: Long): Entry? {
+        return handler.awaitOneOrNull {
+            entriesQueries.getEntryByIdAcrossProfiles(entryId, EntryMapper::mapEntry)
+        }
+    }
+
     override suspend fun pendingConsequences(limit: Int): List<EntryMergePendingConsequence> {
         require(limit > 0) { "Merge consequence batch size must be positive" }
         return handler.awaitList {

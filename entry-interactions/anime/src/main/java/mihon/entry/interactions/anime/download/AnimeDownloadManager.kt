@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import mihon.entry.interactions.EntryDownloadEntryIdentity
 import mihon.entry.interactions.EntryDownloadEvent
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadQueuePolicy
@@ -388,7 +389,7 @@ internal class AnimeDownloadManager(
         _events.tryEmit(
             EntryDownloadEvent.Error(
                 entryType = EntryType.ANIME,
-                entryId = download.anime.id,
+                entryIdentity = EntryDownloadEntryIdentity.from(download.anime),
                 title = download.anime.title,
                 subtitle = download.episode.name,
                 message = download.failure?.toEntryDownloadMessage()

@@ -79,7 +79,7 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
                     }
                     val destination = if (visibleEntry.type in openTypes && update.children.isNotEmpty()) {
                         check(openFeature.isApplicable(visibleEntry.type)) {
-                            "F24 selected Open for ${visibleEntry.type}, but F01 rejected the type"
+                            "Library-update notifications selected Open for ${visibleEntry.type}, but Open rejected it"
                         }
                         EntryLibraryUpdateNotificationDestination.OPEN_CHILD
                     } else {
@@ -89,7 +89,8 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
                         add(EntryLibraryUpdateNotificationAction.VIEW_ENTRY)
                         if (update.entry.type in consumptionTypes && update.children.isNotEmpty()) {
                             check(consumptionFeature.isApplicable(update.entry.type)) {
-                                "F24 selected Consumption for ${update.entry.type}, but F09 rejected the type"
+                                "Library-update notifications selected Consumption for ${update.entry.type}, " +
+                                    "but Consumption rejected it"
                             }
                             add(EntryLibraryUpdateNotificationAction.MARK_CONSUMED)
                         }
@@ -107,7 +108,8 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
                                 }
                                 is EntryDownloadActionAvailability.Blocked -> Unit
                                 is EntryDownloadActionAvailability.Inapplicable -> error(
-                                    "F24 selected Download for ${update.entry.type}, but F04 rejected the type",
+                                    "Library-update notifications selected Download for ${update.entry.type}, " +
+                                        "but Download rejected it",
                                 )
                             }
                         }
@@ -147,10 +149,10 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
     private fun checkPresentationRelationship(type: EntryType, result: EntryTypePresentationResult) {
         when (result) {
             is EntryTypePresentationResult.Contributed -> check(type in contributedPresentationTypes) {
-                "F23 returned contributed presentation for $type without the F24+F23 graph relationship"
+                "Type Presentation returned contributed vocabulary for $type without the notification relationship"
             }
             is EntryTypePresentationResult.Generic -> check(type !in contributedPresentationTypes) {
-                "F24+F23 selected contributed presentation for $type, but F23 returned generic vocabulary"
+                "Notification presentation selected contributed vocabulary for $type, but received generic vocabulary"
             }
         }
     }

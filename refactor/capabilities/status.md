@@ -32,6 +32,7 @@ Updated: 2026-07-19
 - F23 Type Presentation, F24 Library-update Notifications, F25 Viewer Settings, F26 Media-cache Maintenance, and F27
   Profile Preference Ownership are committed and validated.
 - F12.3 Shared Merge coordinator commit: `5812f0e47` (`(refactor): implement shared merge coordinator`)
+- F12.4 Entry ownership migration commit: `e8cd191b5` (`(refactor): migrate merge ownership consumers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -39,19 +40,20 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12.4` — Entry ownership and navigation projections
-- State: F12.1–F12.3 are committed. F12.4 is implemented and awaiting review. F12.5–F12.7 and F11 remain pending.
+- Milestone: `F12.5` — Download, lifecycle, and notification projections
+- State: F12.1–F12.4 are committed. F12.5 is implemented and awaiting review. F12.6–F12.7 and F11 remain pending.
 
-Focused F12.4 validation:
+Focused F12.5 validation:
 
-- `spotlessApply`, focused child/Library Domain behavior tests, API and Manga/Anime compilation, and the Merge-boundary
-  build-logic tests pass.
-- Entry/Library/Catalogue editors, candidates, navigation, shared child ownership, and Library grouping now cross only
-  purpose-specific F12 contracts or narrow downward Domain ports.
-- The boundary census intentionally fails on exactly 16 remaining findings assigned to F12.5, F12.6, and F11. No F12.4
-  consumer remains on raw Merge authority.
-- Root/application compilation still stops at the deliberately unfinished Book/download notification, Library lifecycle,
-  backup/profile, and Migration consumers. These failures remain the migration queue, not compatibility exceptions.
+- Download maintenance aggregates real owners behind one shared coordinator only when the Download provider applies;
+  Book cache/processor code contains no Merge membership authority.
+- Queue events, rendered destinations, and new notification actions carry explicit profile identity. Profile switching
+  and unlock happen before the action is dispatched; legacy ID-only payloads use the named compatibility resolver.
+- Focused root/Book/notification behavior tests, lower production compilation, SQLDelight migration verification,
+  module formatting, and build-logic tests pass.
+- The boundary census intentionally fails on exactly 12 remaining findings assigned to F12.6 and F11. No F12.5 raw
+  consumer remains. Application compilation stops only at those deliberately unfinished consumers plus previously
+  recorded independent migration failures.
 
 ## Why the Plan Was Reset
 
@@ -621,6 +623,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit F12.4 after its observable Entry/Library/Catalogue, navigation, and child-order behavior is reviewed. Then begin
-F12.5 by migrating Download ownership, queue/notification identity, lifecycle cleanup, and notification navigation to
-explicit-profile F12 projections. Use one agent and stop at the F12.5 milestone before lifecycle/backup work.
+Commit F12.5 after its concrete-owner Download aggregation and profile-switch notification behavior are reviewed. Then
+begin F12.6 by migrating Library removal, metadata refresh, backup/restore, profile move/deletion, and durable consequence
+diagnostics. Continue with one agent and stop at the F12.6 milestone before integrated F12 completion review.

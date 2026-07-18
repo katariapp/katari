@@ -196,7 +196,7 @@ internal class DefaultEntryPreviewFeature(
                     EntryPreviewUnavailableReason.NoReadingChild,
                 )
                 request.children.firstOrNull { it.child.id == first.id }
-                    ?: error("F17 selected child ${first.id} outside the F19 candidate set")
+                    ?: error("Child List selected child ${first.id} outside the Preview candidate set")
             }
         }
         val source = child?.source ?: request.previewContext.source

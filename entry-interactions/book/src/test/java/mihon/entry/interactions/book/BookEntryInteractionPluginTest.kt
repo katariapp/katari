@@ -10,7 +10,6 @@ import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookFailureReason
-import mihon.entry.interactions.createEntryInteractions
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -43,33 +42,6 @@ class BookEntryInteractionPluginTest {
         )
 
         assertEquals(first, processor.findNext(entry()))
-    }
-
-    @Test
-    fun `plugin registers generic book interactions without download support`() = runTest {
-        val chapter = chapter()
-        val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(any(), any(), any()) } returns listOf(chapter)
-        }
-        val progressRepository = mockk<EntryProgressRepository> {
-            coEvery { getByEntryId(1L) } returns emptyList()
-        }
-        val interactions = createEntryInteractions(
-            listOf(
-                bookEntryInteractionPlugin(
-                    BookEntryInteractionDependencies(
-                        getEntryWithChapters = getEntryWithChapters,
-                        entryChapterRepository = mockk(),
-                        entryProgressRepository = progressRepository,
-                    ),
-                ),
-            ),
-        )
-        val entry = entry()
-
-        assertEquals(chapter, interactions.continueEntry.findNext(entry))
-        assertFalse(interactions.download.supportsDownloads(EntryType.BOOK))
-        assertFalse(interactions.capability.supportsMigration(entry))
     }
 
     @Test

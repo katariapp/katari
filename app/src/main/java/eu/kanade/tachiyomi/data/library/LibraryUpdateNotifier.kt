@@ -368,9 +368,10 @@ private fun EntryLibraryUpdateNotificationItem.destinationIntent(
 ): PendingIntent = when (destination) {
     EntryLibraryUpdateNotificationDestination.OPEN_CHILD -> checkNotNull(
         NotificationReceiver.openChildPendingActivity(context, visibleEntry, originEntry, children.first()),
-    ) { "F24 selected an Open-child destination that F01 could not render" }
+    ) { "Library-update notifications selected a child destination that Open could not render" }
     EntryLibraryUpdateNotificationDestination.ENTRY_DETAILS -> NotificationReceiver.openEntryPendingActivity(
         context,
+        visibleEntry.profileId,
         visibleEntry.id,
         summaryNotificationId,
     )
@@ -391,6 +392,7 @@ private fun EntryLibraryUpdateNotificationItem.viewEntryIntent(
     summaryNotificationId: Int,
 ): PendingIntent = NotificationReceiver.openEntryPendingActivity(
     context,
+    visibleEntry.profileId,
     visibleEntry.id,
     summaryNotificationId,
 )

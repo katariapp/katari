@@ -51,7 +51,6 @@ fun bookEntryInteractionPlugin(
                 sourceManager = Injekt.get(),
                 entryRepository = Injekt.get(),
                 getEntryWithChapters = dependencies.getEntryWithChapters,
-                mergedEntryRepository = Injekt.get(),
             ),
         )
     } else {
