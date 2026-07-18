@@ -282,8 +282,8 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        rows.filterIsInstance<EntryChildListRow.MissingCount>() shouldBe emptyList()
-        rows.filterIsInstance<EntryChildListRow.Child>()
+        rows.rows.filterIsInstance<EntryChildListRow.MissingCount>() shouldBe emptyList()
+        rows.rows.filterIsInstance<EntryChildListRow.Child>()
             .map { it.chapter.id }
             .shouldContainExactly(3L, 2L, 1L)
     }
@@ -302,7 +302,7 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        val labels = interactions.childList.progressLabels(
+        val labels = interactions.childProgress.progressLabels(
             EntryChildProgressRequest(
                 entry = entry(EntryType.ANIME),
                 chapters = listOf(chapter(id = 7L, read = false)),
@@ -327,7 +327,7 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        val labels = interactions.childList.progressLabels(
+        val labels = interactions.childProgress.progressLabels(
             EntryChildProgressRequest(
                 entry = entry(EntryType.ANIME),
                 chapters = listOf(chapter(id = 7L, read = false)),
@@ -354,7 +354,7 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        val labels = interactions.childList.progressLabels(
+        val labels = interactions.childProgress.progressLabels(
             EntryChildProgressRequest(
                 entry = entry(EntryType.ANIME),
                 chapters = listOf(
@@ -385,7 +385,7 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        val labels = interactions.childList.progressLabels(
+        val labels = interactions.childProgress.progressLabels(
             EntryChildProgressRequest(
                 entry = entry(EntryType.ANIME, id = 1L),
                 chapters = listOf(
@@ -421,11 +421,15 @@ class AnimeEntryInteractionPluginTest {
                 playerQualityHeight = 1080,
             ),
         )
-        val interactions = createEntryInteractions(listOf(animeEntryInteractionPlugin(dependencies)))
+        val progressProcessor = AnimeProgressProcessor(
+            dependencies.entryProgressRepository,
+            dependencies.entryChapterRepository,
+        )
+        val preferencesProcessor = AnimePlaybackPreferencesProcessor(dependencies.playbackPreferencesRepository)
 
         val anime = entry(EntryType.ANIME, id = 1L)
-        val progressSnapshot = interactions.progress.snapshot(anime)
-        val preferencesSnapshot = interactions.playbackPreferences.snapshot(anime)
+        val progressSnapshot = progressProcessor.snapshot(anime)
+        val preferencesSnapshot = preferencesProcessor.snapshot(anime)
 
         progressSnapshot shouldBe EntryProgressSnapshot(
             states = listOf(

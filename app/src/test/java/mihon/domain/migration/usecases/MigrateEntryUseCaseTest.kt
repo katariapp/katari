@@ -12,8 +12,10 @@ import kotlinx.coroutines.test.runTest
 import mihon.domain.migration.models.MigrationFlag
 import mihon.entry.interactions.EntryCapabilityInteraction
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
-import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
-import mihon.entry.interactions.EntryProgressInteraction
+import mihon.entry.interactions.EntryPlaybackPreferencesCopyResult
+import mihon.entry.interactions.EntryPlaybackPreferencesFeature
+import mihon.entry.interactions.EntryProgressCopyResult
+import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressResourceMapping
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import org.junit.jupiter.api.Named
@@ -110,7 +112,7 @@ class MigrateEntryUseCaseTest {
         fixture.useCase(current, target, replace = false)
 
         coVerify(exactly = 1) {
-            fixture.progressInteraction.copy(
+            fixture.progressFeature.copy(
                 current,
                 target,
                 listOf(
@@ -152,8 +154,8 @@ class MigrateEntryUseCaseTest {
         val entryRepository = mockk<EntryRepository>(relaxed = true)
         val entryChapterRepository = mockk<EntryChapterRepository>(relaxed = true)
         private val capabilityInteraction = mockk<EntryCapabilityInteraction>()
-        val progressInteraction = mockk<EntryProgressInteraction>(relaxed = true)
-        private val playbackPreferencesInteraction = mockk<EntryPlaybackPreferencesInteraction>(relaxed = true)
+        val progressFeature = mockk<EntryProgressFeature>()
+        private val playbackPreferencesFeature = mockk<EntryPlaybackPreferencesFeature>()
         val viewerSettingOverrideRepository = mockk<ViewerSettingOverrideRepository>(relaxed = true)
         val downloadMaintenance = mockk<EntryDownloadMaintenanceFeature>(relaxed = true)
         private val categoryRepository = mockk<CategoryRepository>(relaxed = true)
@@ -171,8 +173,8 @@ class MigrateEntryUseCaseTest {
             entryRepository = entryRepository,
             entryChapterRepository = entryChapterRepository,
             capabilityInteraction = capabilityInteraction,
-            progressInteraction = progressInteraction,
-            playbackPreferencesInteraction = playbackPreferencesInteraction,
+            progressFeature = progressFeature,
+            playbackPreferencesFeature = playbackPreferencesFeature,
             downloadMaintenance = downloadMaintenance,
             categoryRepository = categoryRepository,
             getTracks = getTracks,
@@ -188,6 +190,7 @@ class MigrateEntryUseCaseTest {
             every { capabilityInteraction.supportsMigration(any()) } answers {
                 firstArg<Entry>().type in setOf(EntryType.MANGA, EntryType.ANIME)
             }
+            coEvery { progressFeature.copy(any(), any(), any()) } returns EntryProgressCopyResult.Applied
             every { sourcePreferences.migrationFlags } returns migrationFlags
             every { migrationFlags.get() } returns flags
             every { trackerManager.trackers } returns emptyList()
@@ -200,6 +203,8 @@ class MigrateEntryUseCaseTest {
             )
             coEvery { getTracks.await(any()) } returns emptyList()
             coEvery { getMergedEntry.awaitGroupByEntryId(any()) } returns emptyList()
+            coEvery { playbackPreferencesFeature.copy(any(), any()) } returns
+                EntryPlaybackPreferencesCopyResult.NoPreferences
         }
     }
 }

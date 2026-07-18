@@ -128,7 +128,9 @@ private class DefaultEntryInteractions(
     override val playbackPreferences: EntryPlaybackPreferencesInteraction =
         ProviderBackedEntryPlaybackPreferencesInteraction(playbackPreferencesProcessors)
     override val childList: EntryChildListInteraction =
-        ProviderBackedEntryChildListInteraction(childListProcessors, childProgressProcessors)
+        ProviderBackedEntryChildListInteraction(childListProcessors)
+    override val childProgress: EntryChildProgressInteraction =
+        ProviderBackedEntryChildProgressInteraction(childProgressProcessors)
     override val childGroupFilter: EntryChildGroupFilterInteraction =
         ProviderBackedEntryChildGroupFilterInteraction(childGroupFilterProcessors)
     override val libraryFilter: EntryLibraryFilterInteraction =

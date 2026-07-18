@@ -61,7 +61,9 @@ val EntryProgressCapability = entryInteractionCapability<EntryProgressProcessor>
 interface EntryPlaybackPreferencesProcessor : EntryInteractionProvider {
     suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot?
     suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot)
-    suspend fun copy(sourceEntry: Entry, targetEntry: Entry)
+
+    /** Returns whether stored source preferences were copied. */
+    suspend fun copy(sourceEntry: Entry, targetEntry: Entry): Boolean
 }
 
 val EntryPlaybackPreferencesCapability = entryInteractionCapability<EntryPlaybackPreferencesProcessor>(

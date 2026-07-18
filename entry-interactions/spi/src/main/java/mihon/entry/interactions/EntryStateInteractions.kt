@@ -39,5 +39,5 @@ interface EntryProgressInteraction {
 interface EntryPlaybackPreferencesInteraction {
     suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot?
     suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot)
-    suspend fun copy(sourceEntry: Entry, targetEntry: Entry)
+    suspend fun copy(sourceEntry: Entry, targetEntry: Entry): Boolean
 }

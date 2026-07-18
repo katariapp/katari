@@ -144,7 +144,7 @@ so it cannot be silently omitted for the next provider.
 | `F12` | Merge | Entry and Library actions; duplicate/merge dialogs; same-type and selection-shape rules; merged child lists, continue, downloads, progress, library state, metadata refresh, and backup representation. |
 | `F13` | Library update eligibility | Update worker; structured skip reasons; Stats calculations; smart-update settings; release-window policy; one unconditional feature replacing the former duplicate Manga/Anime/Book implementations. |
 | `F14` | Library filtering | Downloaded, bookmarked, consumed/progress, tracker, outside-release-period, source, category, and content-type filters; only capability-dependent filters use graph applicability. |
-| `F15` | Progress transfer | Backup create/restore; migration; reader/player/book persistence; per-child progress labels where applicable. |
+| `F15` | Progress transfer | Backup create/restore and migration copy. Reader/player/Book persistence is type-owned live media behavior; independently contributed per-child labels remain F17. |
 | `F16` | Playback-preference transfer | Backup create/restore and migration; no direct Anime check may remain as authorization. |
 | `F17` | Child-list behavior | Entry sorting/filtering/display rows; merged headers; missing-count rows; immersive first-child selection; per-child progress labels. |
 | `F18` | Child-group filtering | Entry state flows, filter controls, excluded-group persistence, group data source, and settings dialog integration. |
@@ -219,8 +219,8 @@ application-wide graph through its real owner; it does not mean moving all code 
 Every production direct-type branch found by the census must have one of these dispositions:
 
 - **Migrate to a contribution/projection:** `EntryTypePresentation`, missing-child gaps, download settings lookup, library
-  update notification type/channel selection, tracker default support, playback-preference backup gate, and feature UI
-  availability.
+  update notification type/channel selection, tracker default support, and feature UI availability. The former
+  playback-preference backup gate is resolved by F16.
 - **Keep as compatibility/media behavior:** legacy Manga source adaptation, legacy backup model conversion, Manga viewer
   flag conversion, legacy feed payload decoding, and internal media-specific reader/player logic.
 - **Keep as storage default with explicit compatibility coverage:** backup/default model values and serialized enum/string

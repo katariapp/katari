@@ -19,7 +19,8 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import mihon.entry.interactions.EntryChildListInteraction
+import mihon.entry.interactions.EntryChildListFeature
+import mihon.entry.interactions.EntryFirstChildResult
 import mihon.entry.interactions.EntryImmersiveHandle
 import mihon.entry.interactions.EntryImmersiveInteraction
 import org.junit.jupiter.api.AfterAll
@@ -88,8 +89,10 @@ class EntryImmersiveScreenModelTest {
         val repository = mockk<EntryChapterRepository> {
             coEvery { getChaptersByEntryIdAwait(any(), any()) } returns listOf(chapter)
         }
-        val childList = mockk<EntryChildListInteraction>(relaxed = true) {
-            every { sortedForReading(any(), any(), any()) } answers { secondArg<List<EntryChapter>>() }
+        val childList = mockk<EntryChildListFeature>(relaxed = true) {
+            every { firstReadingChild(any(), any(), any()) } answers {
+                EntryFirstChildResult.Available(secondArg<List<EntryChapter>>().firstOrNull())
+            }
         }
         val handles = mutableMapOf<EntryImmersiveItemKey, EntryImmersiveHandle>()
         val interaction = mockk<EntryImmersiveInteraction>(relaxed = true) {
@@ -126,7 +129,7 @@ class EntryImmersiveScreenModelTest {
             model = EntryImmersiveScreenModel(
                 entryChapterRepository = repository,
                 syncEntryWithSource = mockk<SyncEntryWithSource>(relaxed = true),
-                childListInteraction = childList,
+                childListFeature = childList,
                 immersiveInteraction = interaction,
                 sourceManager = sourceManager,
             ),

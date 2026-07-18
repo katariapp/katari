@@ -93,6 +93,35 @@ SPI boundary is not an exit gate for Phase 3.5.
 - The redundant raw Update Eligibility provider, dispatch, and interaction facade are removed rather than retained as
   an always-present declaration.
 
+### Resolved in F15: Progress Transfer feature ownership
+
+- F15 owns graph-derived applicability and structured snapshot, restore, and copy results for portable progress state.
+- Backup create/restore and migration use the app-facing Feature; application production code has no raw
+  `EntryProgressInteraction` reference.
+- Internal provider dispatch is strict. Empty supported state, provider absence, and incompatible source/target types
+  are no longer represented by the same empty/no-op behavior.
+- Live media persistence remains type-owned; per-child labels, migration policy, and library summaries remain assigned
+  to F17, F21, and F22 respectively.
+
+### Resolved in F16: Playback-preference Transfer feature ownership
+
+- F16 owns provider-derived backup snapshot, backup restore, and migration-copy consequences.
+- Backup creation no longer uses `EntryType.ANIME` to authorize playback-preference serialization; application backup
+  and migration consumers depend only on the structured Feature boundary.
+- Supported data absence, provider absence, and cross-type copy are distinct outcomes. Anime download preferences and
+  legacy wire conversion remain separate compatibility concerns.
+- A synthetic provider activates every shared consequence without a concrete type list, while a partial type with no
+  provider remains valid and returns structured inapplicability.
+
+### Resolved in F17: Child List feature ownership
+
+- F17 owns child-list applicability, reading/display order, display construction, merged headers, missing-count results,
+  and the ordered-child consequence consumed by preview and immersive flows.
+- Child List and Child Progress remain independent providers. Optional labels are derived only when both are present;
+  either absence remains valid and returns a structured inapplicable result.
+- Application production code has no raw `EntryChildListInteraction` or `EntryChildProgressInteraction` reference, and
+  presentation no longer contains a Manga gate for missing-count behavior.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -120,8 +149,9 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F10 and F13 now install their contributors; providers belonging
-  to F11, F12, and F14–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
+  content-type plugins that contribute themselves. F01–F10, F13, and F15–F17 now install their contributors; providers
+  belonging to F11, F12, F14, and F18–F27 remain deliberately unreachable rather than receiving empty placeholder
+  contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
 
@@ -134,7 +164,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Resolution: bookmark-aware cleanup is installed from the Download-plus-Bookmarking relationship and receives
   non-optional structured events. The coordinator does not query a type report or contain a concrete type branch.
 
-### Partially resolved in F10: `P5-ENTRY-UI`
+### Partially resolved in F10/F17: `P5-ENTRY-UI`
 
 - Responsible owner: Entry-screen feature
 - Owning phase: Phase 5
@@ -145,6 +175,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F07 resolution: the contextual options branch resolves and executes through the graph-selected options feature.
 - F10 resolution: Bookmark-owned controls consume feature applicability and mutation; the former report/catalog gate is
   removed. Presentation vocabulary remains F23-owned.
+- F17 resolution: list ordering/construction, merged and missing rows, aggregate missing count, and optional progress
+  labels consume the selected Child List feature. Missing Child List support hides the list surface without a fallback.
 
 ### Resolved in F03–F05: `P5-LIBRARY-INTEGRATIONS`
 

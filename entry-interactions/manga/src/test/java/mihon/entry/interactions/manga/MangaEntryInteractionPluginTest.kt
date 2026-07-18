@@ -133,7 +133,7 @@ class MangaEntryInteractionPluginTest {
             ),
         )
 
-        rows.map { row ->
+        rows.rows.map { row ->
             when (row) {
                 is EntryChildListRow.Child -> "child:${row.chapter.id}"
                 is EntryChildListRow.MissingCount -> "missing:${row.id}:${row.count}"
@@ -165,7 +165,7 @@ class MangaEntryInteractionPluginTest {
             ),
         )
 
-        rows.filterIsInstance<EntryChildListRow.Child>()
+        rows.rows.filterIsInstance<EntryChildListRow.Child>()
             .map { it.chapter.id }
             .shouldContainExactly(3L, 2L, 1L)
     }
@@ -180,7 +180,7 @@ class MangaEntryInteractionPluginTest {
             ),
         )
 
-        val labels = interactions.childList.progressLabels(
+        val labels = interactions.childProgress.progressLabels(
             EntryChildProgressRequest(
                 entry = entry(EntryType.MANGA),
                 chapters = listOf(chapter(id = 7L, read = false)),
@@ -202,7 +202,7 @@ class MangaEntryInteractionPluginTest {
             ),
         )
 
-        val labels = interactions.childList.progressLabels(
+        val labels = interactions.childProgress.progressLabels(
             EntryChildProgressRequest(
                 entry = entry(EntryType.MANGA),
                 chapters = listOf(chapter(id = 7L, read = true)),

@@ -26,7 +26,8 @@ Updated: 2026-07-18
 - F02 Continue completion: `0480ffeff` (`(refactor): migrate continue feature integration`)
 - F03–F05 completion: `846c6029f` (`(refactor): migrate core download features`)
 - F06–F08 completion: `91d57f376` (`(refactor): migrate remaining download features`)
-- F09, F10, and F13 are integrated and validated as the current review batch.
+- F09, F10, and F13 completion: `e175cbc3f` (`(refactor): migrate entry state features`)
+- F15–F17 are integrated and validated as the current review batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -34,8 +35,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F09`, `F10`, and `F13` — Consumption, Bookmarking, and Update Eligibility
-- State: complete and validated; next implementation batch is `F15`, `F16`, and `F17`
+- Milestone: `F15`, `F16`, and `F17` — Progress Transfer, Playback Preferences, and Child List
+- State: complete and validated; next implementation batch is `F14`, `F18`, and `F19`
 
 ## Why the Plan Was Reset
 
@@ -181,6 +182,12 @@ authority or weakening the architecture.
 - [x] F13 Update Eligibility deduplicated into one provider-free shared feature for every composed type
 - [x] F09/F10/F13 application consumers reconciled together; no application production source imports their raw facades
   or the deleted capability report/catalog
+- [x] F15 Progress Transfer applicability, snapshot/restore/copy results, backup consumers, and migration copy moved behind
+  one feature-owned boundary
+- [x] F16 backup snapshot, restore, and migration copy consume provider-derived structured Feature results
+- [x] F17 Child List ordering, display rows, missing-count results, ordered-child consumers, and optional independent
+  Child Progress relationship migrated behind one feature
+- [x] F15/F16/F17 application consumers reconciled together; no application production source imports their raw facades
 
 Focused F01 validation:
 
@@ -242,6 +249,17 @@ Focused F09/F10/F13 validation:
 - FOSS application compilation advances to the recorded later-feature migration queue and reports no F09, F10, or F13
   symbol or dispatch error.
 
+Focused F15/F16/F17 validation:
+
+- `spotlessApply`, API/SPI and all production type/root interaction compilation, Feature Graph tests, build-logic tests,
+  and all root Entry-interactions unit tests pass after combining the three implementations.
+- The combined boundary census reports 8 expected later-feature violations and no raw Child List or Child Progress
+  application reference; Progress and Playback Preferences are also absent from the app raw-facade census.
+- FOSS compilation reports no F15, F16, or F17 symbol or dispatch error before stopping at later raw facades.
+- Full Manga/Anime type-suite execution remains blocked by the pre-existing test harness calls that omit the required
+  feature-contributor argument to `createEntryInteractions`; F17 does not conceal that architecture obligation with an
+  empty contributor placeholder or production fallback.
+
 ## New Phase Sequence
 
 - Phase 3: General relationship architecture
@@ -295,8 +313,8 @@ beside the graph.
 - `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
   explicit Phase 5 presentation-projection obligation.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only the real F01–F10 and F13 owners migrated so far; F11, F12, and F14–F27 remain deliberately absent until their
-  owning milestones.
+  only the real F01–F10, F13, and F15–F17 owners migrated so far; F11, F12, F14, and F18–F27 remain deliberately absent
+  until their owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -429,8 +447,9 @@ Approved on 2026-07-18:
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
-- Remaining application failures are the expected migration queue for F11, F12, and F14–F27. Re-exporting SPI, restoring raw DI, or
-  moving provider facades back into the API would contradict the manifesto rather than fix compilation.
+- Remaining application failures are the expected migration queue for F11, F12, F14, and F18–F27. Re-exporting SPI,
+  restoring raw DI, or moving provider facades back into the API would contradict the manifesto rather than fix
+  compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
   reachability or old tests.
@@ -486,8 +505,15 @@ Approved on 2026-07-18:
   Download intersections without another opt-in or type list.
 - F13 removes the artificial universal provider declaration: Update Eligibility is an always-applicable shared feature
   for every composed type and owns one policy across update and Stats consumers.
+- F15 distinguishes available empty progress from provider absence, routes all portable transfer through one feature,
+  and leaves live media persistence, child labels, migration policy, and library summaries with their real owners.
+- F16 removes concrete Anime authorization from playback-preference backup creation. Backup snapshot, restore, and
+  migration copy now share one provider-derived Feature boundary with explicit data-absence, provider-absence, and
+  type-mismatch outcomes.
+- F17 makes Child List provider presence the sole list applicability fact, derives optional labels from Child List plus
+  Child Progress, and removes the app-owned missing-count type gate without introducing fallback behavior.
 
 ## Exact Next Action After Review
 
-Commit the validated F09/F10/F13 batch, remove both its agent worktrees and branches, then start the dependency-ordered
-`F15` Progress, `F16` Playback Preferences, and `F17` Child List batch.
+Commit the validated F15/F16/F17 batch, remove all three agent worktrees and branches, then start the dependency-ordered
+`F14` Library Filtering, `F18` Child Group Filtering, and `F19` Preview batch.

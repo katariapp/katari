@@ -65,13 +65,13 @@ internal class ProviderBackedEntryProgressInteraction(
     private val processors: Map<EntryType, EntryProgressProcessor>,
 ) : EntryProgressInteraction {
     override suspend fun snapshot(entry: Entry): EntryProgressSnapshot {
-        val processor = processors[entry.type] ?: return EntryProgressSnapshot()
+        val processor = processors.requireProcessor("progress", entry.type)
         processor.requireMatchingEntryType("progress", entry, processors.keys)
         return processor.snapshot(entry)
     }
 
     override suspend fun restore(entry: Entry, snapshot: EntryProgressSnapshot) {
-        val processor = processors[entry.type] ?: return
+        val processor = processors.requireProcessor("progress", entry.type)
         processor.requireMatchingEntryType("progress", entry, processors.keys)
         processor.restore(entry, snapshot)
     }
@@ -81,8 +81,11 @@ internal class ProviderBackedEntryProgressInteraction(
         targetEntry: Entry,
         resourceMappings: List<EntryProgressResourceMapping>,
     ) {
-        if (sourceEntry.type != targetEntry.type) return
-        val processor = processors[sourceEntry.type] ?: return
+        require(sourceEntry.type == targetEntry.type) {
+            "Progress copy requires matching Entry types, but source was ${sourceEntry.type} and target was " +
+                targetEntry.type
+        }
+        val processor = processors.requireProcessor("progress", sourceEntry.type)
         processor.requireMatchingEntryType("progress", sourceEntry, processors.keys)
         processor.requireMatchingEntryType("progress", targetEntry, processors.keys)
         processor.copy(sourceEntry, targetEntry, resourceMappings)
@@ -93,22 +96,25 @@ internal class ProviderBackedEntryPlaybackPreferencesInteraction(
     private val processors: Map<EntryType, EntryPlaybackPreferencesProcessor>,
 ) : EntryPlaybackPreferencesInteraction {
     override suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot? {
-        val processor = processors[entry.type] ?: return null
+        val processor = processors.requireProcessor("playback preferences", entry.type)
         processor.requireMatchingEntryType("playback preferences", entry, processors.keys)
         return processor.snapshot(entry)
     }
 
     override suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot) {
-        val processor = processors[entry.type] ?: return
+        val processor = processors.requireProcessor("playback preferences", entry.type)
         processor.requireMatchingEntryType("playback preferences", entry, processors.keys)
         processor.restore(entry, snapshot)
     }
 
-    override suspend fun copy(sourceEntry: Entry, targetEntry: Entry) {
-        if (sourceEntry.type != targetEntry.type) return
-        val processor = processors[sourceEntry.type] ?: return
+    override suspend fun copy(sourceEntry: Entry, targetEntry: Entry): Boolean {
+        require(sourceEntry.type == targetEntry.type) {
+            "Playback-preference copy requires matching Entry types, but received " +
+                "${sourceEntry.type} and ${targetEntry.type}"
+        }
+        val processor = processors.requireProcessor("playback preferences", sourceEntry.type)
         processor.requireMatchingEntryType("playback preferences", sourceEntry, processors.keys)
         processor.requireMatchingEntryType("playback preferences", targetEntry, processors.keys)
-        processor.copy(sourceEntry, targetEntry)
+        return processor.copy(sourceEntry, targetEntry)
     }
 }

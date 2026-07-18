@@ -10,8 +10,9 @@ import kotlinx.coroutines.CancellationException
 import mihon.domain.migration.models.MigrationFlag
 import mihon.entry.interactions.EntryCapabilityInteraction
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
-import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
-import mihon.entry.interactions.EntryProgressInteraction
+import mihon.entry.interactions.EntryPlaybackPreferencesFeature
+import mihon.entry.interactions.EntryProgressCopyResult
+import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressResourceMapping
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import tachiyomi.domain.category.repository.CategoryRepository
@@ -38,8 +39,8 @@ class MigrateEntryUseCase(
     private val entryRepository: EntryRepository,
     private val entryChapterRepository: EntryChapterRepository,
     private val capabilityInteraction: EntryCapabilityInteraction,
-    private val progressInteraction: EntryProgressInteraction,
-    private val playbackPreferencesInteraction: EntryPlaybackPreferencesInteraction,
+    private val progressFeature: EntryProgressFeature,
+    private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature,
     private val downloadMaintenance: EntryDownloadMaintenanceFeature,
     private val categoryRepository: CategoryRepository,
     private val getTracks: GetTracks,
@@ -75,8 +76,12 @@ class MigrateEntryUseCase(
             } else {
                 emptyList()
             }
-            progressInteraction.copy(current, target, progressResourceMappings)
-            playbackPreferencesInteraction.copy(current, target)
+            when (progressFeature.copy(current, target, progressResourceMappings)) {
+                EntryProgressCopyResult.Applied -> Unit
+                is EntryProgressCopyResult.Inapplicable -> Unit
+                is EntryProgressCopyResult.IncompatibleTypes -> return
+            }
+            playbackPreferencesFeature.copy(current, target)
             viewerSettingOverrideRepository.copy(current.id, target.id)
 
             if (MigrationFlag.CATEGORY in flags) {

@@ -63,7 +63,6 @@ import eu.kanade.presentation.entry.components.EntryInfoBox
 import eu.kanade.presentation.entry.components.EntryToolbar
 import eu.kanade.presentation.entry.components.ExpandableEntryDescription
 import eu.kanade.presentation.util.formatChapterNumber
-import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.ui.entry.EntryChapterList
 import eu.kanade.tachiyomi.ui.entry.EntryScreenModel
 import eu.kanade.tachiyomi.ui.entry.entrySelectionActionLabels
@@ -72,7 +71,6 @@ import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryDownloadState
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.service.missingChaptersCount
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.ListGroupHeader
@@ -512,39 +510,35 @@ private fun EntryScreenSmallImpl(
                         )
                     }
 
-                    item(
-                        key = EntryScreenItem.CHAPTER_HEADER,
-                        contentType = EntryScreenItem.CHAPTER_HEADER,
-                    ) {
-                        val missingChapterCount = remember(chapters, state.entry.type) {
-                            missingChildCount(
+                    if (state.childListApplicable) {
+                        item(
+                            key = EntryScreenItem.CHAPTER_HEADER,
+                            contentType = EntryScreenItem.CHAPTER_HEADER,
+                        ) {
+                            EntryChapterHeader(
+                                enabled = !isAnySelected,
                                 entryType = state.entry.type,
-                                childNumbers = chapters.map { it.chapter.chapterNumber },
+                                chapterCount = chapters.size,
+                                missingChapterCount = state.missingChildCount,
+                                onClick = onFilterClicked,
                             )
                         }
-                        EntryChapterHeader(
-                            enabled = !isAnySelected,
-                            entryType = state.entry.type,
-                            chapterCount = chapters.size,
-                            missingChapterCount = missingChapterCount,
-                            onClick = onFilterClicked,
+
+                        sharedChapterItems(
+                            entry = state.entry,
+                            mergedMemberIds = state.memberIds,
+                            memberTitleById = state.memberTitleById,
+                            chapters = listItem,
+                            childProgressLabels = state.childProgressLabels,
+                            isAnyChapterSelected = chapters.fastAny { it.selected },
+                            chapterSwipeStartAction = chapterSwipeStartAction,
+                            chapterSwipeEndAction = chapterSwipeEndAction,
+                            onChapterClicked = onChapterClicked,
+                            onDownloadChapter = onDownloadChapter,
+                            onChapterSelected = onChapterSelected,
+                            onChapterSwipe = onChapterSwipe,
                         )
                     }
-
-                    sharedChapterItems(
-                        entry = state.entry,
-                        mergedMemberIds = state.memberIds,
-                        memberTitleById = state.memberTitleById,
-                        chapters = listItem,
-                        childProgressLabels = state.childProgressLabels,
-                        isAnyChapterSelected = chapters.fastAny { it.selected },
-                        chapterSwipeStartAction = chapterSwipeStartAction,
-                        chapterSwipeEndAction = chapterSwipeEndAction,
-                        onChapterClicked = onChapterClicked,
-                        onDownloadChapter = onDownloadChapter,
-                        onChapterSelected = onChapterSelected,
-                        onChapterSwipe = onChapterSwipe,
-                    )
                 }
             }
         }
@@ -794,49 +788,41 @@ fun EntryScreenLargeImpl(
                                 bottom = contentPadding.calculateBottomPadding(),
                             ),
                         ) {
-                            item(
-                                key = EntryScreenItem.CHAPTER_HEADER,
-                                contentType = EntryScreenItem.CHAPTER_HEADER,
-                            ) {
-                                val missingChapterCount = remember(chapters, state.entry.type) {
-                                    missingChildCount(
+                            if (state.childListApplicable) {
+                                item(
+                                    key = EntryScreenItem.CHAPTER_HEADER,
+                                    contentType = EntryScreenItem.CHAPTER_HEADER,
+                                ) {
+                                    EntryChapterHeader(
+                                        enabled = !isAnySelected,
                                         entryType = state.entry.type,
-                                        childNumbers = chapters.map { it.chapter.chapterNumber },
+                                        chapterCount = chapters.size,
+                                        missingChapterCount = state.missingChildCount,
+                                        onClick = onFilterButtonClicked,
                                     )
                                 }
-                                EntryChapterHeader(
-                                    enabled = !isAnySelected,
-                                    entryType = state.entry.type,
-                                    chapterCount = chapters.size,
-                                    missingChapterCount = missingChapterCount,
-                                    onClick = onFilterButtonClicked,
+
+                                sharedChapterItems(
+                                    entry = state.entry,
+                                    mergedMemberIds = state.memberIds,
+                                    memberTitleById = state.memberTitleById,
+                                    chapters = listItem,
+                                    childProgressLabels = state.childProgressLabels,
+                                    isAnyChapterSelected = chapters.fastAny { it.selected },
+                                    chapterSwipeStartAction = chapterSwipeStartAction,
+                                    chapterSwipeEndAction = chapterSwipeEndAction,
+                                    onChapterClicked = onChapterClicked,
+                                    onDownloadChapter = onDownloadChapter,
+                                    onChapterSelected = onChapterSelected,
+                                    onChapterSwipe = onChapterSwipe,
                                 )
                             }
-
-                            sharedChapterItems(
-                                entry = state.entry,
-                                mergedMemberIds = state.memberIds,
-                                memberTitleById = state.memberTitleById,
-                                chapters = listItem,
-                                childProgressLabels = state.childProgressLabels,
-                                isAnyChapterSelected = chapters.fastAny { it.selected },
-                                chapterSwipeStartAction = chapterSwipeStartAction,
-                                chapterSwipeEndAction = chapterSwipeEndAction,
-                                onChapterClicked = onChapterClicked,
-                                onDownloadChapter = onDownloadChapter,
-                                onChapterSelected = onChapterSelected,
-                                onChapterSwipe = onChapterSwipe,
-                            )
                         }
                     }
                 },
             )
         }
     }
-}
-
-internal fun missingChildCount(entryType: EntryType, childNumbers: List<Double>): Int {
-    return if (entryType == EntryType.MANGA) childNumbers.missingChaptersCount() else 0
 }
 
 @Composable

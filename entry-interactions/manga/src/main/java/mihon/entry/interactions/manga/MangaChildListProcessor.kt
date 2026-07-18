@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import mihon.entry.interactions.EntryChildListDisplay
 import mihon.entry.interactions.EntryChildListProcessor
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
@@ -14,6 +15,7 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.service.calculateChapterGap
+import tachiyomi.domain.entry.service.missingChaptersCount
 import tachiyomi.domain.entry.service.sortedForMergedDisplay
 import tachiyomi.domain.entry.service.sortedForReading
 import tachiyomi.i18n.MR
@@ -40,30 +42,34 @@ internal class MangaChildListProcessor(
         return chapters.sortedForMergedDisplay(entry, memberIds)
     }
 
-    override fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow> {
+    override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
         val sortedChapters = sortedForDisplay(
             entry = request.entry,
             chapters = request.chapters,
             memberIds = request.memberIds,
         )
-        if (request.memberIds.size <= 1) {
-            return sortedChapters.withMissingChapterCounts(request.entry, request.includeMissingCounts)
-        }
+        val rows = if (request.memberIds.size <= 1) {
+            sortedChapters.withMissingChapterCounts(request.entry, request.includeMissingCounts)
+        } else {
+            buildList {
+                request.memberIds.forEach { memberId ->
+                    val memberChapters = sortedChapters.filter { it.entryId == memberId }
+                    if (memberChapters.isEmpty()) return@forEach
 
-        return buildList {
-            request.memberIds.forEach { memberId ->
-                val memberChapters = sortedChapters.filter { it.entryId == memberId }
-                if (memberChapters.isEmpty()) return@forEach
-
-                add(
-                    EntryChildListRow.MemberHeader(
-                        entryId = memberId,
-                        title = request.memberTitleById[memberId].orEmpty().ifBlank { request.fallbackTitle },
-                    ),
-                )
-                addAll(memberChapters.withMissingChapterCounts(request.entry, request.includeMissingCounts))
+                    add(
+                        EntryChildListRow.MemberHeader(
+                            entryId = memberId,
+                            title = request.memberTitleById[memberId].orEmpty().ifBlank { request.fallbackTitle },
+                        ),
+                    )
+                    addAll(memberChapters.withMissingChapterCounts(request.entry, request.includeMissingCounts))
+                }
             }
         }
+        return EntryChildListDisplay(
+            rows = rows,
+            aggregateMissingCount = request.chapters.map(EntryChapter::chapterNumber).missingChaptersCount(),
+        )
     }
 
     override fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>> {

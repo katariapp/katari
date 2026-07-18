@@ -24,6 +24,11 @@ data class EntryChildProgressRequest(
     val memberIds: List<Long> = chapters.map(EntryChapter::entryId).distinct(),
 )
 
+data class EntryChildListDisplay(
+    val rows: List<EntryChildListRow>,
+    val aggregateMissingCount: Int,
+)
+
 sealed interface EntryChildListRow {
     data class MemberHeader(
         val entryId: Long,

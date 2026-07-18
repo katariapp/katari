@@ -116,6 +116,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryConsumptionFeatureContributor,
                 EntryBookmarkFeatureContributor,
                 EntryUpdateEligibilityFeatureContributor,
+                EntryProgressFeatureContributor,
+                EntryPlaybackPreferencesFeatureContributor,
+                EntryChildListFeatureContributor,
             ),
         )
     }
@@ -208,6 +211,28 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             currentPolicy = {
                 preferences.autoUpdateEntryRestrictions.get().toEntryUpdateEligibilityPolicy()
             },
+        )
+    }
+    addSingletonFactory<EntryProgressFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryProgressFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.progress,
+        )
+    }
+    addSingletonFactory<EntryPlaybackPreferencesFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryPlaybackPreferencesFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.playbackPreferences,
+        )
+    }
+    addSingletonFactory<EntryChildListFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryChildListFeature(
+            evaluation = composition.featureGraphEvaluation,
+            childList = composition.interactions.childList,
+            childProgress = composition.interactions.childProgress,
         )
     }
     addSingletonFactory {

@@ -24,13 +24,13 @@ internal class AnimePlaybackPreferencesProcessor(
         playbackPreferencesRepository.upsert(snapshot.toPlaybackPreferences(entry.id))
     }
 
-    override suspend fun copy(sourceEntry: Entry, targetEntry: Entry) {
+    override suspend fun copy(sourceEntry: Entry, targetEntry: Entry): Boolean {
         sourceEntry.requireAnime()
         targetEntry.requireAnime()
 
-        playbackPreferencesRepository.getByEntryId(sourceEntry.id)?.let { preferences ->
-            playbackPreferencesRepository.upsert(preferences.copy(entryId = targetEntry.id))
-        }
+        val preferences = playbackPreferencesRepository.getByEntryId(sourceEntry.id) ?: return false
+        playbackPreferencesRepository.upsert(preferences.copy(entryId = targetEntry.id))
+        return true
     }
 }
 

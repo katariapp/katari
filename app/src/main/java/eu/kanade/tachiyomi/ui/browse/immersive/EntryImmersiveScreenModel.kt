@@ -12,7 +12,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import mihon.entry.interactions.EntryChildListInteraction
+import mihon.entry.interactions.EntryChildListFeature
+import mihon.entry.interactions.EntryFirstChildResult
 import mihon.entry.interactions.EntryImmersiveHandle
 import mihon.entry.interactions.EntryImmersiveInteraction
 import mihon.entry.interactions.EntryImmersiveProgress
@@ -28,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 class EntryImmersiveScreenModel(
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val syncEntryWithSource: SyncEntryWithSource = Injekt.get(),
-    private val childListInteraction: EntryChildListInteraction = Injekt.get(),
+    private val childListFeature: EntryChildListFeature = Injekt.get(),
     private val immersiveInteraction: EntryImmersiveInteraction = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
 ) : StateScreenModel<EntryImmersiveScreenModel.State>(State()) {
@@ -138,7 +139,10 @@ class EntryImmersiveScreenModel(
             chapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
         }
 
-        val chapter = childListInteraction.sortedForReading(entry, chapters, emptyList()).firstOrNull()
+        val chapter = when (val result = childListFeature.firstReadingChild(entry, chapters, emptyList())) {
+            is EntryFirstChildResult.Available -> result.chapter
+            is EntryFirstChildResult.Inapplicable -> error("Child-list behavior is not supported for this entry type")
+        }
             ?: error("No consumable item found")
         val source = sourceManager.get(entry.source) ?: error("Source not available")
         val handle = immersiveInteraction.load(context, entry, chapter, source)

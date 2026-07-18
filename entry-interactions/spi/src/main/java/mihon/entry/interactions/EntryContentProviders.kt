@@ -17,7 +17,7 @@ val EntryImmersiveCapability = entryInteractionCapability<EntryImmersiveProcesso
 interface EntryChildListProcessor : EntryInteractionProvider {
     fun sortedForReading(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
     fun sortedForDisplay(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
-    fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow>
+    fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay
 }
 
 val EntryChildListCapability = entryInteractionCapability<EntryChildListProcessor>(

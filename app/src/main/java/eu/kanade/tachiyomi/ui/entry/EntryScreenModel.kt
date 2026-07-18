@@ -53,6 +53,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
@@ -65,11 +66,14 @@ import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCapabilityInteraction
 import mihon.entry.interactions.EntryChildGroupFilterInteraction
-import mihon.entry.interactions.EntryChildListInteraction
+import mihon.entry.interactions.EntryChildListFeature
 import mihon.entry.interactions.EntryChildListRequest
+import mihon.entry.interactions.EntryChildListResult
 import mihon.entry.interactions.EntryChildListRow
+import mihon.entry.interactions.EntryChildOrderResult
 import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryChildProgressRequest
+import mihon.entry.interactions.EntryChildProgressResult
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
@@ -84,6 +88,7 @@ import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
+import mihon.entry.interactions.EntryFirstChildResult
 import mihon.entry.interactions.EntryPreviewConfig
 import mihon.entry.interactions.EntryPreviewHandle
 import mihon.entry.interactions.EntryPreviewInteraction
@@ -152,7 +157,7 @@ class EntryScreenModel(
     private val entryBookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val entryContinueFeature: EntryContinueFeature = Injekt.get(),
     private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
-    private val entryChildListInteraction: EntryChildListInteraction = Injekt.get(),
+    private val entryChildListFeature: EntryChildListFeature = Injekt.get(),
     private val entryChildGroupFilterInteraction: EntryChildGroupFilterInteraction = Injekt.get(),
     private val coverCache: CoverCache = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
@@ -404,7 +409,7 @@ class EntryScreenModel(
                     mergeGroupMemberIds = mergePresentation.mergeGroupMemberIds,
                     isFromSource = isFromSource,
                     chapters = chapters,
-                    childListInteraction = entryChildListInteraction,
+                    childListFeature = entryChildListFeature,
                     childGroupFilterSupported = entryChildGroupFilterInteraction.supports(entry),
                     availableScanlators = getAvailableChildGroups(entry, mergePresentation.memberIds),
                     excludedScanlators = getExcludedChildGroups(entry, mergePresentation.memberIds),
@@ -445,7 +450,10 @@ class EntryScreenModel(
                 }
                 .distinctUntilChanged()
                 .flatMapLatest { request ->
-                    entryChildListInteraction.progressLabels(request)
+                    when (val result = entryChildListFeature.progressLabels(request)) {
+                        is EntryChildProgressResult.Available -> result.labels
+                        is EntryChildProgressResult.Inapplicable -> flowOf(emptyMap())
+                    }
                         .onStart { emit(emptyMap()) }
                         .catch { error ->
                             logcat(LogPriority.ERROR, error)
@@ -590,8 +598,7 @@ class EntryScreenModel(
         val chapters = getDisplayedChapters()
         val chapterItems = chapters.toChapterListItems(entry)
         return chapterItems
-            .previewReadingChapters(entry, mergePresentation.memberIds, entryChildListInteraction)
-            .firstOrNull()
+            .previewFirstReadingChapter(entry, mergePresentation.memberIds, entryChildListFeature)
     }
 
     private fun launchRefreshFromSource(
@@ -2334,7 +2341,7 @@ class EntryScreenModel(
             val isFromSource: Boolean,
             val chapters: List<EntryChapterList.Item>,
             val childProgressLabels: Map<Long, EntryChildProgressLabel> = emptyMap(),
-            val childListInteraction: EntryChildListInteraction,
+            val childListFeature: EntryChildListFeature,
             val childGroupFilterSupported: Boolean,
             val availableScanlators: Set<String>,
             val excludedScanlators: Set<String>,
@@ -2347,26 +2354,35 @@ class EntryScreenModel(
             val hideMissingChapters: Boolean = false,
         ) : State {
             val processedChapters by lazy {
-                chapters.applyFilters(entry, childListInteraction).toList()
+                chapters.applyFilters(entry, childListFeature).toList()
             }
 
             val readingChapters by lazy {
-                processedChapters.sortedForReading(entry, memberIds, childListInteraction)
+                processedChapters.sortedForReading(entry, memberIds, childListFeature)
             }
 
             val isAnySelected by lazy {
                 chapters.fastAny { it.selected }
             }
 
-            val chapterListItems by lazy {
-                processedChapters.toChapterListRows(
+            private val childListDisplay by lazy {
+                processedChapters.toChapterListDisplay(
                     entry = entry,
                     memberIds = memberIds,
                     memberTitleById = memberTitleById,
-                    childListInteraction = childListInteraction,
+                    childListFeature = childListFeature,
                     includeMissingCounts = !hideMissingChapters,
                 )
             }
+
+            val chapterListItems: List<EntryChapterList>
+                get() = childListDisplay.rows
+
+            val missingChildCount: Int
+                get() = childListDisplay.aggregateMissingCount
+
+            val childListApplicable: Boolean
+                get() = childListFeature.isApplicable(entry.type)
 
             val scanlatorFilterActive: Boolean
                 get() = childGroupFilterSupported &&
@@ -2390,7 +2406,7 @@ class EntryScreenModel(
              */
             private fun List<EntryChapterList.Item>.applyFilters(
                 entry: Entry,
-                childListInteraction: EntryChildListInteraction,
+                childListFeature: EntryChildListFeature,
             ): List<EntryChapterList.Item> {
                 val isLocalEntry = entry.isLocal()
                 val unreadFilter = entry.unreadFilter
@@ -2401,7 +2417,7 @@ class EntryScreenModel(
                     .filter { (chapter) -> applyFilter(bookmarkedFilter) { chapter.bookmark } }
                     .filter { applyFilter(downloadedFilter) { it.isDownloaded || isLocalEntry } }
                     .toList()
-                return filtered.sortedForDisplay(entry, memberIds, childListInteraction)
+                return filtered.sortedForDisplay(entry, memberIds, childListFeature)
             }
         }
     }
@@ -2452,13 +2468,24 @@ sealed class EntryChapterList {
     }
 }
 
-private fun List<EntryChapterList.Item>.previewReadingChapters(
+private fun List<EntryChapterList.Item>.previewFirstReadingChapter(
     entry: Entry,
     memberIds: List<Long>,
-    childListInteraction: EntryChildListInteraction,
-): List<EntryChapterList.Item> {
-    return applyFiltersForPreview(entry)
-        .sortedForReading(entry, memberIds, childListInteraction)
+    childListFeature: EntryChildListFeature,
+): EntryChapterList.Item? {
+    val filtered = applyFiltersForPreview(entry)
+    return when (
+        val result = childListFeature.firstReadingChild(
+            entry = entry,
+            chapters = filtered.map(EntryChapterList.Item::chapter),
+            memberIds = memberIds,
+        )
+    ) {
+        is EntryFirstChildResult.Available -> result.chapter?.let { chapter ->
+            filtered.firstOrNull { it.chapter.id == chapter.id }
+        }
+        is EntryFirstChildResult.Inapplicable -> null
+    }
 }
 
 private fun List<EntryChapterList.Item>.applyFiltersForPreview(
@@ -2475,15 +2502,20 @@ private fun List<EntryChapterList.Item>.applyFiltersForPreview(
         .toList()
 }
 
-private fun List<EntryChapterList.Item>.toChapterListRows(
+private data class EntryChildListDisplayState(
+    val rows: List<EntryChapterList>,
+    val aggregateMissingCount: Int,
+)
+
+private fun List<EntryChapterList.Item>.toChapterListDisplay(
     entry: Entry,
     memberIds: List<Long>,
     memberTitleById: Map<Long, String>,
-    childListInteraction: EntryChildListInteraction,
+    childListFeature: EntryChildListFeature,
     includeMissingCounts: Boolean,
-): List<EntryChapterList> {
+): EntryChildListDisplayState {
     val itemByChapterId = associateBy { it.chapter.id }
-    return childListInteraction.buildDisplayList(
+    val result = childListFeature.displayList(
         EntryChildListRequest(
             entry = entry,
             chapters = map(EntryChapterList.Item::chapter),
@@ -2491,7 +2523,12 @@ private fun List<EntryChapterList.Item>.toChapterListRows(
             memberTitleById = memberTitleById,
             includeMissingCounts = includeMissingCounts,
         ),
-    ).mapNotNull { row ->
+    )
+    if (result is EntryChildListResult.Inapplicable) {
+        return EntryChildListDisplayState(rows = emptyList(), aggregateMissingCount = 0)
+    }
+    val display = (result as EntryChildListResult.Available).display
+    val rows = display.rows.mapNotNull { row ->
         when (row) {
             is EntryChildListRow.Child -> itemByChapterId[row.chapter.id]
             is EntryChildListRow.MemberHeader -> EntryChapterList.MemberHeader(
@@ -2504,34 +2541,44 @@ private fun List<EntryChapterList.Item>.toChapterListRows(
             )
         }
     }
+    return EntryChildListDisplayState(
+        rows = rows,
+        aggregateMissingCount = display.aggregateMissingCount,
+    )
 }
 
 private fun List<EntryChapterList.Item>.sortedForReading(
     entry: Entry,
     memberIds: List<Long>,
-    childListInteraction: EntryChildListInteraction,
+    childListFeature: EntryChildListFeature,
 ): List<EntryChapterList.Item> {
-    return sortedWithChapterOrder(
-        childListInteraction.sortedForReading(
+    return when (
+        val result = childListFeature.readingOrder(
             entry = entry,
             chapters = map(EntryChapterList.Item::chapter),
             memberIds = memberIds,
-        ),
-    )
+        )
+    ) {
+        is EntryChildOrderResult.Available -> sortedWithChapterOrder(result.chapters)
+        is EntryChildOrderResult.Inapplicable -> emptyList()
+    }
 }
 
 private fun List<EntryChapterList.Item>.sortedForDisplay(
     entry: Entry,
     memberIds: List<Long>,
-    childListInteraction: EntryChildListInteraction,
+    childListFeature: EntryChildListFeature,
 ): List<EntryChapterList.Item> {
-    return sortedWithChapterOrder(
-        childListInteraction.sortedForDisplay(
+    return when (
+        val result = childListFeature.displayOrder(
             entry = entry,
             chapters = map(EntryChapterList.Item::chapter),
             memberIds = memberIds,
-        ),
-    )
+        )
+    ) {
+        is EntryChildOrderResult.Available -> sortedWithChapterOrder(result.chapters)
+        is EntryChildOrderResult.Inapplicable -> emptyList()
+    }
 }
 
 private fun List<EntryChapterList.Item>.sortedWithChapterOrder(

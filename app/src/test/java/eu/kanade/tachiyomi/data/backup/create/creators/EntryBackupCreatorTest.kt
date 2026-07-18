@@ -9,11 +9,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.protobuf.ProtoBuf
-import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
+import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
+import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
 import mihon.entry.interactions.EntryPlaybackQualityMode
-import mihon.entry.interactions.EntryProgressInteraction
+import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressSnapshot
+import mihon.entry.interactions.EntryProgressSnapshotResult
 import mihon.entry.interactions.EntryProgressStateSnapshot
 import mihon.entry.viewer.settings.ViewerSettingId
 import mihon.entry.viewer.settings.ViewerSettingOverride
@@ -38,7 +40,7 @@ class EntryBackupCreatorTest {
 
     @ParameterizedTest(name = "serializes {0} backup with chapters={1}")
     @MethodSource("backupCases")
-    fun `playback preferences are independent from chapters only for anime`(
+    fun `playback preferences follow the feature independently from chapters`(
         type: EntryType,
         chaptersEnabled: Boolean,
     ) = runTest {
@@ -75,15 +77,11 @@ class EntryBackupCreatorTest {
             updatedAt shouldBe 30L
         }
 
-        if (type == EntryType.ANIME) {
-            decoded.playbackPreferences?.dubKey shouldBe "playback-dub"
-            decoded.playbackPreferences?.streamKey shouldBe "playback-stream"
-            decoded.playbackPreferences?.subtitleKey shouldBe "playback-subtitle"
-            decoded.playbackPreferences?.playerQualityMode shouldBe "specific_height"
-            decoded.playbackPreferences?.playerQualityHeight shouldBe 1080
-        } else {
-            decoded.playbackPreferences shouldBe null
-        }
+        decoded.playbackPreferences?.dubKey shouldBe "playback-dub"
+        decoded.playbackPreferences?.streamKey shouldBe "playback-stream"
+        decoded.playbackPreferences?.subtitleKey shouldBe "playback-subtitle"
+        decoded.playbackPreferences?.playerQualityMode shouldBe "specific_height"
+        decoded.playbackPreferences?.playerQualityHeight shouldBe 1080
 
         if (type == EntryType.ANIME && chaptersEnabled) {
             decoded.downloadPreferences?.dubKey shouldBe "download-dub"
@@ -98,11 +96,11 @@ class EntryBackupCreatorTest {
         coVerify(exactly = if (type == EntryType.ANIME && chaptersEnabled) 1 else 0) {
             fixture.downloadPreferencesRepository.getByEntryId(entry.id)
         }
-        coVerify(exactly = if (type == EntryType.ANIME) 1 else 0) {
-            fixture.playbackPreferencesInteraction.snapshot(entry)
+        coVerify(exactly = 1) {
+            fixture.playbackPreferencesFeature.snapshot(entry)
         }
         coVerify(exactly = if (chaptersEnabled) 1 else 0) {
-            fixture.progressInteraction.snapshot(entry)
+            fixture.progressFeature.snapshot(entry)
         }
     }
 
@@ -116,8 +114,8 @@ class EntryBackupCreatorTest {
         private val entryRepository = mockk<EntryRepository>()
         val entryChapterRepository = mockk<EntryChapterRepository>()
         val downloadPreferencesRepository = mockk<DownloadPreferencesRepository>()
-        val progressInteraction = mockk<EntryProgressInteraction>()
-        val playbackPreferencesInteraction = mockk<EntryPlaybackPreferencesInteraction>()
+        val progressFeature = mockk<EntryProgressFeature>()
+        val playbackPreferencesFeature = mockk<EntryPlaybackPreferencesFeature>()
         private val viewerSettingOverrideRepository = mockk<ViewerSettingOverrideRepository>()
 
         val creator = EntryBackupCreator(
@@ -126,8 +124,8 @@ class EntryBackupCreatorTest {
             entryRepository = entryRepository,
             entryChapterRepository = entryChapterRepository,
             downloadPreferencesRepository = downloadPreferencesRepository,
-            progressInteraction = progressInteraction,
-            playbackPreferencesInteraction = playbackPreferencesInteraction,
+            progressFeature = progressFeature,
+            playbackPreferencesFeature = playbackPreferencesFeature,
             viewerSettingOverrideRepository = viewerSettingOverrideRepository,
         )
 
@@ -144,25 +142,26 @@ class EntryBackupCreatorTest {
                 qualityMode = VideoDownloadQualityMode.DATA_SAVING,
                 updatedAt = 20L,
             )
-            coEvery { playbackPreferencesInteraction.snapshot(entry) } returns if (entry.type == EntryType.ANIME) {
-                EntryPlaybackPreferencesSnapshot(
-                    dubKey = "playback-dub",
-                    streamKey = "playback-stream",
-                    subtitleKey = "playback-subtitle",
-                    playerQualityMode = EntryPlaybackQualityMode.SPECIFIC_HEIGHT,
-                    playerQualityHeight = 1080,
-                    updatedAt = 10L,
+            coEvery { playbackPreferencesFeature.snapshot(entry) } returns
+                EntryPlaybackPreferencesSnapshotResult.Captured(
+                    EntryPlaybackPreferencesSnapshot(
+                        dubKey = "playback-dub",
+                        streamKey = "playback-stream",
+                        subtitleKey = "playback-subtitle",
+                        playerQualityMode = EntryPlaybackQualityMode.SPECIFIC_HEIGHT,
+                        playerQualityHeight = 1080,
+                        updatedAt = 10L,
+                    ),
                 )
-            } else {
-                null
-            }
-            coEvery { progressInteraction.snapshot(entry) } returns EntryProgressSnapshot(
-                states = listOf(
-                    EntryProgressStateSnapshot(
-                        resourceKey = chapter.url,
-                        sourceChildKey = chapter.url,
-                        locator = EntryProgressLocator(kind = "page", position = 4),
-                        locatorUpdatedAt = 10,
+            coEvery { progressFeature.snapshot(entry) } returns EntryProgressSnapshotResult.Available(
+                EntryProgressSnapshot(
+                    states = listOf(
+                        EntryProgressStateSnapshot(
+                            resourceKey = chapter.url,
+                            sourceChildKey = chapter.url,
+                            locator = EntryProgressLocator(kind = "page", position = 4),
+                            locatorUpdatedAt = 10,
+                        ),
                     ),
                 ),
             )

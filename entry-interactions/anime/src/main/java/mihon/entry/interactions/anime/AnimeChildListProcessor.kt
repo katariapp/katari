@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.ui.video.player.formatPlaybackTimestamp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import mihon.entry.interactions.EntryChildListDisplay
 import mihon.entry.interactions.EntryChildListProcessor
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
@@ -39,30 +40,31 @@ internal class AnimeChildListProcessor(
         return chapters.sortedForMergedDisplay(entry, memberIds)
     }
 
-    override fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow> {
+    override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
         val sortedChapters = sortedForDisplay(
             entry = request.entry,
             chapters = request.chapters,
             memberIds = request.memberIds,
         )
-        if (request.memberIds.size <= 1) {
-            return sortedChapters.map(EntryChildListRow::Child)
-        }
+        val rows: List<EntryChildListRow> = if (request.memberIds.size <= 1) {
+            sortedChapters.map(EntryChildListRow::Child)
+        } else {
+            buildList {
+                request.memberIds.forEach { memberId ->
+                    val memberChapters = sortedChapters.filter { it.entryId == memberId }
+                    if (memberChapters.isEmpty()) return@forEach
 
-        return buildList {
-            request.memberIds.forEach { memberId ->
-                val memberChapters = sortedChapters.filter { it.entryId == memberId }
-                if (memberChapters.isEmpty()) return@forEach
-
-                add(
-                    EntryChildListRow.MemberHeader(
-                        entryId = memberId,
-                        title = request.memberTitleById[memberId].orEmpty().ifBlank { request.fallbackTitle },
-                    ),
-                )
-                addAll(memberChapters.map(EntryChildListRow::Child))
+                    add(
+                        EntryChildListRow.MemberHeader(
+                            entryId = memberId,
+                            title = request.memberTitleById[memberId].orEmpty().ifBlank { request.fallbackTitle },
+                        ),
+                    )
+                    addAll(memberChapters.map(EntryChildListRow::Child))
+                }
             }
         }
+        return EntryChildListDisplay(rows = rows, aggregateMissingCount = 0)
     }
 
     override fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>> {

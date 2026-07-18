@@ -11,10 +11,11 @@ import eu.kanade.tachiyomi.data.backup.models.BackupPlaybackState
 import eu.kanade.tachiyomi.data.backup.models.BackupTracking
 import eu.kanade.tachiyomi.data.backup.models.toEntryProgressStateSnapshot
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
+import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
-import mihon.entry.interactions.EntryProgressInteraction
+import mihon.entry.interactions.EntryProgressFeature
+import mihon.entry.interactions.EntryProgressRestoreResult
 import mihon.entry.interactions.EntryProgressSnapshot
 import mihon.entry.interactions.EntryProgressStateSnapshot
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
@@ -92,8 +93,8 @@ class EntryRestorer(
     private val entryRepository: EntryRepository = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val downloadPreferencesRepository: DownloadPreferencesRepository = Injekt.get(),
-    private val progressInteraction: EntryProgressInteraction = Injekt.get(),
-    private val playbackPreferencesInteraction: EntryPlaybackPreferencesInteraction = Injekt.get(),
+    private val progressFeature: EntryProgressFeature = Injekt.get(),
+    private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature = Injekt.get(),
     private val upsertHistory: UpsertHistory = Injekt.get(),
     private val historyRepository: HistoryRepository = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
@@ -293,12 +294,17 @@ class EntryRestorer(
         } else {
             emptyList()
         }
-        progressInteraction.restore(
-            entry,
-            EntryProgressSnapshot(
-                states = legacyStates + legacyMangaStates + genericStates,
-            ),
-        )
+        when (
+            progressFeature.restore(
+                entry,
+                EntryProgressSnapshot(
+                    states = legacyStates + legacyMangaStates + genericStates,
+                ),
+            )
+        ) {
+            EntryProgressRestoreResult.Applied -> Unit
+            is EntryProgressRestoreResult.Inapplicable -> Unit
+        }
     }
 
     private suspend fun restoreCategories(
@@ -453,7 +459,7 @@ class EntryRestorer(
         backupPreferences: BackupPlaybackPreferences?,
     ) {
         val preferences = backupPreferences?.toPlaybackSnapshot() ?: return
-        playbackPreferencesInteraction.restore(entry, preferences)
+        playbackPreferencesFeature.restore(entry, preferences)
     }
 
     private fun BackupPlaybackState.toProgressSnapshot(): EntryProgressStateSnapshot? {

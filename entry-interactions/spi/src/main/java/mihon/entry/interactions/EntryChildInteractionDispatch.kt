@@ -2,14 +2,12 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.service.sortedForReading
 
 internal class ProviderBackedEntryChildListInteraction(
     private val processors: Map<EntryType, EntryChildListProcessor>,
-    private val progressProcessors: Map<EntryType, EntryChildProgressProcessor>,
 ) : EntryChildListInteraction {
     override fun sortedForReading(
         entry: Entry,
@@ -31,15 +29,19 @@ internal class ProviderBackedEntryChildListInteraction(
         return processor.sortedForDisplay(entry, chapters, memberIds)
     }
 
-    override fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow> {
+    override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
         val processor = processors.requireProcessor("child list", request.entry.type)
         processor.requireMatchingEntryType("child list", request.entry, processors.keys)
         return processor.buildDisplayList(request)
     }
+}
 
+internal class ProviderBackedEntryChildProgressInteraction(
+    private val processors: Map<EntryType, EntryChildProgressProcessor>,
+) : EntryChildProgressInteraction {
     override fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>> {
-        val processor = progressProcessors[request.entry.type] ?: return flowOf(emptyMap())
-        processor.requireMatchingEntryType("child progress", request.entry, progressProcessors.keys)
+        val processor = processors.requireProcessor("child progress", request.entry.type)
+        processor.requireMatchingEntryType("child progress", request.entry, processors.keys)
         return processor.progressLabels(request)
     }
 }

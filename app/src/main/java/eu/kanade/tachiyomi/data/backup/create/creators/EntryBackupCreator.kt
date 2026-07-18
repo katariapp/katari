@@ -11,10 +11,11 @@ import eu.kanade.tachiyomi.data.backup.models.toBackupEntry
 import eu.kanade.tachiyomi.data.backup.models.toBackupEntryProgressState
 import eu.kanade.tachiyomi.data.backup.models.toBackupViewerSettingOverride
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
+import mihon.entry.interactions.EntryPlaybackPreferencesFeature
+import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
 import mihon.entry.interactions.EntryPlaybackQualityMode
-import mihon.entry.interactions.EntryProgressInteraction
-import mihon.entry.interactions.EntryProgressSnapshot
+import mihon.entry.interactions.EntryProgressFeature
+import mihon.entry.interactions.EntryProgressSnapshotResult
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
@@ -34,8 +35,8 @@ class EntryBackupCreator(
     private val entryRepository: EntryRepository = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val downloadPreferencesRepository: DownloadPreferencesRepository = Injekt.get(),
-    private val progressInteraction: EntryProgressInteraction = Injekt.get(),
-    private val playbackPreferencesInteraction: EntryPlaybackPreferencesInteraction = Injekt.get(),
+    private val progressFeature: EntryProgressFeature = Injekt.get(),
+    private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature = Injekt.get(),
     private val viewerSettingOverrideRepository: ViewerSettingOverrideRepository = Injekt.get(),
 ) {
 
@@ -61,15 +62,19 @@ class EntryBackupCreator(
         val entryObject = entry.toBackupEntry()
         entryObject.viewerSettingOverrides = viewerSettingOverrideRepository.getByEntryId(entry.id)
             .map { it.toBackupViewerSettingOverride() }
-        val playbackPreferencesSnapshot = if (entry.type == EntryType.ANIME) {
-            playbackPreferencesInteraction.snapshot(entry)
-        } else {
-            null
+        val playbackPreferencesSnapshot = when (val result = playbackPreferencesFeature.snapshot(entry)) {
+            is EntryPlaybackPreferencesSnapshotResult.Captured -> result.snapshot
+            EntryPlaybackPreferencesSnapshotResult.NoPreferences,
+            is EntryPlaybackPreferencesSnapshotResult.Inapplicable,
+            -> null
         }
         val progressSnapshot = if (options.chapters) {
-            progressInteraction.snapshot(entry)
+            when (val result = progressFeature.snapshot(entry)) {
+                is EntryProgressSnapshotResult.Available -> result.snapshot
+                is EntryProgressSnapshotResult.Inapplicable -> null
+            }
         } else {
-            EntryProgressSnapshot()
+            null
         }
 
         if (entry.type == EntryType.MANGA) {
@@ -84,41 +89,39 @@ class EntryBackupCreator(
                 entryObject.chapters = chapters.map { it.toBackupChapter() }
             }
 
-            entryObject.progressStates = progressSnapshot.states.map { it.toBackupEntryProgressState() }
+            entryObject.progressStates = progressSnapshot?.states.orEmpty().map { it.toBackupEntryProgressState() }
         }
 
-        if (entry.type == EntryType.ANIME) {
-            if (options.chapters) {
-                val downloadPreferences = downloadPreferencesRepository.getByEntryId(entry.id)
-                if (downloadPreferences != null) {
-                    entryObject.downloadPreferences = BackupDownloadPreferences(
-                        dubKey = downloadPreferences.dubKey,
-                        streamKey = downloadPreferences.streamKey,
-                        subtitleKey = downloadPreferences.subtitleKey,
-                        qualityMode = downloadPreferences.qualityMode.name.lowercase(),
-                        updatedAt = downloadPreferences.updatedAt,
-                    )
-                }
-            }
-
-            val preferences = playbackPreferencesSnapshot
-            if (preferences != null) {
-                entryObject.playbackPreferences = BackupPlaybackPreferences(
-                    dubKey = preferences.dubKey,
-                    streamKey = preferences.streamKey,
-                    sourceQualityKey = preferences.sourceQualityKey,
-                    subtitleKey = preferences.subtitleKey,
-                    playerQualityMode = preferences.playerQualityMode.toBackupValue(),
-                    playerQualityHeight = preferences.playerQualityHeight,
-                    subtitleOffsetX = preferences.subtitleOffsetX,
-                    subtitleOffsetY = preferences.subtitleOffsetY,
-                    subtitleTextSize = preferences.subtitleTextSize,
-                    subtitleTextColor = preferences.subtitleTextColor,
-                    subtitleBackgroundColor = preferences.subtitleBackgroundColor,
-                    subtitleBackgroundOpacity = preferences.subtitleBackgroundOpacity,
-                    updatedAt = preferences.updatedAt,
+        if (entry.type == EntryType.ANIME && options.chapters) {
+            val downloadPreferences = downloadPreferencesRepository.getByEntryId(entry.id)
+            if (downloadPreferences != null) {
+                entryObject.downloadPreferences = BackupDownloadPreferences(
+                    dubKey = downloadPreferences.dubKey,
+                    streamKey = downloadPreferences.streamKey,
+                    subtitleKey = downloadPreferences.subtitleKey,
+                    qualityMode = downloadPreferences.qualityMode.name.lowercase(),
+                    updatedAt = downloadPreferences.updatedAt,
                 )
             }
+        }
+
+        val preferences = playbackPreferencesSnapshot
+        if (preferences != null) {
+            entryObject.playbackPreferences = BackupPlaybackPreferences(
+                dubKey = preferences.dubKey,
+                streamKey = preferences.streamKey,
+                sourceQualityKey = preferences.sourceQualityKey,
+                subtitleKey = preferences.subtitleKey,
+                playerQualityMode = preferences.playerQualityMode.toBackupValue(),
+                playerQualityHeight = preferences.playerQualityHeight,
+                subtitleOffsetX = preferences.subtitleOffsetX,
+                subtitleOffsetY = preferences.subtitleOffsetY,
+                subtitleTextSize = preferences.subtitleTextSize,
+                subtitleTextColor = preferences.subtitleTextColor,
+                subtitleBackgroundColor = preferences.subtitleBackgroundColor,
+                subtitleBackgroundOpacity = preferences.subtitleBackgroundOpacity,
+                updatedAt = preferences.updatedAt,
+            )
         }
 
         if (options.categories) {
