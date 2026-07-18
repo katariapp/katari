@@ -71,7 +71,7 @@ import logcat.LogPriority
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryDownloadCapabilityPolicy
-import mihon.entry.interactions.EntryOpenInteraction
+import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.feature.migration.config.MigrationConfigScreen
@@ -110,7 +110,7 @@ class EntryScreen(
         val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
         val lifecycleOwner = LocalLifecycleOwner.current
-        val entryOpenInteraction = remember { Injekt.get<EntryOpenInteraction>() }
+        val entryOpenFeature = remember { Injekt.get<EntryOpenFeature>() }
         val entryCapabilityReport = remember { Injekt.get<EntryCapabilityReport>() }
         val screenModel = rememberScreenModel {
             EntryScreenModel(
@@ -162,6 +162,7 @@ class EntryScreen(
             successState.source?.sourceItemOrientation() ?: EntryItemOrientation.VERTICAL
         }
         var showRelatedEntriesDialog by rememberSaveable(successState.entry.id) { mutableStateOf(false) }
+        val openApplicable = entryOpenFeature.isApplicable(successState.entry.type)
 
         LaunchedEffect(successState.entry, webViewSource) {
             if (webViewSource != null) {
@@ -191,9 +192,9 @@ class EntryScreen(
             navigateUp = navigator::pop,
             onChapterClicked = { chapter ->
                 scope.launch {
-                    openChapter(context, entryOpenInteraction, successState.entry, chapter)
+                    openChapter(context, entryOpenFeature, successState.entry, chapter)
                 }
-            },
+            }.takeIf { openApplicable },
             onDownloadChapter = screenModel::runChapterDownloadActions.takeIf {
                 !successState.source.isLocalOrStub() &&
                     downloadsSupported
@@ -290,7 +291,7 @@ class EntryScreen(
                 scope.launch {
                     openChapter(
                         context,
-                        entryOpenInteraction,
+                        entryOpenFeature,
                         successState.entry,
                         successState.chapters.first {
                             it.chapter.id == chapterId
@@ -298,7 +299,7 @@ class EntryScreen(
                         pageIndex,
                     )
                 }
-            },
+            }.takeIf { openApplicable },
         )
 
         if (showRelatedEntriesDialog) {
@@ -511,12 +512,12 @@ class EntryScreen(
 
     private suspend fun openChapter(
         context: Context,
-        entryOpenInteraction: EntryOpenInteraction,
+        entryOpenFeature: EntryOpenFeature,
         entry: Entry,
         chapter: EntryChapter,
         pageIndex: Int? = null,
     ) {
-        entryOpenInteraction.open(
+        entryOpenFeature.open(
             context = context,
             entry = entry,
             chapter = chapter,

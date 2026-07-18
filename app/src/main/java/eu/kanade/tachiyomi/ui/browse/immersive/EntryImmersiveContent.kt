@@ -106,7 +106,7 @@ internal fun EntryImmersiveContent(
     val initialPageInBounds = positionState.itemIndex.coerceIn(0, (itemCount - 1).coerceAtLeast(0))
     val pagerState = rememberPagerState(initialPage = initialPageInBounds) { itemCount }
     val scope = rememberCoroutineScope()
-    val entryOpenInteraction = remember { Injekt.get<mihon.entry.interactions.EntryOpenInteraction>() }
+    val entryOpenFeature = remember { Injekt.get<mihon.entry.interactions.EntryOpenFeature>() }
     val currentOnPageSettled by rememberUpdatedState(onPageSettled)
     val currentOnNearEnd by rememberUpdatedState(onNearEnd)
     var isZoomed by remember { mutableStateOf(false) }
@@ -188,9 +188,13 @@ internal fun EntryImmersiveContent(
                     onLibraryAction = onLibraryAction,
                     showBackToTop = pagerState.currentPage > 0,
                     onBackToTop = { scope.launch { pagerState.animateScrollToPage(0) } },
-                    onOpenChapter = if (entry != null && itemState is EntryImmersiveScreenModel.ItemState.Ready) {
+                    onOpenChapter = if (
+                        entry != null &&
+                        itemState is EntryImmersiveScreenModel.ItemState.Ready &&
+                        entryOpenFeature.isApplicable(entry.type)
+                    ) {
                         {
-                            entryOpenInteraction.open(
+                            entryOpenFeature.open(
                                 context = context,
                                 entry = entry,
                                 chapter = itemState.chapter,

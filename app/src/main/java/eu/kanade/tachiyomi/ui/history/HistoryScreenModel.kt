@@ -38,7 +38,6 @@ import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryFavorite
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.asEntryCover
 import tachiyomi.domain.history.interactor.GetHistory
 import tachiyomi.domain.history.interactor.RemoveHistory
@@ -291,7 +290,6 @@ class HistoryScreenModel(
     }
 
     sealed interface Event {
-        data class OpenChapter(val chapter: EntryChapter?) : Event
         data object InternalError : Event
         data object HistoryCleared : Event
     }

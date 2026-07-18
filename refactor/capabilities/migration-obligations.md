@@ -24,6 +24,13 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ## Active Obligations
 
+### Resolved in F01: Open feature ownership
+
+- The Open provider is consumed by the `entry-open` contribution.
+- Entry, Updates, deep-link, preview, immersive, notification, and debug dispatch use the graph-derived Open coordinator.
+- No application production consumer injects `EntryOpenInteraction` directly.
+- Full application validation remains blocked by the independent Download Lifecycle obligation below.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -44,13 +51,14 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Required outcome: the download feature owns the prerequisite relationships and shared bulk/bookmark consequences. The
   registry consumes selected feature behavior instead of retaining the transitional cross-provider rule.
 
-### `P5-FEATURE-CONTRIBUTOR-INSTALLATION` — Runtime has no migrated feature contributors to install yet
+### `P5-FEATURE-CONTRIBUTOR-INSTALLATION` — Remaining feature contributors are not migrated yet
 
 - Responsible owners: feature modules and application composition
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. The runtime intentionally supplies no empty placeholder list.
+  content-type plugins that contribute themselves. F01 now installs the Open contributor; providers belonging to
+  F02–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
 
@@ -69,8 +77,9 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Responsible owner: Entry-screen feature
 - Owning phase: Phase 5
 - Affected path: `app/src/main/**/ui/entry/EntryScreen.kt`
-- Required outcome: open/download/bookmark controls consume selected feature applicability and presentation metadata,
-  with no independent support flags or catalog queries.
+- F01 resolution: Open child and preview-page controls consume selected Open applicability.
+- Remaining outcome: download and bookmark controls consume their selected feature applicability and presentation
+  metadata, with no independent support flags or catalog queries.
 
 ### `P5-LIBRARY-INTEGRATIONS` — Library actions and notifications still query the deleted authority
 
@@ -80,7 +89,8 @@ SPI boundary is not an exit gate for Phase 3.5.
   - `app/src/main/**/ui/library/LibraryTab.kt`
   - `app/src/main/**/ui/library/LibraryScreenModel.kt`
   - `app/src/main/**/data/library/LibraryUpdateNotifier.kt`
-- Required outcome: bulk actions and download notification policy consume feature-owned evaluated consequences while
+- F01 resolution: library-update notification Open-child intents consume the selected Open feature gate.
+- Remaining outcome: bulk actions and download notification policy consume feature-owned evaluated consequences while
   preserving contextual selection, local-entry, and queue constraints.
 
 ### `P5-UPDATES-INTEGRATIONS` — Updates actions still query the deleted authority
@@ -88,7 +98,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Responsible owner: Updates feature
 - Owning phase: Phase 5
 - Affected path: `app/src/main/**/ui/updates/UpdatesScreenModel.kt`
-- Required outcome: download and bookmark actions consume evaluated feature relationships and actual operational
+- F01 resolution: Updates row Open availability and dispatch consume the selected Open feature gate.
+- Remaining outcome: download and bookmark actions consume evaluated feature relationships and actual operational
   interactions without recreating a type support matrix.
 
 ### `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS` — Retained behavioral proofs still construct report fixtures

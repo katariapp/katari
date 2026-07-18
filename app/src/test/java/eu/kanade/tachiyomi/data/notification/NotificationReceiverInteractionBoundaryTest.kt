@@ -15,7 +15,7 @@ class NotificationReceiverInteractionBoundaryTest {
             .resolve("app/src/main/java/eu/kanade/tachiyomi/data/notification/NotificationReceiver.kt")
             .readText()
 
-        assertTrue(source.contains("import mihon.entry.interactions.EntryOpenInteraction"))
+        assertTrue(source.contains("import mihon.entry.interactions.EntryOpenFeature"))
         assertTrue(source.contains("import mihon.entry.interactions.EntryConsumptionInteraction"))
         assertTrue(source.contains("import mihon.entry.interactions.EntryDownloadInteraction"))
 

@@ -11,6 +11,11 @@ approved split makes it smaller.
 
 ## Per-Feature Milestone
 
+Current progress:
+
+- [ ] `F01` — Open is implemented and awaiting review. See [`../features/F01-open.md`](../features/F01-open.md).
+- [ ] `F02`–`F27` — Not started.
+
 - [ ] Identify the feature owner and its current consumers from the atlas.
 - [ ] Reconcile the feature with its inventory row, including consumers whose code is already generic.
 - [ ] Declare prerequisite expressions, shared consequences, specialized requirements, contracts, and projections.

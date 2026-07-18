@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mihon.entry.interactions.EntryConsumptionInteraction
 import mihon.entry.interactions.EntryDownloadInteraction
-import mihon.entry.interactions.EntryOpenInteraction
+import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import tachiyomi.core.common.Constants
 import tachiyomi.domain.entry.interactor.GetMergedEntry
@@ -50,7 +50,7 @@ class NotificationReceiver : BroadcastReceiver() {
     private val entryChapterRepository: EntryChapterRepository by injectLazy()
     private val entryConsumptionInteraction: EntryConsumptionInteraction by injectLazy()
     private val entryDownloadInteraction: EntryDownloadInteraction by injectLazy()
-    private val entryOpenInteraction: EntryOpenInteraction by injectLazy()
+    private val entryOpenFeature: EntryOpenFeature by injectLazy()
     private val scope: CoroutineScope by injectLazy()
     private val entryActionHandler by lazy {
         NotificationEntryActionHandler(
@@ -58,7 +58,7 @@ class NotificationReceiver : BroadcastReceiver() {
             entryChapterRepository = entryChapterRepository,
             entryConsumptionInteraction = entryConsumptionInteraction,
             entryDownloadInteraction = entryDownloadInteraction,
-            entryOpenInteraction = entryOpenInteraction,
+            entryOpenFeature = entryOpenFeature,
         )
     }
 
@@ -529,7 +529,7 @@ class NotificationReceiver : BroadcastReceiver() {
             context: Context,
             entry: Entry,
             chapter: EntryChapter,
-        ): PendingIntent {
+        ): PendingIntent? {
             return openChildPendingActivity(context, entry, chapter)
         }
 
@@ -537,8 +537,8 @@ class NotificationReceiver : BroadcastReceiver() {
             context: Context,
             entry: Entry,
             child: EntryChapter,
-        ): PendingIntent {
-            return Injekt.get<EntryOpenInteraction>().pendingIntent(
+        ): PendingIntent? {
+            return Injekt.get<EntryOpenFeature>().pendingIntent(
                 context = context,
                 entry = entry,
                 chapter = child,
@@ -580,7 +580,8 @@ class NotificationReceiver : BroadcastReceiver() {
             visibleEntry: Entry,
             ownerEntry: Entry,
             chapter: EntryChapter,
-        ): PendingIntent {
+        ): PendingIntent? {
+            if (!Injekt.get<EntryOpenFeature>().isApplicable(visibleEntry.type)) return null
             val newIntent = Intent(context, NotificationReceiver::class.java).apply {
                 action = ACTION_OPEN_CHILD
                 putExtra(EXTRA_VISIBLE_ENTRY_ID, visibleEntry.id)
@@ -855,7 +856,7 @@ internal class NotificationEntryActionHandler(
     private val entryChapterRepository: EntryChapterRepository,
     private val entryConsumptionInteraction: EntryConsumptionInteraction,
     private val entryDownloadInteraction: EntryDownloadInteraction,
-    private val entryOpenInteraction: EntryOpenInteraction,
+    private val entryOpenFeature: EntryOpenFeature,
 ) {
     suspend fun openChild(
         context: Context,
@@ -870,7 +871,7 @@ internal class NotificationEntryActionHandler(
         val entry = entryRepository.getEntryById(visibleEntryId) ?: return false
         val chapter = entryChapterRepository.getChapterById(childId) ?: return false
 
-        entryOpenInteraction.open(
+        return entryOpenFeature.open(
             context = context,
             entry = entry,
             chapter = chapter,
@@ -880,7 +881,6 @@ internal class NotificationEntryActionHandler(
                 clearTop = true,
             ),
         )
-        return true
     }
 
     suspend fun markConsumed(entryId: Long, childIds: LongArray) {

@@ -319,7 +319,7 @@ fun ExpandableEntryDescription(
     onPreviewExpandedChange: (Boolean) -> Unit,
     onPreviewRetry: () -> Unit,
     onPreviewPageLoad: (Int) -> Unit,
-    onPreviewPageClick: (Long, Int) -> Unit,
+    onPreviewPageClick: ((Long, Int) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -450,7 +450,7 @@ fun SharedEntryPreviewSection(
     onExpandedChange: (Boolean) -> Unit,
     onRetry: () -> Unit,
     onPageLoad: (Int) -> Unit,
-    onPageClick: (Long, Int) -> Unit,
+    onPageClick: ((Long, Int) -> Unit)?,
 ) {
     Column(
         modifier = Modifier
@@ -500,7 +500,7 @@ fun PreviewContent(
     size: PreviewSizeUi,
     onRetry: () -> Unit,
     onPageLoad: (Int) -> Unit,
-    onPageClick: (Long, Int) -> Unit,
+    onPageClick: ((Long, Int) -> Unit)?,
     modifier: Modifier = Modifier,
     centerStates: Boolean = false,
     loadingContent: @Composable BoxScope.() -> Unit = {
@@ -557,7 +557,7 @@ fun PreviewGrid(
     size: PreviewSizeUi,
     chapterId: Long?,
     onPageLoad: (Int) -> Unit,
-    onPageClick: (Long, Int) -> Unit,
+    onPageClick: ((Long, Int) -> Unit)?,
 ) {
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         val columns = previewGridColumnCount(size, maxWidth)
@@ -592,7 +592,7 @@ private fun EntryPreviewTile(
     previewPage: EntryScreenModel.PreviewPage,
     chapterId: Long?,
     onPageLoad: (Int) -> Unit,
-    onPageClick: (Long, Int) -> Unit,
+    onPageClick: ((Long, Int) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val status by previewPage.page.status.collectAsState()
@@ -608,10 +608,10 @@ private fun EntryPreviewTile(
                 .fillMaxWidth()
                 .aspectRatio(0.72f)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                .clickable(enabled = previewPage.page.isOpenable(chapterId)) {
+                .clickable(enabled = onPageClick != null && previewPage.page.isOpenable(chapterId)) {
                     chapterId
                         ?.takeIf { previewPage.page.canOpen }
-                        ?.let { onPageClick(it, previewPage.page.index) }
+                        ?.let { onPageClick?.invoke(it, previewPage.page.index) }
                 },
             contentAlignment = Alignment.Center,
         ) {

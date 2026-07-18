@@ -160,7 +160,7 @@ This graph records where the inventoried facts currently have consequences. It i
 
 | Fact or capability | Primary workflow consumers | Related UI and actions | Policy, background, and integration consumers |
 | ------------------ | -------------------------- | ---------------------- | --------------------------------------------- |
-| Open | Entry child rows, history, updates, deep links, browse preview sheet, immersive content | Notification open-child action; debug Anime launcher | `NotificationEntryActionHandler` dispatches through the shared interaction. |
+| Open | Entry child rows, updates, child deep links, browse preview sheet, immersive content | Notification open-child action; debug Anime launcher | F01 routes availability, dispatch, and pending intents through the graph-derived Open coordinator. History resume belongs to Continue; its stale unproduced Open event was removed. |
 | Continue | Entry continue action, library continue action, history resume action | Type-specific no-next-item vocabulary | Type processors select from stored progress and merged members. |
 | Download provider presence | Entry child actions and swipe actions, updates actions, library badges/counts, download queue, More tab | Entry and library selection menus; stats total; download initialization gate in `MainActivity` | Shared download job/runtime/notification manager; backup cache invalidation; source and entry rename hooks; migration deletion; advanced cache maintenance. |
 | Download setting capabilities | Download settings screen | Settings visibility for packaging, splitting, and parallelism | Currently queried only for Manga, despite the API returning capabilities by type. |

@@ -94,7 +94,7 @@ fun EntryScreen(
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     navigateUp: () -> Unit,
-    onChapterClicked: (EntryChapter) -> Unit,
+    onChapterClicked: ((EntryChapter) -> Unit)?,
     onDownloadChapter: ((List<EntryChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onAddToLibraryClicked: () -> Unit,
     onAddToMergeClicked: (() -> Unit)?,
@@ -146,7 +146,7 @@ fun EntryScreen(
     onPreviewExpandedChange: (Boolean) -> Unit,
     onPreviewRetry: () -> Unit,
     onPreviewPageLoad: (Int) -> Unit,
-    onPreviewPageClick: (Long, Int) -> Unit,
+    onPreviewPageClick: ((Long, Int) -> Unit)?,
 ) {
     val context = LocalContext.current
     val onCopyTagToClipboard: (tag: String) -> Unit = {
@@ -266,7 +266,7 @@ private fun EntryScreenSmallImpl(
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     navigateUp: () -> Unit,
-    onChapterClicked: (EntryChapter) -> Unit,
+    onChapterClicked: ((EntryChapter) -> Unit)?,
     onDownloadChapter: ((List<EntryChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onAddToLibraryClicked: () -> Unit,
     onAddToMergeClicked: (() -> Unit)?,
@@ -319,7 +319,7 @@ private fun EntryScreenSmallImpl(
     onPreviewExpandedChange: (Boolean) -> Unit,
     onPreviewRetry: () -> Unit,
     onPreviewPageLoad: (Int) -> Unit,
-    onPreviewPageClick: (Long, Int) -> Unit,
+    onPreviewPageClick: ((Long, Int) -> Unit)?,
 ) {
     val chapterListState = rememberLazyListState()
 
@@ -557,7 +557,7 @@ fun EntryScreenLargeImpl(
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
     navigateUp: () -> Unit,
-    onChapterClicked: (EntryChapter) -> Unit,
+    onChapterClicked: ((EntryChapter) -> Unit)?,
     onDownloadChapter: ((List<EntryChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onAddToLibraryClicked: () -> Unit,
     onAddToMergeClicked: (() -> Unit)?,
@@ -610,7 +610,7 @@ fun EntryScreenLargeImpl(
     onPreviewExpandedChange: (Boolean) -> Unit,
     onPreviewRetry: () -> Unit,
     onPreviewPageLoad: (Int) -> Unit,
-    onPreviewPageClick: (Long, Int) -> Unit,
+    onPreviewPageClick: ((Long, Int) -> Unit)?,
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val density = LocalDensity.current
@@ -934,7 +934,7 @@ private fun LazyListScope.sharedChapterItems(
     isAnyChapterSelected: Boolean,
     chapterSwipeStartAction: LibraryPreferences.ChapterSwipeAction,
     chapterSwipeEndAction: LibraryPreferences.ChapterSwipeAction,
-    onChapterClicked: (EntryChapter) -> Unit,
+    onChapterClicked: ((EntryChapter) -> Unit)?,
     onDownloadChapter: ((List<EntryChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onChapterSelected: (EntryChapterList.Item, Boolean, Boolean) -> Unit,
     onChapterSwipe: (EntryChapterList.Item, LibraryPreferences.ChapterSwipeAction) -> Unit,
@@ -1017,11 +1017,11 @@ private fun onChapterItemClick(
     chapterItem: EntryChapterList.Item,
     isAnyChapterSelected: Boolean,
     onToggleSelection: (Boolean) -> Unit,
-    onChapterClicked: (EntryChapter) -> Unit,
+    onChapterClicked: ((EntryChapter) -> Unit)?,
 ) {
     when {
         chapterItem.selected -> onToggleSelection(false)
         isAnyChapterSelected -> onToggleSelection(true)
-        else -> onChapterClicked(chapterItem.chapter)
+        else -> onChapterClicked?.invoke(chapterItem.chapter)
     }
 }

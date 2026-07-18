@@ -112,26 +112,37 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryInteractionComposition> {
         createEntryInteractionComposition(
             plugins = typeRuntimeContributions.map(EntryTypeRuntimeContribution::plugin),
+            featureContributors = listOf(EntryOpenFeatureContributor),
         )
     }
-    addSingletonFactory<EntryInteractions> { get<EntryInteractionComposition>().interactions }
     addSingletonFactory<FeatureGraph> { get<EntryInteractionComposition>().featureGraph }
     addSingletonFactory<FeatureGraphEvaluation> { get<EntryInteractionComposition>().featureGraphEvaluation }
     addSingletonFactory<FeatureArtifactSelection> { get<EntryInteractionComposition>().featureArtifacts }
-    addSingletonFactory<EntryOpenInteraction> { get<EntryInteractions>().open }
-    addSingletonFactory<EntryContinueInteraction> { get<EntryInteractions>().continueEntry }
-    addSingletonFactory<EntryDownloadInteraction> { get<EntryInteractions>().download }
-    addSingletonFactory<EntryCapabilityInteraction> { get<EntryInteractions>().capability }
-    addSingletonFactory<EntryConsumptionInteraction> { get<EntryInteractions>().consumption }
-    addSingletonFactory<EntryBookmarkInteraction> { get<EntryInteractions>().bookmark }
-    addSingletonFactory<EntryUpdateEligibilityInteraction> { get<EntryInteractions>().updateEligibility }
-    addSingletonFactory<EntryProgressInteraction> { get<EntryInteractions>().progress }
-    addSingletonFactory<EntryPlaybackPreferencesInteraction> { get<EntryInteractions>().playbackPreferences }
-    addSingletonFactory<EntryChildListInteraction> { get<EntryInteractions>().childList }
-    addSingletonFactory<EntryChildGroupFilterInteraction> { get<EntryInteractions>().childGroupFilter }
-    addSingletonFactory<EntryLibraryFilterInteraction> { get<EntryInteractions>().libraryFilter }
-    addSingletonFactory<EntryPreviewInteraction> { get<EntryInteractions>().preview }
-    addSingletonFactory<EntryImmersiveInteraction> { get<EntryInteractions>().immersive }
+    addSingletonFactory<EntryOpenFeature> {
+        DefaultEntryOpenFeature(
+            evaluation = get(),
+            interaction = get<EntryInteractionComposition>().interactions.open,
+        )
+    }
+    addSingletonFactory<EntryContinueInteraction> { get<EntryInteractionComposition>().interactions.continueEntry }
+    addSingletonFactory<EntryDownloadInteraction> { get<EntryInteractionComposition>().interactions.download }
+    addSingletonFactory<EntryCapabilityInteraction> { get<EntryInteractionComposition>().interactions.capability }
+    addSingletonFactory<EntryConsumptionInteraction> { get<EntryInteractionComposition>().interactions.consumption }
+    addSingletonFactory<EntryBookmarkInteraction> { get<EntryInteractionComposition>().interactions.bookmark }
+    addSingletonFactory<EntryUpdateEligibilityInteraction> {
+        get<EntryInteractionComposition>().interactions.updateEligibility
+    }
+    addSingletonFactory<EntryProgressInteraction> { get<EntryInteractionComposition>().interactions.progress }
+    addSingletonFactory<EntryPlaybackPreferencesInteraction> {
+        get<EntryInteractionComposition>().interactions.playbackPreferences
+    }
+    addSingletonFactory<EntryChildListInteraction> { get<EntryInteractionComposition>().interactions.childList }
+    addSingletonFactory<EntryChildGroupFilterInteraction> {
+        get<EntryInteractionComposition>().interactions.childGroupFilter
+    }
+    addSingletonFactory<EntryLibraryFilterInteraction> { get<EntryInteractionComposition>().interactions.libraryFilter }
+    addSingletonFactory<EntryPreviewInteraction> { get<EntryInteractionComposition>().interactions.preview }
+    addSingletonFactory<EntryImmersiveInteraction> { get<EntryInteractionComposition>().interactions.immersive }
     addSingletonFactory {
         EntryDownloadNotificationManager(
             context = app,

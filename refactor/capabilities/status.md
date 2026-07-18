@@ -19,15 +19,16 @@ Updated: 2026-07-18
 - Milestone 4.2.3 commit: `c046e1f8f` (`(refactor): split migration and merge providers`)
 - Milestone 4.2.4 commit: `c2ca736e4` (`(refactor): migrate remaining entry providers`)
 - Milestone 4.3 commit: `c88ff5fe9` (`(refactor): unify entry type runtime composition`)
+- Phase 4 completion: `17726de20` (`(refactor): replace interaction registry`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.4 — Generic provider dispatch and transitional registry removal
-- State: complete and approved; next work begins Phase 5 with `F01` Open
+- Phase: Phase 5 — Feature Integration Migration
+- Milestone: `F01` — Open
+- State: implementation and manifesto review complete; awaiting milestone review
 
 ## Why the Plan Was Reset
 
@@ -140,6 +141,19 @@ authority or weakening the architecture.
 - [x] Registry-shaped, per-capability duplicate tests replaced by generic composition invariants
 - [x] Superseded registry fixtures removed without adding capability-label or current-type matrix assertions
 - [x] Decision `0018-generic-provider-index.md` reviewed and accepted
+- [x] Stale boundary-check allowlist replaced with discovery of the accepted public runtime-module bridge contract
+- [x] `F01` Open owner, prerequisite, consequence, and complete consumer disposition recorded
+- [x] Open UI/notification/deep-link dispatch migrated behind one graph-derived coordinator
+- [x] Synthetic single-provider and valid-absence Open feature proofs added
+
+Focused F01 validation:
+
+- Build-logic tests pass after replacing the obsolete installer/plugin boundary allowlist with discovery of public
+  functions returning `EntryTypeRuntimeModule` from owned type modules.
+- `spotlessApply`, `spotlessCheck`, Feature Graph tests, Entry interactions API/SPI compilation, and Manga, Anime, and
+  Book interaction compilation pass.
+- Root Entry interactions compilation reaches only the previously recorded Download Lifecycle report/policy errors; it
+  reports no Open migration error.
 
 ## New Phase Sequence
 
@@ -255,8 +269,11 @@ Approved on 2026-07-18:
 - Milestone 4.2.3 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
 - Milestone 4.2.4 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
 - Milestone 4.3 passes API, SPI, and Manga, Anime, and Book debug Kotlin compilation after formatting.
-- `:entry-interactions:compileDebugKotlin` still fails at the intentionally unported download-lifecycle report input and
-  missing feature-contributor installation recorded as Phase 5 obligations.
+- Before `F01`, `:entry-interactions:compileDebugKotlin` failed at both the intentionally unported Download Lifecycle
+  report input and missing feature-contributor installation.
+- `F01` installs the Open feature contribution and consumes the selected shared-consequence edges through one
+  coordinator. The same lower-boundary validation passes; root compilation now fails only at the independent Download
+  Lifecycle report/policy migration.
 
 ## Manifesto Comparison
 
@@ -303,6 +320,15 @@ Approved on 2026-07-18:
   not repeat support or participation in a matrix or second type-module call.
 - The common plugin/provider boundary permits any provider subset and contains no Open/Continue requirement.
 - Concrete type identity remains type-owned, while validation contains no Manga, Anime, or Book branch.
+- `F01` derives Open applicability from selected shared-consequence edges and matched provider objects; it does not
+  introduce a type list, support label, or Open completion matrix.
+- Application consumers receive one feature-owned Open gate. The low-level dispatcher remains an implementation detail
+  of that coordinator; type-owned Continue processors may still compose their own type-owned Open processor directly.
+  UI and notification availability cannot reconstruct support.
+- A synthetic unknown contribution with only an Open provider receives the shared consequence automatically, while an
+  empty contribution remains valid and produces no action or obligation.
+- Every current Open consumer in the migration census has an explicit disposition. Entry-detail navigation and Continue
+  are retained outside F01 because they are different behavior, not silently omitted Open consequences.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
   reachability or old tests.
@@ -344,5 +370,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit the approved Phase 4 milestone, then begin Phase 5 with the `F01` Open feature inventory. Stop at the `F01`
-milestone gate before continuing to `F02`.
+Review the `F01` Open contribution, coordinator boundary, and consumer dispositions. If approved, commit `F01`; do not
+begin `F02` until the next explicit continuation.

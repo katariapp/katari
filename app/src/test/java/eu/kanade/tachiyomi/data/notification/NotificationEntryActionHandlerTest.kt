@@ -5,13 +5,14 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.EntryConsumptionInteraction
 import mihon.entry.interactions.EntryDownloadInteraction
-import mihon.entry.interactions.EntryOpenInteraction
+import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
@@ -26,13 +27,15 @@ class NotificationEntryActionHandlerTest {
     private val entryChapterRepository = mockk<EntryChapterRepository>()
     private val entryConsumptionInteraction = mockk<EntryConsumptionInteraction>(relaxed = true)
     private val entryDownloadInteraction = mockk<EntryDownloadInteraction>(relaxed = true)
-    private val entryOpenInteraction = mockk<EntryOpenInteraction>(relaxed = true)
+    private val entryOpenFeature = mockk<EntryOpenFeature>(relaxed = true) {
+        every { open(any(), any(), any(), any()) } returns true
+    }
     private val handler = NotificationEntryActionHandler(
         entryRepository = entryRepository,
         entryChapterRepository = entryChapterRepository,
         entryConsumptionInteraction = entryConsumptionInteraction,
         entryDownloadInteraction = entryDownloadInteraction,
-        entryOpenInteraction = entryOpenInteraction,
+        entryOpenFeature = entryOpenFeature,
     )
 
     @Test
@@ -114,7 +117,7 @@ class NotificationEntryActionHandlerTest {
 
         opened shouldBe true
         val options = slot<EntryOpenOptions>()
-        verify { entryOpenInteraction.open(context, visibleEntry, chapter, capture(options)) }
+        verify { entryOpenFeature.open(context, visibleEntry, chapter, capture(options)) }
         options.captured.ownerEntryId shouldBe 3L
         options.captured.newTask shouldBe true
         options.captured.clearTop shouldBe true
@@ -131,7 +134,7 @@ class NotificationEntryActionHandlerTest {
 
         opened shouldBe true
         val options = slot<EntryOpenOptions>()
-        verify { entryOpenInteraction.open(context, visibleEntry, episode, capture(options)) }
+        verify { entryOpenFeature.open(context, visibleEntry, episode, capture(options)) }
         options.captured.ownerEntryId shouldBe 5L
         options.captured.newTask shouldBe true
         options.captured.clearTop shouldBe true
@@ -142,6 +145,19 @@ class NotificationEntryActionHandlerTest {
         coEvery { entryRepository.getEntryById(8L) } returns null
 
         val opened = handler.openChild(context, visibleEntryId = 8L, ownerEntryId = 8L, childId = 80L)
+
+        opened shouldBe false
+    }
+
+    @Test
+    fun `open child returns false when Open is not applicable`() = runTest {
+        val visibleEntry = entry(EntryType.BOOK, id = 9L)
+        val chapter = chapter(id = 90L, entryId = 9L)
+        coEvery { entryRepository.getEntryById(9L) } returns visibleEntry
+        coEvery { entryChapterRepository.getChapterById(90L) } returns chapter
+        every { entryOpenFeature.open(any(), any(), any(), any()) } returns false
+
+        val opened = handler.openChild(context, visibleEntryId = 9L, ownerEntryId = 9L, childId = 90L)
 
         opened shouldBe false
     }

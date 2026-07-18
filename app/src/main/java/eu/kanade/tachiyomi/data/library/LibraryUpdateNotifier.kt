@@ -332,7 +332,7 @@ class LibraryUpdateNotifier(
             return type.childDescriptionProvider(context, children)
         }
 
-        fun openChildIntent(context: Context): PendingIntent {
+        fun openChildIntent(context: Context): PendingIntent? {
             return NotificationReceiver.openChildPendingActivity(context, visibleEntry, originEntry, children.first())
         }
 
