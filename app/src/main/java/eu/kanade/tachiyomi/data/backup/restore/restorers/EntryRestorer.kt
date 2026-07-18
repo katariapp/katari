@@ -19,12 +19,12 @@ import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressRestoreResult
 import mihon.entry.interactions.EntryProgressSnapshot
 import mihon.entry.interactions.EntryProgressStateSnapshot
+import mihon.entry.interactions.EntryViewerSettingsFeature
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import mihon.entry.interactions.reader.settings.ReaderOrientation
 import mihon.entry.interactions.reader.settings.ReadingMode
 import mihon.entry.viewer.settings.ViewerSettingId
 import mihon.entry.viewer.settings.ViewerSettingOverride
-import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.category.interactor.GetCategories
@@ -54,6 +54,7 @@ import kotlin.math.max
 
 private const val LEGACY_MANGA_VIEWER_MASK = 0x3FL
 
+/** Wire-compatibility adapter for the legacy Manga viewer bitfield; it is not current support evidence. */
 internal fun BackupEntry.toViewerSettingOverrides(entry: Entry): List<ViewerSettingOverride> {
     val overrides = viewerSettingOverrides.mapNotNull { override ->
         if (override.encodedValue.length > MAX_VIEWER_SETTING_VALUE_LENGTH) return@mapNotNull null
@@ -102,7 +103,7 @@ class EntryRestorer(
     private val getTracks: GetTracks = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
     private val updateMergedEntry: UpdateMergedEntry = Injekt.get(),
-    private val viewerSettingOverrideRepository: ViewerSettingOverrideRepository = Injekt.get(),
+    private val viewerSettingsFeature: EntryViewerSettingsFeature = Injekt.get(),
     fetchInterval: FetchInterval = Injekt.get(),
 ) {
 
@@ -268,7 +269,7 @@ class EntryRestorer(
     }
 
     private suspend fun restoreViewerSettingOverrides(entry: Entry, backupEntry: BackupEntry): Entry {
-        backupEntry.toViewerSettingOverrides(entry).forEach { viewerSettingOverrideRepository.upsert(it) }
+        viewerSettingsFeature.restore(entry, backupEntry.toViewerSettingOverrides(entry))
         return if (entry.type == EntryType.MANGA) {
             entry.copy(viewerFlags = entry.viewerFlags and LEGACY_MANGA_VIEWER_MASK.inv())
         } else {

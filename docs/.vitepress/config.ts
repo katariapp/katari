@@ -80,6 +80,7 @@ const sidebar: DefaultTheme.SidebarItem[] = [
           { text: 'Overview', link: '/developers/sdk/' },
           { text: 'Data model', link: '/developers/sdk/data-model' },
           { text: 'Content types', link: '/developers/sdk/content-types' },
+          { text: 'Viewer settings', link: '/developers/sdk/viewer-settings' },
           { text: 'Book API architecture', link: '/developers/sdk/book-api' },
           { text: 'Capabilities', link: '/developers/sdk/capabilities' },
           { text: 'Compatibility and versioning', link: '/developers/sdk/versioning' },

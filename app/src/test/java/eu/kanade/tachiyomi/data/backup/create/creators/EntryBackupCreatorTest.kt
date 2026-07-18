@@ -19,9 +19,10 @@ import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressSnapshot
 import mihon.entry.interactions.EntryProgressSnapshotResult
 import mihon.entry.interactions.EntryProgressStateSnapshot
+import mihon.entry.interactions.EntryViewerSettingsFeature
+import mihon.entry.interactions.EntryViewerSettingsSnapshotResult
 import mihon.entry.viewer.settings.ViewerSettingId
 import mihon.entry.viewer.settings.ViewerSettingOverride
-import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -123,7 +124,7 @@ class EntryBackupCreatorTest {
         val progressFeature = mockk<EntryProgressFeature>()
         val playbackPreferencesFeature = mockk<EntryPlaybackPreferencesFeature>()
         val childGroupFilterFeature = mockk<EntryChildGroupFilterFeature>()
-        private val viewerSettingOverrideRepository = mockk<ViewerSettingOverrideRepository>()
+        private val viewerSettingsFeature = mockk<EntryViewerSettingsFeature>()
 
         val creator = EntryBackupCreator(
             handler = handler,
@@ -134,7 +135,7 @@ class EntryBackupCreatorTest {
             progressFeature = progressFeature,
             playbackPreferencesFeature = playbackPreferencesFeature,
             childGroupFilterFeature = childGroupFilterFeature,
-            viewerSettingOverrideRepository = viewerSettingOverrideRepository,
+            viewerSettingsFeature = viewerSettingsFeature,
         )
 
         init {
@@ -178,12 +179,14 @@ class EntryBackupCreatorTest {
             } else {
                 EntryChildGroupFilterSnapshotResult.Inapplicable(entry.type)
             }
-            coEvery { viewerSettingOverrideRepository.getByEntryId(entry.id) } returns listOf(
-                ViewerSettingOverride(
-                    entryId = entry.id,
-                    settingId = ViewerSettingId("unknown.reader", "appearance"),
-                    encodedValue = "sepia",
-                    updatedAt = 30,
+            coEvery { viewerSettingsFeature.snapshot(entry) } returns EntryViewerSettingsSnapshotResult.Available(
+                overrides = listOf(
+                    ViewerSettingOverride(
+                        entryId = entry.id,
+                        settingId = ViewerSettingId("unknown.reader", "appearance"),
+                        encodedValue = "sepia",
+                        updatedAt = 30,
+                    ),
                 ),
             )
             coEvery { handler.awaitList<Any>(false, any()) } returns emptyList()

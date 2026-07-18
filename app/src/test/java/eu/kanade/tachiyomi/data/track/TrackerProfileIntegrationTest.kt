@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.data.track.mangabaka.MangaBaka
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.shouldBe
+import mihon.entry.interactions.EntryViewerSettingsPreferenceOwnership
 import mihon.feature.profiles.core.ProfilePreferenceOwnership
 import org.junit.jupiter.api.Test
 
@@ -25,7 +26,9 @@ class TrackerProfileIntegrationTest {
 
     @Test
     fun `profile ownership includes dynamic tracker account and oauth keys`() {
-        val keys = ProfilePreferenceOwnership.derive()
+        val keys = ProfilePreferenceOwnership.derive(
+            EntryViewerSettingsPreferenceOwnership(emptySet(), emptySet(), emptySet()),
+        )
 
         keys.private.shouldContainAll(
             "pref_mangasync_displayname_10",

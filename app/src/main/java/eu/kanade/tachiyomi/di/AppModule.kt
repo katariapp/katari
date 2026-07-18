@@ -9,6 +9,10 @@ import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDatabaseType
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDriver
 import com.eygraber.sqldelight.androidx.driver.FileProvider
 import eu.kanade.domain.track.store.DelayedTrackingStore
+import eu.kanade.presentation.more.settings.screen.SettingsAnimePlayerScreen
+import eu.kanade.presentation.more.settings.screen.SettingsHtmlProseReaderScreen
+import eu.kanade.presentation.more.settings.screen.SettingsMangaReaderScreen
+import eu.kanade.presentation.more.settings.screen.SettingsReadiumEpubReaderScreen
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
 import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
@@ -32,6 +36,7 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import mihon.entry.interactions.EntryInteractionActivityTheme
 import mihon.entry.interactions.EntryInteractionRuntimeDependencies
 import mihon.entry.interactions.EntryInteractionRuntimeWarmup
+import mihon.entry.interactions.EntryViewerSettingsFeature
 import mihon.entry.interactions.addEntryInteractionRuntime
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
@@ -110,7 +115,16 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory<DatabaseHandler> { AndroidDatabaseHandler(get(), get()) }
         addSingletonFactory { ProfileDatabase(get()) }
         addSingletonFactory { EntryProfileMoveService(get(), get()) }
-        addSingletonFactory { ProfileManager(app, get(), get(), get()) }
+        addSingletonFactory {
+            ProfileManager(
+                application = app,
+                profileDatabase = get(),
+                profileStore = get(),
+                profilesPreferences = get(),
+                extensionManager = get(),
+                viewerSettingsPreferenceOwnership = { get<EntryViewerSettingsFeature>().preferenceOwnership },
+            )
+        }
         addSingletonFactory<EntryPreferenceProvider> { ProfileSourcePreferenceProvider(app, get()) }
 
         addSingletonFactory {
@@ -160,6 +174,12 @@ class AppModule(val app: Application) : InjektModule {
                 basePreferenceStore = get<ProfileStore>().basePreferenceStore(),
                 privatePreferenceStore = get<ProfileStore>().privateStore(),
                 mediaCacheBuckets = listOf(mangaPageImageCache),
+                viewerSettingsScreenProjections = listOf(
+                    SettingsMangaReaderScreen,
+                    SettingsAnimePlayerScreen,
+                    SettingsReadiumEpubReaderScreen,
+                    SettingsHtmlProseReaderScreen,
+                ),
             ),
         )
 

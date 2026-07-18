@@ -19,6 +19,9 @@ import mihon.entry.interactions.EntryPlaybackPreferencesCapability
 import mihon.entry.interactions.EntryPreviewCapability
 import mihon.entry.interactions.EntryPreviewConfigurationCapability
 import mihon.entry.interactions.EntryProgressCapability
+import mihon.entry.interactions.EntryTypePresentationCapability
+import mihon.entry.interactions.EntryViewerSettingsCapability
+import mihon.entry.interactions.EntryViewerSettingsProvider
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
 import mihon.entry.interactions.settings.EntryInteractionPreferences
@@ -37,6 +40,7 @@ import uy.kohesive.injekt.api.get
 
 fun animeEntryInteractionPlugin(
     dependencies: AnimeEntryInteractionDependencies,
+    viewerSettingsProvider: EntryViewerSettingsProvider? = null,
 ): EntryInteractionPlugin {
     return animeEntryInteractionPlugin(
         AnimeEntryInteractionRuntimeDependencies(
@@ -54,11 +58,13 @@ fun animeEntryInteractionPlugin(
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
             historyRepository = dependencies.historyRepository,
         ),
+        viewerSettingsProvider = viewerSettingsProvider,
     )
 }
 
 internal fun animeEntryInteractionPlugin(
     dependencies: AnimeEntryInteractionRuntimeDependencies,
+    viewerSettingsProvider: EntryViewerSettingsProvider? = null,
 ): EntryInteractionPlugin {
     val openProcessor = AnimeOpenProcessor()
     val continueProcessor = AnimeContinueProcessor(
@@ -91,24 +97,30 @@ internal fun animeEntryInteractionPlugin(
     return object : EntryInteractionPlugin {
         override val type = EntryType.ANIME
         override val owner = ContributionOwner("entry-interactions.anime")
-        override val providerBindings = listOf(
-            EntryOpenCapability.bind(openProcessor),
-            EntryContinueCapability.bind(continueProcessor),
-            EntryConsumptionCapability.bind(consumptionProcessor),
-            EntryProgressCapability.bind(progressProcessor),
-            EntryPlaybackPreferencesCapability.bind(playbackPreferencesProcessor),
-            EntryDownloadCapability.bind(downloadProcessor),
-            EntryDownloadOptionsCapability.bind(downloadProcessor),
-            EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
-            EntryMigrationCapability.bind(migrationMergeProvider),
-            EntryMergeCapability.bind(migrationMergeProvider),
-            EntryChildListCapability.bind(childListProcessor),
-            EntryChildProgressCapability.bind(childListProcessor),
-            EntryLibraryProgressCapability.bind(libraryProgressProvider),
-            EntryPreviewCapability.bind(previewProcessor),
-            EntryPreviewConfigurationCapability.bind(previewProcessor),
-            EntryImmersiveCapability.bind(immersiveProcessor),
-        )
+        override val providerBindings = buildList {
+            addAll(
+                listOf(
+                    EntryOpenCapability.bind(openProcessor),
+                    EntryContinueCapability.bind(continueProcessor),
+                    EntryConsumptionCapability.bind(consumptionProcessor),
+                    EntryProgressCapability.bind(progressProcessor),
+                    EntryPlaybackPreferencesCapability.bind(playbackPreferencesProcessor),
+                    EntryDownloadCapability.bind(downloadProcessor),
+                    EntryDownloadOptionsCapability.bind(downloadProcessor),
+                    EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
+                    EntryMigrationCapability.bind(migrationMergeProvider),
+                    EntryMergeCapability.bind(migrationMergeProvider),
+                    EntryChildListCapability.bind(childListProcessor),
+                    EntryChildProgressCapability.bind(childListProcessor),
+                    EntryLibraryProgressCapability.bind(libraryProgressProvider),
+                    EntryPreviewCapability.bind(previewProcessor),
+                    EntryPreviewConfigurationCapability.bind(previewProcessor),
+                    EntryImmersiveCapability.bind(immersiveProcessor),
+                    EntryTypePresentationCapability.bind(AnimeEntryTypePresentationProvider),
+                ),
+            )
+            viewerSettingsProvider?.let { add(EntryViewerSettingsCapability.bind(it)) }
+        }
     }
 }
 

@@ -6,8 +6,7 @@ import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.serialization.json.Json
 import mihon.core.common.CustomPreferences
-import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
-import mihon.entry.interactions.settings.AnimePlayerPreferences
+import mihon.entry.interactions.EntryViewerSettingsPreferenceOwnership
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
@@ -27,7 +26,7 @@ object ProfilePreferenceOwnership {
         val private: Set<String>,
     )
 
-    fun derive(): Keys {
+    fun derive(viewerSettings: EntryViewerSettingsPreferenceOwnership): Keys {
         val recorder = KeyRecordingPreferenceStore()
 
         SourcePreferences(recorder, json)
@@ -36,16 +35,14 @@ object ProfilePreferenceOwnership {
         DuplicatePreferences(recorder)
         UpdatesPreferences(recorder)
         EntryInteractionPreferences(recorder)
-        AnimePlayerPreferences(recorder)
-        MangaReaderSettingsProvider(recorder)
         UiPreferences(recorder)
         CustomPreferences(recorder)
         TrackPreferences(recorder).recordKeys(TrackerManager.TRACKER_IDS)
 
         return Keys(
-            profile = recorder.profileKeys,
-            appState = recorder.appStateKeys,
-            private = recorder.privateKeys,
+            profile = recorder.profileKeys + viewerSettings.profileKeys,
+            appState = recorder.appStateKeys + viewerSettings.appStateKeys,
+            private = recorder.privateKeys + viewerSettings.privateKeys,
         )
     }
 

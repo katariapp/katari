@@ -28,7 +28,9 @@ Updated: 2026-07-18
 - F06–F08 completion: `91d57f376` (`(refactor): migrate remaining download features`)
 - F09, F10, and F13 completion: `e175cbc3f` (`(refactor): migrate entry state features`)
 - F14, F18, and F19 completion: `a03ff2a71` (`(refactor): migrate entry filtering and preview features`)
-- F20, F21, and F22 are implemented and validated in the current integration batch.
+- F20, F21, and F22 completion: `dd8fc5106` (`(refactor): migrate immersive, related, and progress features`)
+- F23 Type Presentation, F24 Library-update Notifications, and F25 Viewer Settings are implemented and validated in
+  the current integration batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -36,8 +38,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F20`, `F21`, and `F22` — Immersive, Related Entries, and Library Progress Summary
-- State: complete and validated; next implementation batch is `F23`, `F24`, and `F25`
+- Milestone: `F23`, `F24`, and `F25` — Type Presentation, Library-update Notifications, and Viewer Settings
+- State: complete and validated; F11 Migration and F26 Media-cache Maintenance are the active isolated migrations
 
 ## Why the Plan Was Reset
 
@@ -366,11 +368,10 @@ beside the graph.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
-- `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
-  explicit Phase 5 presentation-projection obligation.
+- `T01`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy; F23 resolves the former
+  `T23` presentation-projection obligation through optional type-owned providers.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only the real F01–F10 and F13–F19 owners migrated so far; F11, F12, and F20–F27 remain deliberately absent until their
-  owning milestones.
+  only real migrated owners; F11, F12, F26, and F27 remain deliberately absent until their owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -503,9 +504,9 @@ Approved on 2026-07-18:
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
-- Remaining boundary failures are the expected migration queue for F11, F12, and F20–F27. Re-exporting SPI,
-  restoring raw DI, or moving provider facades back into the API would contradict the manifesto rather than fix
-  compilation.
+- Remaining raw application boundary failures are exactly the three F11/F12 `EntryCapabilityInteraction` consumers.
+  F26 and F27 remain tracked feature migrations without raw interaction-facade failures. Re-exporting SPI, restoring
+  raw DI, or moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
   reachability or old tests.
@@ -587,8 +588,17 @@ Approved on 2026-07-18:
   path, and leaves unsupported Library entries structurally visible with explicit inapplicability.
 - F22 owns common counts and merged summaries, derives Continue and Bookmark consequences from F02/F10, and carries
   unknown summary state truthfully through F14, sort, badges, Stats, and F13 update eligibility.
+- F23 discovers type-owned vocabulary and imagery through ordinary plugin contributions, removes the application type
+  map, keeps generic provenance explicit, and leaves every behavioral action with its owning Feature.
+- F24 gives every composed type shared Library-update notification routing and rendering, derives child Open, Mark
+  Consumed, and Download independently from F01/F09/F04, and consumes F23 only for vocabulary.
+- F24 removes the Manga fallback for Book. A frozen compatibility adapter preserves shipped Manga/Anime Android
+  identities; Book and future routes derive from content identity and are collision-validated.
+- F25 moves Viewer Settings into the ordinary optional plugin/provider graph, validates exact app-owned screen
+  projections, and derives hub/search, preference ownership, overrides, reset, backup, and migration consequences from
+  the same provider definitions.
 
 ## Exact Next Action After Review
 
-Commit the validated F20/F21/F22 milestone, remove all three agent worktrees and branches, then start the `F23` Type
-Presentation, `F24` Library-update Notifications, and `F25` Viewer Settings batch.
+Commit the validated `F23`, `F24`, and `F25` milestone and remove all three completed worktrees and branches while the
+`F11` and `F26` migrations continue in isolation.

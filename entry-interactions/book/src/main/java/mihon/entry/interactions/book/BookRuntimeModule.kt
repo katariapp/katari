@@ -2,6 +2,7 @@ package mihon.entry.interactions.book
 
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
 import mihon.entry.interactions.EntryMediaCacheBucket
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryTypeRuntimeContribution
@@ -36,8 +37,11 @@ fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTy
                     entryProgressRepository = progressRepository,
                     downloadsEnabled = true,
                 ),
+                viewerSettingsProvider = DefaultEntryViewerSettingsProvider(
+                    type = EntryType.BOOK,
+                    surfaces = runtime.viewerSettingsSurfaces,
+                ),
             ),
-            viewerSettingsProviders = runtime.viewerSettingsProviders,
             mediaCacheBuckets = runtime.mediaCacheBuckets,
         )
     }
@@ -125,11 +129,11 @@ private fun InjektRegistrar.addBookEntryInteractionRuntime(
     }
     return BookRuntimeArtifacts(
         mediaCacheBuckets = listOf(materializationCache),
-        viewerSettingsProviders = listOf(readiumSettingsProvider, proseSettingsProvider),
+        viewerSettingsSurfaces = listOf(readiumSettingsProvider, proseSettingsProvider),
     )
 }
 
 private data class BookRuntimeArtifacts(
     val mediaCacheBuckets: List<EntryMediaCacheBucket>,
-    val viewerSettingsProviders: List<ViewerSettingsProvider>,
+    val viewerSettingsSurfaces: List<ViewerSettingsProvider>,
 )

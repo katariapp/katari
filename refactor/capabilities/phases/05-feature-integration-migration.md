@@ -45,7 +45,12 @@ Current progress:
   [`../features/F21-related-entries.md`](../features/F21-related-entries.md).
 - [x] `F22` — Library Progress Summary complete. See
   [`../features/F22-library-progress-summary.md`](../features/F22-library-progress-summary.md).
-- [ ] `F11`, `F12`, and `F23`–`F27` — Not started.
+- [x] `F23` — Type Presentation complete. See
+  [`../features/F23-type-presentation.md`](../features/F23-type-presentation.md).
+- [x] `F24` — Library-update Notifications complete. See
+  [`../features/F24-library-update-notifications.md`](../features/F24-library-update-notifications.md).
+- [x] `F25` — Viewer Settings complete. See [`../features/F25-viewer-settings.md`](../features/F25-viewer-settings.md).
+- [ ] `F11`, `F12`, `F26`, and `F27` — Not started or owned by concurrent milestones.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

@@ -13,6 +13,9 @@ import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryProgressCapability
+import mihon.entry.interactions.EntryTypePresentationCapability
+import mihon.entry.interactions.EntryViewerSettingsCapability
+import mihon.entry.interactions.EntryViewerSettingsProvider
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.feature.graph.ContributionOwner
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -23,6 +26,7 @@ import uy.kohesive.injekt.api.get
 
 fun bookEntryInteractionPlugin(
     dependencies: BookEntryInteractionDependencies,
+    viewerSettingsProvider: EntryViewerSettingsProvider? = null,
 ): EntryInteractionPlugin {
     val openProcessor = BookOpenProcessor()
     val continueProcessor = BookContinueProcessor(
@@ -67,10 +71,12 @@ fun bookEntryInteractionPlugin(
             add(EntryChildProgressCapability.bind(childListProcessor))
             add(EntryLibraryProgressCapability.bind(libraryProgressProvider))
             add(EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider))
+            add(EntryTypePresentationCapability.bind(BookEntryTypePresentationProvider))
             if (downloadProcessor != null) {
                 add(EntryDownloadCapability.bind(downloadProcessor))
                 add(EntryBulkDownloadCandidateCapability.bind(downloadProcessor))
             }
+            viewerSettingsProvider?.let { add(EntryViewerSettingsCapability.bind(it)) }
         }
     }
 }

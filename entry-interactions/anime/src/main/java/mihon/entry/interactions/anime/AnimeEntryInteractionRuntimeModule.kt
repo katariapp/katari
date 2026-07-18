@@ -2,6 +2,7 @@ package mihon.entry.interactions.anime
 
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryMediaCacheBucket
 import mihon.entry.interactions.EntryMediaCacheBucketKeys
@@ -24,6 +25,10 @@ fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
     return EntryTypeRuntimeModule(EntryType.ANIME) { app ->
         val warmup = addAnimeEntryInteractionRuntime(app)
         val viewerSettingsProvider = AnimePlayerPreferences(profilePreferenceStore)
+        val typeViewerSettingsProvider = DefaultEntryViewerSettingsProvider(
+            type = EntryType.ANIME,
+            surfaces = listOf(viewerSettingsProvider),
+        )
         addSingletonFactory { viewerSettingsProvider }
         val progressRepository = get<EntryProgressRepository>()
         EntryTypeRuntimeContribution(
@@ -41,8 +46,8 @@ fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     entryInteractionPreferences = get<EntryInteractionPreferences>(),
                     historyRepository = get(),
                 ),
+                viewerSettingsProvider = typeViewerSettingsProvider,
             ),
-            viewerSettingsProviders = listOf(viewerSettingsProvider),
             mediaCacheBuckets = listOf(LazyAnimePlaybackCacheBucket { get<EntryPlayerCache>() }),
             warmups = listOf(warmup),
         )

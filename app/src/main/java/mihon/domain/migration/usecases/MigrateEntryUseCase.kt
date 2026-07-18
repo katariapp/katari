@@ -14,7 +14,7 @@ import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryProgressCopyResult
 import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressResourceMapping
-import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
+import mihon.entry.interactions.EntryViewerSettingsFeature
 import tachiyomi.domain.category.repository.CategoryRepository
 import tachiyomi.domain.entry.interactor.GetMergedEntry
 import tachiyomi.domain.entry.interactor.SyncEntryWithSource
@@ -49,7 +49,7 @@ class MigrateEntryUseCase(
     private val getMergedEntry: GetMergedEntry,
     private val updateMergedEntry: UpdateMergedEntry,
     private val syncEntryWithSource: SyncEntryWithSource,
-    private val viewerSettingOverrideRepository: ViewerSettingOverrideRepository,
+    private val viewerSettingsFeature: EntryViewerSettingsFeature,
 ) {
 
     private val enhancedServices by lazy { trackerManager.trackers.filterIsInstance<EnhancedTracker>() }
@@ -82,7 +82,7 @@ class MigrateEntryUseCase(
                 is EntryProgressCopyResult.IncompatibleTypes -> return
             }
             playbackPreferencesFeature.copy(current, target)
-            viewerSettingOverrideRepository.copy(current.id, target.id)
+            viewerSettingsFeature.copy(current, target)
 
             if (MigrationFlag.CATEGORY in flags) {
                 val categoryIds = categoryRepository.getCategoriesByEntryId(current.id)

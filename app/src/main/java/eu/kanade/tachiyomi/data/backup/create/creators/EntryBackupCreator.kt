@@ -18,7 +18,8 @@ import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
 import mihon.entry.interactions.EntryPlaybackQualityMode
 import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressSnapshotResult
-import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
+import mihon.entry.interactions.EntryViewerSettingsFeature
+import mihon.entry.interactions.EntryViewerSettingsSnapshotResult
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.category.model.Category
@@ -40,7 +41,7 @@ class EntryBackupCreator(
     private val progressFeature: EntryProgressFeature = Injekt.get(),
     private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature = Injekt.get(),
     private val childGroupFilterFeature: EntryChildGroupFilterFeature = Injekt.get(),
-    private val viewerSettingOverrideRepository: ViewerSettingOverrideRepository = Injekt.get(),
+    private val viewerSettingsFeature: EntryViewerSettingsFeature = Injekt.get(),
 ) {
 
     suspend operator fun invoke(entries: List<Entry>, options: BackupOptions): List<BackupEntry> {
@@ -63,8 +64,11 @@ class EntryBackupCreator(
         allEntriesById: Map<Long, Entry>,
     ): BackupEntry {
         val entryObject = entry.toBackupEntry()
-        entryObject.viewerSettingOverrides = viewerSettingOverrideRepository.getByEntryId(entry.id)
-            .map { it.toBackupViewerSettingOverride() }
+        entryObject.viewerSettingOverrides = when (val result = viewerSettingsFeature.snapshot(entry)) {
+            is EntryViewerSettingsSnapshotResult.Available ->
+                result.overrides.map { it.toBackupViewerSettingOverride() }
+            is EntryViewerSettingsSnapshotResult.Inapplicable -> emptyList()
+        }
         val playbackPreferencesSnapshot = when (val result = playbackPreferencesFeature.snapshot(entry)) {
             is EntryPlaybackPreferencesSnapshotResult.Captured -> result.snapshot
             EntryPlaybackPreferencesSnapshotResult.NoPreferences,

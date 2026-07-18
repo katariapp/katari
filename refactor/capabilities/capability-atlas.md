@@ -123,7 +123,7 @@ Defaults are executable statements of absence and can hide missing work when tre
 | Bookmarked download menu availability | Derived application policy | Entry and Library obtain availability from `EntryDownloadCapabilityPolicy`; the dropdown receives the derived result | Bulk Downloads + Bookmarking has one feature-owned behavioral answer; type presentation contributes wording only. |
 | `missingChildCount(EntryType, ...)` | Type-wide behavioral gate | Application presentation code calculates gaps only for Manga | A direct `EntryType.MANGA` check owns availability outside the interaction model. Whether this is fundamental, derived, or intentional is unresolved. |
 | Download settings capability lookup | Type-wide behavioral/presentation gate | Settings screen reads `settingCapabilities()[EntryType.MANGA]` specifically | The settings surface assumes Manga owns configurable download settings even though the API returns a map by type. |
-| Library-update notification type | Type-wide behavioral routing and presentation | `LibraryUpdateNotifier.EntryUpdateNotificationType` defines Manga and Anime; `from(entry)` falls back to Manga for Book or any unlisted type | Book receives Manga notification channel/group IDs and chapter/read terminology instead of an explicit Book result. Whether notification semantics should be derived or specialized is unresolved. |
+| Library-update notification projection | Feature-owned routing, grouping, presentation composition, and action derivation | F24 discovers every composed type, consumes F23 vocabulary, and derives F01/F09/F04 actions independently | Manga/Anime shipped identities remain in a frozen compatibility adapter; Book/future routes derive from content identity and are collision-validated. |
 | Backup snapshot and restore branches | Mixed capability integration and compatibility boundary | Playback preferences follow the provider-derived Feature; Anime download preferences still use a media gate; Manga scanlator/viewer and legacy progress conversions use `EntryType.MANGA` | The playback-preference capability consumer is resolved in F16. Remaining branches retain their separate feature or compatibility owners. |
 | History subtitle and partial-progress label branches | Presentation-only | `EntryType` selects media vocabulary | Legitimate terminology differences; these must not become capability truth. |
 | Icons, labels, plurals, and media nouns in `EntryTypePresentation` | Presentation-only | Presentation mapping | Legitimate type presentation, except where a field controls behavior as above. |
@@ -189,7 +189,7 @@ This graph records where the inventoried facts currently have consequences. It i
 | Local/stub restriction | Entry download, bulk-download, WebView, and source-backed actions | Controls are removed even when type support exists | Contextual negative gate applied directly by consumers. |
 | Tracker supported types | Entry tracking action/dialog, library tracking filters, track auto-add/sync | Tracker search is filtered by entry type | Tracker integrations advertise support independently; current built-in/legacy integrations resolve to Manga. |
 | Platform/player/viewer capabilities | Anime picture-in-picture and Manga auto-scroll controls | Preference plus runtime/device/renderer support | Remain internal contextual predicates, not content-type catalog facts. |
-| Library-update notification type | New-update summary and child notifications | Channel/group IDs, consumed/view labels, descriptions, and download action | Book enters the shared notification workflow but falls back to Manga routing and vocabulary. |
+| Library-update notification projection | New-update summary and child notifications | F24 routes/groups and action sets; F23 vocabulary; F01 child destination; F09/F04 actions | Book receives explicit Item vocabulary and a derived route. Missing relationships omit only the affected action and preserve notification participation. |
 | Backup type gates | Backup create and restore | No direct capability UI | Playback-preference dispatch is provider-derived; remaining branches cover legacy/wire conversions, progress migration, and download preferences under their own owners. |
 
 ## Coverage Graph
@@ -260,7 +260,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 | Preview | Processor registration; source interface for Anime; preference/config state; entry and browse availability; long-press fallback; documentation. |
 | Immersive | F20 Feature integration; source opt-in; type renderer and load mode; load-time media requirements; feed/catalog modes; long-press action; provider-derived preload; strict lifecycle; behavior contract; documentation. |
 | Tracking | Per-tracker supported types; entry action; library filters; sync/search guards; documentation. |
-| Type presentation | Central vocabulary, icons, and plurals; notification vocabulary is maintained in a separate two-type enum. Bookmarked-download behavioral authority has been removed from presentation. |
+| Type presentation | F23 discovers type-owned vocabulary, icons, plurals, and formatting policy through ordinary plugin contributions. The application consumes one Feature; presentation has no behavioral authority. F24 consumes its notification vocabulary without owning a type map. |
 | Type composition | Interaction plugins now own optional Library Progress evidence; tracker/source metadata, notification semantics, presentation, and remaining boundary migrations retain their assigned owners. |
 
 ## Implemented Capability Combinations
@@ -282,7 +282,7 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 ## Coverage and Documentation Gaps
 
 - The Phase 1 executable catalog and report enumerate reviewed fundamental capability facts, but consumer selection, shared contracts, and documentation projection have not migrated yet.
-- No shared contract yet instantiates every real content-type provider claiming migration, merge, library progress, presentation, notification, viewer-setting, or media-cache support. F01–F10 and F13–F20 use graph-selected feature contracts rather than support-label matrices.
+- No shared contract yet instantiates every real content-type provider claiming migration, merge, notification, viewer-setting, or media-cache support. F01–F10 and F13–F23 use graph-selected feature contracts rather than support-label matrices.
 - `EntryType.entries` is used by one strong shared lifecycle test, but enum membership is not the same as capability applicability.
 - The content reference is entirely hand-maintained. Anime migration already demonstrates that executable support and documentation can disagree without validation failing.
 - The bookmark-based bulk-download rule drives shared runtime and application presentation; public documentation verification remains assigned to the Phase 2 integration gate.
@@ -299,7 +299,8 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 - The same absence is represented by missing providers, default-false methods, explicit `Unsupported` values, empty results, no-ops, presentation booleans, and direct type checks.
 - Some facts that look type-wide are contextual. Anime preview depends on the source, immersive loading depends on resolvable media, tracking depends on the tracker, and selection actions depend on the whole selection.
 - Downloading bookmarked children and exposing its menu action are both derived by shared download policy; presentation owns terminology only.
-- Presentation and documentation already contain support statements independent from executable processor behavior.
+- Presentation vocabulary is now an independently contributed projection that cannot authorize executable behavior;
+  documentation projection remains later work.
 - Cross-feature routing can omit a type even when the underlying workflow is shared: Book update notifications currently fall through to Manga-specific notification semantics.
 - Compatibility, media format, storage, and vocabulary branches must remain visible but outside the capability catalog unless they independently gate a user-facing feature.
 
@@ -351,7 +352,7 @@ Observed disagreements are recorded without changing implementation or public do
 | Anime migration | `AnimeCapabilityProcessor` returns true; `docs/features/content-type-reference.md` describes migration as unavailable | Anime migration remains supported; documentation is stale | Provider/feature migration in Phases 4–5; docs projection/correction in Phase 7 | Accepted: documentation drift |
 | Book downloads as a registered capability | Production runtime enables the Book download plugin, but the plugin defaults `downloadsEnabled` to false and can be assembled without its provider | Production Book downloads are supported; the flag is a construction/testing seam | Registration evidence prototype in Phase 1; composition in Phase 4; contracts in Phase 7 | Accepted: non-product ambiguity |
 | Anime child-group filtering | Anime formerly registered a false/empty/no-op processor while Book expressed absence by not registering | Anime remains intentionally unsupported; provider absence is the sole representation | Provider cleanup in Phase 4 and F18 feature migration in Phase 5 | Resolved: no-op provider removed and Feature returns structured inapplicability |
-| Book library-update notification semantics | The shared update notifier supports the Book workflow but its notification type catalog defines only Manga and Anime, with Manga as the fallback | Book receives shared behavior with explicit neutral/Book semantics, never Manga fallback | Derived notification integration in Phase 5; contract in Phase 7 | Accepted: implementation bug |
+| Book library-update notification semantics | **Resolved in F24:** the shared Feature projection discovers Book and composes its F23 Item vocabulary | Book receives shared behavior with explicit neutral/Book semantics, never Manga fallback | F24 behavior contract covers derived routing and relationship absence; Phase 7 runs it across applicable production types | Accepted: implementation bug corrected |
 
 ## Phase 0 Completion Summary
 

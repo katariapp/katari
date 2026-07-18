@@ -3,7 +3,6 @@ package mihon.entry.interactions
 import android.app.Application
 import coil3.ComponentRegistry
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.viewer.settings.ViewerSettingsProvider
 import uy.kohesive.injekt.api.InjektRegistrar
 
 class EntryTypeRuntimeModule(
@@ -13,7 +12,6 @@ class EntryTypeRuntimeModule(
 
 data class EntryTypeRuntimeContribution(
     val plugin: EntryInteractionPlugin,
-    val viewerSettingsProviders: List<ViewerSettingsProvider> = emptyList(),
     val mediaCacheBuckets: List<EntryMediaCacheBucket> = emptyList(),
     val warmups: List<() -> Unit> = emptyList(),
     val imageComponentInstallers: List<EntryImageComponentInstaller> = emptyList(),

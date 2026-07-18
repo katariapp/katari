@@ -51,6 +51,8 @@ fun createEntryInteractionComposition(
             previewConfigurationProviders = providers[EntryPreviewConfigurationCapability],
             immersiveProcessors = providers[EntryImmersiveCapability],
             libraryProgressProviders = providers[EntryLibraryProgressCapability],
+            typePresentationProviders = providers[EntryTypePresentationCapability],
+            viewerSettingsProviders = providers[EntryViewerSettingsCapability],
         ),
         featureGraph = featureGraph,
         featureGraphEvaluation = featureGraphEvaluation,
@@ -112,6 +114,8 @@ private class DefaultEntryInteractions(
     previewConfigurationProviders: Map<EntryType, EntryPreviewConfigurationProvider>,
     immersiveProcessors: Map<EntryType, EntryImmersiveProcessor>,
     libraryProgressProviders: Map<EntryType, EntryLibraryProgressProvider>,
+    typePresentationProviders: Map<EntryType, EntryTypePresentationProvider>,
+    viewerSettingsProviders: Map<EntryType, EntryViewerSettingsProvider>,
 ) : EntryInteractions {
     override val open: EntryOpenInteraction = ProviderBackedEntryOpenInteraction(openProcessors)
     override val continueEntry: EntryContinueInteraction = ProviderBackedEntryContinueInteraction(continueProcessors)
@@ -141,4 +145,8 @@ private class DefaultEntryInteractions(
         ProviderBackedEntryImmersiveInteraction(immersiveProcessors)
     override val libraryProgress: EntryLibraryProgressInteraction =
         ProviderBackedEntryLibraryProgressInteraction(libraryProgressProviders)
+    override val typePresentation: EntryTypePresentationInteraction =
+        ProviderBackedEntryTypePresentationInteraction(typePresentationProviders)
+    override val viewerSettings: EntryViewerSettingsInteraction =
+        ProviderBackedEntryViewerSettingsInteraction(viewerSettingsProviders)
 }

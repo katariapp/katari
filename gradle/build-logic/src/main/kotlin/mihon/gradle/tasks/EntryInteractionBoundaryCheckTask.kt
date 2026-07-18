@@ -521,7 +521,7 @@ private class EntryInteractionBoundaryRules(
         findings += Finding(
             relativePath = file.relativePath,
             lineNumber = minOf(mangaLine, animeLine),
-            reason = "generic EntryType MANGA/ANIME mapping must use EntryTypePresentation or an approved " +
+            reason = "generic EntryType MANGA/ANIME mapping must use EntryTypePresentationFeature or an approved " +
                 "compatibility/storage boundary",
         )
     }
@@ -658,7 +658,6 @@ private class EntryInteractionBoundaryRules(
     private fun KotlinSourceFile.isExhaustiveEntryTypeMappingAllowedPath(): Boolean {
         return relativePath.startsWith("entry-interactions/") ||
             isTestPath() ||
-            relativePath == "app/src/main/java/eu/kanade/presentation/entry/EntryTypePresentation.kt" ||
             relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt" ||
             relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/data/backup/") ||
             relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/data/track/") ||

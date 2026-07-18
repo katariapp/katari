@@ -2,6 +2,22 @@
 
 Capabilities are focused interfaces or properties that opt a source into behavior beyond the required `UnifiedSource` lifecycle. Katari should detect capabilities through their public contracts rather than through concrete source classes.
 
+## Content-type presentation projections
+
+Host content-type modules may optionally bind an `EntryTypePresentationProvider` through their normal
+`EntryInteractionPlugin`. The projection owns that type's resource tokens, icons, plurals, and formatting policy. It is
+discovered automatically; do not add the type to an application presentation map.
+
+Presentation is descriptive only. Contributing it does not authorize Open, Continue, Download, Consumption, Child
+List, or any other operation, and omitting it does not make a partial content type invalid. Resolution then returns an
+explicit `Generic(type, presentation)` result so the requested type remains observable while neutral emergency
+vocabulary can render. A contributed projection returns `Contributed(type, presentation)` instead. Product release
+validation may separately require owned vocabulary for selected shipped types, but that policy is not capability
+support or architectural type validity.
+
+Library-update notification vocabulary is part of this projection, while notification grouping, channels, IDs,
+actions, and behavioral applicability remain owned by the notification feature.
+
 ## Capability matrix
 
 | Contract | Intent |

@@ -26,6 +26,9 @@ import mihon.entry.interactions.EntryPreviewConfigurationCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
+import mihon.entry.interactions.EntryTypePresentationCapability
+import mihon.entry.interactions.EntryViewerSettingsCapability
+import mihon.entry.interactions.EntryViewerSettingsProvider
 import mihon.entry.interactions.manga.download.DownloadCache
 import mihon.entry.interactions.manga.download.DownloadManager
 import mihon.entry.interactions.settings.EntryInteractionPreferences
@@ -42,6 +45,7 @@ import uy.kohesive.injekt.api.get
 
 fun mangaEntryInteractionPlugin(
     dependencies: MangaEntryInteractionDependencies,
+    viewerSettingsProvider: EntryViewerSettingsProvider? = null,
 ): EntryInteractionPlugin {
     return mangaEntryInteractionPlugin(
         MangaEntryInteractionRuntimeDependencies(
@@ -56,11 +60,13 @@ fun mangaEntryInteractionPlugin(
             downloadLifecycle = dependencies.downloadLifecycle,
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
         ),
+        viewerSettingsProvider = viewerSettingsProvider,
     )
 }
 
 internal fun mangaEntryInteractionPlugin(
     dependencies: MangaEntryInteractionRuntimeDependencies,
+    viewerSettingsProvider: EntryViewerSettingsProvider? = null,
 ): EntryInteractionPlugin {
     val openProcessor = MangaOpenProcessor()
     val continueProcessor = MangaContinueProcessor(
@@ -93,29 +99,35 @@ internal fun mangaEntryInteractionPlugin(
     return object : EntryInteractionPlugin {
         override val type = EntryType.MANGA
         override val owner = ContributionOwner("entry-interactions.manga")
-        override val providerBindings = listOf(
-            EntryOpenCapability.bind(openProcessor),
-            EntryContinueCapability.bind(continueProcessor),
-            EntryConsumptionCapability.bind(consumptionProcessor),
-            EntryBookmarkCapability.bind(consumptionProcessor),
-            EntryProgressCapability.bind(progressProcessor),
-            EntryDownloadCapability.bind(downloadProcessor),
-            EntryDownloadArchivePackagingCapability.bind(downloadProcessor),
-            EntryDownloadTallImageSplittingCapability.bind(downloadProcessor),
-            EntryDownloadParallelSourceTransfersCapability.bind(downloadProcessor),
-            EntryDownloadParallelItemTransfersCapability.bind(downloadProcessor),
-            EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
-            EntryMigrationCapability.bind(migrationMergeProvider),
-            EntryMergeCapability.bind(migrationMergeProvider),
-            EntryChildListCapability.bind(childListProcessor),
-            EntryChildProgressCapability.bind(childListProcessor),
-            EntryLibraryProgressCapability.bind(libraryProgressProvider),
-            EntryChildGroupFilterCapability.bind(childGroupFilterProcessor),
-            EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider),
-            EntryPreviewCapability.bind(previewProcessor),
-            EntryPreviewConfigurationCapability.bind(previewProcessor),
-            EntryImmersiveCapability.bind(immersiveProcessor),
-        )
+        override val providerBindings = buildList {
+            addAll(
+                listOf(
+                    EntryOpenCapability.bind(openProcessor),
+                    EntryContinueCapability.bind(continueProcessor),
+                    EntryConsumptionCapability.bind(consumptionProcessor),
+                    EntryBookmarkCapability.bind(consumptionProcessor),
+                    EntryProgressCapability.bind(progressProcessor),
+                    EntryDownloadCapability.bind(downloadProcessor),
+                    EntryDownloadArchivePackagingCapability.bind(downloadProcessor),
+                    EntryDownloadTallImageSplittingCapability.bind(downloadProcessor),
+                    EntryDownloadParallelSourceTransfersCapability.bind(downloadProcessor),
+                    EntryDownloadParallelItemTransfersCapability.bind(downloadProcessor),
+                    EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
+                    EntryMigrationCapability.bind(migrationMergeProvider),
+                    EntryMergeCapability.bind(migrationMergeProvider),
+                    EntryChildListCapability.bind(childListProcessor),
+                    EntryChildProgressCapability.bind(childListProcessor),
+                    EntryLibraryProgressCapability.bind(libraryProgressProvider),
+                    EntryChildGroupFilterCapability.bind(childGroupFilterProcessor),
+                    EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider),
+                    EntryPreviewCapability.bind(previewProcessor),
+                    EntryPreviewConfigurationCapability.bind(previewProcessor),
+                    EntryImmersiveCapability.bind(immersiveProcessor),
+                    EntryTypePresentationCapability.bind(MangaEntryTypePresentationProvider),
+                ),
+            )
+            viewerSettingsProvider?.let { add(EntryViewerSettingsCapability.bind(it)) }
+        }
     }
 }
 

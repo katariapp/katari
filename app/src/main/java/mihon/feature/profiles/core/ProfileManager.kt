@@ -23,7 +23,7 @@ import mihon.core.common.CustomPreferences
 import mihon.core.common.HomeScreenTabs
 import mihon.core.common.defaultHomeScreenTabs
 import mihon.core.common.toHomeScreenTabPreferenceValue
-import mihon.entry.interactions.settings.AnimePlayerPreferences
+import mihon.entry.interactions.EntryViewerSettingsPreferenceOwnership
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.domain.library.service.DuplicatePreferences
@@ -41,6 +41,7 @@ class ProfileManager(
     private val profileStore: ProfileStoreImpl = Injekt.get(),
     private val profilesPreferences: ProfilesPreferences = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
+    private val viewerSettingsPreferenceOwnership: () -> EntryViewerSettingsPreferenceOwnership,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val switchRequests = MutableStateFlow(profilesPreferences.activeProfileId.get())
@@ -172,7 +173,7 @@ class ProfileManager(
         if (currentVersion >= LEGACY_PROFILE_MIGRATION_VERSION) return
 
         correctProfileOwnershipMismatches(currentVersion)
-        val ownership = ProfilePreferenceOwnership.derive()
+        val ownership = ProfilePreferenceOwnership.derive(viewerSettingsPreferenceOwnership())
 
         val migration = ProfilePreferenceMigration(
             PreferenceManager.getDefaultSharedPreferences(application),
@@ -241,6 +242,9 @@ class ProfileManager(
         if (currentVersion < 9) {
             migrateCustomPreferencesToProfileKeys(sharedPreferences)
         }
+        if (currentVersion < 11) {
+            migrateViewerSettingsToProfileKeys(sharedPreferences)
+        }
 
         migrateKeyBackToGlobal(
             sharedPreferences = sharedPreferences,
@@ -287,11 +291,22 @@ class ProfileManager(
 
         profileIds.forEach { profileId ->
             val customProfileKeys = CustomPreferences.profileKeys +
-                EntryInteractionPreferences.profileKeys +
-                AnimePlayerPreferences.profileKeys
+                EntryInteractionPreferences.profileKeys
             customProfileKeys.forEach { key ->
                 migrateProfileAppStateKeyToProfileKey(sharedPreferences, profileId, key)
             }
+        }
+    }
+
+    private suspend fun migrateViewerSettingsToProfileKeys(
+        sharedPreferences: android.content.SharedPreferences,
+    ) {
+        val profileIds = profileDatabase.getProfiles(includeArchived = true)
+            .map(Profile::id)
+            .ifEmpty { listOf(ProfileConstants.DEFAULT_PROFILE_ID) }
+        val profileKeys = viewerSettingsPreferenceOwnership().profileKeys
+        profileIds.forEach { profileId ->
+            profileKeys.forEach { key -> migrateProfileAppStateKeyToProfileKey(sharedPreferences, profileId, key) }
         }
     }
 
@@ -571,6 +586,6 @@ class ProfileManager(
     }
 
     companion object {
-        private const val LEGACY_PROFILE_MIGRATION_VERSION = 10
+        private const val LEGACY_PROFILE_MIGRATION_VERSION = 11
     }
 }

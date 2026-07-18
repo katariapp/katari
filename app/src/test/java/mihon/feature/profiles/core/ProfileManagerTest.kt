@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.EntryViewerSettingsPreferenceOwnership
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.PreferenceStore
@@ -108,6 +109,9 @@ class ProfileManagerTest {
             profileStore = profileStore,
             profilesPreferences = profilesPreferences,
             extensionManager = extensionManager,
+            viewerSettingsPreferenceOwnership = {
+                EntryViewerSettingsPreferenceOwnership(emptySet(), emptySet(), emptySet())
+            },
         )
 
         val profile = manager.createProfile(name = "Anime")

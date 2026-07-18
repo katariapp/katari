@@ -85,6 +85,18 @@ SPI boundary is not an exit gate for Phase 3.5.
   Download-plus-Bookmark consequences remain derived relationships, so a future Bookmark provider activates them
   without an application or Download edit.
 
+### Resolved in F24: Library-update notification feature ownership
+
+- F24 owns type grouping, channel/group/summary identity, summary and child projection, merged visible targets, and
+  notification action composition through one app-facing Feature.
+- F01 child Open, F09 Mark Consumed, and F04 Download are independent graph-derived relationships. Provider or
+  contextual absence omits only that action; normal Entry-details navigation remains available and is not F01.
+- F23 supplies vocabulary and numbering policy without authorizing participation or actions.
+- `Notifications.createChannels` consumes discovered routes. Manga/Anime shipped identities survive only in a frozen
+  compatibility adapter; Book and future types receive stable derived, collision-validated routes.
+- `LibraryUpdateNotifier` contains no type enum, Manga fallback, vocabulary map, or direct F01/F09/F04 availability
+  reconstruction.
+
 ### Resolved in F13: Update Eligibility feature ownership
 
 - F13 owns the universal library-update eligibility policy and the consequences used by the update worker and Stats.
@@ -195,6 +207,19 @@ SPI boundary is not an exit gate for Phase 3.5.
   are removed. The Domain resolution port exists only to avoid reversing the API-to-Domain dependency and is wired by
   composition to the app-facing Feature.
 
+### Resolved in F25: Viewer Settings feature ownership
+
+- F25 replaces the parallel runtime provider list and mutable `ViewerSettingsInteraction` with one optional ordinary
+  plugin provider per type. A provider may expose multiple genuine viewer surfaces; provider absence remains valid.
+- Reader/Player hubs and settings search consume the same Feature destinations. Actual app-owned screen projection
+  contributions are matched exactly, and missing, duplicate, or orphan surface IDs fail rather than disabling UI.
+- Preference ownership derives profile/app/private keys from every provider definition and is consumed explicitly by
+  profile migration. F27 retains ownership of the general preference-contribution architecture.
+- Backup, restore, migration copy, and per-entry override reset use structured Feature operations. The legacy Manga
+  viewer bitfield remains only a named backup/reset compatibility adapter.
+- Application production code has no raw Viewer Settings collection/registration facade, hardcoded screen map, or
+  direct override repository operation outside application composition.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -222,8 +247,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F10 and F13–F22 now install their contributors; providers
-  belonging to F11, F12, and F23–F27 remain deliberately unreachable rather than receiving empty placeholder
+  content-type plugins that contribute themselves. F01–F10 and F13–F25 now install their contributors; providers
+  belonging to F11, F12, F26, and F27 remain deliberately unreachable rather than receiving empty placeholder
   contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
@@ -295,6 +320,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ### `P5-PRESENTATION-PROJECTION` — Type vocabulary remains an app-owned concrete-type map
 
+Status: resolved by F23
+
 - Responsible owners: Entry presentation and every feature consuming type vocabulary
 - Owning phase: Phase 5
 - Inventory scope: `T23` and the presentation consumers in `F01`–`F27`
@@ -302,6 +329,9 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Required outcome: type-owned vocabulary becomes projection input selected by applicable feature integrations. Icons,
   labels, and nouns may vary but cannot decide behavioral support. The generic fallback must not hide a missing shipped
   type projection.
+- Resolution: each type owns one optional presentation provider in its normal plugin contribution; F23 discovers and
+  exposes it through an application Feature. Concrete and generic results retain provenance, the application map is
+  removed, formatting tokens are type-owned, and boundary validation rejects recreating the map.
 
 ## Removed Rather Than Migrated
 

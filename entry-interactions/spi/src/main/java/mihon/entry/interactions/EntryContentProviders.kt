@@ -107,3 +107,11 @@ interface EntryPreviewConfigurationProvider : EntryInteractionProvider {
 val EntryPreviewConfigurationCapability = entryInteractionCapability<EntryPreviewConfigurationProvider>(
     id = CapabilityId("entry.preview.configuration"),
 )
+
+interface EntryTypePresentationProvider : EntryInteractionProvider {
+    val presentation: EntryTypePresentation
+}
+
+val EntryTypePresentationCapability = entryInteractionCapability<EntryTypePresentationProvider>(
+    id = CapabilityId("entry.type-presentation"),
+)

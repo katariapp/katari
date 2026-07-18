@@ -557,11 +557,11 @@ class EntryInteractionBoundaryCheckTaskTest {
 
         val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
 
-        error.message shouldContain "generic EntryType MANGA/ANIME mapping must use EntryTypePresentation"
+        error.message shouldContain "generic EntryType MANGA/ANIME mapping must use EntryTypePresentationFeature"
     }
 
     @Test
-    fun `central presentation descriptor may own exhaustive manga anime mapping`() {
+    fun `application presentation cannot own an exhaustive manga anime mapping`() {
         createBaseFixture(
             additionalFiles = mapOf(
                 "app/src/main/java/eu/kanade/presentation/entry/EntryTypePresentation.kt" to
@@ -580,7 +580,9 @@ class EntryInteractionBoundaryCheckTaskTest {
             ),
         )
 
-        runBoundaryCheck()
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "generic EntryType MANGA/ANIME mapping must use EntryTypePresentationFeature"
     }
 
     private fun createBaseFixture(

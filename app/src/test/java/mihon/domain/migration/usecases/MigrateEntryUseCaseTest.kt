@@ -17,7 +17,7 @@ import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryProgressCopyResult
 import mihon.entry.interactions.EntryProgressFeature
 import mihon.entry.interactions.EntryProgressResourceMapping
-import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
+import mihon.entry.interactions.EntryViewerSettingsFeature
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -50,7 +50,7 @@ class MigrateEntryUseCaseTest {
 
         coVerify(exactly = 0) { fixture.syncEntryWithSource(any()) }
         coVerify(exactly = 0) { fixture.entryRepository.update(any()) }
-        coVerify(exactly = 0) { fixture.viewerSettingOverrideRepository.copy(any(), any()) }
+        coVerify(exactly = 0) { fixture.viewerSettingsFeature.copy(any(), any()) }
     }
 
     @ParameterizedTest(name = "selected remove-download flag deletes {0} downloads when replace={1}")
@@ -90,7 +90,7 @@ class MigrateEntryUseCaseTest {
 
         fixture.useCase(current, target, replace)
 
-        coVerify(exactly = 1) { fixture.viewerSettingOverrideRepository.copy(current.id, target.id) }
+        coVerify(exactly = 1) { fixture.viewerSettingsFeature.copy(current, target) }
         val expectedViewerFlags = if (type == EntryType.MANGA) 256L else 283L
         coVerify(exactly = 1) {
             fixture.entryRepository.update(match { it.id == target.id && it.viewerFlags == expectedViewerFlags })
@@ -156,7 +156,7 @@ class MigrateEntryUseCaseTest {
         private val capabilityInteraction = mockk<EntryCapabilityInteraction>()
         val progressFeature = mockk<EntryProgressFeature>()
         private val playbackPreferencesFeature = mockk<EntryPlaybackPreferencesFeature>()
-        val viewerSettingOverrideRepository = mockk<ViewerSettingOverrideRepository>(relaxed = true)
+        val viewerSettingsFeature = mockk<EntryViewerSettingsFeature>(relaxed = true)
         val downloadMaintenance = mockk<EntryDownloadMaintenanceFeature>(relaxed = true)
         private val categoryRepository = mockk<CategoryRepository>(relaxed = true)
         private val getTracks = mockk<GetTracks>()
@@ -183,7 +183,7 @@ class MigrateEntryUseCaseTest {
             getMergedEntry = getMergedEntry,
             updateMergedEntry = updateMergedEntry,
             syncEntryWithSource = syncEntryWithSource,
-            viewerSettingOverrideRepository = viewerSettingOverrideRepository,
+            viewerSettingsFeature = viewerSettingsFeature,
         )
 
         init {

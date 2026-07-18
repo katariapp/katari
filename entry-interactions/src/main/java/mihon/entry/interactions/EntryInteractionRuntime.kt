@@ -11,13 +11,12 @@ import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
 import mihon.entry.interactions.reader.settings.ReaderTrackPreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
-import mihon.entry.interactions.settings.DefaultViewerSettingsInteraction
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import mihon.entry.interactions.settings.EntryMediaCachePreferences
 import mihon.entry.viewer.settings.ViewerSettingBinder
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
-import mihon.entry.viewer.settings.ViewerSettingsInteraction
 import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
@@ -35,6 +34,7 @@ data class EntryInteractionRuntimeDependencies(
     val profilePreferenceStore: PreferenceStore,
     val basePreferenceStore: PreferenceStore,
     val privatePreferenceStore: PreferenceStore,
+    val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
     val mediaCacheBuckets: List<EntryMediaCacheBucket> = emptyList(),
 )
 
@@ -78,12 +78,6 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         module.install(this, app).also { it.validate(module.type) }
     }
 
-    addSingletonFactory<ViewerSettingsInteraction> {
-        DefaultViewerSettingsInteraction(
-            providers = typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::viewerSettingsProviders),
-        )
-    }
-
     addSingletonFactory<EntryMediaCacheMaintenance> {
         DefaultEntryMediaCacheMaintenance(
             buckets = dependencies.mediaCacheBuckets +
@@ -120,6 +114,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryImmersiveFeatureContributor,
                 EntryRelatedEntriesFeatureContributor,
                 EntryLibraryProgressFeatureContributor,
+                EntryTypePresentationFeatureContributor,
+                EntryLibraryUpdateNotificationFeatureContributor,
+                EntryViewerSettingsFeatureContributor,
             ),
         )
     }
@@ -146,6 +143,18 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         )
     }
     addSingletonFactory<EntryLibraryProgressResolutionPort> { get<EntryLibraryProgressFeature>() }
+    addSingletonFactory<EntryViewerSettingsFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryViewerSettingsFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.viewerSettings,
+            projections = dependencies.viewerSettingsScreenProjections,
+            overrideRepository = get<ViewerSettingOverrideRepository>(),
+            legacyMangaViewerFlagsReset = EntryLegacyMangaViewerFlagsReset {
+                get<EntryRepository>().resetViewerFlags()
+            },
+        )
+    }
     addSingletonFactory<EntryDownloadRuntimeCoordinator> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryDownloadRuntimeFeature(
@@ -282,6 +291,28 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             getEntry = get(),
         )
     }
+    addSingletonFactory<EntryTypePresentationFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryTypePresentationFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.typePresentation,
+        )
+    }
+    addSingletonFactory<EntryLibraryUpdateNotificationFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryLibraryUpdateNotificationFeature(
+            evaluation = composition.featureGraphEvaluation,
+            presentationFeature = get(),
+            openFeature = get(),
+            consumptionFeature = get(),
+            downloadActionFeature = get(),
+            resolveVisibleEntry = { entry ->
+                val visibleEntryId = get<tachiyomi.domain.entry.interactor.GetMergedEntry>()
+                    .awaitVisibleTargetId(entry.id)
+                get<tachiyomi.domain.entry.interactor.GetEntry>().await(visibleEntryId) ?: entry
+            },
+        )
+    }
     addSingletonFactory {
         EntryDownloadNotificationManager(
             context = app,
@@ -293,6 +324,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryDownloadForegroundNotificationProvider> { get<EntryDownloadNotificationManager>() }
     addSingletonFactory<EntryInteractionRuntimeWarmup> {
         EntryInteractionRuntimeWarmup {
+            get<EntryViewerSettingsFeature>()
             typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::warmups).forEach { it() }
             get<EntryDownloadNotificationManager>().start()
         }
