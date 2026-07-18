@@ -30,7 +30,7 @@ Updated: 2026-07-18
 - F14, F18, and F19 completion: `a03ff2a71` (`(refactor): migrate entry filtering and preview features`)
 - F20, F21, and F22 completion: `dd8fc5106` (`(refactor): migrate immersive, related, and progress features`)
 - F23 Type Presentation, F24 Library-update Notifications, F25 Viewer Settings, F26 Media-cache Maintenance, and F27
-  Profile Preference Ownership are implemented and validated in the current integration batch.
+  Profile Preference Ownership are committed and validated.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -38,8 +38,9 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F27` — Profile Preference Ownership
-- State: complete and validated; F11/F12 remain active
+- Milestone: `F12` — Merge restart planning
+- State: the rejected combined F12 implementation is isolated on `salvage/f12-merge-audit`; the active branch is clean at
+  the last accepted milestone. F12 will execute sequentially as `F12.1`–`F12.7`; F11 remains pending.
 
 ## Why the Plan Was Reset
 
@@ -371,7 +372,7 @@ beside the graph.
 - `T01`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy; F23 resolves the former
   `T23` presentation-projection obligation through optional type-owned providers.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only real migrated owners; F11, F12, and F27 remain deliberately absent until their owning milestones.
+  only real migrated owners; F11 and F12 remain deliberately absent until their owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -608,5 +609,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Integrate the validated F27 branch with F11/F12, run combined application validation, then clean each integrated agent
-worktree and branch together.
+Begin F12.1 only after review of the sequential F12 plan. Establish and enforce the intent/projection/host ownership
+boundary before persistence changes or consumer migration. Use one agent and stop after the milestone for architectural
+review.

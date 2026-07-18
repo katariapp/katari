@@ -8,23 +8,24 @@ The former `EntryCapabilityProcessor` combined Migration and Merge behind two de
 overrode both methods only to return `true`; Book inherited both false defaults. It contained no media-specific migration
 or merge operation.
 
-Migration and Merge are nevertheless independent product capabilities. A type can be compatible with either shared
-workflow without supporting the other. Their selection and entry-state restrictions are feature policy, not additional
-type capability declarations.
+Milestone 4.2.3 split those flags into independent marker providers so their ownership could be audited separately. That
+transition exposed different final classifications. Migration remains assigned to F11. Merge has no type-owned
+operation or compatibility behavior and is therefore a shared product workflow rather than a fundamental type
+capability. Its selection and entry-state restrictions are contextual feature policy.
 
-## Proposed Decision
+## Decision
 
-- Migration and Merge are independent provider contracts and capability bindings.
-- These contracts are markers of a type's fundamental compatibility with the corresponding shared workflow. They do
-  not pretend that the type owns operations which are actually implemented by the feature.
-- Marker-provider presence is the single type-owned compatibility fact. There is no default false method, support
-  matrix, or explicit unsupported provider.
-- The Migration feature owns source availability, current/target compatibility, library state, transfer composition,
-  and other contextual rules.
+- Migration retains its independent transitional provider until F11 establishes its final operational and feature
+  boundary.
+- F12 removes the Merge provider, capability binding, and compatibility dispatch rather than preserving an empty marker.
+- One provider-free Merge feature contribution applies to every composed content type.
+- Entry type, profile, selection size, same-type requirements, and existing membership are request context. They reject
+  particular operations; they do not classify a content type as unsupported.
 - The Merge feature owns minimum selection size, homogeneous-type selection, existing merged-group shape, and other
   contextual rules.
-- One type-owned object may implement both marker contracts while binding them independently. Implementing both
-  interfaces does not contribute either capability until its corresponding binding is present.
+- Optional Open, Continue, Download, Consumption, Bookmarking, Child List, Preview, Immersive, Library Progress, and
+  other consequences remain independently provider-backed. Missing one omits only that relationship and never disables
+  base Merge.
 
 ## Milestone 4.2.3 Application
 
@@ -35,12 +36,10 @@ type capability declarations.
 
 ## Consequences
 
-- A future type may contribute Migration, Merge, both, or neither without affecting architectural validity.
-- Adding Migration does not silently opt the type into Merge, and the reverse is also true.
-- Phase 5 can attach every shared Migration or Merge consequence to its corresponding capability without adding type
-  branches.
-- The transitional combined interaction facade still evaluates selection rules until the owning feature integrations
-  replace it.
+- A future composed type receives base Merge without adding a marker or type-module edit.
+- Adding Migration does not authorize or disable Merge.
+- Merge consumers derive optional consequences from the owning feature graph rather than a Merge/type matrix.
+- The Milestone 4.2.3 marker split remains historical scaffolding and is not the target architecture.
 
 ## Alternatives Rejected
 
@@ -49,3 +48,4 @@ type capability declarations.
 - Treating same-type or selection-shape rules as type-owned capability facts
 - Claiming that the marker providers contain media-specific operations
 - Deriving one capability from the presence of the other
+- Retaining an empty Merge marker as type compatibility evidence

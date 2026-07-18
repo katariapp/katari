@@ -52,7 +52,11 @@ Current progress:
 - [x] `F25` — Viewer Settings complete. See [`../features/F25-viewer-settings.md`](../features/F25-viewer-settings.md).
 - [x] `F26` — Media-cache Maintenance complete. See
   [`../features/F26-media-cache-maintenance.md`](../features/F26-media-cache-maintenance.md).
-- [ ] `F11`, `F12`, and `F27` — Active or pending.
+- [x] `F27` — Profile Preference Ownership complete. See
+  [`../features/F27-profile-preference-ownership.md`](../features/F27-profile-preference-ownership.md).
+- [ ] `F12` — Planned as sequential milestones `F12.1`–`F12.7`. See
+  [`../features/F12-merge.md`](../features/F12-merge.md).
+- [ ] `F11` — Pending until the F12 boundary is accepted.
 
 ## Architecture Gate 5.0 — Application Feature Access
 
