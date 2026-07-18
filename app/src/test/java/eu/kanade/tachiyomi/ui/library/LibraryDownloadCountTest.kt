@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.library.model.LibraryItem
@@ -18,9 +18,9 @@ class LibraryDownloadCountTest {
     fun `merged download count uses each member's source and title`() {
         val first = entry(id = 1L, source = 10L, title = "First")
         val second = entry(id = 2L, source = 20L, title = "Second")
-        val downloads = mockk<EntryDownloadInteraction> {
-            every { getDownloadCount(first) } returns 2
-            every { getDownloadCount(second) } returns 3
+        val downloads = mockk<EntryDownloadRuntimeFeature> {
+            every { downloadCount(first) } returns 2
+            every { downloadCount(second) } returns 3
         }
         val item = libraryItem(first, second)
 

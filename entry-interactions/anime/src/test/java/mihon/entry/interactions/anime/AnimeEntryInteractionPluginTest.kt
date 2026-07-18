@@ -30,9 +30,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
@@ -55,8 +52,6 @@ import mihon.entry.interactions.createEntryInteractions
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
-import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
@@ -103,39 +98,6 @@ class AnimeEntryInteractionPluginTest {
 
         continued?.id shouldBe 10L
         status.state shouldBe EntryDownloadState.DOWNLOADED
-    }
-
-    @Test
-    fun `anime bulk downloads select next or all unconsumed episodes`() = runTest {
-        val anime = entry(EntryType.ANIME)
-        val episodes = (1L..30L).map { chapter(id = it, sourceOrder = it) } +
-            chapter(id = 31L, read = true, sourceOrder = 31L)
-        val interactions = createEntryInteractions(
-            listOf(animeEntryInteractionPlugin(dependencies(chapters = episodes))),
-        )
-
-        listOf(1, 5, 10, 25).forEach { limit ->
-            val next = interactions.download.resolveBulkDownloadCandidates(
-                anime,
-                EntryBulkDownloadAction.next(limit),
-                candidates = episodes,
-            ) as EntryBulkDownloadCandidateResult.Supported
-            next.chapters.size shouldBe limit
-            next.chapters.all { !it.read } shouldBe true
-        }
-        val all = interactions.download.resolveBulkDownloadCandidates(
-            anime,
-            EntryBulkDownloadAction.unread,
-            candidates = episodes,
-        ) as EntryBulkDownloadCandidateResult.Supported
-
-        all.chapters.size shouldBe 30
-        all.chapters.all { !it.read } shouldBe true
-        interactions.download.resolveBulkDownloadCandidates(
-            anime,
-            EntryBulkDownloadAction.bookmarked,
-            candidates = episodes,
-        ) shouldBe EntryBulkDownloadCandidateResult.Unsupported
     }
 
     @Test
@@ -286,32 +248,6 @@ class AnimeEntryInteractionPluginTest {
             )
             manager.startDownloads()
         }
-    }
-
-    @Test
-    fun `anime automatic downloads honor shared category exclusions`() = runTest {
-        val anime = entry(EntryType.ANIME).copy(favorite = true)
-        val episode = chapter(id = 2L)
-        val preferences = tachiyomi.domain.download.service.DownloadPreferences(InMemoryPreferenceStore()).apply {
-            downloadNewEntryChapters.set(true)
-            downloadNewEntryChapterCategoriesExclude.set(setOf("9"))
-        }
-        val getCategories = mockk<GetCategories> {
-            coEvery { await(anime.id) } returns listOf(Category(9L, "Excluded", 0L, 0L))
-        }
-        val interactions = createEntryInteractions(
-            listOf(
-                animeEntryInteractionPlugin(
-                    dependencies(
-                        chapters = listOf(episode),
-                        automaticDownloadPreferences = preferences,
-                        getCategories = getCategories,
-                    ),
-                ),
-            ),
-        )
-
-        interactions.download.filterAutoDownloadCandidates(anime, listOf(episode)) shouldBe emptyList()
     }
 
     @Test
@@ -967,7 +903,6 @@ class AnimeEntryInteractionPluginTest {
             EntryInteractionPreferences(InMemoryPreferenceStore()),
         animeDownloadManager: AnimeDownloadManager? = null,
         automaticDownloadPreferences: tachiyomi.domain.download.service.DownloadPreferences = mockk(relaxed = true),
-        getCategories: GetCategories = mockk(relaxed = true),
         downloadPreferencesRepository: DownloadPreferencesRepository = FakeDownloadPreferencesRepository(),
         sourceManager: SourceManager = mockSourceManager(),
     ): AnimeEntryInteractionRuntimeDependencies {
@@ -985,11 +920,6 @@ class AnimeEntryInteractionPluginTest {
             animeDownloadManager = animeDownloadManager ?: mockAnimeDownloadManager(episodeDownloaded),
             animeDownloadCache = mockAnimeDownloadCache(),
             downloadPreferences = automaticDownloadPreferences,
-            filterEntryChaptersForDownload = FilterEntryChaptersForDownload(
-                entryChapterRepository = entryChapterRepository,
-                downloadPreferences = automaticDownloadPreferences,
-                getCategories = getCategories,
-            ),
             downloadPreferencesRepository = downloadPreferencesRepository,
             sourceManager = sourceManager,
             entryRepository = entryRepository,

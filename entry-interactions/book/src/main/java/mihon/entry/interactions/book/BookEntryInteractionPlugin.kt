@@ -1,8 +1,6 @@
 package mihon.entry.interactions.book
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryChildListCapability
 import mihon.entry.interactions.EntryChildProgressCapability
@@ -49,9 +47,6 @@ fun bookEntryInteractionPlugin(
                 sourceManager = Injekt.get(),
                 entryRepository = Injekt.get(),
                 getEntryWithChapters = dependencies.getEntryWithChapters,
-                filterEntryChaptersForDownload = checkNotNull(dependencies.filterEntryChaptersForDownload) {
-                    "BOOK downloads require the automatic-download filter"
-                },
                 mergedEntryRepository = Injekt.get(),
             ),
         )
@@ -74,7 +69,6 @@ fun bookEntryInteractionPlugin(
             if (downloadProcessor != null) {
                 add(EntryDownloadCapability.bind(downloadProcessor))
                 add(EntryBulkDownloadCandidateCapability.bind(downloadProcessor))
-                add(EntryAutomaticDownloadFilterCapability.bind(downloadProcessor))
             }
         }
     }
@@ -84,7 +78,6 @@ data class BookEntryInteractionDependencies(
     val getEntryWithChapters: GetEntryWithChapters,
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
-    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload? = null,
     val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
     val downloadsEnabled: Boolean = false,
 )

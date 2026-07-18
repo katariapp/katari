@@ -29,6 +29,7 @@ import cafe.adriel.voyager.navigator.tab.TabOptions
 import dev.icerock.moko.resources.StringResource
 import eu.kanade.presentation.category.components.ChangeCategoryDialog
 import eu.kanade.presentation.components.AppSnackbarHost
+import eu.kanade.presentation.entry.DownloadAction
 import eu.kanade.presentation.entry.components.LibraryBottomActionMenu
 import eu.kanade.presentation.entry.components.MergeEditorDialog
 import eu.kanade.presentation.entry.components.MergeEditorEntry
@@ -57,9 +58,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryContinueFeature
-import mihon.entry.interactions.EntryDownloadCapabilityPolicy
 import mihon.feature.migration.config.MigrationConfigScreen
 import mihon.feature.profiles.core.ProfileManager
 import tachiyomi.core.common.i18n.stringResource
@@ -103,7 +102,6 @@ data object LibraryTab : Tab {
         val activeProfile by profileManager.activeProfile.collectFlowAsState()
         val visibleProfiles by profileManager.visibleProfiles.collectFlowAsState()
         val entryContinueFeature = remember { Injekt.get<EntryContinueFeature>() }
-        val entryCapabilityReport = remember { Injekt.get<EntryCapabilityReport>() }
 
         val screenModel = rememberScreenModel { LibraryScreenModel(context.applicationContext) }
         val settingsScreenModel =
@@ -199,9 +197,8 @@ data object LibraryTab : Tab {
                     markAsReadLabel = actionLabels.markAsReadLabel,
                     markAsUnreadLabel = actionLabels.markAsUnreadLabel,
                     downloadPresentation = state.selectedEntryTypes.selectionEntryTypePresentation(),
-                    bookmarkedDownloadsSupported = EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(
-                        entryCapabilityReport,
-                        state.selectedEntryTypes,
+                    bookmarkedDownloadsSupported = screenModel.canDownloadSelection(
+                        DownloadAction.BOOKMARKED_CHAPTERS,
                     ),
                     onDownloadClicked = screenModel::performDownloadAction
                         .takeIf { screenModel.canDownloadSelection() },

@@ -35,7 +35,6 @@ fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTy
                     getEntryWithChapters = get(),
                     entryChapterRepository = get(),
                     entryProgressRepository = progressRepository,
-                    filterEntryChaptersForDownload = get(),
                     downloadLifecycle = get<EntryDownloadLifecycleInteraction>(),
                     downloadsEnabled = true,
                 ),

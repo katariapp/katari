@@ -522,46 +522,6 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
-    fun `app main code cannot reference FilterEntryChaptersForDownload directly`() {
-        createBaseFixture(
-            appSource = """
-                package app
-
-                import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-
-                class AppFeature(
-                    private val filterChaptersForDownload: FilterEntryChaptersForDownload,
-                )
-            """.trimIndent(),
-        )
-
-        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
-
-        error.message shouldContain "app must route auto-download filtering through EntryDownloadInteraction"
-        error.message shouldContain "FilterEntryChaptersForDownload"
-    }
-
-    @Test
-    fun `type modules may reference FilterEntryChaptersForDownload`() {
-        createBaseFixture(
-            additionalFiles = mapOf(
-                "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/MangaDownloadSupport.kt" to
-                    """
-                        package mihon.entry.interactions.manga
-
-                        import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-
-                        internal class MangaDownloadSupport(
-                            private val filterChaptersForDownload: FilterEntryChaptersForDownload,
-                        )
-                    """.trimIndent(),
-            ),
-        )
-
-        runBoundaryCheck()
-    }
-
-    @Test
     fun `generic code cannot add exhaustive manga anime presentation mapping`() {
         createBaseFixture(
             appSource = """

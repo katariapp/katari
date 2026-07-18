@@ -34,7 +34,6 @@ fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     entryProgressRepository = progressRepository,
                     playbackPreferencesRepository = get(),
                     downloadPreferences = get(),
-                    filterEntryChaptersForDownload = get(),
                     downloadPreferencesRepository = get(),
                     sourceManager = get(),
                     entryRepository = get(),

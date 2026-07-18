@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
-import mihon.entry.interactions.EntryAutomaticDownloadFilterProcessor
 import mihon.entry.interactions.EntryBulkDownloadCandidateProcessor
 import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
@@ -28,8 +27,7 @@ import tachiyomi.domain.entry.repository.EntryRepository
 internal class BookDownloadProcessor(
     private val dependencies: BookDownloadProcessorDependencies,
 ) : EntryDownloadProcessor,
-    EntryBulkDownloadCandidateProcessor,
-    EntryAutomaticDownloadFilterProcessor {
+    EntryBulkDownloadCandidateProcessor {
     private val manager: BookDownloadManager = dependencies.manager
     private val cache: BookDownloadCache = dependencies.cache
     private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
@@ -126,14 +124,6 @@ internal class BookDownloadProcessor(
             .filterNot { isDownloadedByOwner(entry, it) }
     }
 
-    override suspend fun filterAutoDownloadCandidates(
-        entry: Entry,
-        chapters: List<EntryChapter>,
-    ): List<EntryChapter> {
-        entry.requireBook()
-        return dependencies.filterEntryChaptersForDownload.await(entry, chapters)
-    }
-
     override suspend fun delete(entry: Entry, chapters: List<EntryChapter>) {
         entry.requireBook()
         manager.delete(entry, chapters)
@@ -210,6 +200,5 @@ internal data class BookDownloadProcessorDependencies(
     val sourceManager: tachiyomi.domain.source.service.SourceManager,
     val entryRepository: EntryRepository,
     val getEntryWithChapters: tachiyomi.domain.entry.interactor.GetEntryWithChapters,
-    val filterEntryChaptersForDownload: mihon.domain.chapter.interactor.FilterEntryChaptersForDownload,
     val mergedEntryRepository: tachiyomi.domain.entry.repository.MergedEntryRepository,
 )

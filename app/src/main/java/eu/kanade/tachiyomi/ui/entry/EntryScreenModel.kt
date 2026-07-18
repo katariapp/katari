@@ -35,6 +35,7 @@ import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
+import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.util.lang.toStoredDisplayName
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.ImmutableList
@@ -58,9 +59,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryBookmarkInteraction
 import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCapabilityInteraction
 import mihon.entry.interactions.EntryChildGroupFilterInteraction
 import mihon.entry.interactions.EntryChildListInteraction
@@ -70,9 +72,13 @@ import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryChildProgressRequest
 import mihon.entry.interactions.EntryConsumptionInteraction
 import mihon.entry.interactions.EntryContinueFeature
+import mihon.entry.interactions.EntryDownloadActionFeature
+import mihon.entry.interactions.EntryDownloadActionTarget
 import mihon.entry.interactions.EntryDownloadInteraction
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
+import mihon.entry.interactions.EntryDownloadRuntimeFeature
+import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
 import mihon.entry.interactions.EntryPreviewConfig
@@ -134,6 +140,9 @@ class EntryScreenModel(
     private val trackerManager: TrackerManager = Injekt.get(),
     private val trackChapter: TrackChapter = Injekt.get(),
     private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
+    private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
+    private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
     private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
@@ -285,8 +294,8 @@ class EntryScreenModel(
             mergeAwareEntryAndChaptersFlow(
                 entryAndChaptersFlow = entryAndChaptersFlow(),
                 mergeGroupFlow = getMergedEntry.subscribeGroupByEntryId(entryId),
-                downloadChangesFlow = entryDownloadInteraction.changes,
-                downloadQueueFlow = entryDownloadInteraction.queueState,
+                downloadChangesFlow = downloadRuntime.changes,
+                downloadQueueFlow = downloadRuntime.state.map { it.queue },
             )
                 .flowWithLifecycle(lifecycle)
                 .collectLatest { (entry, chapters) ->
@@ -895,7 +904,7 @@ class EntryScreenModel(
 
     private fun observeDownloads() {
         screenModelScope.launchIO {
-            entryDownloadInteraction.updates()
+            downloadRuntime.statusUpdates()
                 .filter { download ->
                     successState?.chapters.orEmpty().any { item ->
                         item.entry.type == download.entryType && item.chapter.id == download.chapterId
@@ -934,15 +943,15 @@ class EntryScreenModel(
             val activeDownload = if (isLocal) {
                 null
             } else {
-                entryDownloadInteraction.getStatus(
-                    entryType = chapterEntry.type,
-                    chapterId = chapter.id,
-                    chapterName = chapter.name,
-                    chapterScanlator = chapter.scanlator,
-                    chapterUrl = chapter.url,
+                downloadRuntime.status(
+                    type = chapterEntry.type,
+                    childId = chapter.id,
+                    childName = chapter.name,
+                    childScanlator = chapter.scanlator,
+                    childUrl = chapter.url,
                     entryTitle = chapterEntry.title,
                     sourceId = chapterEntry.source,
-                )
+                ) ?: EntryDownloadStatus(chapterEntry.type, chapter.id, EntryDownloadState.NOT_DOWNLOADED)
             }
             val downloadState = when {
                 isLocal -> EntryDownloadState.DOWNLOADED
@@ -1073,7 +1082,7 @@ class EntryScreenModel(
             if (selection != null) {
                 entryDownloadInteraction.downloadWithOptions(entry, chapters, selection, startNow)
             } else {
-                entryDownloadInteraction.download(entry, chapters, startNow)
+                entryDownloadActionFeature.download(downloadActionTarget(entry), entry, chapters, startNow)
             }
 
             if (!isFavorited && !successState.hasPromptedToAddBefore) {
@@ -1100,7 +1109,7 @@ class EntryScreenModel(
             ChapterDownloadAction.START -> {
                 startDownload(items, false)
                 if (items.any { it.downloadState == EntryDownloadState.ERROR }) {
-                    entryDownloadInteraction.startDownloads()
+                    entryDownloadActionFeature.retry(items.map { downloadActionTarget(it.entry) })
                 }
             }
             ChapterDownloadAction.START_NOW -> {
@@ -1121,13 +1130,14 @@ class EntryScreenModel(
         val candidateItems = getBulkDownloadCandidateItems()
 
         screenModelScope.launchNonCancellable {
-            val result = entryDownloadInteraction.resolveBulkDownloadCandidates(
+            val result = entryDownloadActionFeature.resolveBulkDownloadCandidates(
+                target = downloadActionTarget(state.entry),
                 entry = state.entry,
                 action = action.toEntryBulkDownloadAction(),
                 candidates = candidateItems.map(EntryChapterList.Item::chapter),
                 memberEntryIds = state.memberIds,
             )
-            if (result is EntryBulkDownloadCandidateResult.Supported && result.chapters.isNotEmpty()) {
+            if (result is EntryBulkDownloadResolutionResult.Candidates) {
                 val itemsByChapterId = candidateItems.associateBy { it.chapter.id }
                 startDownload(result.chapters.mapNotNull { itemsByChapterId[it.id] }, false)
             }
@@ -1149,8 +1159,10 @@ class EntryScreenModel(
 
     private fun cancelDownload(chapterId: Long) {
         val chapterItem = successState?.chapters.orEmpty().firstOrNull { it.id == chapterId } ?: return
-        val updatedStatus = entryDownloadInteraction.cancelQueuedDownload(chapterItem.entry.type, chapterId) ?: return
-        updateDownloadState(updatedStatus)
+        val result = entryDownloadActionFeature.cancel(downloadActionTarget(chapterItem.entry), chapterId)
+        if (result is mihon.entry.interactions.EntryDownloadCancellationResult.Cancelled) {
+            updateDownloadState(result.status)
+        }
     }
 
     fun markPreviousChapterRead(pointer: EntryChapter) {
@@ -1241,7 +1253,7 @@ class EntryScreenModel(
             .forEach { (_, chapterItems) ->
                 val entry = chapterItems.first().entry
                 val chapters = chapterItems.map { it.chapter }
-                entryDownloadInteraction.download(entry, chapters)
+                entryDownloadActionFeature.download(downloadActionTarget(entry), entry, chapters)
             }
         toggleAllSelection(false)
     }
@@ -1283,12 +1295,23 @@ class EntryScreenModel(
                 chapters.groupBy { it.entryId }
                     .forEach { (memberEntryId, memberChapters) ->
                         val entry = entryRepository.getEntryById(memberEntryId) ?: return@forEach
-                        entryDownloadInteraction.delete(entry, memberChapters)
+                        entryDownloadActionFeature.delete(downloadActionTarget(entry), entry, memberChapters)
                     }
             } catch (e: Throwable) {
                 logcat(LogPriority.ERROR, e)
             }
         }
+    }
+
+    private fun downloadActionTarget(entry: Entry): EntryDownloadActionTarget {
+        return EntryDownloadActionTarget(
+            type = entry.type,
+            sourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
+                EntryDownloadSourceAccess.LOCAL_OR_STUB
+            } else {
+                EntryDownloadSourceAccess.REMOTE
+            },
+        )
     }
 
     private fun downloadNewEntryChapters(chapters: List<EntryChapter>) {
@@ -1297,13 +1320,10 @@ class EntryScreenModel(
                 .groupBy { it.entry.id }
                 .forEach { (_, chapterItems) ->
                     val entry = chapterItems.first().entry
-                    val chaptersToDownload = entryDownloadInteraction.filterAutoDownloadCandidates(
+                    entryAutomaticDownloadFeature.downloadAfterEntryRefresh(
                         entry = entry,
-                        chapters = chapterItems.map { it.chapter },
+                        newChapters = chapterItems.map { it.chapter },
                     )
-                    if (chaptersToDownload.isNotEmpty()) {
-                        entryDownloadInteraction.download(entry, chaptersToDownload)
-                    }
                 }
         }
     }

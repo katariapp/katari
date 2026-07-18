@@ -118,7 +118,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import mihon.core.migration.Migrator
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadRuntimeFeature
+import mihon.entry.interactions.EntryDownloadRuntimeState
 import mihon.entry.interactions.EntryMediaCacheMaintenance
 import mihon.entry.interactions.settings.EntryMediaCachePreferences
 import mihon.feature.profiles.core.Profile
@@ -154,7 +155,7 @@ class MainActivity : BaseActivity() {
     private val profileManager: ProfileManager by injectLazy()
     private val profilesPreferences: ProfilesPreferences by injectLazy()
 
-    private val entryDownloadInteraction: EntryDownloadInteraction by injectLazy()
+    private val downloadRuntime: EntryDownloadRuntimeFeature by injectLazy()
     private val mediaCacheMaintenance: EntryMediaCacheMaintenance by injectLazy()
     private val extensionManager: ExtensionManager by injectLazy()
 
@@ -213,7 +214,10 @@ class MainActivity : BaseActivity() {
 
             var incognito by remember { mutableStateOf(getIncognitoState.await(null)) }
             val downloadOnly by libraryPreferences.downloadedOnly.collectAsState()
-            val indexing by entryDownloadInteraction.isInitializing.collectAsState(initial = false)
+            val downloadRuntimeState by downloadRuntime.state.collectAsState(
+                initial = EntryDownloadRuntimeState(),
+            )
+            val indexing = downloadRuntimeState.isInitializing
             val visibleProfiles by profileManager.visibleProfiles.collectAsState()
             val activeProfile by profileManager.activeProfile.collectAsState()
             val activeProfileId = activeProfile?.id ?: profileManager.activeProfileId

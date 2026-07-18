@@ -39,7 +39,6 @@ fun createEntryInteractionComposition(
             downloadOptionsProcessors = providers[EntryDownloadOptionsCapability],
             downloadSettingCapabilities = providers.downloadSettingCapabilities(),
             bulkDownloadCandidateProcessors = providers[EntryBulkDownloadCandidateCapability],
-            automaticDownloadFilterProcessors = providers[EntryAutomaticDownloadFilterCapability],
             migrationProviders = providers[EntryMigrationCapability],
             mergeProviders = providers[EntryMergeCapability],
             consumptionProcessors = providers[EntryConsumptionCapability],
@@ -110,7 +109,6 @@ private class DefaultEntryInteractions(
     downloadOptionsProcessors: Map<EntryType, EntryDownloadOptionsProcessor>,
     downloadSettingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
     bulkDownloadCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
-    automaticDownloadFilterProcessors: Map<EntryType, EntryAutomaticDownloadFilterProcessor>,
     migrationProviders: Map<EntryType, EntryMigrationProvider>,
     mergeProviders: Map<EntryType, EntryMergeProvider>,
     consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
@@ -132,8 +130,6 @@ private class DefaultEntryInteractions(
             optionsProcessors = downloadOptionsProcessors,
             settingCapabilities = downloadSettingCapabilities,
             bulkCandidateProcessors = bulkDownloadCandidateProcessors,
-            automaticFilterProcessors = automaticDownloadFilterProcessors,
-            bookmarkProviderTypes = bookmarkProcessors.keys,
         )
     override val capability: EntryCapabilityInteraction =
         ProviderBackedEntryCapabilityInteraction(migrationProviders, mergeProviders)

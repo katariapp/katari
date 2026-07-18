@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import mihon.entry.interactions.EntryAutomaticDownloadFilterProcessor
 import mihon.entry.interactions.EntryBulkDownloadCandidateProcessor
 import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
@@ -23,8 +22,7 @@ internal class MangaDownloadProcessor(
     private val dependencies: MangaEntryInteractionRuntimeDependencies,
 ) : EntryDownloadProcessor,
     EntryDownloadSettingProvider,
-    EntryBulkDownloadCandidateProcessor,
-    EntryAutomaticDownloadFilterProcessor {
+    EntryBulkDownloadCandidateProcessor {
     private val downloadManager = dependencies.downloadManager
     private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
 
@@ -133,14 +131,6 @@ internal class MangaDownloadProcessor(
             entry.id,
             applyScanlatorFilter = true,
         ).filterNot { isDownloaded(entry, it) }
-    }
-
-    override suspend fun filterAutoDownloadCandidates(
-        entry: Entry,
-        chapters: List<EntryChapter>,
-    ): List<EntryChapter> {
-        entry.requireManga()
-        return dependencies.filterEntryChaptersForDownload.await(entry, chapters)
     }
 
     override suspend fun delete(entry: Entry, chapters: List<EntryChapter>) {

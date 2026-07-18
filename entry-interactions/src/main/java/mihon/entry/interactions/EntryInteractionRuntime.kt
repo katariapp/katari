@@ -5,7 +5,6 @@ import coil3.ComponentRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
 import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
 import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
@@ -53,7 +52,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryReaderTracking> { dependencies.readerTracking }
     addSingletonFactory<EntryChildGroupFilterDataSource> { dependencies.mangaChildGroupFilterDataSource }
     addSingletonFactory<EntryDownloadWorkController> { DefaultEntryDownloadWorkController(app) }
-    addSingletonFactory { FilterEntryChaptersForDownload(get(), get(), get()) }
+    addSingletonFactory { EntryAutomaticDownloadPolicy(get(), get(), get()) }
     addSingletonFactory<EntryDownloadLifecycleInteraction> {
         EntryDownloadLifecycleManager(
             downloadPreferences = get(),
@@ -112,6 +111,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             featureContributors = listOf(
                 EntryOpenFeatureContributor,
                 EntryContinueFeatureContributor,
+                EntryDownloadRuntimeFeatureContributor,
+                EntryDownloadActionFeatureContributor,
+                EntryAutomaticDownloadFeatureContributor,
             ),
         )
     }
@@ -129,10 +131,33 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             interaction = composition.interactions.continueEntry,
         )
     }
+    addSingletonFactory<EntryDownloadRuntimeCoordinator> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryDownloadRuntimeFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.download,
+        )
+    }
+    addSingletonFactory<EntryDownloadRuntimeFeature> { get<EntryDownloadRuntimeCoordinator>() }
+    addSingletonFactory<EntryDownloadActionFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryDownloadActionFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.download,
+        )
+    }
+    addSingletonFactory<EntryAutomaticDownloadFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryAutomaticDownloadFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.download,
+            sharedPolicy = get(),
+        )
+    }
     addSingletonFactory {
         EntryDownloadNotificationManager(
             context = app,
-            downloads = get<EntryInteractionComposition>().interactions.download,
+            downloads = get<EntryDownloadRuntimeCoordinator>(),
             actions = dependencies.notificationActions,
             getMergedEntry = get(),
         )

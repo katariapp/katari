@@ -68,9 +68,13 @@ import eu.kanade.tachiyomi.util.system.toShareIntent
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryCapabilityCatalog
 import mihon.entry.interactions.EntryCapabilityReport
-import mihon.entry.interactions.EntryDownloadCapabilityPolicy
+import mihon.entry.interactions.EntryDownloadActionAvailability
+import mihon.entry.interactions.EntryDownloadActionFeature
+import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
@@ -111,6 +115,7 @@ class EntryScreen(
         val scope = rememberCoroutineScope()
         val lifecycleOwner = LocalLifecycleOwner.current
         val entryOpenFeature = remember { Injekt.get<EntryOpenFeature>() }
+        val entryDownloadActionFeature = remember { Injekt.get<EntryDownloadActionFeature>() }
         val entryCapabilityReport = remember { Injekt.get<EntryCapabilityReport>() }
         val screenModel = rememberScreenModel {
             EntryScreenModel(
@@ -138,22 +143,28 @@ class EntryScreen(
         }
 
         val successState = state as EntryScreenModel.State.Success
-        val downloadsSupported = entryCapabilityReport.supportsTypeWide(
-            successState.entry.type,
-            EntryCapabilityCatalog.DOWNLOADS,
+        val downloadTarget = EntryDownloadActionTarget(
+            type = successState.entry.type,
+            sourceAccess = if (successState.source.isLocalOrStub()) {
+                EntryDownloadSourceAccess.LOCAL_OR_STUB
+            } else {
+                EntryDownloadSourceAccess.REMOTE
+            },
         )
-        val bulkDownloadsSupported = entryCapabilityReport.supportsTypeWide(
-            successState.entry.type,
-            EntryCapabilityCatalog.BULK_DOWNLOADS,
-        )
+        val downloadsAvailable = entryDownloadActionFeature.individualAvailability(downloadTarget) ==
+            EntryDownloadActionAvailability.Available
+        val bulkDownloadsAvailable = entryDownloadActionFeature.bulkAvailability(
+            targets = listOf(downloadTarget),
+            action = EntryBulkDownloadAction.unread,
+        ) == EntryDownloadActionAvailability.Available
         val bookmarksSupported = entryCapabilityReport.supportsTypeWide(
             successState.entry.type,
             EntryCapabilityCatalog.BOOKMARKING,
         )
-        val bookmarkedDownloadsSupported = EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(
-            entryCapabilityReport,
-            successState.entry.type,
-        )
+        val bookmarkedDownloadsSupported = entryDownloadActionFeature.bulkAvailability(
+            targets = listOf(downloadTarget),
+            action = EntryBulkDownloadAction.bookmarked,
+        ) == EntryDownloadActionAvailability.Available
         val previewConfig by screenModel.previewConfig.collectAsStateWithLifecycle()
         val previewState by screenModel.previewState.collectAsStateWithLifecycle()
         val webViewSource = remember(successState.source) { successState.source as? WebViewSource }
@@ -182,11 +193,11 @@ class EntryScreen(
             nextUpdate = successState.entry.expectedNextUpdate,
             isTabletUi = isTabletUi(),
             chapterSwipeStartAction = screenModel.chapterSwipeStartAction.availableFor(
-                downloadsSupported = downloadsSupported,
+                downloadsSupported = downloadsAvailable,
                 bookmarksSupported = bookmarksSupported,
             ),
             chapterSwipeEndAction = screenModel.chapterSwipeEndAction.availableFor(
-                downloadsSupported = downloadsSupported,
+                downloadsSupported = downloadsAvailable,
                 bookmarksSupported = bookmarksSupported,
             ),
             navigateUp = navigator::pop,
@@ -195,10 +206,7 @@ class EntryScreen(
                     openChapter(context, entryOpenFeature, successState.entry, chapter)
                 }
             }.takeIf { openApplicable },
-            onDownloadChapter = screenModel::runChapterDownloadActions.takeIf {
-                !successState.source.isLocalOrStub() &&
-                    downloadsSupported
-            },
+            onDownloadChapter = screenModel::runChapterDownloadActions.takeIf { downloadsAvailable },
             onAddToLibraryClicked = {
                 screenModel.toggleFavorite()
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -248,7 +256,7 @@ class EntryScreen(
                 webViewSource != null
             },
             onDownloadActionClicked = screenModel::runDownloadAction
-                .takeIf { !successState.source.isLocalOrStub() && bulkDownloadsSupported },
+                .takeIf { bulkDownloadsAvailable },
             bookmarkedDownloadsSupported = bookmarkedDownloadsSupported,
             onEditCategoryClicked = screenModel::showChangeCategoryDialog.takeIf { successState.entry.favorite },
             onEditFetchIntervalClicked = screenModel::showSetFetchIntervalDialog.takeIf {

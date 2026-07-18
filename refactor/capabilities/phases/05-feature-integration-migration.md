@@ -16,7 +16,11 @@ Current progress:
 - [x] `F01` — Open committed in `106fec52e`. See [`../features/F01-open.md`](../features/F01-open.md).
 - [x] `5.0` — Application feature-access boundary committed in `83b2f93e7`.
 - [x] `F02` — Continue complete. See [`../features/F02-continue.md`](../features/F02-continue.md).
-- [ ] `F03`–`F27` — Not started.
+- [x] `F03` — Download Runtime complete. See [`../features/F03-download-runtime.md`](../features/F03-download-runtime.md).
+- [x] `F04` — Download Actions complete. See [`../features/F04-download-actions.md`](../features/F04-download-actions.md).
+- [x] `F05` — Automatic Downloads complete. See
+  [`../features/F05-automatic-downloads.md`](../features/F05-automatic-downloads.md).
+- [ ] `F06`–`F27` — Not started.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

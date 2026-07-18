@@ -19,6 +19,7 @@ import eu.kanade.tachiyomi.entry.EntryRemovalCleanupInteraction
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
+import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.source.sourceItemOrientation
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -39,12 +40,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import mihon.core.common.utils.mutate
 import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
-import mihon.entry.interactions.EntryCapabilityCatalog
+import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCapabilityInteraction
-import mihon.entry.interactions.EntryCapabilityReport
 import mihon.entry.interactions.EntryConsumptionInteraction
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadActionAvailability
+import mihon.entry.interactions.EntryDownloadActionFeature
+import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadRuntimeFeature
+import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryLibraryFilterInteraction
 import mihon.entry.interactions.EntryMergeCapabilityItem
 import mihon.feature.profiles.core.EntryProfileMoveConflictResolution
@@ -106,9 +109,9 @@ class LibraryScreenModel(
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
+    private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
-    private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
     private val entryLibraryFilterInteraction: EntryLibraryFilterInteraction = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
@@ -588,7 +591,7 @@ class LibraryScreenModel(
     private fun getLibraryItemsFlow(): Flow<List<LibraryItem>> {
         return combine(
             getLibraryEntries.subscribe(),
-            entryDownloadInteraction.changes,
+            downloadRuntime.changes,
         ) { items, _ ->
             items.enrichEntryItems()
         }
@@ -606,7 +609,7 @@ class LibraryScreenModel(
             } else {
                 sourceDisplayInfo?.lang.orEmpty()
             }
-            val downloadCount = item.calculateDownloadCount(entryDownloadInteraction)
+            val downloadCount = item.calculateDownloadCount(downloadRuntime)
 
             item.copy(
                 sourceName = sourceName,
@@ -673,32 +676,46 @@ class LibraryScreenModel(
         screenModelScope.launchNonCancellable {
             val entries = getActionEntries(entryIds)
             entries.forEach { entry ->
-                when (
-                    val result = entryDownloadInteraction.resolveBulkDownloadCandidates(
-                        entry = entry,
-                        action = action.toEntryBulkDownloadAction(),
-                    )
-                ) {
-                    is EntryBulkDownloadCandidateResult.Supported -> {
-                        if (result.chapters.isNotEmpty()) {
-                            entryDownloadInteraction.download(entry, result.chapters)
-                        }
-                    }
-                    EntryBulkDownloadCandidateResult.Unsupported -> Unit
+                val target = downloadActionTarget(entry)
+                val result = entryDownloadActionFeature.resolveBulkDownloadCandidates(
+                    target = target,
+                    entry = entry,
+                    action = action.toEntryBulkDownloadAction(),
+                )
+                if (result is EntryBulkDownloadResolutionResult.Candidates) {
+                    entryDownloadActionFeature.download(target, entry, result.chapters)
                 }
             }
         }
     }
 
-    fun canDownloadSelection(): Boolean {
-        val selectedItems = state.value.selectedLibraryItems
-        if (selectedItems.isEmpty()) return false
-        return selectedItems.all { item ->
-            !item.isLocal && entryCapabilityReport.supportsTypeWide(
-                item.entry.type,
-                EntryCapabilityCatalog.BULK_DOWNLOADS,
-            )
-        }
+    fun canDownloadSelection(action: DownloadAction = DownloadAction.UNREAD_CHAPTERS): Boolean {
+        return entryDownloadActionFeature.bulkAvailability(
+            targets = state.value.selectedLibraryItems.map(::downloadActionTarget),
+            action = action.toEntryBulkDownloadAction(),
+        ) == EntryDownloadActionAvailability.Available
+    }
+
+    private fun downloadActionTarget(item: LibraryItem): EntryDownloadActionTarget {
+        return EntryDownloadActionTarget(
+            type = item.entry.type,
+            sourceAccess = if (item.sourceIds.any { sourceManager.get(it).isLocalOrStub() }) {
+                EntryDownloadSourceAccess.LOCAL_OR_STUB
+            } else {
+                EntryDownloadSourceAccess.REMOTE
+            },
+        )
+    }
+
+    private fun downloadActionTarget(entry: Entry): EntryDownloadActionTarget {
+        return EntryDownloadActionTarget(
+            type = entry.type,
+            sourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
+                EntryDownloadSourceAccess.LOCAL_OR_STUB
+            } else {
+                EntryDownloadSourceAccess.REMOTE
+            },
+        )
     }
 
     /**
@@ -748,7 +765,7 @@ class LibraryScreenModel(
                 distinctEntries.forEach { entry ->
                     val chapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
                     if (chapters.isNotEmpty()) {
-                        entryDownloadInteraction.delete(entry, chapters)
+                        entryDownloadActionFeature.delete(downloadActionTarget(entry), entry, chapters)
                     }
                 }
             }
@@ -1274,8 +1291,8 @@ class LibraryScreenModel(
     }
 }
 
-internal fun LibraryItem.calculateDownloadCount(entryDownloadInteraction: EntryDownloadInteraction): Int {
-    return memberEntries.sumOf(entryDownloadInteraction::getDownloadCount)
+internal fun LibraryItem.calculateDownloadCount(downloadRuntime: EntryDownloadRuntimeFeature): Int {
+    return memberEntries.sumOf(downloadRuntime::downloadCount)
 }
 
 internal fun buildTypeLibraryPages(

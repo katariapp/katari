@@ -34,7 +34,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class EntryDownloadJob(context: Context, workerParams: WorkerParameters) : CoroutineWorker(context, workerParams) {
-    private val downloads: EntryDownloadInteraction = Injekt.get()
+    private val downloads: EntryDownloadRuntimeCoordinator = Injekt.get()
     private val downloadPreferences: DownloadPreferences = Injekt.get()
     private val notificationProvider: EntryDownloadForegroundNotificationProvider = Injekt.get()
 

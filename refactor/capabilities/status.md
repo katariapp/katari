@@ -23,6 +23,8 @@ Updated: 2026-07-18
 - Runtime-bridge boundary correction: `4b517ed53` (`(fix): discover entry runtime module bridges`)
 - F01 Open completion: `106fec52e` (`(refactor): migrate open feature integration`)
 - Architecture Gate 5.0: `83b2f93e7` (`(refactor): enforce feature-facing entry boundary`)
+- F02 Continue completion: `0480ffeff` (`(refactor): migrate continue feature integration`)
+- F03–F05 are integrated in the working tree as one review batch and are not committed on the main branch yet.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -30,8 +32,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F02` — Continue
-- State: complete; awaiting explicit instruction before F03
+- Milestone: `F03`–`F05` — Download Runtime, Download Actions, and Automatic Downloads
+- State: complete in the working tree; awaiting review and explicit commit instruction before `F06`
 
 ## Why the Plan Was Reset
 
@@ -110,10 +112,10 @@ authority or weakening the architecture.
 - [x] Existing Anime consumption lifecycle event corrected to use the episodes whose state actually changed
 - [x] Decision `0013-provider-binding-and-dispatch.md` accepted
 - [x] Milestone 4.2.1 committed in `62c9741a1`
-- [x] Core downloads separated from options, settings, bulk candidates, and automatic filtering
+- [x] Core downloads initially separated from options, settings, bulk candidates, and automatic filtering
 - [x] Download support contributed through capability-owned bindings for Manga, Anime, and optional Book construction
 - [x] Anime alone contributes interactive options; Manga contributes each implemented download setting independently
-- [x] Manga, Anime, and Book downloaders contribute bulk-candidate and automatic-filter providers independently
+- [x] Manga, Anime, and Book downloaders initially contributed bulk-candidate and automatic-filter providers independently
 - [x] Default false/null/empty download sub-capability declarations removed from the core downloader contract
 - [x] Decision `0014-download-provider-decomposition.md` accepted
 - [x] Milestone 4.2.2 committed in `f4a6d153c`
@@ -159,6 +161,11 @@ authority or weakening the architecture.
 - [x] F02 Continue owner, prerequisite, result semantics, and complete consumer disposition recorded
 - [x] Entry, Library, and History Continue surfaces migrated behind one graph-derived coordinator
 - [x] Synthetic provider, no-next, and valid-absence Continue proofs added
+- [x] F03 queue/runtime state, counts, controls, worker, and notification consequences migrated behind one feature
+- [x] F04 individual, bulk, bookmarked-bulk, retry, and notification actions migrated behind one feature
+- [x] F05 automatic-download policy and orchestration made shared for every core Download provider
+- [x] Redundant per-type automatic-filter capability, dispatch, bindings, and generic domain policy exposure removed
+- [x] F03–F05 application consumers reconciled together; no migrated operation retains raw provider access
 
 Focused F01 validation:
 
@@ -189,6 +196,16 @@ Focused F02 validation:
   migration error.
 - Full application compilation and a clean boundary check remain intentionally deferred while F03–F27 raw consumers are
   inaccessible.
+
+Focused F03–F05 validation:
+
+- `spotlessApply`, Feature Graph tests, Entry-interactions API/SPI compilation, and Manga, Anime, and Book interaction
+  compilation pass after combining the three isolated implementations.
+- The combined boundary census reports 34 remaining raw application references, all assigned to F06–F27. F03-only
+  screens and the shared Library, Updates, and Notification Receiver download paths no longer import raw download SPI.
+- Root Entry-interactions compilation reaches only the known F06 lifecycle failures: deleted `EntryCapabilityReport`,
+  deleted `EntryDownloadCapabilityPolicy`, and the resulting runtime factory inference error.
+- Focused root feature tests are present but cannot execute until the independent F06 main source set compiles.
 
 ## New Phase Sequence
 
@@ -236,14 +253,14 @@ beside the graph.
 - Milestone 4.2.2 is committed in `f4a6d153c`.
 - Milestone 4.2.3 is committed in `c046e1f8f`.
 - Milestone 4.2.4 is committed in `c2ca736e4`.
-- Milestone 4.3 production and refactor-workspace changes are uncommitted and awaiting review.
+- Milestone 4.3 is committed in `c88ff5fe9`.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
 - `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
   explicit Phase 5 presentation-projection obligation.
-- No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
-  blocked until real feature owners contribute relationships in their owning phase.
+- No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
+  only the real F01–F05 owners migrated so far; F06–F27 remain deliberately absent until their owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -376,7 +393,7 @@ Approved on 2026-07-18:
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
-- Remaining application failures are the expected migration queue for F02–F27. Re-exporting SPI, restoring raw DI, or
+- Remaining application failures are the expected migration queue for F06–F27. Re-exporting SPI, restoring raw DI, or
   moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
@@ -388,12 +405,12 @@ Approved on 2026-07-18:
   only Anime binds Playback-preference transfer.
 - Milestone 4.2.2 does not turn the old downloader into one broad capability. Each behavior that a future type may add
   independently has its own provider contract and binding.
-- Core downloads imply neither options, settings, bulk candidates, nor automatic filtering. Book remains valid when its
-  optional downloader is omitted.
+- Core downloads imply neither options, settings, nor bulk candidates. They do receive shared automatic-download policy
+  through F05; Book remains valid when its optional downloader is omitted.
 - Each Manga download setting is an individual graph-visible provider claim, not an enum set treated as another support
   authority.
-- Shared bulk selection and automatic-download orchestration remain feature-owned Phase 5 work; type providers expose
-  only the genuinely media-specific operations those features need.
+- Shared bulk selection and automatic-download orchestration are feature-owned in F04/F05; type providers expose only
+  the genuinely media-specific operations those features need.
 - Milestone 4.2.3 removes the combined Migration/Merge boolean holder instead of wrapping it as one broad provider.
 - Migration and Merge bindings are independent even though each current supporting type uses one object to carry both
   compatibility markers.
@@ -416,7 +433,15 @@ Approved on 2026-07-18:
   and the generic operational provider index; no per-capability registration method remains.
 - The generic provider index is not a feature coordinator. Existing facade policies exposed by compilation remain Phase
   5 obligations and must move to feature-owned integrations rather than into the index.
+- F03 declares queue, status, count, worker, initialization, and notification consequences once and exposes one
+  app-facing runtime contract; adding a Download provider requires no queue/UI/worker registration.
+- F04 derives bookmarked bulk behavior from Download, Bulk Candidate, and Bookmark providers. A future Bookmark provider
+  activates that consequence without editing the downloader or application presentation.
+- F05 removes the artificial automatic-filter opt-in after proving every current implementation was the same shared
+  policy. A future Download provider receives automatic-download policy without type-specific delegation.
+- Application consumers use feature contracts for every F03–F05 operation. Remaining raw download access is explicitly
+  owned by F07/F08, while the independent F06 lifecycle compile failure remains visible.
 
 ## Exact Next Action After Review
 
-Do not begin `F03` until explicitly instructed to continue.
+Do not begin `F06` until the F03–F05 batch is reviewed, explicitly committed, and the user instructs continuation.

@@ -1,8 +1,6 @@
 package mihon.entry.interactions.manga
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBookmarkCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryChildGroupFilterCapability
@@ -49,7 +47,6 @@ fun mangaEntryInteractionPlugin(
             getEntryWithChapters = dependencies.getEntryWithChapters,
             entryChapterRepository = dependencies.entryChapterRepository,
             entryProgressRepository = dependencies.entryProgressRepository,
-            filterEntryChaptersForDownload = dependencies.filterEntryChaptersForDownload,
             childGroupFilterDataSource = dependencies.childGroupFilterDataSource,
             downloadPreferences = dependencies.downloadPreferences,
             downloadManager = Injekt.get(),
@@ -108,7 +105,6 @@ internal fun mangaEntryInteractionPlugin(
             EntryDownloadParallelSourceTransfersCapability.bind(downloadProcessor),
             EntryDownloadParallelItemTransfersCapability.bind(downloadProcessor),
             EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
-            EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
             EntryMigrationCapability.bind(migrationMergeProvider),
             EntryMergeCapability.bind(migrationMergeProvider),
             EntryChildListCapability.bind(childListProcessor),
@@ -125,7 +121,6 @@ data class MangaEntryInteractionDependencies(
     val getEntryWithChapters: GetEntryWithChapters,
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
-    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload,
     val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val downloadPreferences: DownloadPreferences,
     val sourceManager: SourceManager,
@@ -137,7 +132,6 @@ internal data class MangaEntryInteractionRuntimeDependencies(
     val getEntryWithChapters: GetEntryWithChapters,
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
-    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload,
     val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val downloadPreferences: DownloadPreferences,
     val downloadManager: DownloadManager,

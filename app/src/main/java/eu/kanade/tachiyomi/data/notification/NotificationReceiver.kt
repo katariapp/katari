@@ -9,6 +9,7 @@ import androidx.core.net.toUri
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreJob
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.data.updater.AppUpdateDownloadJob
+import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.getParcelableExtraCompat
@@ -21,7 +22,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mihon.entry.interactions.EntryConsumptionInteraction
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadActionFeature
+import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadRuntimeFeature
+import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import tachiyomi.core.common.Constants
@@ -30,6 +34,7 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
+import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -49,16 +54,19 @@ class NotificationReceiver : BroadcastReceiver() {
     private val entryRepository: EntryRepository by injectLazy()
     private val entryChapterRepository: EntryChapterRepository by injectLazy()
     private val entryConsumptionInteraction: EntryConsumptionInteraction by injectLazy()
-    private val entryDownloadInteraction: EntryDownloadInteraction by injectLazy()
+    private val downloadRuntime: EntryDownloadRuntimeFeature by injectLazy()
+    private val entryDownloadActionFeature: EntryDownloadActionFeature by injectLazy()
     private val entryOpenFeature: EntryOpenFeature by injectLazy()
+    private val sourceManager: SourceManager by injectLazy()
     private val scope: CoroutineScope by injectLazy()
     private val entryActionHandler by lazy {
         NotificationEntryActionHandler(
             entryRepository = entryRepository,
             entryChapterRepository = entryChapterRepository,
             entryConsumptionInteraction = entryConsumptionInteraction,
-            entryDownloadInteraction = entryDownloadInteraction,
+            entryDownloadActionFeature = entryDownloadActionFeature,
             entryOpenFeature = entryOpenFeature,
+            sourceManager = sourceManager,
         )
     }
 
@@ -68,15 +76,15 @@ class NotificationReceiver : BroadcastReceiver() {
             ACTION_DISMISS_NOTIFICATION -> dismissNotification(context, intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1))
             // Resume the download service
             ACTION_RESUME_DOWNLOADS -> {
-                entryDownloadInteraction.startDownloads()
+                downloadRuntime.start()
             }
             // Pause the download service
             ACTION_PAUSE_DOWNLOADS -> {
-                entryDownloadInteraction.pauseDownloads()
+                downloadRuntime.pause()
             }
             // Clear the download queue
             ACTION_CLEAR_DOWNLOADS -> {
-                entryDownloadInteraction.clearQueue()
+                downloadRuntime.clearQueue()
             }
             // Launch share activity and dismiss notification
             ACTION_SHARE_IMAGE ->
@@ -855,8 +863,9 @@ internal class NotificationEntryActionHandler(
     private val entryRepository: EntryRepository,
     private val entryChapterRepository: EntryChapterRepository,
     private val entryConsumptionInteraction: EntryConsumptionInteraction,
-    private val entryDownloadInteraction: EntryDownloadInteraction,
+    private val entryDownloadActionFeature: EntryDownloadActionFeature,
     private val entryOpenFeature: EntryOpenFeature,
+    private val sourceManager: SourceManager,
 ) {
     suspend fun openChild(
         context: Context,
@@ -902,7 +911,18 @@ internal class NotificationEntryActionHandler(
         val entry = entryRepository.getEntryById(entryId) ?: return
         val chapters = loadChapters(childIds)
         if (chapters.isNotEmpty()) {
-            entryDownloadInteraction.download(entry, chapters)
+            entryDownloadActionFeature.download(
+                target = EntryDownloadActionTarget(
+                    type = entry.type,
+                    sourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
+                        EntryDownloadSourceAccess.LOCAL_OR_STUB
+                    } else {
+                        EntryDownloadSourceAccess.REMOTE
+                    },
+                ),
+                entry = entry,
+                chapters = chapters,
+            )
         }
     }
 

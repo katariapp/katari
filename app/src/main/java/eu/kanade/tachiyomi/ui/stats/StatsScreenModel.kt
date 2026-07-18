@@ -8,7 +8,7 @@ import eu.kanade.presentation.more.stats.StatsScreenState
 import eu.kanade.presentation.more.stats.data.StatsData
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.coroutines.flow.update
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryUpdateEligibility
 import mihon.entry.interactions.EntryUpdateEligibilityInteraction
 import mihon.entry.interactions.EntryUpdateEligibilityRequest
@@ -27,7 +27,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class StatsScreenModel(
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryUpdateEligibility: EntryUpdateEligibilityInteraction = Injekt.get(),
     private val getLibraryEntries: GetLibraryEntries = Injekt.get(),
     private val getTotalReadDuration: GetTotalReadDuration = Injekt.get(),
@@ -66,7 +66,7 @@ class StatsScreenModel(
             val chaptersStatData = StatsData.Chapters(
                 totalChapterCount = distinctLibraryEntries.sumOf { it.totalCount }.toInt(),
                 readChapterCount = distinctLibraryEntries.sumOf { it.consumedCount }.toInt(),
-                downloadCount = entryDownloadInteraction.getTotalDownloadCount(),
+                downloadCount = downloadRuntime.totalDownloadCount(),
             )
 
             val trackersStatData = StatsData.Trackers(

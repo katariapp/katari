@@ -1,8 +1,6 @@
 package mihon.entry.interactions.anime
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryChildListCapability
 import mihon.entry.interactions.EntryChildProgressCapability
@@ -47,7 +45,6 @@ fun animeEntryInteractionPlugin(
             animeDownloadManager = Injekt.get(),
             animeDownloadCache = Injekt.get(),
             downloadPreferences = dependencies.downloadPreferences,
-            filterEntryChaptersForDownload = dependencies.filterEntryChaptersForDownload,
             downloadPreferencesRepository = dependencies.downloadPreferencesRepository,
             sourceManager = dependencies.sourceManager,
             entryRepository = dependencies.entryRepository,
@@ -102,7 +99,6 @@ internal fun animeEntryInteractionPlugin(
             EntryDownloadCapability.bind(downloadProcessor),
             EntryDownloadOptionsCapability.bind(downloadProcessor),
             EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
-            EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
             EntryMigrationCapability.bind(migrationMergeProvider),
             EntryMergeCapability.bind(migrationMergeProvider),
             EntryChildListCapability.bind(childListProcessor),
@@ -119,7 +115,6 @@ data class AnimeEntryInteractionDependencies(
     val entryProgressRepository: EntryProgressRepository,
     val playbackPreferencesRepository: PlaybackPreferencesRepository,
     val downloadPreferences: DownloadPreferences,
-    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload,
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
@@ -136,7 +131,6 @@ internal data class AnimeEntryInteractionRuntimeDependencies(
     val animeDownloadManager: AnimeDownloadManager,
     val animeDownloadCache: AnimeDownloadCache,
     val downloadPreferences: DownloadPreferences,
-    val filterEntryChaptersForDownload: FilterEntryChaptersForDownload,
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,

@@ -28,8 +28,7 @@ class EntryDownloadNotificationManagerTest {
         fixture.manager.start()
         runCurrent()
 
-        fixture.queue.value = listOf(group(item()))
-        fixture.running.value = true
+        fixture.state.value = EntryDownloadRuntimeState(queue = listOf(group(item())), isRunning = true)
         runCurrent()
 
         progress.captured.entryType shouldBe EntryType.BOOK
@@ -37,7 +36,7 @@ class EntryDownloadNotificationManagerTest {
         progress.captured.title shouldBe "Entry"
         progress.captured.text shouldBe "Chapter • 25%"
 
-        fixture.paused.value = true
+        fixture.state.value = fixture.state.value.copy(isPaused = true)
         runCurrent()
 
         verify { fixture.presenter.showPaused() }
@@ -69,16 +68,12 @@ class EntryDownloadNotificationManagerTest {
     }
 
     private fun fixture(scope: CoroutineScope): Fixture {
-        val queue = MutableStateFlow<List<EntryDownloadQueueGroup>>(emptyList())
-        val running = MutableStateFlow(false)
-        val paused = MutableStateFlow(false)
+        val stateFlow = MutableStateFlow(EntryDownloadRuntimeState())
         val progress = MutableSharedFlow<EntryDownloadQueueItem>()
         val status = MutableSharedFlow<EntryDownloadQueueItem>()
         val events = MutableSharedFlow<EntryDownloadEvent>()
-        val downloads = mockk<EntryDownloadInteraction>(relaxed = true) {
-            every { queueState } returns queue
-            every { isRunning } returns running
-            every { isPaused } returns paused
+        val downloads = mockk<EntryDownloadRuntimeCoordinator>(relaxed = true) {
+            every { state } returns stateFlow
             every { queueProgressUpdates() } returns progress
             every { queueStatusUpdates() } returns status
             every { events() } returns events
@@ -106,9 +101,7 @@ class EntryDownloadNotificationManagerTest {
                 },
             ),
             presenter = presenter,
-            queue = queue,
-            running = running,
-            paused = paused,
+            state = stateFlow,
             events = events,
         )
     }
@@ -144,9 +137,7 @@ class EntryDownloadNotificationManagerTest {
     private data class Fixture(
         val manager: EntryDownloadNotificationManager,
         val presenter: EntryDownloadNotificationPresenter,
-        val queue: MutableStateFlow<List<EntryDownloadQueueGroup>>,
-        val running: MutableStateFlow<Boolean>,
-        val paused: MutableStateFlow<Boolean>,
+        val state: MutableStateFlow<EntryDownloadRuntimeState>,
         val events: MutableSharedFlow<EntryDownloadEvent>,
     )
 }

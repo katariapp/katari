@@ -46,6 +46,16 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Applicable no-next state is distinct from provider absence through the structured feature result.
 - No application production consumer imports `EntryContinueInteraction` directly.
 
+### Resolved in F03–F05: shared Download runtime, actions, and automatic policy
+
+- F03 owns queue/runtime state, inspection, controls, worker execution, and notification rendering.
+- F04 owns individual, bulk, bookmarked-bulk, retry, and notification-triggered actions; provider SPI exposes only the
+  genuinely media-specific bulk candidate pool.
+- F05 owns one automatic-download selection and scheduling policy for every core Download provider. The redundant
+  automatic-filter capability, dispatch, type bindings, and public domain policy were removed.
+- No F03–F05 application operation calls `EntryDownloadInteraction`; the 34 remaining raw application references are
+  assigned to F06–F27.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -54,7 +64,7 @@ SPI boundary is not an exit gate for Phase 3.5.
   binding dispatch, duplicate claims, and type ownership. Type-specific processor behavior remains in the type suites;
   tests that need real feature contributors remain Phase 5/7 obligations rather than receiving empty placeholders.
 
-### `P5-DOWNLOAD-REGISTRY` — Bulk and bookmarked download consequences remain in transitional dispatch
+### Resolved in F04: `P5-DOWNLOAD-REGISTRY`
 
 - Responsible owner: Downloads feature
 - Owning phase: Phase 5
@@ -63,8 +73,9 @@ SPI boundary is not an exit gate for Phase 3.5.
   temporarily checks Bookmarking-provider presence before applying the shared bookmarked action. The provider-backed
   facade no longer uses a registry, but this cross-provider feature policy is still transitional. This removed the
   deleted report dependency and restored SPI compilation without recreating a support authority.
-- Required outcome: the download feature owns the prerequisite relationships and shared bulk/bookmark consequences. The
-  registry consumes selected feature behavior instead of retaining the transitional cross-provider rule.
+- Resolution: F04 declares separate Download, Download-plus-Bulk-Candidate, and
+  Download-plus-Bulk-Candidate-plus-Bookmark relationships. Shared selection moved into the feature, and raw dispatch
+  now resolves only the media-specific candidate pool.
 
 ### `P5-FEATURE-CONTRIBUTOR-INSTALLATION` — Remaining feature contributors are not migrated yet
 
@@ -73,7 +84,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
   content-type plugins that contribute themselves. F01 now installs the Open contributor; providers belonging to
-  F03–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
+  F06–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
 
@@ -93,10 +104,12 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `app/src/main/**/ui/entry/EntryScreen.kt`
 - F01 resolution: Open child and preview-page controls consume selected Open applicability.
-- Remaining outcome: download and bookmark controls consume their selected feature applicability and presentation
-  metadata, with no independent support flags or catalog queries.
+- F04 resolution: download and bookmarked-bulk controls consume selected action applicability with contextual source and
+  selection blockers.
+- Remaining outcome: Bookmark-owned controls consume F10 applicability and presentation metadata; F07 owns the options
+  branch still retained in the screen model.
 
-### `P5-LIBRARY-INTEGRATIONS` — Library actions and notifications still query the deleted authority
+### Resolved in F03–F05: `P5-LIBRARY-INTEGRATIONS`
 
 - Responsible owners: Library feature and Downloads feature
 - Owning phase: Phase 5
@@ -105,17 +118,18 @@ SPI boundary is not an exit gate for Phase 3.5.
   - `app/src/main/**/ui/library/LibraryScreenModel.kt`
   - `app/src/main/**/data/library/LibraryUpdateNotifier.kt`
 - F01 resolution: library-update notification Open-child intents consume the selected Open feature gate.
-- Remaining outcome: bulk actions and download notification policy consume feature-owned evaluated consequences while
-  preserving contextual selection, local-entry, and queue constraints.
+- Resolution: Library counts use F03; whole-selection bulk actions and notification eligibility/dispatch use F04; the
+  library-update automatic-download batch uses F05. Contextual selection, local/stub, queue, and notification-size
+  constraints remain structured inputs rather than support flags.
 
-### `P5-UPDATES-INTEGRATIONS` — Updates actions still query the deleted authority
+### Partially resolved in F03/F04: `P5-UPDATES-INTEGRATIONS`
 
 - Responsible owner: Updates feature
 - Owning phase: Phase 5
 - Affected path: `app/src/main/**/ui/updates/UpdatesScreenModel.kt`
 - F01 resolution: Updates row Open availability and dispatch consume the selected Open feature gate.
-- Remaining outcome: download and bookmark actions consume evaluated feature relationships and actual operational
-  interactions without recreating a type support matrix.
+- F03/F04 resolution: download status and action availability/dispatch consume the runtime and action features.
+- Remaining outcome: Bookmark actions migrate with F10 without recreating a type support matrix.
 
 ### `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS` — Retained behavioral proofs still construct report fixtures
 
@@ -125,10 +139,11 @@ SPI boundary is not an exit gate for Phase 3.5.
   - the cleanup portion formerly covered by `entry-interactions/src/test/**/BookmarkDownloadVerticalContractTest.kt`;
     its provider-backed bookmark/bulk behavior remains covered, while cleanup selection awaits the Phase 5 consumer
   - `entry-interactions/src/test/**/EntryDownloadLifecycleManagerTest.kt`
-  - `app/src/test/**/DownloadDropdownMenuTest.kt`
   - `app/src/test/**/UpdatesSelectionActionsTest.kt`
-- Required outcome: preserve behavioral selection and cleanup assertions as graph-selected contracts. Remove synthetic
-  report construction and do not replace it with hardcoded production type expectations.
+- F04 resolution: `DownloadDropdownMenuTest` now tests only presentation of the feature-selected bookmarked consequence;
+  it no longer constructs a support report.
+- Required outcome: preserve remaining cleanup and Bookmark selection assertions as graph-selected contracts. Remove
+  synthetic report construction and do not replace it with hardcoded production type expectations.
 
 ### `P5-PRESENTATION-PROJECTION` — Type vocabulary remains an app-owned concrete-type map
 

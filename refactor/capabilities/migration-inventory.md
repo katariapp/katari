@@ -75,9 +75,9 @@ Migration progress:
 - Milestone 4.2.1 implements `T11`, `T12`, `T14`, and `T15` in the working tree. Capability-owned bindings derive graph
   providers and dispatch from one declaration, including the Manga object that independently binds Consumption and
   Bookmarking.
-- Milestone 4.2.2 implements `T04`–`T08` in the working tree. The former monolithic downloader is split into independent
-  core, options, per-setting, bulk-candidate, and automatic-filter provider claims. Current types contribute only the
-  contracts their concrete implementations supply.
+- Milestone 4.2.2 initially split `T04`–`T08` into core, options, per-setting, bulk-candidate, and automatic-filter
+  provider claims. F05 later proved the automatic-filter claim was only repeated delegation to shared policy and removed
+  it; core, options, per-setting, and genuinely media-specific bulk-candidate providers remain independent.
 - Milestone 4.2.3 implements `T09` and `T10` in the working tree. Migration and Merge are independent compatibility
   providers for their shared workflows; Manga and Anime bind both, while Book binds neither.
 - Milestone 4.2.4 implements `T13` and `T16`–`T21` in the working tree. Universal Update Eligibility is shared policy;
@@ -98,7 +98,7 @@ Migration progress:
 | `T05` | Download options | Default-false/null methods inside the download processor; Anime supplies behavior | Represent option resolution as a distinct provider or owned specialized behavior so core downloads do not imply options. |
 | `T06` | Download setting behavior | `settingCapabilities` set inside each downloader | Model each genuine specialized setting behavior without a central enum-to-type matrix. Settings visibility is feature-derived. |
 | `T07` | Bulk candidate pool | Required method on each download processor | Preserve media-specific pool construction; bulk action selection and intersections belong to the Downloads feature. |
-| `T08` | Automatic-download filtering | Required method on each download processor | Preserve media-specific filtering as specialized behavior selected by the automatic-download integration. |
+| `T08` | Automatic-download filtering | The three former methods only asserted type and delegated to one shared policy | Remove the artificial provider and derive Automatic Downloads from core Download support. F05 owns shared policy; future genuine media differences must be modeled from their actual requirement without restoring no-op providers. |
 | `T09` | Migration | `EntryCapabilityProcessor.supportsMigration`, default false | Split from the combined capability processor. Provider absence means unavailable; do not contribute a false result. |
 | `T10` | Merge | `EntryCapabilityProcessor.supportsMerge`, default false | Split from migration. Selection shape remains a feature-owned contextual rule. |
 | `T11` | Consumption mutation | `EntryConsumptionProcessor` | Contribute the provider independently from Bookmarking and Downloads. |
@@ -134,7 +134,7 @@ so it cannot be silently omitted for the next provider.
 | `F02` | Continue | Entry continue action; library continue action; history resume action; no-next-item presentation. |
 | `F03` | Download queue/runtime | Entry and Updates status/actions; library counts and filters; unified queue UI; More-tab running state; main-activity initialization; shared job, work controller, foreground notification, and notification event renderer. |
 | `F04` | Individual and bulk download actions | Entry selection/swipes; Library selection; Updates selection; library-update notification download action; candidate resolution; local/stub and selection blockers. |
-| `F05` | Automatic downloads | Library update discovery and queue start; entry refresh auto-download path; category and preference policy; provider-specific candidate filtering. |
+| `F05` | Automatic downloads | Library update discovery and queue start; entry refresh auto-download path; shared category, preference, and unread policy; removal of the redundant per-type filtering opt-in. |
 | `F06` | Download lifecycle cleanup | Consumption, reader, player, and Book completion/progress events; remove-after-consumed policy; category exclusions; bookmark protection; physical delete versus cleanup dispatch. |
 | `F07` | Download settings and options | Download settings screen; packaging/splitting/parallelism visibility; entry download-options dialog; stream, dub, subtitle, and quality selection; option persistence. |
 | `F08` | Download maintenance | Source rename, entry-title rename, backup-restore cache invalidation, migration deletion, advanced cache invalidation, source removal, and catalogue removal paths. |

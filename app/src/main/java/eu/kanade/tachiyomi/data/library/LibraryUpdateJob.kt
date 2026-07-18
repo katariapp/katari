@@ -36,7 +36,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryUpdateEligibility
 import mihon.entry.interactions.EntryUpdateEligibilityInteraction
 import mihon.entry.interactions.EntryUpdateEligibilityRequest
@@ -72,7 +72,6 @@ import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
@@ -83,7 +82,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
     private val sourceManager: SourceManager = Injekt.get()
     private val libraryPreferences: LibraryPreferences = Injekt.get()
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get()
+    private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get()
     private val entryUpdateEligibility: EntryUpdateEligibilityInteraction = Injekt.get()
     private val getLibraryEntries: GetLibraryEntries = Injekt.get()
     private val entryRepository: EntryRepository = Injekt.get()
@@ -301,7 +300,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         val currentlyUpdatingEntries = CopyOnWriteArrayList<Entry>()
         val newUpdates = CopyOnWriteArrayList<Pair<Entry, Array<EntryChapter>>>()
         val failedUpdates = CopyOnWriteArrayList<Pair<Entry, String?>>()
-        val hasDownloads = AtomicBoolean(false)
+        val automaticDownloads = entryAutomaticDownloadFeature.newLibraryUpdateBatch()
 
         logcat(LogPriority.INFO) { "Processing ${entriesToUpdate.size} queued library entries" }
 
@@ -334,16 +333,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             .sortedByDescending { it.sourceOrder }
 
                                         if (newChapters.isNotEmpty()) {
-                                            val chaptersToDownload =
-                                                entryDownloadInteraction.filterAutoDownloadCandidates(
-                                                    entry,
-                                                    newChapters,
-                                                )
-
-                                            if (chaptersToDownload.isNotEmpty()) {
-                                                downloadEntryChapters(queuedEntry, chaptersToDownload)
-                                                hasDownloads.store(true)
-                                            }
+                                            automaticDownloads.enqueue(entry, newChapters)
 
                                             libraryPreferences.newUpdatesCount.getAndSet { it + newChapters.size }
 
@@ -383,10 +373,8 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
         if (newUpdates.isNotEmpty()) {
             notifier.showUpdateNotifications(newUpdates)
-            if (hasDownloads.load()) {
-                entryDownloadInteraction.startDownloads()
-            }
         }
+        automaticDownloads.complete()
 
         logcat(LogPriority.INFO) {
             "Library update finished with ${newUpdates.size} updated entr${if (newUpdates.size == 1) "y" else "ies"} and ${failedUpdates.size} failure${if (failedUpdates.size == 1) "" else "s"}"
@@ -399,12 +387,6 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 errorFile.getUriCompat(context),
             )
         }
-    }
-
-    private suspend fun downloadEntryChapters(queuedEntry: Entry, chapters: List<EntryChapter>) {
-        // We don't want to start downloading while the library is updating, because websites
-        // may don't like it and they could ban the user.
-        entryDownloadInteraction.queue(queuedEntry, chapters, autoStart = false)
     }
 
     private suspend fun withUpdateNotification(

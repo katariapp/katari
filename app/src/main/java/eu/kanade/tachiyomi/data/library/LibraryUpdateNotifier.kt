@@ -22,6 +22,7 @@ import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnmeteredSource
+import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.lang.chop
 import eu.kanade.tachiyomi.util.system.cancelNotification
@@ -30,8 +31,10 @@ import eu.kanade.tachiyomi.util.system.notificationBuilder
 import eu.kanade.tachiyomi.util.system.notify
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import mihon.entry.interactions.EntryCapabilityCatalog
-import mihon.entry.interactions.EntryCapabilityReport
+import mihon.entry.interactions.EntryDownloadActionAvailability
+import mihon.entry.interactions.EntryDownloadActionFeature
+import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadSourceAccess
 import tachiyomi.core.common.Constants
 import tachiyomi.core.common.i18n.pluralStringResource
 import tachiyomi.core.common.i18n.stringResource
@@ -54,7 +57,7 @@ class LibraryUpdateNotifier(
     private val sourceManager: SourceManager = Injekt.get(),
     private val getMergedEntry: GetMergedEntry = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
+    private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
 ) {
 
     private val percentFormatter = NumberFormat.getPercentInstance().apply {
@@ -283,12 +286,17 @@ class LibraryUpdateNotifier(
                 update.type.viewEntryLabel(context),
                 update.viewEntryIntent(context),
             )
+            val downloadTarget = EntryDownloadActionTarget(
+                type = update.originEntry.type,
+                sourceAccess = if (sourceManager.get(update.originEntry.source).isLocalOrStub()) {
+                    EntryDownloadSourceAccess.LOCAL_OR_STUB
+                } else {
+                    EntryDownloadSourceAccess.REMOTE
+                },
+            )
             if (
-                entryCapabilityReport.supportsTypeWide(
-                    update.originEntry.type,
-                    EntryCapabilityCatalog.BULK_DOWNLOADS,
-                ) &&
-                update.children.size <= CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD
+                entryDownloadActionFeature.notificationAvailability(downloadTarget, update.children.size) ==
+                EntryDownloadActionAvailability.Available
             ) {
                 addAction(
                     android.R.drawable.stat_sys_download_done,
@@ -575,4 +583,3 @@ private const val NOTIF_TITLE_MAX_LEN = 45
 private const val NOTIF_ICON_SIZE = 192
 private const val MANGA_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 60
 private const val WARNING_NOTIF_TIMEOUT_MS = 30_000L
-private const val CHAPTERS_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 15

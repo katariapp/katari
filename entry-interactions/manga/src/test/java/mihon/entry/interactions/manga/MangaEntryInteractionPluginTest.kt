@@ -21,8 +21,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
@@ -79,24 +77,6 @@ class MangaEntryInteractionPluginTest {
 
         continued?.id shouldBe 10L
         status.state shouldBe EntryDownloadState.DOWNLOADED
-    }
-
-    @Test
-    fun `manga bookmark provider activates shared bookmarked download selection`() = runTest {
-        val manga = entry(EntryType.MANGA)
-        val regular = chapter(id = 1L, bookmark = false)
-        val bookmarked = chapter(id = 2L, read = true, bookmark = true)
-        val interactions = createEntryInteractions(
-            listOf(mangaEntryInteractionPlugin(dependencies(chapters = listOf(regular, bookmarked)))),
-        )
-
-        val result = interactions.download.resolveBulkDownloadCandidates(
-            entry = manga,
-            action = EntryBulkDownloadAction.bookmarked,
-            candidates = listOf(regular, bookmarked),
-        )
-
-        result shouldBe EntryBulkDownloadCandidateResult.Supported(listOf(bookmarked))
     }
 
     @Test
@@ -644,7 +624,6 @@ class MangaEntryInteractionPluginTest {
             },
             entryChapterRepository = FakeEntryChapterRepository(chapters),
             entryProgressRepository = FakeEntryProgressRepository(progressStates),
-            filterEntryChaptersForDownload = mockk(relaxed = true),
             childGroupFilterDataSource = FakeEntryChildGroupFilterDataSource(),
             downloadPreferences = mockDownloadPreferences(),
             downloadManager = downloadManager,

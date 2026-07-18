@@ -4,7 +4,6 @@ import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import mihon.entry.interactions.download.notification.AndroidEntryDownloadNotifier
@@ -17,7 +16,7 @@ import tachiyomi.domain.entry.interactor.GetMergedEntry
 
 internal class EntryDownloadNotificationManager(
     private val context: Context,
-    private val downloads: EntryDownloadInteraction,
+    private val downloads: EntryDownloadRuntimeCoordinator,
     private val actions: EntryDownloadNotificationActions,
     private val getMergedEntry: GetMergedEntry,
     private val presenter: EntryDownloadNotificationPresenter = AndroidEntryDownloadNotifier(context),
@@ -44,7 +43,7 @@ internal class EntryDownloadNotificationManager(
             downloads.events().collect { handleEvent(it) }
         }
         scope.launch {
-            combine(downloads.queueState, downloads.isRunning, downloads.isPaused, ::NotificationState)
+            downloads.state
                 .distinctUntilChanged()
                 .collect(::renderState)
         }
@@ -54,7 +53,7 @@ internal class EntryDownloadNotificationManager(
 
     override fun notification() = context.entryDownloadForegroundNotification()
 
-    private suspend fun renderState(state: NotificationState) {
+    private suspend fun renderState(state: EntryDownloadRuntimeState) {
         val items = state.queue.flatMap(EntryDownloadQueueGroup::items)
         when {
             items.isEmpty() -> presenter.onComplete()
@@ -110,10 +109,4 @@ internal class EntryDownloadNotificationManager(
             }
         }
     }
-
-    private data class NotificationState(
-        val queue: List<EntryDownloadQueueGroup>,
-        val isRunning: Boolean,
-        val isPaused: Boolean,
-    )
 }

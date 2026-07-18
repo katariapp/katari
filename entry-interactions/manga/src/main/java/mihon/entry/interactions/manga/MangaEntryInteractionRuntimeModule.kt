@@ -31,7 +31,6 @@ fun mangaEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     getEntryWithChapters = get(),
                     entryChapterRepository = get(),
                     entryProgressRepository = progressRepository,
-                    filterEntryChaptersForDownload = get(),
                     childGroupFilterDataSource = get<EntryChildGroupFilterDataSource>(),
                     downloadPreferences = get(),
                     sourceManager = get(),

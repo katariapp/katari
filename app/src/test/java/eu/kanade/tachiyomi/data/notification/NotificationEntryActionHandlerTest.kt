@@ -11,7 +11,7 @@ import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.EntryConsumptionInteraction
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import org.junit.jupiter.api.Test
@@ -19,6 +19,7 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
+import tachiyomi.domain.source.service.SourceManager
 
 class NotificationEntryActionHandlerTest {
 
@@ -26,7 +27,8 @@ class NotificationEntryActionHandlerTest {
     private val entryRepository = mockk<EntryRepository>()
     private val entryChapterRepository = mockk<EntryChapterRepository>()
     private val entryConsumptionInteraction = mockk<EntryConsumptionInteraction>(relaxed = true)
-    private val entryDownloadInteraction = mockk<EntryDownloadInteraction>(relaxed = true)
+    private val entryDownloadActionFeature = mockk<EntryDownloadActionFeature>(relaxed = true)
+    private val sourceManager = mockk<SourceManager>(relaxed = true)
     private val entryOpenFeature = mockk<EntryOpenFeature>(relaxed = true) {
         every { open(any(), any(), any(), any()) } returns true
     }
@@ -34,8 +36,9 @@ class NotificationEntryActionHandlerTest {
         entryRepository = entryRepository,
         entryChapterRepository = entryChapterRepository,
         entryConsumptionInteraction = entryConsumptionInteraction,
-        entryDownloadInteraction = entryDownloadInteraction,
+        entryDownloadActionFeature = entryDownloadActionFeature,
         entryOpenFeature = entryOpenFeature,
+        sourceManager = sourceManager,
     )
 
     @Test
@@ -61,7 +64,7 @@ class NotificationEntryActionHandlerTest {
 
         handler.downloadChildren(entryId = 2L, childIds = longArrayOf(20L, 21L))
 
-        coVerify { entryDownloadInteraction.download(entry, chapters) }
+        coVerify { entryDownloadActionFeature.download(any(), entry, chapters) }
     }
 
     @Test
@@ -103,7 +106,7 @@ class NotificationEntryActionHandlerTest {
 
         handler.downloadChildren(entryId = 7L, childUrls = arrayOf("chapter-2", "chapter-3"))
 
-        coVerify { entryDownloadInteraction.download(entry, listOf(chapters[1], chapters[2])) }
+        coVerify { entryDownloadActionFeature.download(any(), entry, listOf(chapters[1], chapters[2])) }
     }
 
     @Test

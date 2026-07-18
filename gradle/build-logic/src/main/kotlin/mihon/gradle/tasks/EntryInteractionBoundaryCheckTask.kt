@@ -207,7 +207,6 @@ private class EntryInteractionBoundaryRules(
         sourceIndex.files.forEach { file ->
             checkForbiddenImports(file, findings)
             checkRootCompositionTypeModuleImports(file, findings)
-            checkForbiddenAppReferences(file, findings)
             checkLegacyInteractionApis(file, findings)
             checkInternalApiReferences(file, findings)
             checkProcessorImplementationReferences(file, findings)
@@ -360,19 +359,6 @@ private class EntryInteractionBoundaryRules(
                 reason =
                 "root Entry interaction composition may import only the public ${module.name} runtime-module " +
                     "bridge, not type-module implementation symbols: $importedFqName",
-            )
-        }
-    }
-
-    private fun checkForbiddenAppReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
-        if (!file.relativePath.startsWith("app/src/main/")) return
-
-        file.findReference("FilterEntryChaptersForDownload")?.let { reference ->
-            findings += Finding(
-                relativePath = file.relativePath,
-                lineNumber = reference.lineNumber,
-                reason = "app must route auto-download filtering through EntryDownloadInteraction, not " +
-                    "FilterEntryChaptersForDownload",
             )
         }
     }

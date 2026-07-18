@@ -9,7 +9,6 @@ import io.mockk.verify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
@@ -81,20 +80,6 @@ class BookDownloadProcessorTest {
     }
 
     @Test
-    fun `automatic downloads use the shared category and unread filter`() = runTest {
-        val entry = entry(id = 1L, source = 10L)
-        val first = chapter(id = 11L, entryId = entry.id, number = 1.0)
-        val second = chapter(id = 12L, entryId = entry.id, number = 2.0)
-        val fixture = fixture()
-        coEvery { fixture.filter.await(entry, listOf(first, second)) } returns listOf(second)
-
-        val result = fixture.processor.filterAutoDownloadCandidates(entry, listOf(first, second))
-
-        assertEquals(listOf(second), result)
-        coVerify(exactly = 1) { fixture.filter.await(entry, listOf(first, second)) }
-    }
-
-    @Test
     fun `deleting a merged entry includes every indexed member`() = runTest {
         val visible = entry(id = 1L, source = 10L)
         val fixture = fixture()
@@ -142,7 +127,6 @@ class BookDownloadProcessorTest {
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
             coEvery { awaitChapters(any(), any()) } returns chapters
         }
-        val filter = mockk<FilterEntryChaptersForDownload>()
         val mergedEntryRepository = mockk<MergedEntryRepository> {
             every { subscribeAll() } returns flowOf(emptyList())
         }
@@ -153,11 +137,10 @@ class BookDownloadProcessorTest {
                 sourceManager = mockk<SourceManager>(),
                 entryRepository = entryRepository,
                 getEntryWithChapters = getEntryWithChapters,
-                filterEntryChaptersForDownload = filter,
                 mergedEntryRepository = mergedEntryRepository,
             ),
         )
-        return ProcessorFixture(processor, manager, cache, filter)
+        return ProcessorFixture(processor, manager, cache)
     }
 
     private fun entry(id: Long, source: Long): Entry = Entry.create().copy(
@@ -182,5 +165,4 @@ private data class ProcessorFixture(
     val processor: BookDownloadProcessor,
     val manager: BookDownloadManager,
     val cache: BookDownloadCache,
-    val filter: FilterEntryChaptersForDownload,
 )

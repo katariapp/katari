@@ -44,13 +44,10 @@ interface EntryDownloadInteraction {
     )
     fun supportsDownloadOptions(entry: Entry): Boolean
     suspend fun resolveDownloadOptions(context: Context, entry: Entry, chapter: EntryChapter): EntryDownloadOptions?
-    suspend fun resolveBulkDownloadCandidates(
+    suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
-        action: EntryBulkDownloadAction,
         candidates: List<EntryChapter>? = null,
-        memberEntryIds: List<Long> = emptyList(),
-    ): EntryBulkDownloadCandidateResult
-    suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
+    ): List<EntryChapter>
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
     suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>)
     suspend fun deleteEntryDownloads(entry: Entry)

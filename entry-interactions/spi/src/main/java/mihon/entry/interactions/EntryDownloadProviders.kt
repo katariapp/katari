@@ -89,10 +89,6 @@ interface EntryBulkDownloadCandidateProcessor : EntryInteractionProvider {
     ): List<EntryChapter>
 }
 
-interface EntryAutomaticDownloadFilterProcessor : EntryInteractionProvider {
-    suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
-}
-
 val EntryDownloadCapability = entryInteractionCapability<EntryDownloadProcessor>(
     id = CapabilityId("entry.download"),
 )
@@ -138,8 +134,4 @@ val EntryDownloadParallelItemTransfersCapability = entryDownloadSettingCapabilit
 
 val EntryBulkDownloadCandidateCapability = entryInteractionCapability<EntryBulkDownloadCandidateProcessor>(
     id = CapabilityId("entry.download.bulk-candidates"),
-)
-
-val EntryAutomaticDownloadFilterCapability = entryInteractionCapability<EntryAutomaticDownloadFilterProcessor>(
-    id = CapabilityId("entry.download.automatic-filter"),
 )

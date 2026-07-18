@@ -111,16 +111,16 @@ data object UpdatesTab : Tab {
                     onDownloadClicked = {
                         screenModel.downloadChapters(state.selected, ChapterDownloadAction.START)
                     }.takeIf {
-                        selected.any {
+                        screenModel.canUseDownloadActions(selected) && selected.any {
                             it.update is UpdateItem.EntryUpdate &&
-                                it.downloadSupported &&
+                                it.downloadAvailable &&
                                 it.downloadStateProvider() != EntryDownloadState.DOWNLOADED
                         }
                     },
                     onDeleteClicked = {
                         screenModel.showConfirmDeleteChapters(state.selected)
                     }.takeIf {
-                        selected.any {
+                        screenModel.canUseDownloadActions(selected) && selected.any {
                             it.update is UpdateItem.EntryUpdate &&
                                 it.downloadStateProvider() == EntryDownloadState.DOWNLOADED
                         }

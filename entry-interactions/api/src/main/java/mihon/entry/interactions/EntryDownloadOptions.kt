@@ -45,31 +45,9 @@ sealed interface EntryDownloadLifecycleEvent {
     ) : EntryDownloadLifecycleEvent
 }
 
-data class EntryBulkDownloadAction(
-    val type: EntryBulkDownloadActionType,
-    val limit: Int? = null,
-) {
-    companion object {
-        fun next(limit: Int): EntryBulkDownloadAction = EntryBulkDownloadAction(EntryBulkDownloadActionType.NEXT, limit)
-        val unread: EntryBulkDownloadAction = EntryBulkDownloadAction(EntryBulkDownloadActionType.UNREAD)
-        val bookmarked: EntryBulkDownloadAction = EntryBulkDownloadAction(EntryBulkDownloadActionType.BOOKMARKED)
-    }
-}
-
-enum class EntryBulkDownloadActionType {
-    NEXT,
-    UNREAD,
-    BOOKMARKED,
-}
-
 enum class EntryDownloadSettingCapability {
     ARCHIVE_PACKAGING,
     TALL_IMAGE_SPLITTING,
     PARALLEL_SOURCE_TRANSFERS,
     PARALLEL_ITEM_TRANSFERS,
-}
-
-sealed interface EntryBulkDownloadCandidateResult {
-    data class Supported(val chapters: List<EntryChapter>) : EntryBulkDownloadCandidateResult
-    data object Unsupported : EntryBulkDownloadCandidateResult
 }

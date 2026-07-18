@@ -11,15 +11,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.service.sortedForReading
 
 internal class EntryDownloadInteractionDispatch(
     private val processors: Map<EntryType, EntryDownloadProcessor>,
     private val optionsProcessors: Map<EntryType, EntryDownloadOptionsProcessor>,
     private val settingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
     private val bulkCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
-    private val automaticFilterProcessors: Map<EntryType, EntryAutomaticDownloadFilterProcessor>,
-    private val bookmarkProviderTypes: Set<EntryType>,
 ) : EntryDownloadInteraction {
     private val paused = MutableStateFlow(false)
 
@@ -147,33 +144,13 @@ internal class EntryDownloadInteractionDispatch(
         return processor.resolveDownloadOptions(context, entry, chapter)
     }
 
-    override suspend fun resolveBulkDownloadCandidates(
+    override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
-        action: EntryBulkDownloadAction,
         candidates: List<EntryChapter>?,
-        memberEntryIds: List<Long>,
-    ): EntryBulkDownloadCandidateResult {
-        val processor = bulkCandidateProcessors[entry.type] ?: return EntryBulkDownloadCandidateResult.Unsupported
-        processor.requireMatchingEntryType("bulk download candidates", entry, bulkCandidateProcessors.keys)
-        if (
-            action.type == EntryBulkDownloadActionType.BOOKMARKED &&
-            entry.type !in bookmarkProviderTypes
-        ) {
-            return EntryBulkDownloadCandidateResult.Unsupported
-        }
-        val pool = processor.resolveBulkDownloadCandidatePool(entry, candidates)
-        return EntryBulkDownloadCandidateResult.Supported(
-            pool.selectBulkDownloadCandidates(entry, action, memberEntryIds),
-        )
-    }
-
-    override suspend fun filterAutoDownloadCandidates(
-        entry: Entry,
-        chapters: List<EntryChapter>,
     ): List<EntryChapter> {
-        val processor = automaticFilterProcessors[entry.type] ?: return emptyList()
-        processor.requireMatchingEntryType("automatic download filter", entry, automaticFilterProcessors.keys)
-        return processor.filterAutoDownloadCandidates(entry, chapters)
+        val processor = bulkCandidateProcessors.requireProcessor("bulk download candidates", entry.type)
+        processor.requireMatchingEntryType("bulk download candidates", entry, bulkCandidateProcessors.keys)
+        return processor.resolveBulkDownloadCandidatePool(entry, candidates)
     }
 
     override suspend fun delete(entry: Entry, chapters: List<EntryChapter>) {
@@ -239,19 +216,5 @@ internal class EntryDownloadInteractionDispatch(
 
     override fun cancelQueuedDownload(entryType: EntryType, chapterId: Long): EntryDownloadStatus? {
         return processors[entryType]?.cancelQueuedDownload(chapterId)
-    }
-}
-
-private fun List<EntryChapter>.selectBulkDownloadCandidates(
-    entry: Entry,
-    action: EntryBulkDownloadAction,
-    memberEntryIds: List<Long>,
-): List<EntryChapter> {
-    return when (action.type) {
-        EntryBulkDownloadActionType.NEXT -> filterNot(EntryChapter::read)
-            .sortedForReading(entry, memberEntryIds.ifEmpty { map(EntryChapter::entryId).distinct() })
-            .let { chapters -> action.limit?.let(chapters::take) ?: chapters }
-        EntryBulkDownloadActionType.UNREAD -> filterNot(EntryChapter::read)
-        EntryBulkDownloadActionType.BOOKMARKED -> filter(EntryChapter::bookmark)
     }
 }
