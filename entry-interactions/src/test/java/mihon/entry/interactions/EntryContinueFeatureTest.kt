@@ -20,6 +20,7 @@ class EntryContinueFeatureTest {
         val processor = RecordingContinueProcessor(EntryType.BOOK, chapter)
         val feature = featureFor(plugin(EntryType.BOOK, EntryContinueCapability.bind(processor)))
 
+        feature.nextTarget(entry) shouldBe EntryContinueTargetResult.Available(chapter)
         feature.continueEntry(context, entry) shouldBe EntryContinueResult.Opened(chapter)
         processor.openedEntryId shouldBe entry.id
     }
@@ -38,6 +39,7 @@ class EntryContinueFeatureTest {
         val feature = featureFor()
 
         feature.isApplicable(entry.type) shouldBe false
+        feature.nextTarget(entry) shouldBe EntryContinueTargetResult.Inapplicable
         feature.continueEntry(context, entry) shouldBe EntryContinueResult.Inapplicable
     }
 

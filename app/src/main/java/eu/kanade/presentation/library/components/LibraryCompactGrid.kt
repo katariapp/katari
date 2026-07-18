@@ -67,7 +67,7 @@ internal fun LibraryCompactGrid(
                         DownloadsBadge(count = libraryItem.downloadCount)
                     }
                     if (displaySettings.unreadBadge) {
-                        UnreadBadge(count = libraryItem.unconsumedCount)
+                        libraryItem.unconsumedCount?.let { UnreadBadge(count = it) }
                     }
                 },
                 coverBadgeEnd = {
@@ -87,7 +87,7 @@ internal fun LibraryCompactGrid(
                 onClickContinueReading = if (
                     onClickContinueReading != null &&
                     isContinueReadingAvailable(libraryItem) &&
-                    libraryItem.canContinue
+                    (!libraryItem.hasProgressSummary || libraryItem.canContinue)
                 ) {
                     { onClickContinueReading(libraryItem) }
                 } else {

@@ -32,6 +32,7 @@ class EntryLibraryFilterFeatureTest {
 
         result.includedTargetIndices.shouldContainExactly(0)
         result.hasActiveFilters.shouldBeTrue()
+        result.availability.progressSummary.isAvailable.shouldBeFalse()
         result.availability.bookmarking.isAvailable.shouldBeFalse()
         result.availability.outsideReleasePeriod.isAvailable.shouldBeFalse()
     }
@@ -41,6 +42,7 @@ class EntryLibraryFilterFeatureTest {
         val composition = composition(
             plugin(
                 EntryType.BOOK,
+                EntryLibraryProgressCapability.bind(LibraryProgressProvider()),
                 EntryBookmarkCapability.bind(BookmarkProcessor()),
                 EntryOutsideReleasePeriodFilterCapability.bind(OutsideReleasePeriodProvider()),
             ),
@@ -64,6 +66,7 @@ class EntryLibraryFilterFeatureTest {
         val composition = composition(
             plugin(
                 EntryType.BOOK,
+                EntryLibraryProgressCapability.bind(LibraryProgressProvider()),
                 EntryBookmarkCapability.bind(BookmarkProcessor()),
                 EntryOutsideReleasePeriodFilterCapability.bind(OutsideReleasePeriodProvider()),
             ),
@@ -95,7 +98,12 @@ class EntryLibraryFilterFeatureTest {
     @Test
     fun `unavailable capability filters neither filter nor report active`() {
         val feature = DefaultEntryLibraryFilterFeature(
-            composition(plugin(EntryType.ANIME)).featureGraphEvaluation,
+            composition(
+                plugin(
+                    EntryType.ANIME,
+                    EntryLibraryProgressCapability.bind(LibraryProgressProvider(EntryType.ANIME)),
+                ),
+            ).featureGraphEvaluation,
         )
         val result = feature.filter(
             request(
@@ -157,7 +165,11 @@ class EntryLibraryFilterFeatureTest {
     fun `aggregate target state is interpreted without merge-specific policy`() {
         val feature = DefaultEntryLibraryFilterFeature(
             composition(
-                plugin(EntryType.BOOK, EntryBookmarkCapability.bind(BookmarkProcessor())),
+                plugin(
+                    EntryType.BOOK,
+                    EntryLibraryProgressCapability.bind(LibraryProgressProvider()),
+                    EntryBookmarkCapability.bind(BookmarkProcessor()),
+                ),
             ).featureGraphEvaluation,
         )
         val aggregate = target(
@@ -193,6 +205,28 @@ class EntryLibraryFilterFeatureTest {
         }
     }
 
+    @Test
+    fun `active progress predicates exclude unknown state for both polarities`() {
+        val feature = DefaultEntryLibraryFilterFeature(
+            composition(
+                plugin(
+                    EntryType.BOOK,
+                    EntryLibraryProgressCapability.bind(LibraryProgressProvider()),
+                ),
+                plugin(EntryType.ANIME),
+            ).featureGraphEvaluation,
+        )
+        val targets = arrayOf(
+            target(EntryType.BOOK, unconsumed = true),
+            target(EntryType.ANIME, unconsumed = null, started = null),
+        )
+
+        feature.filter(request(*targets, policy = policy(unconsumed = TriState.ENABLED_IS)))
+            .includedTargetIndices.shouldContainExactly(0)
+        feature.filter(request(*targets, policy = policy(unconsumed = TriState.ENABLED_NOT)))
+            .includedTargetIndices.shouldContainExactly()
+    }
+
     private fun composition(vararg plugins: EntryInteractionPlugin): EntryInteractionComposition {
         return createEntryInteractionComposition(
             plugins = plugins.toList(),
@@ -221,9 +255,9 @@ class EntryLibraryFilterFeatureTest {
     private fun target(
         type: EntryType,
         downloaded: Boolean = false,
-        unconsumed: Boolean = false,
-        started: Boolean = false,
-        bookmarked: Boolean = false,
+        unconsumed: Boolean? = false,
+        started: Boolean? = false,
+        bookmarked: Boolean? = false,
         completed: Boolean = false,
         outsideReleasePeriod: Boolean = false,
         trackers: Set<Long> = emptySet(),
@@ -276,5 +310,12 @@ class EntryLibraryFilterFeatureTest {
 
     private class OutsideReleasePeriodProvider : EntryOutsideReleasePeriodFilterProvider {
         override val type = EntryType.BOOK
+    }
+
+    private class LibraryProgressProvider(
+        override val type: EntryType = EntryType.BOOK,
+    ) : EntryLibraryProgressProvider {
+        override suspend fun evidence(entry: Entry, chapters: List<EntryChapter>) =
+            EntryLibraryProgressEvidence(false, null, null, 0L)
     }
 }

@@ -70,6 +70,7 @@ fun LibrarySettingsDialog(
                 1 -> SortPage(
                     category = category,
                     screenModel = screenModel,
+                    progressSummaryAvailable = filterAvailability.progressSummary.isAvailable,
                 )
                 2 -> DisplayPage(
                     screenModel = screenModel,
@@ -101,18 +102,20 @@ private fun FilterPage(
         enabled = !downloadedOnly,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterDownloaded) },
     )
-    val filterUnread by screenModel.libraryPreferences.filterUnread.collectAsState()
-    TriStateItem(
-        label = stringResource(MR.strings.action_filter_unconsumed),
-        state = filterUnread,
-        onClick = { screenModel.toggleFilter(LibraryPreferences::filterUnread) },
-    )
-    val filterNotStarted by screenModel.libraryPreferences.filterNotStarted.collectAsState()
-    TriStateItem(
-        label = stringResource(MR.strings.label_not_started),
-        state = filterNotStarted,
-        onClick = { screenModel.toggleFilter(LibraryPreferences::filterNotStarted) },
-    )
+    if (filterAvailability.progressSummary.isAvailable) {
+        val filterUnread by screenModel.libraryPreferences.filterUnread.collectAsState()
+        TriStateItem(
+            label = stringResource(MR.strings.action_filter_unconsumed),
+            state = filterUnread,
+            onClick = { screenModel.toggleFilter(LibraryPreferences::filterUnread) },
+        )
+        val filterNotStarted by screenModel.libraryPreferences.filterNotStarted.collectAsState()
+        TriStateItem(
+            label = stringResource(MR.strings.label_not_started),
+            state = filterNotStarted,
+            onClick = { screenModel.toggleFilter(LibraryPreferences::filterNotStarted) },
+        )
+    }
     if (filterAvailability.bookmarking.isAvailable) {
         val filterBookmarked by screenModel.libraryPreferences.filterBookmarked.collectAsState()
         TriStateItem(
@@ -173,6 +176,7 @@ private fun FilterPage(
 private fun SortPage(
     category: Category?,
     screenModel: LibrarySettingsScreenModel,
+    progressSummaryAvailable: Boolean,
 ) {
     val trackers by screenModel.trackersFlow.collectAsState()
     val globalSort by screenModel.libraryPreferences.sortingMode.collectAsState()
@@ -180,7 +184,7 @@ private fun SortPage(
     val sortingMode = currentSort.type
     val sortDescending = !currentSort.isAscending
 
-    val options = remember(trackers.isEmpty()) {
+    val options = remember(trackers.isEmpty(), progressSummaryAvailable) {
         val trackerMeanPair = if (trackers.isNotEmpty()) {
             MR.strings.action_sort_tracker_score to LibrarySort.Type.TrackerMean
         } else {
@@ -188,10 +192,13 @@ private fun SortPage(
         }
         listOfNotNull(
             MR.strings.action_sort_alpha to LibrarySort.Type.Alphabetical,
-            MR.strings.action_sort_total to LibrarySort.Type.TotalChapters,
-            MR.strings.action_sort_last_read to LibrarySort.Type.LastRead,
+            (MR.strings.action_sort_total to LibrarySort.Type.TotalChapters)
+                .takeIf { progressSummaryAvailable },
+            (MR.strings.action_sort_last_read to LibrarySort.Type.LastRead)
+                .takeIf { progressSummaryAvailable },
             MR.strings.action_sort_last_manga_update to LibrarySort.Type.LastUpdate,
-            MR.strings.action_sort_unread_count to LibrarySort.Type.UnreadCount,
+            (MR.strings.action_sort_unread_count to LibrarySort.Type.UnreadCount)
+                .takeIf { progressSummaryAvailable },
             MR.strings.action_sort_latest_chapter to LibrarySort.Type.LatestChapter,
             MR.strings.action_sort_chapter_fetch_date to LibrarySort.Type.ChapterFetchDate,
             MR.strings.action_sort_date_added to LibrarySort.Type.DateAdded,

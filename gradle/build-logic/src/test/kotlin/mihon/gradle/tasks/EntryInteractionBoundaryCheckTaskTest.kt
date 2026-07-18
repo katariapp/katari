@@ -82,6 +82,23 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application consumers cannot bypass Library Progress Feature through domain port`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
+
+                class AppFeature(private val progress: EntryLibraryProgressResolutionPort)
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "application consumers must use EntryLibraryProgressFeature"
+    }
+
+    @Test
     fun `root module cannot export the provider spi`() {
         createBaseFixture(
             additionalFiles = mapOf(

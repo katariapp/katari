@@ -3,8 +3,6 @@ package eu.kanade.tachiyomi.ui.browse.immersive
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.entry.VideoRequest
-import eu.kanade.tachiyomi.source.entry.VideoStream
 import io.kotest.assertions.nondeterministic.eventually
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
@@ -19,10 +17,11 @@ import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import mihon.entry.interactions.EntryChildListFeature
-import mihon.entry.interactions.EntryFirstChildResult
+import mihon.entry.interactions.EntryImmersiveAvailability
+import mihon.entry.interactions.EntryImmersiveChildRequirement
+import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveHandle
-import mihon.entry.interactions.EntryImmersiveInteraction
+import mihon.entry.interactions.EntryImmersiveLoadResult
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -53,7 +52,7 @@ class EntryImmersiveScreenModelTest {
                 model.state.value.items.keys shouldBe setOf(EntryImmersiveItemKey(anime.id, anime.type))
             }
             verify(exactly = 1) {
-                fixture.interaction.release(
+                fixture.feature.release(
                     fixture.handles.getValue(EntryImmersiveItemKey(1L, EntryType.MANGA)),
                 )
             }
@@ -89,34 +88,24 @@ class EntryImmersiveScreenModelTest {
         val repository = mockk<EntryChapterRepository> {
             coEvery { getChaptersByEntryIdAwait(any(), any()) } returns listOf(chapter)
         }
-        val childList = mockk<EntryChildListFeature>(relaxed = true) {
-            every { firstReadingChild(any(), any(), any()) } answers {
-                EntryFirstChildResult.Available(secondArg<List<EntryChapter>>().firstOrNull())
-            }
-        }
         val handles = mutableMapOf<EntryImmersiveItemKey, EntryImmersiveHandle>()
-        val interaction = mockk<EntryImmersiveInteraction>(relaxed = true) {
-            every { isSupported(any()) } returns true
-            coEvery { load(any(), any(), any(), any()) } answers {
-                val loadedEntry = secondArg<Entry>()
+        val feature = mockk<EntryImmersiveFeature>(relaxed = true) {
+            every { availability(any()) } returns EntryImmersiveAvailability.Available(
+                preloadRadius = 1,
+                childRequirement = EntryImmersiveChildRequirement.FIRST_READING_CHILD,
+            )
+            coEvery { load(any()) } answers {
+                val request = firstArg<mihon.entry.interactions.EntryImmersiveLoadRequest>()
+                val loadedEntry = request.entry
                 val ref = EntryImmersiveItemKey(loadedEntry.id, loadedEntry.type)
-                handles.getOrPut(ref) {
-                    when (loadedEntry.type) {
-                        EntryType.MANGA -> EntryImmersiveHandle.ImagePages(
-                            entryType = loadedEntry.type,
-                            chapterId = chapter.id,
-                            delegate = Unit,
-                        )
-                        EntryType.ANIME -> EntryImmersiveHandle.Playback(
-                            entryType = loadedEntry.type,
-                            chapterId = chapter.id,
-                            stream = VideoStream(VideoRequest("https://example.invalid/video")),
-                            subtitles = emptyList(),
-                            resumePositionMs = 0L,
-                        )
-                        EntryType.BOOK -> error("BOOK immersive feeds are not supported by this fixture")
-                    }
+                val handle = handles.getOrPut(ref) {
+                    EntryImmersiveHandle.ImagePages(
+                        entryType = loadedEntry.type,
+                        chapterId = chapter.id,
+                        delegate = Unit,
+                    )
                 }
+                EntryImmersiveLoadResult.Loaded(handle, chapter)
             }
         }
         val source = mockk<UnifiedSource>(relaxed = true)
@@ -124,13 +113,12 @@ class EntryImmersiveScreenModelTest {
         every { sourceManager.get(any()) } returns source
         return Fixture(
             context = context,
-            interaction = interaction,
+            feature = feature,
             handles = handles,
             model = EntryImmersiveScreenModel(
                 entryChapterRepository = repository,
                 syncEntryWithSource = mockk<SyncEntryWithSource>(relaxed = true),
-                childListFeature = childList,
-                immersiveInteraction = interaction,
+                immersiveFeature = feature,
                 sourceManager = sourceManager,
             ),
         )
@@ -142,7 +130,7 @@ class EntryImmersiveScreenModelTest {
 
     private data class Fixture(
         val context: Context,
-        val interaction: EntryImmersiveInteraction,
+        val feature: EntryImmersiveFeature,
         val handles: Map<EntryImmersiveItemKey, EntryImmersiveHandle>,
         val model: EntryImmersiveScreenModel,
     )

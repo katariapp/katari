@@ -209,6 +209,7 @@ private class EntryInteractionBoundaryRules(
             checkRootCompositionTypeModuleImports(file, findings)
             checkLegacyInteractionApis(file, findings)
             checkInternalApiReferences(file, findings)
+            checkLibraryProgressDomainPortReferences(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
             checkRuntimeInternalReferences(file, findings)
@@ -389,6 +390,26 @@ private class EntryInteractionBoundaryRules(
         }
     }
 
+    private fun checkLibraryProgressDomainPortReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val allowedPaths = setOf(
+            "domain/src/main/java/tachiyomi/domain/entry/service/EntryLibraryProgressResolution.kt",
+            "domain/src/main/java/tachiyomi/domain/entry/interactor/GetLibraryEntries.kt",
+            "entry-interactions/api/src/main/java/mihon/entry/interactions/EntryLibraryProgressFeature.kt",
+            "entry-interactions/src/main/java/mihon/entry/interactions/EntryInteractionRuntime.kt",
+        )
+        if (file.relativePath in allowedPaths) return
+
+        file.findReference("EntryLibraryProgressResolutionPort")?.let { reference ->
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = reference.lineNumber,
+                reason = "Library Progress domain port is reserved for Domain assembly and Feature composition; " +
+                    "application consumers must use EntryLibraryProgressFeature",
+            )
+        }
+    }
+
     private fun checkProcessorImplementationReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
         processorImplementations.forEach { symbol ->
             if (file.isOwnedBy(symbol.owner) || file.isTestPath()) return@forEach
@@ -554,7 +575,6 @@ private class EntryInteractionBoundaryRules(
                         if (file.isPublicTypeModuleApiPath()) return@forEach
                         if (declaration.isDependencyContainer()) return@forEach
                         if (declaration.isPluginFactory()) return@forEach
-                        if (declaration.isLibraryProgressCalculatorFactory()) return@forEach
                         if (declaration.isRuntimeBridgeFunction(file)) return@forEach
 
                         findings += Finding(
@@ -578,11 +598,6 @@ private class EntryInteractionBoundaryRules(
     private fun KotlinDeclaration.isPluginFactory(): Boolean {
         return kind == KotlinDeclarationKind.FUNCTION &&
             returnTypeName == "EntryInteractionPlugin"
-    }
-
-    private fun KotlinDeclaration.isLibraryProgressCalculatorFactory(): Boolean {
-        return kind == KotlinDeclarationKind.FUNCTION &&
-            returnTypeName == "EntryLibraryProgressCalculator"
     }
 
     private fun KotlinDeclaration.isRuntimeBridgeFunction(file: KotlinSourceFile): Boolean {

@@ -8,9 +8,9 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.model.LibraryItemKey
-import tachiyomi.domain.library.model.ProgressState
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.readText
@@ -161,17 +161,8 @@ private fun libraryItem(id: Long, memberIds: List<Long> = listOf(id)): LibraryIt
         isMerged = memberIds.size > 1,
         memberEntryIds = memberIds.map { LibraryItemKey(EntryType.ANIME, it) },
         memberEntries = listOf(entry),
-        progress = ProgressState(
-            totalCount = 0L,
-            consumedCount = 0L,
-            inProgressItemId = null,
-            inProgressFraction = null,
-            hasStarted = false,
-            continueMode = ProgressState.ContinueMode.TARGET_AVAILABLE,
-        ),
+        progressSummary = EntryLibraryProgressResolution.Inapplicable(EntryType.ANIME),
         latestUpload = 0L,
-        lastRead = 0L,
-        continueEntryId = null,
         downloadCount = 0,
     )
 }

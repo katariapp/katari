@@ -19,9 +19,14 @@ private val ENTRY_CONTINUE_FEATURE_ID = FeatureId("entry.continue")
 private val ENTRY_CONTINUE_INTEGRATION_ID = FeatureIntegrationId("entry.continue.provider")
 private val ENTRY_CONTINUE_FEATURE_OWNER = ContributionOwner("entry-continue")
 private val ENTRY_CONTINUE_DISPATCH_CONSEQUENCE_ID = FeatureArtifactId("entry.continue.dispatch")
+private val ENTRY_CONTINUE_TARGET_CONSEQUENCE_ID = FeatureArtifactId("entry.continue.next-target")
 
 private object EntryContinueDispatchConsequence : SharedFeatureConsequence {
     override val id = ENTRY_CONTINUE_DISPATCH_CONSEQUENCE_ID
+}
+
+private object EntryContinueTargetConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_CONTINUE_TARGET_CONSEQUENCE_ID
 }
 
 internal object EntryContinueFeatureContributor : FeatureGraphContributor {
@@ -36,7 +41,10 @@ internal object EntryContinueFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_CONTINUE_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryContinueCapability.definition),
-                        sharedConsequences = listOf(EntryContinueDispatchConsequence),
+                        sharedConsequences = listOf(
+                            EntryContinueDispatchConsequence,
+                            EntryContinueTargetConsequence,
+                        ),
                     ),
                 ),
             ),
@@ -53,8 +61,26 @@ internal class DefaultEntryContinueFeature(
         integration = ENTRY_CONTINUE_INTEGRATION_ID,
         consequence = ENTRY_CONTINUE_DISPATCH_CONSEQUENCE_ID,
     )
+    private val targetTypes = evaluation.applicableProviderTypes<EntryContinueProcessor>(
+        feature = ENTRY_CONTINUE_FEATURE_ID,
+        integration = ENTRY_CONTINUE_INTEGRATION_ID,
+        consequence = ENTRY_CONTINUE_TARGET_CONSEQUENCE_ID,
+    )
+
+    init {
+        check(applicableTypes == targetTypes) {
+            "Continue dispatch and target consequences selected different provider sets"
+        }
+    }
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes
+
+    override suspend fun nextTarget(entry: Entry): EntryContinueTargetResult {
+        if (entry.type !in targetTypes) return EntryContinueTargetResult.Inapplicable
+        return interaction.findNext(entry)
+            ?.let(EntryContinueTargetResult::Available)
+            ?: EntryContinueTargetResult.NoNext
+    }
 
     override suspend fun continueEntry(context: Context, entry: Entry): EntryContinueResult {
         if (!isApplicable(entry.type)) return EntryContinueResult.Inapplicable

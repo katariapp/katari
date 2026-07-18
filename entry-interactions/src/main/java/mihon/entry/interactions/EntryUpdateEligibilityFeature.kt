@@ -120,16 +120,19 @@ internal class DefaultEntryUpdateEligibilityFeature(
         val policy = currentPolicy()
         val fetchWindowUpperBound = request.fetchWindowUpperBound
         return when {
-            request.entry.updateStrategy == EntryUpdateStrategy.ONLY_FETCH_ONCE && request.totalCount > 0L -> {
+            request.entry.updateStrategy == EntryUpdateStrategy.ONLY_FETCH_ONCE &&
+                request.totalCount?.let { it > 0L } == true -> {
                 EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_ALWAYS_UPDATE)
             }
             policy.skipCompleted && request.entry.status == EntryStatus.COMPLETED -> {
                 EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.COMPLETED)
             }
-            policy.skipWhenUnconsumed && request.unconsumedCount != 0L -> {
+            policy.skipWhenUnconsumed && request.unconsumedCount?.let { it != 0L } == true -> {
                 EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_CAUGHT_UP)
             }
-            policy.skipWhenNotStarted && request.totalCount > 0L && !request.hasStarted -> {
+            policy.skipWhenNotStarted &&
+                request.totalCount?.let { it > 0L } == true &&
+                request.hasStarted == false -> {
                 EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_STARTED)
             }
             policy.skipOutsideReleasePeriod &&

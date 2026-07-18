@@ -14,6 +14,7 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.allOf
 import tachiyomi.core.common.preference.TriState
 
 private val ENTRY_LIBRARY_FILTER_FEATURE_ID = FeatureId("entry.library-filtering")
@@ -22,6 +23,8 @@ private val ENTRY_LIBRARY_FILTER_POLICY_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-filtering.shared-policy")
 private val ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-filtering.bookmark-control")
+private val ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION_ID =
+    FeatureIntegrationId("entry.library-filtering.progress-controls")
 private val ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-filtering.outside-release-period")
 
@@ -31,6 +34,8 @@ private val ENTRY_LIBRARY_FILTER_ACTIVE_STATE_CONSEQUENCE_ID =
     FeatureArtifactId("entry.library-filtering.active-state")
 private val ENTRY_LIBRARY_FILTER_BOOKMARK_CONTROL_CONSEQUENCE_ID =
     FeatureArtifactId("entry.library-filtering.bookmark-control")
+private val ENTRY_LIBRARY_FILTER_PROGRESS_CONTROL_CONSEQUENCE_ID =
+    FeatureArtifactId("entry.library-filtering.progress-controls")
 private val ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_CONSEQUENCE_ID =
     FeatureArtifactId("entry.library-filtering.outside-release-period")
 private val ENTRY_LIBRARY_FILTER_BEHAVIOR_CONTRACT_ID =
@@ -46,6 +51,10 @@ private object EntryLibraryFilterActiveStateConsequence : SharedFeatureConsequen
 
 private object EntryLibraryFilterBookmarkControlConsequence : SharedFeatureConsequence {
     override val id = ENTRY_LIBRARY_FILTER_BOOKMARK_CONTROL_CONSEQUENCE_ID
+}
+
+private object EntryLibraryFilterProgressControlConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_LIBRARY_FILTER_PROGRESS_CONTROL_CONSEQUENCE_ID
 }
 
 private object EntryLibraryFilterReleasePeriodConsequence : SharedFeatureConsequence {
@@ -75,8 +84,16 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
                         behavioralContracts = listOf(EntryLibraryFilterBehaviorContract),
                     ),
                     FeatureIntegration(
+                        id = ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
+                        sharedConsequences = listOf(EntryLibraryFilterProgressControlConsequence),
+                    ),
+                    FeatureIntegration(
                         id = ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION_ID,
-                        prerequisites = CapabilityExpression.Provided(EntryBookmarkCapability.definition),
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
+                            CapabilityExpression.Provided(EntryBookmarkCapability.definition),
+                        ),
                         sharedConsequences = listOf(EntryLibraryFilterBookmarkControlConsequence),
                     ),
                     FeatureIntegration(
@@ -108,6 +125,11 @@ internal class DefaultEntryLibraryFilterFeature(
         integration = ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION_ID,
         consequence = ENTRY_LIBRARY_FILTER_BOOKMARK_CONTROL_CONSEQUENCE_ID,
     )
+    private val progressTypes = evaluation.applicableProviderTypes<EntryLibraryProgressProvider>(
+        feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
+        integration = ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION_ID,
+        consequence = ENTRY_LIBRARY_FILTER_PROGRESS_CONTROL_CONSEQUENCE_ID,
+    )
     private val releasePeriodTypes = evaluation.applicableProviderTypes<EntryOutsideReleasePeriodFilterProvider>(
         feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
         integration = ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION_ID,
@@ -130,12 +152,19 @@ internal class DefaultEntryLibraryFilterFeature(
         }
 
         val availability = EntryLibraryFilterAvailability(
+            progressSummary = currentTypes.controlAvailability(progressTypes),
             bookmarking = currentTypes.controlAvailability(bookmarkTypes),
             outsideReleasePeriod = currentTypes.controlAvailability(releasePeriodTypes),
         )
         val policy = request.policy
         val effectiveDownloaded = if (policy.downloadedOnly) TriState.ENABLED_IS else policy.downloaded
         val activeTracking = policy.tracking.filterValues { it != TriState.DISABLED }
+        val unconsumedFilter = policy.unconsumed.takeIf {
+            availability.progressSummary.isAvailable
+        } ?: TriState.DISABLED
+        val notStartedFilter = policy.notStarted.takeIf {
+            availability.progressSummary.isAvailable
+        } ?: TriState.DISABLED
         val bookmarkFilter = policy.bookmarked.takeIf { availability.bookmarking.isAvailable } ?: TriState.DISABLED
         val releasePeriodFilter = policy.outsideReleasePeriod.takeIf {
             policy.outsideReleasePeriodEnabled && availability.outsideReleasePeriod.isAvailable
@@ -144,8 +173,8 @@ internal class DefaultEntryLibraryFilterFeature(
         val included = request.targets.mapIndexedNotNull { index, target ->
             index.takeIf {
                 effectiveDownloaded.matches(target.isDownloadedOrLocal) &&
-                    policy.unconsumed.matches(target.hasUnconsumed) &&
-                    policy.notStarted.matches(!target.hasStarted) &&
+                    unconsumedFilter.matches(target.hasUnconsumed) &&
+                    notStartedFilter.matches(target.hasStarted?.not()) &&
                     bookmarkFilter.matches(target.hasBookmarks) &&
                     policy.completed.matches(target.isCompleted) &&
                     releasePeriodFilter.matchesReleasePeriod(target, releasePeriodTypes) &&
@@ -157,8 +186,8 @@ internal class DefaultEntryLibraryFilterFeature(
             includedTargetIndices = included,
             hasActiveFilters = listOf(
                 effectiveDownloaded,
-                policy.unconsumed,
-                policy.notStarted,
+                unconsumedFilter,
+                notStartedFilter,
                 bookmarkFilter,
                 policy.completed,
                 releasePeriodFilter,
@@ -192,11 +221,11 @@ private fun Set<EntryType>.controlAvailability(
     )
 }
 
-private fun TriState.matches(value: Boolean): Boolean {
+private fun TriState.matches(value: Boolean?): Boolean {
     return when (this) {
         TriState.DISABLED -> true
-        TriState.ENABLED_IS -> value
-        TriState.ENABLED_NOT -> !value
+        TriState.ENABLED_IS -> value == true
+        TriState.ENABLED_NOT -> value == false
     }
 }
 

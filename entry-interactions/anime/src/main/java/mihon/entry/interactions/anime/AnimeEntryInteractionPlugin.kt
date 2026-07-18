@@ -11,6 +11,7 @@ import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadOptionsCapability
 import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
+import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
@@ -78,6 +79,7 @@ internal fun animeEntryInteractionPlugin(
     val downloadProcessor = AnimeDownloadProcessor(dependencies)
     val migrationMergeProvider = AnimeMigrationMergeProvider()
     val childListProcessor = AnimeChildListProcessor(dependencies.entryProgressRepository)
+    val libraryProgressProvider = AnimeLibraryProgressProvider(dependencies.entryProgressRepository)
     val previewProcessor = AnimePreviewInteraction(
         entryInteractionPreferences = dependencies.entryInteractionPreferences,
     )
@@ -102,6 +104,7 @@ internal fun animeEntryInteractionPlugin(
             EntryMergeCapability.bind(migrationMergeProvider),
             EntryChildListCapability.bind(childListProcessor),
             EntryChildProgressCapability.bind(childListProcessor),
+            EntryLibraryProgressCapability.bind(libraryProgressProvider),
             EntryPreviewCapability.bind(previewProcessor),
             EntryPreviewConfigurationCapability.bind(previewProcessor),
             EntryImmersiveCapability.bind(immersiveProcessor),

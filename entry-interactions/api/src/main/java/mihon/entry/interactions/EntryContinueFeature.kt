@@ -9,7 +9,15 @@ import tachiyomi.domain.entry.model.EntryChapter
 interface EntryContinueFeature {
     fun isApplicable(type: EntryType): Boolean
 
+    suspend fun nextTarget(entry: Entry): EntryContinueTargetResult
+
     suspend fun continueEntry(context: Context, entry: Entry): EntryContinueResult
+}
+
+sealed interface EntryContinueTargetResult {
+    data object Inapplicable : EntryContinueTargetResult
+    data object NoNext : EntryContinueTargetResult
+    data class Available(val chapter: EntryChapter) : EntryContinueTargetResult
 }
 
 sealed interface EntryContinueResult {

@@ -5,9 +5,9 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.model.LibraryItemKey
-import tachiyomi.domain.library.model.ProgressState
 
 class LibraryScreenModelMergeDialogTest {
 
@@ -82,31 +82,8 @@ private fun libraryItem(
         isMerged = isMerged,
         memberEntryIds = memberEntries.map { LibraryItemKey(it.type, it.id) },
         memberEntries = memberEntries,
-        progress = when (type) {
-            EntryType.MANGA -> ProgressState(
-                totalCount = 0L,
-                consumedCount = 0L,
-                bookmarkCount = 0L,
-                hasStarted = false,
-            )
-            EntryType.ANIME -> ProgressState(
-                totalCount = 0L,
-                consumedCount = 0L,
-                inProgressItemId = null,
-                inProgressFraction = null,
-                hasStarted = false,
-                continueMode = ProgressState.ContinueMode.TARGET_AVAILABLE,
-            )
-            EntryType.BOOK -> ProgressState(
-                totalCount = 0L,
-                consumedCount = 0L,
-                bookmarkCount = 0L,
-                hasStarted = false,
-            )
-        },
+        progressSummary = EntryLibraryProgressResolution.Inapplicable(type),
         latestUpload = 0L,
-        lastRead = 0L,
-        continueEntryId = null,
         downloadCount = 0,
     )
 }

@@ -66,7 +66,7 @@ internal fun LibraryList(
                         DownloadsBadge(count = libraryItem.downloadCount)
                     }
                     if (displaySettings.unreadBadge) {
-                        UnreadBadge(count = libraryItem.unconsumedCount)
+                        libraryItem.unconsumedCount?.let { UnreadBadge(count = it) }
                     }
                     if (displaySettings.entryTypeBadge) {
                         EntryTypeBadge(entryType = libraryItem.entry.type)
@@ -84,7 +84,7 @@ internal fun LibraryList(
                 onClickContinueReading = if (
                     onClickContinueReading != null &&
                     isContinueReadingAvailable(libraryItem) &&
-                    libraryItem.canContinue
+                    (!libraryItem.hasProgressSummary || libraryItem.canContinue)
                 ) {
                     { onClickContinueReading(libraryItem) }
                 } else {

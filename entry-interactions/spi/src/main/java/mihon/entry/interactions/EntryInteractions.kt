@@ -15,4 +15,5 @@ interface EntryInteractions {
     val childList: EntryChildListInteraction
     val childProgress: EntryChildProgressInteraction
     val childGroupFilter: EntryChildGroupFilterInteraction
+    val libraryProgress: EntryLibraryProgressInteraction
 }

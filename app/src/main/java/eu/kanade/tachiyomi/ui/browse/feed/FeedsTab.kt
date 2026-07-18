@@ -106,6 +106,8 @@ import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
+import mihon.entry.interactions.EntryImmersiveFeature
+import mihon.entry.interactions.EntryImmersiveSourceAvailability
 import mihon.feature.migration.dialog.MigrateEntryDialog
 import mihon.feature.profiles.core.ProfileManager
 import sh.calvin.reorderable.ReorderableItem
@@ -232,15 +234,19 @@ private fun Screen.FeedsTabContent(
     val activeFeed = screenModel.activeFeed()
     val activeSource = activeFeed?.let { screenModel.sourceFor(it.sourceId) }
     val activePreset = activeFeed?.let(screenModel::presetFor)
-    val supportsImmersiveFeed = activeSource?.supportsImmersiveFeed == true
+    val sourceManager = remember { Injekt.get<SourceManager>() }
+    val immersiveFeature = remember { Injekt.get<EntryImmersiveFeature>() }
+    val immersiveAvailable = immersiveFeature.sourceAvailability(
+        activeSource?.let { sourceManager.get(it.id) },
+    ) is EntryImmersiveSourceAvailability.Available
     val haptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     ImmersiveSystemBarsEffect(enabled = feedViewMode == FeedViewMode.Immersive)
 
-    LaunchedEffect(activeFeed?.id, supportsImmersiveFeed) {
-        if (!supportsImmersiveFeed && feedViewMode == FeedViewMode.Immersive) {
+    LaunchedEffect(activeFeed?.id, immersiveAvailable) {
+        if (!immersiveAvailable && feedViewMode == FeedViewMode.Immersive) {
             onFeedViewModeChange(FeedViewMode.Regular)
         }
     }
@@ -398,10 +404,7 @@ private fun Screen.FeedsTabContent(
                                 onItemLongClick = { item ->
                                     scope.launch {
                                         val outcome = withIOContext {
-                                            actionModel.onItemLongClick(
-                                                item = item,
-                                                supportsImmersive = supportsImmersiveFeed,
-                                            )
+                                            actionModel.onItemLongClick(item)
                                         }
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         if (outcome == BrowseLongPressOutcome.StartImmersive) {
@@ -478,7 +481,7 @@ private fun Screen.FeedsTabContent(
                     canGoPrevious = hasPreviousFeed,
                     canGoNext = hasNextFeed,
                     feedViewMode = feedViewMode,
-                    supportsImmersiveFeed = supportsImmersiveFeed,
+                    immersiveAvailable = immersiveAvailable,
                     onFeedViewModeChange = onFeedViewModeChange,
                     onDisplayModeChange = { screenModel.updateFeedDisplayMode(activeFeed.id, it) },
                     onPreviousClick = {
@@ -658,7 +661,7 @@ private fun FeedNavigationBar(
     canGoPrevious: Boolean,
     canGoNext: Boolean,
     feedViewMode: FeedViewMode,
-    supportsImmersiveFeed: Boolean,
+    immersiveAvailable: Boolean,
     onFeedViewModeChange: (FeedViewMode) -> Unit,
     onDisplayModeChange: (LibraryDisplayMode) -> Unit,
     onPreviousClick: () -> Unit,
@@ -724,7 +727,7 @@ private fun FeedNavigationBar(
             }
             FeedViewModeButton(
                 viewMode = feedViewMode,
-                supportsImmersiveFeed = supportsImmersiveFeed,
+                immersiveAvailable = immersiveAvailable,
                 onViewModeChange = onFeedViewModeChange,
             )
             if (feedViewMode == FeedViewMode.Regular) {
@@ -740,7 +743,7 @@ private fun FeedNavigationBar(
 @Composable
 private fun FeedViewModeButton(
     viewMode: FeedViewMode,
-    supportsImmersiveFeed: Boolean,
+    immersiveAvailable: Boolean,
     onViewModeChange: (FeedViewMode) -> Unit,
 ) {
     IconButton(
@@ -749,7 +752,7 @@ private fun FeedViewModeButton(
                 if (viewMode == FeedViewMode.Regular) FeedViewMode.Immersive else FeedViewMode.Regular,
             )
         },
-        enabled = supportsImmersiveFeed,
+        enabled = immersiveAvailable,
     ) {
         Icon(
             imageVector = Icons.Outlined.Fullscreen,
@@ -758,8 +761,8 @@ private fun FeedViewModeButton(
     }
 }
 
-internal fun availableFeedViewModes(supportsImmersiveFeed: Boolean): List<FeedViewMode> {
-    return if (supportsImmersiveFeed) {
+internal fun availableFeedViewModes(immersiveAvailable: Boolean): List<FeedViewMode> {
+    return if (immersiveAvailable) {
         listOf(FeedViewMode.Regular, FeedViewMode.Immersive)
     } else {
         listOf(FeedViewMode.Regular)

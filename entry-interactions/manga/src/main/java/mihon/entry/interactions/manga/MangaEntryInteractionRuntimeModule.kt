@@ -36,7 +36,6 @@ fun mangaEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     entryInteractionPreferences = get<EntryInteractionPreferences>(),
                 ),
             ),
-            libraryProgressCalculator = mangaEntryLibraryProgressCalculator(progressRepository),
             viewerSettingsProviders = listOf(viewerSettingsProvider),
             warmups = listOf(warmup),
             imageComponentInstallers = listOf(EntryImageComponentInstaller(::addMangaReaderImageComponents)),

@@ -18,8 +18,8 @@ import tachiyomi.domain.entry.model.EntryMerge
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.MergedEntryRepository
-import tachiyomi.domain.entry.service.EntryLibraryProgressResolver
-import tachiyomi.domain.entry.service.EntryLibraryState
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.model.LibraryItemKey
 import tachiyomi.domain.source.service.HiddenSourceIds
@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.seconds
 class GetLibraryEntries(
     private val entryRepository: EntryRepository,
     private val entryChapterRepository: EntryChapterRepository,
-    private val entryLibraryProgressResolver: EntryLibraryProgressResolver,
+    private val entryLibraryProgressResolver: EntryLibraryProgressResolutionPort,
     private val categoryRepository: CategoryRepository,
     private val mergedEntryRepository: MergedEntryRepository,
     private val hiddenSourceIds: HiddenSourceIds,
@@ -79,7 +79,7 @@ class GetLibraryEntries(
 
         val itemsById = favorites.associate { entry ->
             val entryChapters = chapters.filter { it.entryId == entry.id }
-            val libraryState = entryLibraryProgressResolver.resolve(
+            val libraryState = entryLibraryProgressResolver.calculate(
                 entry = entry,
                 chapters = entryChapters,
                 lastRead = lastReadByEntryId[entry.id] ?: 0L,
@@ -151,7 +151,12 @@ class GetLibraryEntries(
                 ?: EntryItemOrientation.VERTICAL
         }
 
-        val libraryState = entryLibraryProgressResolver.merge(target.entry.type, members)
+        val memberSummaries = members.mapNotNull { it.availableProgressSummary }
+        val libraryState = if (memberSummaries.size == members.size) {
+            entryLibraryProgressResolver.merge(target.entry.type, memberSummaries)
+        } else {
+            EntryLibraryProgressResolution.Inapplicable(target.entry.type)
+        }
 
         return target.copy(
             categories = members.flatMap { it.categories }.distinct(),
@@ -163,10 +168,8 @@ class GetLibraryEntries(
             isMerged = true,
             memberEntryIds = members.flatMap { it.memberEntryIds },
             memberEntries = members.flatMap { it.memberEntries },
-            progress = libraryState.progress,
+            progressSummary = libraryState,
             latestUpload = members.maxOfOrNull { it.latestUpload } ?: 0L,
-            lastRead = libraryState.lastRead,
-            continueEntryId = libraryState.continueEntryId,
         )
     }
 
@@ -178,7 +181,7 @@ class GetLibraryEntries(
         displaySourceId: Long,
         sourceIds: Set<Long>,
         isMerged: Boolean,
-        libraryState: EntryLibraryState,
+        libraryState: EntryLibraryProgressResolution,
     ): LibraryItem {
         val source = sourceManager.getOrStub(entry.source)
         val sourceDisplayInfo = sourceManager.getDisplayInfo(entry.source)
@@ -198,10 +201,8 @@ class GetLibraryEntries(
             isMerged = isMerged,
             memberEntryIds = memberEntries.map { LibraryItemKey(entry.type, it.id) },
             memberEntries = memberEntries,
-            progress = libraryState.progress,
+            progressSummary = libraryState,
             latestUpload = chapters.maxOfOrNull { it.dateUpload }?.takeIf { it > 0 } ?: entry.lastUpdate,
-            lastRead = libraryState.lastRead,
-            continueEntryId = libraryState.continueEntryId,
             downloadCount = 0,
         )
     }

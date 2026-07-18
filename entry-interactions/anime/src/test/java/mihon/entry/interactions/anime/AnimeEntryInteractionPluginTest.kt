@@ -1,7 +1,6 @@
 package mihon.entry.interactions.anime
 
 import android.content.Context
-import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryMedia
 import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
 import eu.kanade.tachiyomi.source.entry.EntryType
@@ -69,8 +68,6 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.MergedEntryRepository
 import tachiyomi.domain.entry.repository.PlaybackPreferencesRepository
-import tachiyomi.domain.library.model.LibraryItem
-import tachiyomi.domain.library.model.ProgressState
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 
@@ -252,18 +249,28 @@ class AnimeEntryInteractionPluginTest {
     }
 
     @Test
-    fun `anime merged library progress keeps first member continue target`() {
-        val calculator = animeEntryLibraryProgressCalculator(FakeEntryProgressRepository(emptyList()))
-
-        val state = calculator.merge(
-            listOf(
-                libraryItem(entryId = 7L, continueEntryId = null),
-                libraryItem(entryId = 8L, continueEntryId = 82L),
+    fun `anime library progress provider exposes playback evidence`() = runTest {
+        val evidence = AnimeLibraryProgressProvider(
+            FakeEntryProgressRepository(
+                listOf(
+                    playbackState(
+                        chapterId = 2L,
+                        positionMs = 5_000L,
+                        durationMs = 10_000L,
+                        completed = false,
+                        lastWatchedAt = 80L,
+                    ),
+                ),
             ),
+        ).evidence(
+            entry = entry(EntryType.ANIME),
+            chapters = listOf(chapter(id = 1L), chapter(id = 2L)),
         )
 
-        state.continueEntryId shouldBe 82L
-        state.progress.canContinue(state.continueEntryId, unconsumedCount = 1L) shouldBe true
+        evidence.hasMediaProgress shouldBe true
+        evidence.inProgressItemId shouldBe 2L
+        evidence.inProgressFraction shouldBe 0.5f
+        evidence.lastActivityAt shouldBe 80L
     }
 
     @Test
@@ -1000,36 +1007,6 @@ class AnimeEntryInteractionPluginTest {
             source = sourceId,
             profileId = profileId,
             type = type,
-        )
-    }
-
-    private fun libraryItem(
-        entryId: Long,
-        continueEntryId: Long?,
-    ): LibraryItem {
-        val entry = entry(EntryType.ANIME, id = entryId)
-        return LibraryItem(
-            entry = entry,
-            categories = emptyList(),
-            sourceName = "Source",
-            sourceLanguage = "en",
-            sourceItemOrientation = EntryItemOrientation.VERTICAL,
-            displaySourceId = entry.source,
-            sourceIds = setOf(entry.source),
-            isLocal = false,
-            isMerged = false,
-            memberEntryIds = emptyList(),
-            memberEntries = listOf(entry),
-            progress = ProgressState(
-                totalCount = 1L,
-                consumedCount = 0L,
-                hasStarted = false,
-                continueMode = ProgressState.ContinueMode.TARGET_AVAILABLE,
-            ),
-            latestUpload = 0L,
-            lastRead = 0L,
-            continueEntryId = continueEntryId,
-            downloadCount = 0,
         )
     }
 

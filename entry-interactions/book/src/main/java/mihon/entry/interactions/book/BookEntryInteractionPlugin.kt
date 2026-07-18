@@ -9,6 +9,7 @@ import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionProviderBinding
+import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryProgressCapability
@@ -52,6 +53,7 @@ fun bookEntryInteractionPlugin(
         null
     }
     val childListProcessor = BookChildListProcessor(dependencies.entryProgressRepository)
+    val libraryProgressProvider = BookLibraryProgressProvider(dependencies.entryProgressRepository)
     val outsideReleasePeriodFilterProvider = BookOutsideReleasePeriodFilterProvider()
     return object : EntryInteractionPlugin {
         override val type = EntryType.BOOK
@@ -63,6 +65,7 @@ fun bookEntryInteractionPlugin(
             add(EntryProgressCapability.bind(progressProcessor))
             add(EntryChildListCapability.bind(childListProcessor))
             add(EntryChildProgressCapability.bind(childListProcessor))
+            add(EntryLibraryProgressCapability.bind(libraryProgressProvider))
             add(EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider))
             if (downloadProcessor != null) {
                 add(EntryDownloadCapability.bind(downloadProcessor))

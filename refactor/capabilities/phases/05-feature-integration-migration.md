@@ -40,7 +40,12 @@ Current progress:
 - [x] `F18` — Child Group Filtering complete. See
   [`../features/F18-child-group-filtering.md`](../features/F18-child-group-filtering.md).
 - [x] `F19` — Preview complete. See [`../features/F19-preview.md`](../features/F19-preview.md).
-- [ ] `F11`, `F12`, and `F20`–`F27` — Not started.
+- [x] `F20` — Immersive Browsing complete. See [`../features/F20-immersive.md`](../features/F20-immersive.md).
+- [x] `F21` — Related Entries complete. See
+  [`../features/F21-related-entries.md`](../features/F21-related-entries.md).
+- [x] `F22` — Library Progress Summary complete. See
+  [`../features/F22-library-progress-summary.md`](../features/F22-library-progress-summary.md).
+- [ ] `F11`, `F12`, and `F23`–`F27` — Not started.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

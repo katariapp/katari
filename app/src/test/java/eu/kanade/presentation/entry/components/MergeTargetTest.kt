@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.model.LibraryItemKey
-import tachiyomi.domain.library.model.ProgressState
 import tachiyomi.domain.source.model.SourceDisplayInfo
 import tachiyomi.domain.source.service.SourceManager
 
@@ -96,10 +96,8 @@ private fun libraryItem(
         isMerged = memberEntries.size > 1,
         memberEntryIds = memberEntries.map { LibraryItemKey(it.type, it.id) },
         memberEntries = memberEntries,
-        progress = ProgressState(totalCount = 0L, consumedCount = 0L, hasStarted = false),
+        progressSummary = EntryLibraryProgressResolution.Inapplicable(entry.type),
         latestUpload = 0L,
-        lastRead = 0L,
-        continueEntryId = null,
         downloadCount = 0,
     )
 }

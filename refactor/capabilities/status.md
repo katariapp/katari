@@ -27,7 +27,8 @@ Updated: 2026-07-18
 - F03–F05 completion: `846c6029f` (`(refactor): migrate core download features`)
 - F06–F08 completion: `91d57f376` (`(refactor): migrate remaining download features`)
 - F09, F10, and F13 completion: `e175cbc3f` (`(refactor): migrate entry state features`)
-- F14, F18, and F19 are integrated and validated as the current review batch.
+- F14, F18, and F19 completion: `a03ff2a71` (`(refactor): migrate entry filtering and preview features`)
+- F20, F21, and F22 are implemented and validated in the current integration batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -35,8 +36,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F14`, `F18`, and `F19` — Library Filtering, Child Group Filtering, and Preview
-- State: complete and validated; next implementation batch is `F20`, `F21`, and `F22`
+- Milestone: `F20`, `F21`, and `F22` — Immersive, Related Entries, and Library Progress Summary
+- State: complete and validated; next implementation batch is `F23`, `F24`, and `F25`
 
 ## Why the Plan Was Reset
 
@@ -299,6 +300,22 @@ Combined F14/F18/F19 validation:
 - The settings boundary caught and rejected a hardcoded Manga/Anime Preview text map during integration. It was removed
   in favor of provider-declared context plus generic presentation; no allowlist exception was added.
 
+Focused F20 validation:
+
+- Immersive provider presence selects every common surface and lifecycle consequence. Source opt-in, Child List, Open,
+  descriptive metadata, and resolved media remain independent contextual or derived relationships.
+- Child-backed providers fail coordinator construction when Immersive plus Child List cannot be selected; entry-level
+  and zero-preload providers remain valid.
+- Catalogue/feed mode, per-entry long press, settings evidence, preload, loading, rendering, progress, and release use
+  one application Feature boundary. Raw SPI access, silent release, and missing-provider preload fallback are removed.
+- The synthetic contract proves structured provider absence, empty-runtime source closure, source unavailable, source
+  opt-out, no reading child, media failure, metadata-only surface pruning, Open composition, strict lifecycle, and
+  anonymous type participation.
+- API/SPI, every production type/root interaction module, and focused F20 tests pass. FOSS compilation reports no F20
+  error before stopping at the expected F11/F12 and unrelated application migration queue.
+- The boundary census is exactly three later-feature references, all raw F11/F12 capability-facade consumers; no F20
+  application reference remains.
+
 ## New Phase Sequence
 
 - Phase 3: General relationship architecture
@@ -519,8 +536,9 @@ Approved on 2026-07-18:
   conditions remain contextual.
 - Every production type plugin now declares providers only through bindings; the transitional registry is no longer
   called directly by a type module.
-- Milestone 4.3 removes the separate root lists for plugins, library progress, settings, caches, warmups, and image
-  components. Each list is derived from the one installed type-runtime contribution collection.
+- Milestone 4.3 colocates plugins, library progress, settings, caches, warmups, and image components in one installed
+  type-runtime contribution collection. F22 later removes the still-required Library Progress field and second provider
+  path entirely in favor of optional plugin bindings.
 - Presentation vocabulary is not treated as a runtime service or support fact; its remaining concrete-type map is
   visible Phase 5 projection work.
 - Milestone 4.4 removes the last two-step installation mechanism. A binding is now consumed directly by both the graph
@@ -558,8 +576,19 @@ Approved on 2026-07-18:
   observation, live filtering, persistence, backup, and controls are Feature-owned without Manga authorization.
 - F19 makes Preview provider presence the sole type-wide support fact, derives configuration, Child List, Open, and
   contextual source requirements independently, and removes raw Preview access and settings type enumeration.
+- F20 makes Immersive provider presence the sole type-wide support fact, composes public source opt-in and runtime media
+  context, derives Child List and Open relationships, and routes every application authorization and lifecycle path
+  through one Feature boundary.
+- F21 gives every composed type shared Related Entries orchestration while leaving `RelatedEntriesSource` and source
+  orientation as contextual external truth. The Feature owns source availability, fetch/persistence, live Library state,
+  and Entry/dialog consequences without filtering mixed authoritative returned types or coupling details navigation to
+  F01 Open.
+- F22 makes Library Progress provider presence optional and authoritative, removes the mandatory calculator/runtime
+  path, and leaves unsupported Library entries structurally visible with explicit inapplicability.
+- F22 owns common counts and merged summaries, derives Continue and Bookmark consequences from F02/F10, and carries
+  unknown summary state truthfully through F14, sort, badges, Stats, and F13 update eligibility.
 
 ## Exact Next Action After Review
 
-Commit the validated F14/F18/F19 batch, remove all three agent worktrees and branches, then start the dependency-ordered
-`F20` Immersive, `F21` Migration, and `F22` Merge batch.
+Commit the validated F20/F21/F22 milestone, remove all three agent worktrees and branches, then start the `F23` Type
+Presentation, `F24` Library-update Notifications, and `F25` Viewer Settings batch.

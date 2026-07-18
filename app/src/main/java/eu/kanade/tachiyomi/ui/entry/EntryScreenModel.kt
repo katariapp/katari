@@ -131,8 +131,8 @@ import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.EntryMerge
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
-import tachiyomi.domain.library.model.ProgressState
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
@@ -2311,15 +2311,8 @@ class EntryScreenModel(
                 isMerged = false,
                 memberEntryIds = emptyList(),
                 memberEntries = listOf(entry),
-                progress = ProgressState(
-                    totalCount = 0,
-                    consumedCount = 0,
-                    bookmarkCount = 0,
-                    hasStarted = false,
-                ),
+                progressSummary = EntryLibraryProgressResolution.Inapplicable(entry.type),
                 latestUpload = 0L,
-                lastRead = 0L,
-                continueEntryId = null,
                 downloadCount = 0,
             )
         }

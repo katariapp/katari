@@ -66,7 +66,7 @@ assert which production types carry a Progress label.
 - Provider presence is the sole Progress-transfer support fact; provider absence is ordinary unsupported behavior.
 - Every shared consumer is named by the F15 contribution and uses one app-facing contract.
 - Media-specific mapping/persistence remains in the provider; shared result semantics remain in the coordinator.
-- Live playback/reading, F17 labels, F21 migration policy, F22 library summaries, and F23 vocabulary stay with their
+- Live playback/reading, F17 labels, F11 migration policy, F22 library summaries, and F23 vocabulary stay with their
   actual owners rather than being absorbed because they share progress data.
 - A future provider automatically enters backup and migration transfer consequences without application or root type
   edits.

@@ -8,9 +8,9 @@ interface EntryUpdateEligibilityFeature {
 
 data class EntryUpdateEligibilityRequest(
     val entry: Entry,
-    val totalCount: Long,
-    val unconsumedCount: Long,
-    val hasStarted: Boolean,
+    val totalCount: Long?,
+    val unconsumedCount: Long?,
+    val hasStarted: Boolean?,
     val fetchWindowUpperBound: Long? = null,
 )
 

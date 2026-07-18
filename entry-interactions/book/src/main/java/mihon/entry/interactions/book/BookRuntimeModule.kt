@@ -37,7 +37,6 @@ fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTy
                     downloadsEnabled = true,
                 ),
             ),
-            libraryProgressCalculator = bookEntryLibraryProgressCalculator(progressRepository),
             viewerSettingsProviders = runtime.viewerSettingsProviders,
             mediaCacheBuckets = runtime.mediaCacheBuckets,
         )

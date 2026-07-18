@@ -42,7 +42,6 @@ fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     historyRepository = get(),
                 ),
             ),
-            libraryProgressCalculator = animeEntryLibraryProgressCalculator(progressRepository),
             viewerSettingsProviders = listOf(viewerSettingsProvider),
             mediaCacheBuckets = listOf(LazyAnimePlaybackCacheBucket { get<EntryPlayerCache>() }),
             warmups = listOf(warmup),

@@ -18,7 +18,7 @@ import mihon.entry.viewer.settings.ViewerSettingBinder
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import mihon.entry.viewer.settings.ViewerSettingsInteraction
 import tachiyomi.core.common.preference.PreferenceStore
-import tachiyomi.domain.entry.service.EntryLibraryProgressResolver
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektRegistrar
@@ -91,11 +91,6 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         )
     }
     addSingletonFactory {
-        EntryLibraryProgressResolver(
-            typeRuntimeContributions.map(EntryTypeRuntimeContribution::libraryProgressCalculator),
-        )
-    }
-    addSingletonFactory {
         EntryImageComponentInstallers(
             typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::imageComponentInstallers),
         )
@@ -122,6 +117,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryLibraryFilterFeatureContributor,
                 EntryChildGroupFilterFeatureContributor,
                 EntryPreviewFeatureContributor,
+                EntryImmersiveFeatureContributor,
+                EntryRelatedEntriesFeatureContributor,
+                EntryLibraryProgressFeatureContributor,
             ),
         )
     }
@@ -139,6 +137,15 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             interaction = composition.interactions.continueEntry,
         )
     }
+    addSingletonFactory<EntryLibraryProgressFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryLibraryProgressFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.libraryProgress,
+            continueFeature = get(),
+        )
+    }
+    addSingletonFactory<EntryLibraryProgressResolutionPort> { get<EntryLibraryProgressFeature>() }
     addSingletonFactory<EntryDownloadRuntimeCoordinator> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryDownloadRuntimeFeature(
@@ -256,6 +263,23 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.preview,
             childList = get(),
+        )
+    }
+    addSingletonFactory<EntryImmersiveFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryImmersiveFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.immersive,
+            childList = get(),
+        )
+    }
+    addSingletonFactory<EntryRelatedEntriesFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryRelatedEntriesFeature(
+            evaluation = composition.featureGraphEvaluation,
+            sourceManager = get(),
+            networkToLocalEntry = get(),
+            getEntry = get(),
         )
     }
     addSingletonFactory {

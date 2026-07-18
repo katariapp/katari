@@ -9,6 +9,7 @@ import eu.kanade.tachiyomi.ui.video.player.VideoStreamResolver
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mihon.entry.interactions.EntryImmersiveHandle
+import mihon.entry.interactions.EntryImmersiveLoadMode
 import mihon.entry.interactions.EntryImmersiveProcessor
 import mihon.entry.interactions.EntryImmersiveProgress
 import mihon.entry.interactions.EntryImmersiveRenderer
@@ -24,18 +25,17 @@ internal class AnimeImmersiveProcessor(
     private val resolveVideoStream: () -> VideoStreamResolver,
 ) : EntryImmersiveProcessor {
     override val type: EntryType = EntryType.ANIME
+    override val loadMode = EntryImmersiveLoadMode.FIRST_READING_CHILD
+    override val preloadRadius: Int = 1
     private val persistMutex = Mutex()
-
-    override fun isSupported(entry: Entry): Boolean = entry.type == type
-
-    override fun preloadRadius(entryType: EntryType): Int = 1
 
     override suspend fun load(
         context: Context,
         entry: Entry,
-        chapter: EntryChapter,
+        chapter: EntryChapter?,
         source: UnifiedSource,
     ): EntryImmersiveHandle {
+        requireNotNull(chapter) { "Anime immersive loading requires a reading child" }
         return when (
             val result = resolveVideoStream()(
                 entryId = entry.id,

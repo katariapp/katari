@@ -7,8 +7,27 @@ import mihon.feature.graph.CapabilityId
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
-interface EntryImmersiveProcessor : EntryImmersiveInteraction, EntryInteractionProvider {
-    override fun preloadRadius(entryType: EntryType): Int
+enum class EntryImmersiveLoadMode {
+    ENTRY,
+    FIRST_READING_CHILD,
+}
+
+interface EntryImmersiveProcessor : EntryInteractionProvider {
+    val loadMode: EntryImmersiveLoadMode
+    val preloadRadius: Int
+
+    suspend fun load(
+        context: android.content.Context,
+        entry: Entry,
+        chapter: EntryChapter?,
+        source: UnifiedSource,
+    ): EntryImmersiveHandle
+
+    fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRenderer
+
+    suspend fun persistProgress(handle: EntryImmersiveHandle, progress: EntryImmersiveProgress)
+
+    fun release(handle: EntryImmersiveHandle)
 }
 
 val EntryImmersiveCapability = entryInteractionCapability<EntryImmersiveProcessor>(

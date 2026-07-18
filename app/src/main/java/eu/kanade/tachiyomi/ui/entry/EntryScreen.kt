@@ -48,12 +48,9 @@ import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
-import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
-import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.WebViewSource
 import eu.kanade.tachiyomi.source.isLocalOrStub
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
@@ -80,6 +77,9 @@ import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewOpenTargetResult
 import mihon.entry.interactions.EntryPreviewSize
+import mihon.entry.interactions.EntryRelatedEntriesAvailability
+import mihon.entry.interactions.EntryRelatedEntriesContext
+import mihon.entry.interactions.EntryRelatedEntriesFeature
 import mihon.feature.migration.config.MigrationConfigScreen
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.withIOContext
@@ -120,6 +120,7 @@ class EntryScreen(
         val entryConsumptionFeature = remember { Injekt.get<EntryConsumptionFeature>() }
         val entryDownloadActionFeature = remember { Injekt.get<EntryDownloadActionFeature>() }
         val entryBookmarkFeature = remember { Injekt.get<EntryBookmarkFeature>() }
+        val entryRelatedEntriesFeature = remember { Injekt.get<EntryRelatedEntriesFeature>() }
         val screenModel = rememberScreenModel {
             EntryScreenModel(
                 context = context,
@@ -130,7 +131,7 @@ class EntryScreen(
             )
         }
         val relatedEntriesScreenModel = rememberScreenModel(tag = "related-entries-$entryId") {
-            RelatedEntriesScreenModel(entryId)
+            RelatedEntriesScreenModel(entryId, entryRelatedEntriesFeature)
         }
 
         val state by screenModel.state.collectAsStateWithLifecycle()
@@ -168,9 +169,13 @@ class EntryScreen(
         val previewConfig by screenModel.previewConfig.collectAsStateWithLifecycle()
         val previewState by screenModel.previewState.collectAsStateWithLifecycle()
         val webViewSource = remember(successState.source) { successState.source as? WebViewSource }
-        val relatedEntriesSource = remember(successState.source) { successState.source as? RelatedEntriesSource }
-        val relatedEntriesOrientation = remember(successState.source) {
-            successState.source?.sourceItemOrientation() ?: EntryItemOrientation.VERTICAL
+        val relatedEntriesAvailability = remember(successState.entry, successState.source) {
+            entryRelatedEntriesFeature.availability(
+                EntryRelatedEntriesContext(
+                    entry = successState.entry,
+                    source = successState.source,
+                ),
+            )
         }
         var showRelatedEntriesDialog by rememberSaveable(successState.entry.id) { mutableStateOf(false) }
         val openApplicable = entryOpenFeature.isApplicable(successState.entry.type)
@@ -275,7 +280,7 @@ class EntryScreen(
             }.takeIf { successState.entry.favorite && screenModel.supportsMigration() },
             onRelatedEntriesClicked = {
                 showRelatedEntriesDialog = true
-            }.takeIf { relatedEntriesSource != null },
+            }.takeIf { relatedEntriesAvailability is EntryRelatedEntriesAvailability.Available },
             onEditNotesClicked = {
                 navigator.push(eu.kanade.tachiyomi.ui.entry.notes.EntryNotesScreen(entry = successState.entry))
             },
@@ -321,7 +326,6 @@ class EntryScreen(
         if (showRelatedEntriesDialog) {
             RelatedEntriesDialog(
                 screenModel = relatedEntriesScreenModel,
-                sourceItemOrientation = relatedEntriesOrientation,
                 onDismissRequest = { showRelatedEntriesDialog = false },
                 onEntryClick = { relatedEntry ->
                     showRelatedEntriesDialog = false

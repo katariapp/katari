@@ -79,33 +79,20 @@ class MangaEntryInteractionPluginTest {
     }
 
     @Test
-    fun `manga library progress preserves last read timestamp`() = runTest {
-        val state = mangaEntryLibraryProgressCalculator(FakeEntryProgressRepository(emptyList())).calculate(
-            entry = entry(EntryType.MANGA),
-            chapters = listOf(chapter(read = true)),
-            lastRead = 1234L,
-        )
-
-        state.lastRead shouldBe 1234L
-    }
-
-    @Test
-    fun `manga library progress exposes generic partial page state`() = runTest {
-        val state = mangaEntryLibraryProgressCalculator(
+    fun `manga library progress provider exposes partial page evidence`() = runTest {
+        val evidence = MangaLibraryProgressProvider(
             FakeEntryProgressRepository(
                 listOf(pageProgress(chapterId = 2L, pageIndex = 4L, updatedAt = 2_000L)),
             ),
-        ).calculate(
+        ).evidence(
             entry = entry(EntryType.MANGA),
             chapters = listOf(chapter(id = 1L), chapter(id = 2L)),
-            lastRead = 1_000L,
         )
 
-        state.progress.hasStarted shouldBe true
-        state.progress.inProgressItemId shouldBe 2L
-        state.progress.inProgressFraction shouldBe (4f / 9f)
-        state.lastRead shouldBe 2_000L
-        state.continueEntryId shouldBe 2L
+        evidence.hasMediaProgress shouldBe true
+        evidence.inProgressItemId shouldBe 2L
+        evidence.inProgressFraction shouldBe (4f / 9f)
+        evidence.lastActivityAt shouldBe 2_000L
     }
 
     @Test

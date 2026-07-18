@@ -90,6 +90,9 @@ Migration progress:
   directly from bindings, and the old registry-shaped support tests are replaced by generic composition invariants.
 - Phase 5 F14 now owns generic Library filter policy and active state. Bookmark-control and outside-release-period
   applicability derive from their independent provider evidence; search/grouping and update scope remain contextual.
+- Phase 5 F21 now owns Related Entries orchestration for every composed type while preserving `RelatedEntriesSource`
+  and source orientation as contextual external truth. Mixed returned types, profile-aware persistence, live Library
+  state, and Entry-details navigation no longer depend on an app-owned capability cast or parallel domain use case.
 
 | ID | Provider or composition fact | Current evidence | Required migration outcome |
 | --- | --- | --- | --- |
@@ -114,7 +117,7 @@ Migration progress:
 | `T19` | Outside-release-period library filter | Boolean method on three registered library-filter processors | Represent the actual optional feature provider; provider registration must no longer coexist with a false support method. |
 | `T20` | Preview renderer/loader | Manga and Anime preview processors; contextual support methods | Contribute the type-owned preview implementation while source, entry, and preference facts remain contextual. |
 | `T21` | Immersive renderer/loader | Manga and Anime immersive processors | Contribute the renderer; source opt-in, media resolution, and runtime state remain contextual. |
-| `T22` | Library progress calculation | Separate `EntryLibraryProgressCalculator` registry and root list | Join the type contribution boundary or a graph-selected feature adapter; a new type must not require a second root list. |
+| `T22` | Library progress calculation | F22 binds optional media-evidence providers through the ordinary type plugin | Provider presence is sole summary support; no required runtime field, second root list, public factory, or `getValue` absence failure remains. |
 | `T23` | Presentation vocabulary | `EntryTypePresentation` hardcodes three types plus a generic fallback | Type-owned vocabulary becomes projection input. It may vary without deciding support. |
 | `T24` | Type runtime services | `addMangaEntryInteractionRuntime`, `addAnimeEntryInteractionRuntime`, `addBookEntryInteractionRuntime` | Install through the same owned contribution boundary or an explicitly linked runtime contribution, not an unrelated type list. |
 | `T25` | Viewer-setting providers | Manga/Anime providers plus Book runtime provider list | Associate providers with their owning contributions; settings integration must not require root and UI lists. |
@@ -151,9 +154,9 @@ so it cannot be silently omitted for the next provider.
 | `F17` | Child-list behavior | Entry sorting/filtering/display rows; merged headers; missing-count rows; immersive first-child selection; per-child progress labels. |
 | `F18` | Child-group filtering | Entry state flows, live-list filtering, multi-member observation, filter controls, excluded-group persistence, backup snapshot/restore, generic storage consequences, group data source, and settings dialog integration. |
 | `F19` | Preview | Entry preview state; browse long-press preview; preference/configuration; page loader and open action; contextual source and child requirements. |
-| `F20` | Immersive browsing | Catalogue and feed mode entry; long-press action; view-mode fallback; renderer loading; preload radius; progress persistence; source opt-in. |
+| `F20` | Immersive browsing | Catalogue and feed mode entry; per-entry long-press action and source settings evidence; view-mode fallback; contextual source/entry outcomes; renderer loading; provider-derived preload radius; progress and strict lifecycle; source opt-in and metadata-only surface pruning. |
 | `F21` | Related entries | Entry action, related-entry screen model/dialog, source orientation, library membership, and normal open flow for returned mixed types. |
-| `F22` | Library progress summary | Unified library load, merged state, continue target, badges, sort/filter inputs, and any empty-provider behavior. |
+| `F22` | Library progress summary | Unified library load; explicit absence; merged state; F02 continue target; F10 bookmark summary; badges; sort/filter inputs; Stats coverage; F13 update inputs; structural F12 adapters; boundary enforcement. |
 | `F23` | Type presentation | Entry, Library, Updates, History, Browse, Download, Duplicate, Tracking, and notification vocabulary/icons/plurals; presentation never authorizes an action. |
 | `F24` | Library-update notifications | Type grouping; channel/group/ID selection; summary and child vocabulary; mark-consumed, view, and download actions; neutral or owned Book semantics instead of Manga fallback. |
 | `F25` | Viewer settings | Provider discovery; reader/player settings hubs; provider-to-screen routing; settings search indexing; entry overrides; profile ownership; reset actions; backup/migration integration. |
@@ -199,7 +202,7 @@ application-wide graph through its real owner; it does not mean moving all code 
 
 | Finding | Evidence | Proposed classification for verification |
 | --- | --- | --- |
-| Library progress is a second required-per-type provider system | `EntryLibraryProgressRuntime.kt`, `EntryLibraryProgressResolver.kt`, `DomainModule.kt` | **Include.** Join type contribution discovery; absence must be a feature result, not `getValue` failure caused by a forgotten root edit. |
+| Library progress was a second required-per-type provider system | Former calculator factories, runtime-contribution field, root resolver list, and Domain consumer | **Resolved in F22.** Optional plugin-bound evidence providers feed one Feature; absence is structured and Library items remain visible. |
 | Viewer settings are discovered operationally but routed through a hardcoded UI map | `ViewerSettingsInteraction`, `EntryInteractionRuntime.kt`, `SettingsViewerHubScreens.kt`, `SettingsSearchScreen.kt` | **Include.** Provider contribution must carry/select its UI projection and search participation. |
 | Media caches use a provider list but hardcoded keys, labels, and auto-clear policy | `EntryRuntimeContracts.kt`, `EntryInteractionRuntime.kt`, `SettingsDataScreen.kt`, `AutoClearMediaCache.kt`, `MainActivity.kt` | **Include.** Cache maintenance is a feature with provider-owned descriptors and selected settings/startup consequences. |
 | Profile preference ownership manually instantiates known preference owners | `ProfilePreferenceOwnership.kt`, `ProfileManager.kt` | **Include.** Feature preferences need an owned contribution so a new provider cannot be omitted from profile migration. |

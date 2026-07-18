@@ -16,11 +16,10 @@ import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.MergedEntryRepository
-import tachiyomi.domain.entry.service.EntryLibraryProgressCalculator
-import tachiyomi.domain.entry.service.EntryLibraryProgressResolver
-import tachiyomi.domain.entry.service.EntryLibraryState
-import tachiyomi.domain.library.model.LibraryItem
-import tachiyomi.domain.library.model.ProgressState
+import tachiyomi.domain.entry.service.EntryLibraryContinueTarget
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
+import tachiyomi.domain.entry.service.EntryLibraryProgressSummary
 import tachiyomi.domain.source.model.SourceDisplayInfo
 import tachiyomi.domain.source.service.HiddenSourceIds
 import tachiyomi.domain.source.service.SourceManager
@@ -33,12 +32,8 @@ class GetLibraryEntriesTest {
     private val mergedEntryRepository = mockk<MergedEntryRepository>()
     private val hiddenSourceIds = mockk<HiddenSourceIds>()
     private val sourceManager = mockk<SourceManager>()
-    private val entryLibraryProgressResolver = EntryLibraryProgressResolver(
-        listOf(
-            testCalculator(EntryType.MANGA),
-            testCalculator(EntryType.ANIME),
-        ),
-    )
+    private val unavailableSummaryEntryIds = mutableSetOf<Long>()
+    private val entryLibraryProgressResolver = testProgressPort()
 
     private val interactor = GetLibraryEntries(
         entryRepository = entryRepository,
@@ -96,6 +91,26 @@ class GetLibraryEntriesTest {
         items.map { it.lastRead } shouldBe listOf(100L, 200L)
     }
 
+    @Test
+    fun `entry without progress summary remains structurally visible`() = runTest {
+        val book = entry(id = 3L, source = 30L, type = EntryType.BOOK)
+        unavailableSummaryEntryIds += book.id
+        coEvery { entryRepository.getLibraryEntries() } returns listOf(book)
+        coEvery { entryRepository.getLibraryLastRead() } returns emptyMap()
+        coEvery { mergedEntryRepository.getAll() } returns emptyList()
+        every { hiddenSourceIds.get() } returns emptySet()
+        every { entryChapterRepository.getChaptersByEntryIds(listOf(book.id)) } returns flowOf(emptyList())
+        coEvery { categoryRepository.getCategoryIdsByEntryIds(listOf(book.id)) } returns emptyMap()
+        every { sourceManager.getOrStub(book.source) } returns source(book.source)
+        every { sourceManager.getDisplayInfo(book.source) } returns sourceDisplayInfo(book.source)
+
+        val item = interactor.await().single()
+
+        item.entry shouldBe book
+        item.progressSummary shouldBe EntryLibraryProgressResolution.Inapplicable(EntryType.BOOK)
+        item.totalCount shouldBe null
+    }
+
     private fun entry(id: Long, source: Long, type: EntryType): Entry {
         return Entry.create().copy(
             id = id,
@@ -123,52 +138,40 @@ class GetLibraryEntriesTest {
         )
     }
 
-    private fun testCalculator(type: EntryType): EntryLibraryProgressCalculator {
-        return object : EntryLibraryProgressCalculator {
-            override val entryType = type
-
+    private fun testProgressPort(): EntryLibraryProgressResolutionPort {
+        return object : EntryLibraryProgressResolutionPort {
             override suspend fun calculate(
                 entry: Entry,
                 chapters: List<EntryChapter>,
                 lastRead: Long,
-            ): EntryLibraryState {
-                return EntryLibraryState(progress(type, chapters.size.toLong()), lastRead, continueEntryId = null)
+            ): EntryLibraryProgressResolution {
+                if (entry.id in unavailableSummaryEntryIds) {
+                    return EntryLibraryProgressResolution.Inapplicable(entry.type)
+                }
+                return EntryLibraryProgressResolution.Available(summary(chapters.size.toLong(), lastRead))
             }
 
-            override fun merge(members: List<LibraryItem>): EntryLibraryState {
-                return EntryLibraryState(
-                    progress(
-                        type,
-                        members.sumOf {
-                            it.totalCount
-                        },
-                    ),
-                    lastRead = 0L,
-                    continueEntryId = null,
+            override fun merge(
+                entryType: EntryType,
+                members: List<EntryLibraryProgressSummary>,
+            ): EntryLibraryProgressResolution {
+                return EntryLibraryProgressResolution.Available(
+                    summary(members.sumOf(EntryLibraryProgressSummary::totalCount), lastRead = 0L),
                 )
             }
         }
     }
 
-    private fun progress(type: EntryType, totalCount: Long): ProgressState {
-        return when (type) {
-            EntryType.MANGA -> ProgressState(
-                totalCount = totalCount,
-                consumedCount = 0L,
-                hasStarted = false,
-            )
-            EntryType.ANIME -> ProgressState(
-                totalCount = totalCount,
-                consumedCount = 0L,
-                hasStarted = false,
-                continueMode = ProgressState.ContinueMode.TARGET_AVAILABLE,
-            )
-            EntryType.BOOK -> ProgressState(
-                totalCount = totalCount,
-                consumedCount = 0L,
-                hasStarted = false,
-                continueMode = ProgressState.ContinueMode.TARGET_AVAILABLE,
-            )
-        }
+    private fun summary(totalCount: Long, lastRead: Long): EntryLibraryProgressSummary {
+        return EntryLibraryProgressSummary(
+            totalCount = totalCount,
+            consumedCount = 0L,
+            hasStarted = false,
+            bookmarkCount = null,
+            inProgressItemId = null,
+            inProgressFraction = null,
+            lastRead = lastRead,
+            continueTarget = EntryLibraryContinueTarget.Inapplicable,
+        )
     }
 }

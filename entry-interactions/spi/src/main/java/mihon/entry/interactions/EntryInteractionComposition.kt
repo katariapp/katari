@@ -50,6 +50,7 @@ fun createEntryInteractionComposition(
             previewProcessors = providers[EntryPreviewCapability],
             previewConfigurationProviders = providers[EntryPreviewConfigurationCapability],
             immersiveProcessors = providers[EntryImmersiveCapability],
+            libraryProgressProviders = providers[EntryLibraryProgressCapability],
         ),
         featureGraph = featureGraph,
         featureGraphEvaluation = featureGraphEvaluation,
@@ -110,6 +111,7 @@ private class DefaultEntryInteractions(
     previewProcessors: Map<EntryType, EntryPreviewProcessor>,
     previewConfigurationProviders: Map<EntryType, EntryPreviewConfigurationProvider>,
     immersiveProcessors: Map<EntryType, EntryImmersiveProcessor>,
+    libraryProgressProviders: Map<EntryType, EntryLibraryProgressProvider>,
 ) : EntryInteractions {
     override val open: EntryOpenInteraction = ProviderBackedEntryOpenInteraction(openProcessors)
     override val continueEntry: EntryContinueInteraction = ProviderBackedEntryContinueInteraction(continueProcessors)
@@ -137,4 +139,6 @@ private class DefaultEntryInteractions(
         ProviderBackedEntryPreviewInteraction(previewProcessors, previewConfigurationProviders)
     override val immersive: EntryImmersiveInteraction =
         ProviderBackedEntryImmersiveInteraction(immersiveProcessors)
+    override val libraryProgress: EntryLibraryProgressInteraction =
+        ProviderBackedEntryLibraryProgressInteraction(libraryProgressProviders)
 }

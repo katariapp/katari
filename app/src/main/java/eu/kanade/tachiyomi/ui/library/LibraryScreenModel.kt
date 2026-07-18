@@ -259,7 +259,7 @@ class LibraryScreenModel(
             EntryLibraryFilterTarget(
                 type = item.entry.type,
                 isDownloadedOrLocal = item.isLocal || item.downloadCount > 0,
-                hasUnconsumed = item.unconsumedCount > 0,
+                hasUnconsumed = item.unconsumedCount?.let { it > 0 },
                 hasStarted = item.hasStarted,
                 hasBookmarks = item.hasBookmarks,
                 isCompleted = item.entry.status == EntryStatus.COMPLETED,
@@ -1170,6 +1170,7 @@ class LibraryScreenModel(
         val loggedInTrackerIds: Set<Long> = emptySet(),
         val hasActiveFilters: Boolean = false,
         val filterAvailability: EntryLibraryFilterAvailability = EntryLibraryFilterAvailability(
+            progressSummary = EntryLibraryFilterControlAvailability(emptySet(), emptySet()),
             bookmarking = EntryLibraryFilterControlAvailability(emptySet(), emptySet()),
             outsideReleasePeriod = EntryLibraryFilterControlAvailability(emptySet(), emptySet()),
         ),

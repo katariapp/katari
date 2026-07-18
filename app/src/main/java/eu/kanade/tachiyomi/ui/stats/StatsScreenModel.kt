@@ -42,6 +42,7 @@ class StatsScreenModel(
             val libraryEntries = getLibraryEntries.await()
 
             val distinctLibraryEntries = libraryEntries.fastDistinctBy { it.key }
+            val hasCompleteProgressCoverage = distinctLibraryEntries.all(LibraryItem::hasProgressSummary)
 
             val entryTrackMap = getEntryTrackMap(distinctLibraryEntries)
             val scoredEntryTrackerMap = getScoredEntryTrackMap(entryTrackMap)
@@ -50,7 +51,7 @@ class StatsScreenModel(
 
             val overviewStatData = StatsData.Overview(
                 libraryEntryCount = distinctLibraryEntries.size,
-                completedEntryCount = distinctLibraryEntries.count {
+                completedEntryCount = distinctLibraryEntries.takeIf { hasCompleteProgressCoverage }?.count {
                     it.entry.status == EntryStatus.COMPLETED && it.unconsumedCount == 0L
                 },
                 totalReadDuration = getTotalReadDuration.await(),
@@ -58,13 +59,18 @@ class StatsScreenModel(
 
             val titlesStatData = StatsData.Titles(
                 globalUpdateItemCount = getGlobalUpdateItemCount(libraryEntries),
-                startedEntryCount = distinctLibraryEntries.count { it.hasStarted },
+                startedEntryCount = distinctLibraryEntries.takeIf { hasCompleteProgressCoverage }
+                    ?.count { it.hasStarted == true },
                 localEntryCount = distinctLibraryEntries.count { it.entry.source == LocalSource.ID },
             )
 
             val chaptersStatData = StatsData.Chapters(
-                totalChapterCount = distinctLibraryEntries.sumOf { it.totalCount }.toInt(),
-                readChapterCount = distinctLibraryEntries.sumOf { it.consumedCount }.toInt(),
+                totalChapterCount = distinctLibraryEntries.takeIf { hasCompleteProgressCoverage }
+                    ?.sumOf { checkNotNull(it.totalCount) }
+                    ?.toInt(),
+                readChapterCount = distinctLibraryEntries.takeIf { hasCompleteProgressCoverage }
+                    ?.sumOf { checkNotNull(it.consumedCount) }
+                    ?.toInt(),
                 downloadCount = downloadRuntime.totalDownloadCount(),
             )
 

@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mihon.entry.interactions.EntryImmersiveHandle
+import mihon.entry.interactions.EntryImmersiveLoadMode
 import mihon.entry.interactions.EntryImmersiveProcessor
 import mihon.entry.interactions.EntryImmersiveProgress
 import mihon.entry.interactions.EntryImmersiveRenderer
@@ -32,18 +33,17 @@ internal class MangaImmersiveProcessor(
     private val now: () -> Long = System::currentTimeMillis,
 ) : EntryImmersiveProcessor {
     override val type: EntryType = EntryType.MANGA
+    override val loadMode = EntryImmersiveLoadMode.FIRST_READING_CHILD
+    override val preloadRadius: Int = 1
     private val persistMutex = Mutex()
-
-    override fun isSupported(entry: Entry): Boolean = entry.type == type
-
-    override fun preloadRadius(entryType: EntryType): Int = 1
 
     override suspend fun load(
         context: Context,
         entry: Entry,
-        chapter: EntryChapter,
+        chapter: EntryChapter?,
         source: UnifiedSource,
     ): EntryImmersiveHandle {
+        requireNotNull(chapter) { "Manga immersive loading requires a reading child" }
         val imageSource = source as? EntryImageSource
             ?: error("Source ${source.name} does not support image pages")
         val media = source.getMedia(chapter.toSEntryChapter()) as? EntryMedia.ImagePages
@@ -95,7 +95,8 @@ internal class MangaImmersiveProcessor(
         if (imageProgress.pageCount <= 0) return
 
         persistMutex.withLock {
-            val chapter = repository.getChapterById(handle.chapterId) ?: return@withLock
+            val chapterId = requireNotNull(handle.chapterId) { "Manga immersive progress requires a child" }
+            val chapter = repository.getChapterById(chapterId) ?: return@withLock
             val pageIndex = imageProgress.pageIndex.coerceIn(0, imageProgress.pageCount - 1)
             val current = progressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
             val completedNow = current?.completed != true && pageIndex == imageProgress.pageCount - 1

@@ -16,6 +16,7 @@ import mihon.entry.interactions.EntryDownloadParallelSourceTransfersCapability
 import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
 import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
+import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
@@ -78,6 +79,7 @@ internal fun mangaEntryInteractionPlugin(
     val downloadProcessor = MangaDownloadProcessor(dependencies)
     val migrationMergeProvider = MangaMigrationMergeProvider()
     val childListProcessor = MangaChildListProcessor(dependencies.entryProgressRepository)
+    val libraryProgressProvider = MangaLibraryProgressProvider(dependencies.entryProgressRepository)
     val childGroupFilterProcessor = MangaChildGroupFilterProcessor
     val outsideReleasePeriodFilterProvider = MangaOutsideReleasePeriodFilterProvider()
     val previewProcessor = MangaPreviewInteraction(dependencies.entryInteractionPreferences)
@@ -107,6 +109,7 @@ internal fun mangaEntryInteractionPlugin(
             EntryMergeCapability.bind(migrationMergeProvider),
             EntryChildListCapability.bind(childListProcessor),
             EntryChildProgressCapability.bind(childListProcessor),
+            EntryLibraryProgressCapability.bind(libraryProgressProvider),
             EntryChildGroupFilterCapability.bind(childGroupFilterProcessor),
             EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider),
             EntryPreviewCapability.bind(previewProcessor),

@@ -38,20 +38,12 @@ internal class ProviderBackedEntryPreviewInteraction(
 internal class ProviderBackedEntryImmersiveInteraction(
     private val processors: Map<EntryType, EntryImmersiveProcessor>,
 ) : EntryImmersiveInteraction {
-    override fun isSupported(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
-        processor.requireMatchingEntryType("immersive feed", entry, processors.keys)
-        return processor.isSupported(entry)
-    }
-
-    override fun preloadRadius(entryType: EntryType): Int {
-        return processors[entryType]?.preloadRadius(entryType) ?: 0
-    }
+    override fun processor(type: EntryType): EntryImmersiveProcessor? = processors[type]
 
     override suspend fun load(
         context: Context,
         entry: Entry,
-        chapter: EntryChapter,
+        chapter: EntryChapter?,
         source: UnifiedSource,
     ): EntryImmersiveHandle {
         val processor = processors.requireProcessor("immersive feed", entry.type)
@@ -72,6 +64,6 @@ internal class ProviderBackedEntryImmersiveInteraction(
     }
 
     override fun release(handle: EntryImmersiveHandle) {
-        processors[handle.entryType]?.release(handle)
+        processors.requireProcessor("immersive feed", handle.entryType).release(handle)
     }
 }

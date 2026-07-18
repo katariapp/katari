@@ -8,9 +8,9 @@ import io.mockk.mockk
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.model.LibraryItemKey
-import tachiyomi.domain.library.model.ProgressState
 
 class LibraryDownloadCountTest {
 
@@ -46,10 +46,8 @@ class LibraryDownloadCountTest {
         isMerged = true,
         memberEntryIds = entries.map { LibraryItemKey(it.type, it.id) },
         memberEntries = entries.toList(),
-        progress = ProgressState(0L, 0L, false),
+        progressSummary = EntryLibraryProgressResolution.Inapplicable(entries.first().type),
         latestUpload = 0L,
-        lastRead = 0L,
-        continueEntryId = null,
         downloadCount = 0,
     )
 }

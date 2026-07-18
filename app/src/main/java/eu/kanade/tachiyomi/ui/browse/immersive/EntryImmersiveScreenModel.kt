@@ -12,11 +12,15 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import mihon.entry.interactions.EntryChildListFeature
-import mihon.entry.interactions.EntryFirstChildResult
+import mihon.entry.interactions.EntryImmersiveAvailability
+import mihon.entry.interactions.EntryImmersiveChildRequirement
+import mihon.entry.interactions.EntryImmersiveContext
+import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveHandle
-import mihon.entry.interactions.EntryImmersiveInteraction
+import mihon.entry.interactions.EntryImmersiveLoadRequest
+import mihon.entry.interactions.EntryImmersiveLoadResult
 import mihon.entry.interactions.EntryImmersiveProgress
+import mihon.entry.interactions.EntryImmersiveUnavailableReason
 import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -29,8 +33,7 @@ import java.util.concurrent.ConcurrentHashMap
 class EntryImmersiveScreenModel(
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val syncEntryWithSource: SyncEntryWithSource = Injekt.get(),
-    private val childListFeature: EntryChildListFeature = Injekt.get(),
-    private val immersiveInteraction: EntryImmersiveInteraction = Injekt.get(),
+    private val immersiveFeature: EntryImmersiveFeature = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
 ) : StateScreenModel<EntryImmersiveScreenModel.State>(State()) {
 
@@ -110,12 +113,12 @@ class EntryImmersiveScreenModel(
         load(context, entry, force = true)
     }
 
-    fun renderer(handle: EntryImmersiveHandle) = immersiveInteraction.renderer(handle)
+    fun renderer(handle: EntryImmersiveHandle) = immersiveFeature.renderer(handle)
 
     fun persistProgress(handle: EntryImmersiveHandle, progress: EntryImmersiveProgress) {
         screenModelScope.launch(Dispatchers.IO) {
             withContext(NonCancellable) {
-                immersiveInteraction.persistProgress(handle, progress)
+                immersiveFeature.persistProgress(handle, progress)
             }
         }
     }
@@ -129,29 +132,48 @@ class EntryImmersiveScreenModel(
     }
 
     private suspend fun resolveItem(context: Context, entry: Entry, forceSync: Boolean): ItemState {
-        if (!immersiveInteraction.isSupported(entry)) {
-            error("Immersive browsing is not supported for this entry type")
+        val source = sourceManager.get(entry.source)
+        val availability = when (
+            val result = immersiveFeature.availability(EntryImmersiveContext(entry, source))
+        ) {
+            is EntryImmersiveAvailability.Available -> result
+            is EntryImmersiveAvailability.ContextuallyUnavailable ->
+                return ItemState.Unavailable(entry, result.reason)
+            is EntryImmersiveAvailability.Inapplicable -> return ItemState.Inapplicable(entry)
         }
 
-        var chapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
-        if (forceSync || chapters.isEmpty()) {
-            syncEntryWithSource(entry, fetchDetails = false, fetchChapters = true)
-            chapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
+        val chapters = when (availability.childRequirement) {
+            EntryImmersiveChildRequirement.NONE -> emptyList()
+            EntryImmersiveChildRequirement.FIRST_READING_CHILD -> {
+                var current = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
+                if (forceSync || current.isEmpty()) {
+                    syncEntryWithSource(entry, fetchDetails = false, fetchChapters = true)
+                    current = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
+                }
+                current
+            }
         }
 
-        val chapter = when (val result = childListFeature.firstReadingChild(entry, chapters, emptyList())) {
-            is EntryFirstChildResult.Available -> result.chapter
-            is EntryFirstChildResult.Inapplicable -> error("Child-list behavior is not supported for this entry type")
+        return when (
+            val result = immersiveFeature.load(
+                EntryImmersiveLoadRequest(
+                    context = context,
+                    entry = entry,
+                    source = source,
+                    children = chapters,
+                ),
+            )
+        ) {
+            is EntryImmersiveLoadResult.Loaded -> ItemState.Ready(entry, result.child, result.handle)
+            is EntryImmersiveLoadResult.ContextuallyUnavailable -> ItemState.Unavailable(entry, result.reason)
+            is EntryImmersiveLoadResult.Inapplicable -> ItemState.Inapplicable(entry)
+            is EntryImmersiveLoadResult.Failed -> ItemState.Error(entry, result.error)
         }
-            ?: error("No consumable item found")
-        val source = sourceManager.get(entry.source) ?: error("Source not available")
-        val handle = immersiveInteraction.load(context, entry, chapter, source)
-        return ItemState.Ready(entry, chapter, handle)
     }
 
     private fun release(state: ItemState?) {
         val ready = state as? ItemState.Ready ?: return
-        immersiveInteraction.release(ready.handle)
+        immersiveFeature.release(ready.handle)
     }
 
     data class State(
@@ -165,8 +187,15 @@ class EntryImmersiveScreenModel(
 
         data class Ready(
             override val entry: Entry,
-            val chapter: EntryChapter,
+            val chapter: EntryChapter?,
             val handle: EntryImmersiveHandle,
+        ) : ItemState
+
+        data class Inapplicable(override val entry: Entry) : ItemState
+
+        data class Unavailable(
+            override val entry: Entry,
+            val reason: EntryImmersiveUnavailableReason,
         ) : ItemState
 
         data class Error(

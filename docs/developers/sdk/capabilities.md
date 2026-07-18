@@ -27,7 +27,13 @@ Capabilities are focused interfaces or properties that opt a source into behavio
 
 `EntryCatalogueSource.supportsLatest` controls whether Katari offers the latest-updates catalogue call. Return `true` only when `getLatestUpdates()` has a meaningful implementation.
 
-`supportsImmersiveFeed` opts the source into Katari's immersive catalogue and feed presentation. It does not change the catalogue response shape; entries must still carry supported types and satisfy their normal media contracts.
+`supportsImmersiveFeed` opts the source into Katari's immersive catalogue and feed presentation. Katari composes this
+source-owned opt-in with the immersive runtime contributed for each returned entry type. It does not change the
+catalogue response shape; each returned entry type remains authoritative and must satisfy its normal media contract.
+
+When `SourceMetadata` declares entry types, Katari may use that metadata to hide an immersive source-level control when
+none of the declared types currently has an immersive runtime. This is only contextual surface pruning: metadata does
+not reject returned entries or declare immersive support.
 
 Only opt in when the entry types shown by those catalogue or feed surfaces have an immersive runtime. BOOK entries do not currently have one, so a catalogue that can return BOOK should leave this disabled unless unsupported entries are excluded from its immersive listings.
 

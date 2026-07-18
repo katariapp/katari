@@ -21,14 +21,12 @@ interface EntryPreviewInteraction {
 }
 
 interface EntryImmersiveInteraction {
-    fun isSupported(entry: Entry): Boolean
-
-    fun preloadRadius(entryType: EntryType): Int
+    fun processor(type: EntryType): EntryImmersiveProcessor?
 
     suspend fun load(
         context: Context,
         entry: Entry,
-        chapter: EntryChapter,
+        chapter: EntryChapter?,
         source: UnifiedSource,
     ): EntryImmersiveHandle
 

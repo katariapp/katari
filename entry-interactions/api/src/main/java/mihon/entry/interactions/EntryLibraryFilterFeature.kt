@@ -16,9 +16,9 @@ data class EntryLibraryFilterRequest(
 data class EntryLibraryFilterTarget(
     val type: EntryType,
     val isDownloadedOrLocal: Boolean,
-    val hasUnconsumed: Boolean,
-    val hasStarted: Boolean,
-    val hasBookmarks: Boolean,
+    val hasUnconsumed: Boolean?,
+    val hasStarted: Boolean?,
+    val hasBookmarks: Boolean?,
     val isCompleted: Boolean,
     val isOutsideReleasePeriod: Boolean,
     val trackerIds: Set<Long>,
@@ -43,6 +43,7 @@ data class EntryLibraryFilterResult(
 )
 
 data class EntryLibraryFilterAvailability(
+    val progressSummary: EntryLibraryFilterControlAvailability,
     val bookmarking: EntryLibraryFilterControlAvailability,
     val outsideReleasePeriod: EntryLibraryFilterControlAvailability,
 )

@@ -54,6 +54,10 @@ import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
+import mihon.entry.interactions.EntryImmersiveAvailability
+import mihon.entry.interactions.EntryImmersiveContext
+import mihon.entry.interactions.EntryImmersiveFeature
+import mihon.entry.interactions.EntryImmersiveSourceAvailability
 import mihon.entry.interactions.EntryPreviewAvailability
 import mihon.entry.interactions.EntryPreviewContext
 import mihon.entry.interactions.EntryPreviewFeature
@@ -119,6 +123,7 @@ class CatalogScreenModel(
     private val entryRepository: EntryRepository = Injekt.get(),
     private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
+    private val entryImmersiveFeature: EntryImmersiveFeature = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
     private val application: Application = Injekt.get(),
@@ -143,6 +148,9 @@ class CatalogScreenModel(
     private val presetHelper = CatalogPresetHelper(sourceId, sourceManager, browseFeedService)
 
     val catalogSource = sourceManager.get(sourceId)?.toCatalogSource()
+    val isImmersiveSourceAvailable: Boolean
+        get() = entryImmersiveFeature.sourceAvailability(catalogSource?.source) is
+            EntryImmersiveSourceAvailability.Available
 
     init {
         if (catalogSource == null) {
@@ -410,12 +418,17 @@ class CatalogScreenModel(
 
     internal suspend fun onItemLongClick(
         item: CatalogListItem,
-        supportsImmersive: Boolean,
     ): BrowseLongPressOutcome {
+        val immersiveAvailable = entryImmersiveFeature.availability(
+            EntryImmersiveContext(
+                entry = item.entry,
+                source = sourceManager.get(item.entry.source),
+            ),
+        ) is EntryImmersiveAvailability.Available
         return when (
             resolveBrowseLongPressAction(
                 priority = browseLongPressActionPriority,
-                supportsImmersive = supportsImmersive,
+                immersiveAvailable = immersiveAvailable,
                 previewEnabled = entryPreviewFeature.availability(
                     EntryPreviewContext(
                         entry = item.entry,
@@ -1148,14 +1161,14 @@ internal enum class BrowseLongPressOutcome {
 
 internal fun resolveBrowseLongPressAction(
     priority: Collection<CustomPreferences.BrowseLongPressAction>,
-    supportsImmersive: Boolean,
+    immersiveAvailable: Boolean,
     previewEnabled: Boolean,
 ): CustomPreferences.BrowseLongPressAction {
     return sanitizeBrowseLongPressActionPriority(priority).first { action ->
         when (action) {
             CustomPreferences.BrowseLongPressAction.LIBRARY_ACTION -> true
             CustomPreferences.BrowseLongPressAction.PREVIEW -> previewEnabled
-            CustomPreferences.BrowseLongPressAction.IMMERSIVE -> supportsImmersive
+            CustomPreferences.BrowseLongPressAction.IMMERSIVE -> immersiveAvailable
         }
     }
 }

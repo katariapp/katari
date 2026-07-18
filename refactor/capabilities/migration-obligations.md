@@ -112,7 +112,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Internal provider dispatch is strict. Empty supported state, provider absence, and incompatible source/target types
   are no longer represented by the same empty/no-op behavior.
 - Live media persistence remains type-owned; per-child labels, migration policy, and library summaries remain assigned
-  to F17, F21, and F22 respectively.
+  to F17, F11, and F22 respectively.
 
 ### Resolved in F16: Playback-preference Transfer feature ownership
 
@@ -156,6 +156,45 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Application production code has no raw `EntryPreviewInteraction` reference. F20 long-press Immersive evidence and F23
   vocabulary remain separate migrations.
 
+### Resolved in F20: Immersive feature ownership
+
+- F20 owns provider-derived applicability, source/entry contextual availability, catalogue/feed and long-press
+  evidence, preload selection, loading, rendering, progress, Open targets, and strict handle lifecycle.
+- Source opt-in remains public source-owned context. Descriptive source type metadata may only prune a source-level
+  surface; returned Entry type remains authoritative and provider absence remains valid.
+- Child-backed providers declare their stable load mode and fail coordinator construction when the graph cannot select
+  Immersive plus Child List. Entry-level and zero-preload providers remain valid partial contributions.
+- Application production code has no raw `EntryImmersiveInteraction` reference. UI concurrency, source/media runtime,
+  generic long-press preferences, and F23 vocabulary retain their distinct owners.
+
+### Resolved in F21: Related Entries feature ownership
+
+- F21 owns contextual source availability, source-order and authoritative-type preservation, identity deduplication,
+  profile-aware persistence, live Library membership, source orientation, and the Entry action/dialog consequences.
+- `RelatedEntriesSource` and `EntryItemOrientationProvider` remain public source-owned inputs. An always-applicable graph
+  relationship gives every composed type the shared orchestration without claiming every source supports it.
+- The parallel `GetRelatedEntries` application/domain boundary is removed. Application production code uses only
+  `EntryRelatedEntriesFeature`; source missing and source unsupported are structured while network failures remain
+  retryable errors.
+- Returned Entry-details navigation is not F01 Open. The authoritative returned type reaches the normal Entry screen,
+  where any child Open behavior remains independently provider-derived.
+
+### Resolved in F22: Library Progress Summary feature ownership
+
+- F22 replaces the required `EntryLibraryProgressCalculator` runtime field and second root list with optional provider
+  bindings in the ordinary type plugin. Provider absence is valid and returns structured `Inapplicable` state.
+- Unified Library items, including stored merged groups, remain structurally visible without a provider. No zero or false
+  summary is manufactured to preserve the old non-null model.
+- The Feature owns common counts, last-read and started policy, merged aggregation, badges, nullable sort/filter inputs,
+  Stats coverage, and F13 update inputs; providers expose only genuine media progress evidence.
+- F22 plus F02 derives a structured non-opening Continue target, and F22 plus F10 derives bookmark summary/filter
+  behavior. Either independent provider may remain absent without invalidating the type.
+- Progress-dependent F14 predicates reject unknown state in either polarity, sort values are missing-last, Stats uses
+  all-or-unavailable summary coverage, and F13 progress skips do not fire without evidence.
+- The raw calculator/resolver list, `getValue` absence crash, public type factories, and build-boundary factory exemption
+  are removed. The Domain resolution port exists only to avoid reversing the API-to-Domain dependency and is wired by
+  composition to the app-facing Feature.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -183,8 +222,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F10 and F13–F19 now install their contributors; providers
-  belonging to F11, F12, and F20–F27 remain deliberately unreachable rather than receiving empty placeholder
+  content-type plugins that contribute themselves. F01–F10 and F13–F22 now install their contributors; providers
+  belonging to F11, F12, and F23–F27 remain deliberately unreachable rather than receiving empty placeholder
   contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
@@ -198,7 +237,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Resolution: bookmark-aware cleanup is installed from the Download-plus-Bookmarking relationship and receives
   non-optional structured events. The coordinator does not query a type report or contain a concrete type branch.
 
-### Partially resolved in F10/F17/F18: `P5-ENTRY-UI`
+### Partially resolved in F10/F17/F18/F21: `P5-ENTRY-UI`
 
 - Responsible owner: Entry-screen feature
 - Owning phase: Phase 5
@@ -213,6 +252,8 @@ SPI boundary is not an exit gate for Phase 3.5.
   labels consume the selected Child List feature. Missing Child List support hides the list surface without a fallback.
 - F18 resolution: group state, live filtering, active state, controls, and multi-member persistence consume the selected
   Child Group Filtering feature. The former raw support/apply gates and unfiltered live-list overwrite are removed.
+- F21 resolution: the Related Entries action, load, orientation, persistence, and live Library state consume one
+  contextual Feature boundary. The app no longer casts the source capability or calls a parallel domain use case.
 
 ### Resolved in F03–F05: `P5-LIBRARY-INTEGRATIONS`
 

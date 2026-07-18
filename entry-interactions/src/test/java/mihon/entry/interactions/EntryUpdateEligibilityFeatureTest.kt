@@ -89,6 +89,20 @@ class EntryUpdateEligibilityFeatureTest {
     }
 
     @Test
+    fun `unknown progress evidence does not trigger progress-dependent skips`() {
+        val feature = featureFor(compositionFor(EntryType.BOOK), policy())
+
+        feature.evaluate(
+            request(
+                entry.copy(updateStrategy = EntryUpdateStrategy.ONLY_FETCH_ONCE),
+                totalCount = null,
+                unconsumedCount = null,
+                hasStarted = null,
+            ),
+        ) shouldBe EntryUpdateEligibility.Eligible
+    }
+
+    @Test
     fun `an Entry type outside runtime composition fails instead of becoming unsupported`() {
         val feature = featureFor(compositionFor(EntryType.BOOK), policy())
 
@@ -121,9 +135,9 @@ class EntryUpdateEligibilityFeatureTest {
 
     private fun request(
         entry: Entry,
-        totalCount: Long = 0L,
-        unconsumedCount: Long = 0L,
-        hasStarted: Boolean = true,
+        totalCount: Long? = 0L,
+        unconsumedCount: Long? = 0L,
+        hasStarted: Boolean? = true,
         fetchWindowUpperBound: Long? = null,
     ): EntryUpdateEligibilityRequest {
         return EntryUpdateEligibilityRequest(
