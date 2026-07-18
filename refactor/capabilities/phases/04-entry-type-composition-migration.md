@@ -20,7 +20,8 @@ register, including type-owned artifacts currently outside the interaction regis
   - [x] 4.2.3 — Split and migrate Migration and Merge (`T09`, `T10`).
   - [x] 4.2.4 — Migrate Update Eligibility and decompose Child List, filtering, Preview, and Immersive contracts
     (`T13`, `T16`–`T21`).
-- [ ] 4.3 — Join type-owned runtime artifacts and parallel composition paths in `T22`–`T27`.
+- [x] 4.3 — Join type-owned runtime artifacts and parallel composition paths in `T22`–`T27`, with `T23` explicitly
+  deferred to its Phase 5 projection migration.
 - [ ] 4.4 — Remove superseded registration paths, reconcile the test harness, and close the Phase 4 exit gate.
 
 Phase-level checks:

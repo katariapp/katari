@@ -24,27 +24,6 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ## Active Obligations
 
-### `P4-TYPE-COMPOSITION` — Type-owned participation remains split across composition paths
-
-- Responsible owners: `entry-interactions.manga`, `entry-interactions.anime`, `entry-interactions.book`
-- Owning phase: Phase 4
-- Affected production paths: the `T22`–`T27` runtime artifacts and root composition paths listed in
-  `migration-inventory.md`
-- Milestone 4.1 status: Manga, Anime, and Book now contribute owned identity plus their actual Open and Continue provider
-  objects. Provider-owned installation puts those same objects into operational dispatch without a second type-module
-  registration. `EntryInteractionPlugin` validates provider type identity generically and does not require either
-  provider.
-- Milestone 4.2.1 status: Consumption, Bookmarking, Progress transfer, and Playback-preference transfer now use
-  capability-owned bindings. Graph evidence and dispatch derive from the same declaration, including implementations
-  that supply more than one independent capability.
-- Milestone 4.2.2 status: Downloads are decomposed into core, options, individual settings, bulk candidates, and
-  automatic filtering. Each is contributed independently from the same concrete implementation where appropriate.
-- Milestone 4.2.3 status: Migration and Merge are split into independent compatibility providers. Manga and Anime bind
-  both; Book's combined default-false processor is removed without an absence declaration.
-- Milestone 4.2.4 status: all `T01`–`T21` interaction contracts now use provider bindings or, for universal Update
-  Eligibility, one shared policy. Optional child progress is split and false/no-op filtering providers are removed.
-- Remaining outcome: migrate `T22`–`T27` type-owned artifacts.
-
 ### `P4-PLUGIN-TEST-HARNESS` — Operational fixtures use superseded registration paths
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -127,6 +106,16 @@ SPI boundary is not an exit gate for Phase 3.5.
   - `app/src/test/**/UpdatesSelectionActionsTest.kt`
 - Required outcome: preserve behavioral selection and cleanup assertions as graph-selected contracts. Remove synthetic
   report construction and do not replace it with hardcoded production type expectations.
+
+### `P5-PRESENTATION-PROJECTION` — Type vocabulary remains an app-owned concrete-type map
+
+- Responsible owners: Entry presentation and every feature consuming type vocabulary
+- Owning phase: Phase 5
+- Inventory scope: `T23` and the presentation consumers in `F01`–`F27`
+- Affected path: `app/src/main/**/presentation/entry/EntryTypePresentation.kt` and its consumers
+- Required outcome: type-owned vocabulary becomes projection input selected by applicable feature integrations. Icons,
+  labels, and nouns may vary but cannot decide behavioral support. The generic fallback must not hide a missing shipped
+  type projection.
 
 ## Removed Rather Than Migrated
 

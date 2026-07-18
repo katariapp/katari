@@ -17,6 +17,7 @@ Updated: 2026-07-18
 - Milestone 4.2.1 commit: `62c9741a1` (`(refactor): bind independent entry providers`)
 - Milestone 4.2.2 commit: `f4a6d153c` (`(refactor): decompose download providers`)
 - Milestone 4.2.3 commit: `c046e1f8f` (`(refactor): split migration and merge providers`)
+- Milestone 4.2.4 commit: `c2ca736e4` (`(refactor): migrate remaining entry providers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -24,8 +25,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.2.4 — Remaining interaction contract migration
-- State: implementation approved; committing Milestone 4.2.4 before starting Milestone 4.3
+- Milestone: 4.3 — Owned type runtime composition
+- State: implementation approved; committing Milestone 4.3 before starting Milestone 4.4
 
 ## Why the Plan Was Reset
 
@@ -124,6 +125,13 @@ authority or weakening the architecture.
 - [x] Manga/Anime Preview and Immersive implementations contributed with contextual conditions retained
 - [x] Production type plugins no longer contain direct registry calls or custom installation overrides
 - [x] Decision `0016-remaining-interaction-provider-boundaries.md` accepted
+- [x] Milestone 4.2.4 committed in `c2ca736e4`
+- [x] One runtime module per production type becomes the sole root type aggregation
+- [x] Plugins, library progress, viewer settings, caches, warmups, and image components derive from runtime contributions
+- [x] Separate library-progress list and public per-type installation paths removed
+- [x] Runtime plugin/calculator identity validated against the owning type
+- [x] Presentation vocabulary recorded as a Phase 5 projection obligation rather than mixed into runtime services
+- [x] Decision `0017-owned-type-runtime-modules.md` accepted
 
 ## New Phase Sequence
 
@@ -170,12 +178,13 @@ beside the graph.
 - Milestone 4.2.1 is committed in `62c9741a1`.
 - Milestone 4.2.2 is committed in `f4a6d153c`.
 - Milestone 4.2.3 is committed in `c046e1f8f`.
-- Milestone 4.2.4 production and refactor-workspace changes are uncommitted and awaiting review.
+- Milestone 4.2.4 is committed in `c2ca736e4`.
+- Milestone 4.3 production and refactor-workspace changes are uncommitted and awaiting review.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
-- `T01`–`T21` now use independent provider bindings or deliberate shared policy. `T22`–`T27` type artifacts remain
-  unported.
+- `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
+  explicit Phase 5 presentation-projection obligation.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
   blocked until real feature owners contribute relationships in their owning phase.
 
@@ -237,6 +246,7 @@ Approved on 2026-07-18:
   recorded Phase 5 feature-consumer migration, not a replacement authority.
 - Milestone 4.2.3 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
 - Milestone 4.2.4 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
+- Milestone 4.3 passes API, SPI, and Manga, Anime, and Book debug Kotlin compilation after formatting.
 - `:entry-interactions:compileDebugKotlin` still fails at the intentionally unported download-lifecycle report input and
   missing feature-contributor installation recorded as Phase 5 obligations.
 
@@ -315,8 +325,12 @@ Approved on 2026-07-18:
   conditions remain contextual.
 - Every production type plugin now declares providers only through bindings; the transitional registry is no longer
   called directly by a type module.
+- Milestone 4.3 removes the separate root lists for plugins, library progress, settings, caches, warmups, and image
+  components. Each list is derived from the one installed type-runtime contribution collection.
+- Presentation vocabulary is not treated as a runtime service or support fact; its remaining concrete-type map is
+  visible Phase 5 projection work.
 
 ## Exact Next Action After Review
 
-Milestone 4.2.4 and decision `0016` are approved. Commit the milestone, then begin Milestone 4.3 with the type-owned
-runtime artifacts and parallel composition paths in `T22`–`T27`. Stop before Milestone 4.4.
+Milestone 4.3 and decision `0017` are approved. Commit the milestone, then begin Milestone 4.4 by removing transitional
+registration and reconciling behavioral fixtures. Do not begin Phase 5.

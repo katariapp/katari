@@ -6,20 +6,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-import mihon.entry.interactions.anime.AnimeEntryInteractionDependencies
-import mihon.entry.interactions.anime.addAnimeEntryInteractionRuntime
-import mihon.entry.interactions.anime.animeEntryInteractionPlugin
-import mihon.entry.interactions.book.BookEntryInteractionDependencies
-import mihon.entry.interactions.book.addBookEntryInteractionRuntime
-import mihon.entry.interactions.book.bookEntryInteractionPlugin
-import mihon.entry.interactions.manga.MangaEntryInteractionDependencies
-import mihon.entry.interactions.manga.addMangaEntryInteractionRuntime
-import mihon.entry.interactions.manga.mangaEntryInteractionPlugin
-import mihon.entry.interactions.manga.reader.addMangaReaderImageComponents
-import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
+import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
+import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
+import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
 import mihon.entry.interactions.reader.settings.ReaderTrackPreferences
-import mihon.entry.interactions.settings.AnimePlayerPreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
 import mihon.entry.interactions.settings.DefaultViewerSettingsInteraction
 import mihon.entry.interactions.settings.EntryInteractionPreferences
@@ -31,6 +22,7 @@ import mihon.feature.graph.FeatureArtifactSelection
 import mihon.feature.graph.FeatureGraph
 import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.domain.entry.service.EntryLibraryProgressResolver
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
@@ -62,6 +54,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryPageImageCache> { dependencies.pageImageCache }
     addSingletonFactory<EntryReaderIncognitoState> { dependencies.readerIncognitoState }
     addSingletonFactory<EntryReaderTracking> { dependencies.readerTracking }
+    addSingletonFactory<EntryChildGroupFilterDataSource> { dependencies.mangaChildGroupFilterDataSource }
     addSingletonFactory<EntryDownloadWorkController> { DefaultEntryDownloadWorkController(app) }
     addSingletonFactory { FilterEntryChaptersForDownload(get(), get(), get()) }
     addSingletonFactory<EntryDownloadLifecycleInteraction> {
@@ -75,11 +68,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         )
     }
 
-    addSingletonFactory { MangaReaderSettingsProvider(dependencies.profilePreferenceStore) }
     addSingletonFactory { ReaderBasePreferences(dependencies.basePreferenceStore) }
     addSingletonFactory { ReaderTrackPreferences(dependencies.privatePreferenceStore) }
     addSingletonFactory { EntryInteractionPreferences(dependencies.profilePreferenceStore) }
-    addSingletonFactory { AnimePlayerPreferences(dependencies.profilePreferenceStore) }
     addSingletonFactory { EntryMediaCachePreferences(dependencies.basePreferenceStore) }
     addSingletonFactory<ViewerSettingBinder> {
         DefaultViewerSettingBinder(
@@ -87,73 +78,40 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
         )
     }
-    val mangaWarmup = addMangaEntryInteractionRuntime(app)
-    val animeWarmup = addAnimeEntryInteractionRuntime(app)
-    val bookRuntime = addBookEntryInteractionRuntime(app, dependencies.profilePreferenceStore)
+    val typeRuntimeContributions = listOf(
+        mangaEntryTypeRuntimeModule(dependencies.profilePreferenceStore),
+        animeEntryTypeRuntimeModule(dependencies.profilePreferenceStore),
+        bookEntryTypeRuntimeModule(dependencies.profilePreferenceStore),
+    ).map { module ->
+        module.install(this, app).also { it.validate(module.type) }
+    }
 
     addSingletonFactory<ViewerSettingsInteraction> {
         DefaultViewerSettingsInteraction(
-            providers = listOf(
-                get<MangaReaderSettingsProvider>(),
-                get<AnimePlayerPreferences>(),
-            ) + bookRuntime.viewerSettingsProviders,
+            providers = typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::viewerSettingsProviders),
         )
     }
 
     addSingletonFactory<EntryMediaCacheMaintenance> {
         DefaultEntryMediaCacheMaintenance(
             buckets = dependencies.mediaCacheBuckets +
-                bookRuntime.mediaCacheBuckets +
-                LazyEntryMediaCacheBucket(
-                    key = EntryMediaCacheBucketKeys.ANIME_PLAYBACK,
-                    delegateProvider = { get<EntryPlayerCache>() },
-                ),
+                typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::mediaCacheBuckets),
+        )
+    }
+    addSingletonFactory {
+        EntryLibraryProgressResolver(
+            typeRuntimeContributions.map(EntryTypeRuntimeContribution::libraryProgressCalculator),
+        )
+    }
+    addSingletonFactory {
+        EntryImageComponentInstallers(
+            typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::imageComponentInstallers),
         )
     }
 
     addSingletonFactory<EntryInteractionComposition> {
         createEntryInteractionComposition(
-            plugins = listOf(
-                mangaEntryInteractionPlugin(
-                    MangaEntryInteractionDependencies(
-                        getEntryWithChapters = get(),
-                        entryChapterRepository = get(),
-                        entryProgressRepository = get(),
-                        filterEntryChaptersForDownload = get(),
-                        childGroupFilterDataSource = dependencies.mangaChildGroupFilterDataSource,
-                        downloadPreferences = get(),
-                        sourceManager = get(),
-                        downloadLifecycle = get(),
-                        entryInteractionPreferences = get<EntryInteractionPreferences>(),
-                    ),
-                ),
-                animeEntryInteractionPlugin(
-                    AnimeEntryInteractionDependencies(
-                        entryChapterRepository = get(),
-                        getEntryWithChapters = get(),
-                        entryProgressRepository = get(),
-                        playbackPreferencesRepository = get(),
-                        downloadPreferences = get(),
-                        filterEntryChaptersForDownload = get(),
-                        downloadPreferencesRepository = get(),
-                        sourceManager = get(),
-                        entryRepository = get(),
-                        downloadLifecycle = get(),
-                        entryInteractionPreferences = get<EntryInteractionPreferences>(),
-                        historyRepository = get(),
-                    ),
-                ),
-                bookEntryInteractionPlugin(
-                    BookEntryInteractionDependencies(
-                        getEntryWithChapters = get(),
-                        entryChapterRepository = get(),
-                        entryProgressRepository = get(),
-                        filterEntryChaptersForDownload = get(),
-                        downloadLifecycle = get(),
-                        downloadsEnabled = true,
-                    ),
-                ),
-            ),
+            plugins = typeRuntimeContributions.map(EntryTypeRuntimeContribution::plugin),
         )
     }
     addSingletonFactory<EntryInteractions> { get<EntryInteractionComposition>().interactions }
@@ -185,15 +143,15 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryDownloadForegroundNotificationProvider> { get<EntryDownloadNotificationManager>() }
     addSingletonFactory<EntryInteractionRuntimeWarmup> {
         EntryInteractionRuntimeWarmup {
-            mangaWarmup()
-            animeWarmup()
+            typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::warmups).forEach { it() }
             get<EntryDownloadNotificationManager>().start()
         }
     }
 }
 
 fun ComponentRegistry.Builder.addEntryInteractionImageComponents(): ComponentRegistry.Builder {
-    return addMangaReaderImageComponents(this)
+    Injekt.get<EntryImageComponentInstallers>().values.forEach { it.install(this) }
+    return this
 }
 
 private class DefaultEntryMediaCacheMaintenance(
@@ -218,20 +176,6 @@ private class DefaultEntryMediaCacheMaintenance(
     override fun clear(key: String): Int {
         return bucketsByKey[key]?.clear()
             ?: error("No entry media cache bucket registered for key $key")
-    }
-}
-
-private class LazyEntryMediaCacheBucket(
-    override val key: String,
-    private val delegateProvider: () -> EntryMediaCacheBucket,
-) : EntryMediaCacheBucket {
-    private val delegate: EntryMediaCacheBucket by lazy(delegateProvider)
-
-    override val readableSize: String
-        get() = delegate.readableSize
-
-    override fun clear(): Int {
-        return delegate.clear()
     }
 }
 

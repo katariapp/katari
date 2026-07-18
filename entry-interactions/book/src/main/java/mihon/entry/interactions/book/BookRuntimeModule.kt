@@ -1,8 +1,12 @@
 package mihon.entry.interactions.book
 
 import android.app.Application
-import mihon.entry.interactions.EntryInteractionRuntimeContribution
+import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryMediaCacheBucket
 import mihon.entry.interactions.EntryReaderIncognitoState
+import mihon.entry.interactions.EntryTypeRuntimeContribution
+import mihon.entry.interactions.EntryTypeRuntimeModule
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadIndexStore
 import mihon.entry.interactions.book.download.BookDownloadManager
@@ -13,17 +17,41 @@ import mihon.entry.interactions.book.epub.ReadiumEpubProcessor
 import mihon.entry.interactions.book.prose.HtmlProseChapterProcessor
 import mihon.entry.interactions.settings.HtmlProseSettingsProvider
 import mihon.entry.interactions.settings.ReadiumEpubSettingsProvider
+import mihon.entry.viewer.settings.ViewerSettingsProvider
 import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.storage.service.StorageManager
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
 
+fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTypeRuntimeModule {
+    return EntryTypeRuntimeModule(EntryType.BOOK) { app ->
+        val runtime = addBookEntryInteractionRuntime(app, profilePreferenceStore)
+        val progressRepository = get<EntryProgressRepository>()
+        EntryTypeRuntimeContribution(
+            plugin = bookEntryInteractionPlugin(
+                BookEntryInteractionDependencies(
+                    getEntryWithChapters = get(),
+                    entryChapterRepository = get(),
+                    entryProgressRepository = progressRepository,
+                    filterEntryChaptersForDownload = get(),
+                    downloadLifecycle = get<EntryDownloadLifecycleInteraction>(),
+                    downloadsEnabled = true,
+                ),
+            ),
+            libraryProgressCalculator = bookEntryLibraryProgressCalculator(progressRepository),
+            viewerSettingsProviders = runtime.viewerSettingsProviders,
+            mediaCacheBuckets = runtime.mediaCacheBuckets,
+        )
+    }
+}
+
 /** Installs generic BOOK host services. Built-in format processors are registered here when ready. */
-fun InjektRegistrar.addBookEntryInteractionRuntime(
+private fun InjektRegistrar.addBookEntryInteractionRuntime(
     app: Application,
     profilePreferenceStore: PreferenceStore,
-): EntryInteractionRuntimeContribution {
+): BookRuntimeArtifacts {
     val materializationCache = BookMaterializationCache(app)
     val readiumSettingsProvider = ReadiumEpubSettingsProvider(profilePreferenceStore)
     val proseSettingsProvider = HtmlProseSettingsProvider(profilePreferenceStore)
@@ -99,8 +127,13 @@ fun InjektRegistrar.addBookEntryInteractionRuntime(
             downloadLifecycle = get(),
         )
     }
-    return EntryInteractionRuntimeContribution(
+    return BookRuntimeArtifacts(
         mediaCacheBuckets = listOf(materializationCache),
         viewerSettingsProviders = listOf(readiumSettingsProvider, proseSettingsProvider),
     )
 }
+
+private data class BookRuntimeArtifacts(
+    val mediaCacheBuckets: List<EntryMediaCacheBucket>,
+    val viewerSettingsProviders: List<ViewerSettingsProvider>,
+)

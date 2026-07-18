@@ -83,7 +83,9 @@ Migration progress:
 - Milestone 4.2.4 implements `T13` and `T16`–`T21` in the working tree. Universal Update Eligibility is shared policy;
   Child List and progress labels are independent; false/no-op filter processors are removed; and real Preview and
   Immersive implementations are contributed without flattening their contextual conditions.
-- `T22`–`T27` remain unported type-owned artifact and runtime-composition work.
+- Milestone 4.3 migrates `T22` and `T24`–`T27` in the working tree through one owned runtime module per type. `T23`
+  presentation vocabulary is deliberately deferred to its Phase 5 projection migration because its current app-owned
+  model cannot enter the runtime service contract without mixing ownership.
 
 | ID | Provider or composition fact | Current evidence | Required migration outcome |
 | --- | --- | --- | --- |

@@ -3,7 +3,6 @@ package mihon.entry.interactions
 import android.app.Activity
 import android.content.Context
 import kotlinx.coroutines.flow.Flow
-import mihon.entry.viewer.settings.ViewerSettingsProvider
 import java.io.File
 
 interface EntryPageImageCache {
@@ -33,11 +32,6 @@ fun interface EntryInteractionActivityTheme {
     /** Applies the host application's current theme before the activity creates any UI. */
     fun apply(activity: Activity)
 }
-
-data class EntryInteractionRuntimeContribution(
-    val mediaCacheBuckets: List<EntryMediaCacheBucket> = emptyList(),
-    val viewerSettingsProviders: List<ViewerSettingsProvider> = emptyList(),
-)
 
 interface EntryReaderIncognitoState {
     fun isIncognito(sourceId: Long?): Boolean
