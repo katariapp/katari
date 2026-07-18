@@ -50,7 +50,9 @@ Current progress:
 - [x] `F24` — Library-update Notifications complete. See
   [`../features/F24-library-update-notifications.md`](../features/F24-library-update-notifications.md).
 - [x] `F25` — Viewer Settings complete. See [`../features/F25-viewer-settings.md`](../features/F25-viewer-settings.md).
-- [ ] `F11`, `F12`, `F26`, and `F27` — Not started or owned by concurrent milestones.
+- [x] `F26` — Media-cache Maintenance complete. See
+  [`../features/F26-media-cache-maintenance.md`](../features/F26-media-cache-maintenance.md).
+- [ ] `F11`, `F12`, and `F27` — Active or pending.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

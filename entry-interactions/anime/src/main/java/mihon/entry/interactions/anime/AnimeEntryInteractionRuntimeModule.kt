@@ -4,9 +4,6 @@ import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.EntryMediaCacheBucket
-import mihon.entry.interactions.EntryMediaCacheBucketKeys
-import mihon.entry.interactions.EntryPlayerCache
 import mihon.entry.interactions.EntryTypeRuntimeContribution
 import mihon.entry.interactions.EntryTypeRuntimeModule
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
@@ -48,19 +45,9 @@ fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                 ),
                 viewerSettingsProvider = typeViewerSettingsProvider,
             ),
-            mediaCacheBuckets = listOf(LazyAnimePlaybackCacheBucket { get<EntryPlayerCache>() }),
             warmups = listOf(warmup),
         )
     }
-}
-
-private class LazyAnimePlaybackCacheBucket(
-    private val cache: () -> EntryPlayerCache,
-) : EntryMediaCacheBucket {
-    private val delegate by lazy(cache)
-    override val key: String = EntryMediaCacheBucketKeys.ANIME_PLAYBACK
-    override val readableSize: String get() = delegate.readableSize
-    override fun clear(): Int = delegate.clear()
 }
 
 private fun InjektRegistrar.addAnimeEntryInteractionRuntime(app: Application): () -> Unit {

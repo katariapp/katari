@@ -18,4 +18,5 @@ interface EntryInteractions {
     val libraryProgress: EntryLibraryProgressInteraction
     val typePresentation: EntryTypePresentationInteraction
     val viewerSettings: EntryViewerSettingsInteraction
+    val mediaCache: EntryMediaCacheInteraction
 }

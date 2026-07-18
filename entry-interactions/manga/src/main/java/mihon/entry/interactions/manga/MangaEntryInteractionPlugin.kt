@@ -17,6 +17,7 @@ import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
 import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryLibraryProgressCapability
+import mihon.entry.interactions.EntryMediaCacheCapability
 import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
@@ -124,6 +125,7 @@ internal fun mangaEntryInteractionPlugin(
                     EntryPreviewConfigurationCapability.bind(previewProcessor),
                     EntryImmersiveCapability.bind(immersiveProcessor),
                     EntryTypePresentationCapability.bind(MangaEntryTypePresentationProvider),
+                    EntryMediaCacheCapability.bind(MangaMediaCacheProvider { Injekt.get() }),
                 ),
             )
             viewerSettingsProvider?.let { add(EntryViewerSettingsCapability.bind(it)) }

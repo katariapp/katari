@@ -220,6 +220,17 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Application production code has no raw Viewer Settings collection/registration facade, hardcoded screen map, or
   direct override repository operation outside application composition.
 
+### Resolved in F26: Media-cache Maintenance feature ownership
+
+- Optional media-cache providers bind through the ordinary type plugin and expose non-empty type-owned artifacts;
+  provider absence remains valid and produces no setting or startup work.
+- F26 owns discovery, labels, preferences, manual clear, launch auto-clear, refreshed size, and structured per-artifact
+  failures. Provider presence is sufficient for all shared consequences.
+- Application settings and startup consume only `EntryMediaCacheFeature`. The root bucket list, central cache keys,
+  hardcoded label/launch maps, raw maintenance registry, and dedicated current-type preference holder are removed.
+- Stable preference compatibility is provider-described and Feature-applied without becoming support evidence. F27
+  retains ownership of general profile preference discovery and movement.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -247,8 +258,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F10 and F13–F25 now install their contributors; providers
-  belonging to F11, F12, F26, and F27 remain deliberately unreachable rather than receiving empty placeholder
+  content-type plugins that contribute themselves. F01–F10 and F13–F26 now install their contributors; providers
+  belonging to F11, F12, and F27 remain deliberately unreachable rather than receiving empty placeholder
   contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.

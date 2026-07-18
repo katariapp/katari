@@ -6,8 +6,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import mihon.book.api.BookContentResource
 import mihon.book.api.BookResourceCacheState
-import mihon.entry.interactions.EntryMediaCacheBucket
-import mihon.entry.interactions.EntryMediaCacheBucketKeys
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -45,7 +43,7 @@ internal class BookMaterializationCache(
     private val directory: File = application.cacheDir.resolve(CACHE_DIRECTORY_NAME),
     private val maxCacheBytes: Long = MAX_CACHE_BYTES,
     private val maxResourceBytes: Long = MAX_RESOURCE_BYTES,
-) : BookMaterializationStore, EntryMediaCacheBucket {
+) : BookMaterializationStore {
     private val stateLock = Any()
     private val activeLeaseCounts = mutableMapOf<File, Int>()
     private val activeWrites = mutableSetOf<File>()
@@ -53,9 +51,7 @@ internal class BookMaterializationCache(
     private val keyLocks = mutableMapOf<String, ReferencedMutex>()
     private var initialized = false
 
-    override val key: String = EntryMediaCacheBucketKeys.BOOK_MATERIALIZED
-
-    override val readableSize: String
+    val readableSize: String
         get() = Formatter.formatFileSize(application, directory.cacheFiles().sumOf(File::length))
 
     override suspend fun acquire(
@@ -92,7 +88,7 @@ internal class BookMaterializationCache(
         }
     }
 
-    override fun clear(): Int = synchronized(stateLock) {
+    fun clear(): Int = synchronized(stateLock) {
         ensureDirectory()
         directory.listFiles().orEmpty().count { file ->
             file !in activeLeaseCounts && file !in activeWrites && file.deleteRecursively()

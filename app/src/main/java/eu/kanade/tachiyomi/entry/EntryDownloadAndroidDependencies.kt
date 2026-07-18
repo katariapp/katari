@@ -7,8 +7,6 @@ import eu.kanade.tachiyomi.data.notification.NotificationHandler
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryDownloadNotificationActions
-import mihon.entry.interactions.EntryMediaCacheBucket
-import mihon.entry.interactions.EntryMediaCacheBucketKeys
 import mihon.entry.interactions.EntryPageImageCache
 import java.io.File
 
@@ -40,9 +38,7 @@ class AppEntryDownloadNotificationActions : EntryDownloadNotificationActions {
 
 class AppMangaPageImageCache(
     private val pageCache: MangaPageCache,
-) : EntryPageImageCache, EntryMediaCacheBucket {
-    override val key: String = EntryMediaCacheBucketKeys.MANGA_PAGE_IMAGE
-
+) : EntryPageImageCache {
     override val readableSize: String
         get() = pageCache.readableSize
 

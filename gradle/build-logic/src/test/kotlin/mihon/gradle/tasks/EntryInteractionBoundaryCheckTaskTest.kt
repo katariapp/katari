@@ -467,8 +467,34 @@ class EntryInteractionBoundaryCheckTaskTest {
 
         val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
 
-        error.message shouldContain "settings/UI cache maintenance must use EntryMediaCacheMaintenance"
+        error.message shouldContain "settings/UI cache maintenance must use EntryMediaCacheFeature"
         error.message shouldContain "MangaPageCache"
+    }
+
+    @Test
+    fun `settings UI cannot bypass media cache feature through host ports`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/eu/kanade/presentation/more/settings/screen/SettingsDataScreen.kt" to
+                    """
+                        package eu.kanade.presentation.more.settings.screen
+
+                        import mihon.entry.interactions.EntryPageImageCache
+                        import mihon.entry.interactions.EntryPlayerCache
+
+                        class SettingsDataScreen(
+                            private val pageCache: EntryPageImageCache,
+                            private val playerCache: EntryPlayerCache,
+                        )
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "settings/UI cache maintenance must use EntryMediaCacheFeature"
+        error.message shouldContain "EntryPageImageCache"
+        error.message shouldContain "EntryPlayerCache"
     }
 
     @Test

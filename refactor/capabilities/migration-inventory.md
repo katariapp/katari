@@ -121,7 +121,7 @@ Migration progress:
 | `T23` | Presentation vocabulary | `EntryTypePresentation` hardcodes three types plus a generic fallback | Type-owned vocabulary becomes projection input. It may vary without deciding support. |
 | `T24` | Type runtime services | `addMangaEntryInteractionRuntime`, `addAnimeEntryInteractionRuntime`, `addBookEntryInteractionRuntime` | Install through the same owned contribution boundary or an explicitly linked runtime contribution, not an unrelated type list. |
 | `T25` | Viewer-setting providers | Manga/Anime providers plus Book runtime provider list | Associate providers with their owning contributions; settings integration must not require root and UI lists. |
-| `T26` | Media caches and image components | Separate cache-bucket list, Anime lazy bucket, Book runtime buckets, Manga Coil component bridge | Associate specialized runtime artifacts with their owners and feature projections; do not infer support from hardcoded keys. |
+| `T26` | Media caches and image components | F26 binds optional non-empty cache providers through the ordinary type plugin; image components remain owned runtime artifacts | Provider presence selects shared maintenance projections; no root cache list, hardcoded key map, or empty provider remains. |
 | `T27` | Warmup/startup hooks | Manga warmup, Anime warmup, shared download notifier start | Preserve startup work as selected consequences or owned runtime contributions with explicit lifecycle semantics. |
 
 Phase 4 ends after real type composition and type-owned artifacts conform. It does not migrate the feature consumers
@@ -160,7 +160,7 @@ so it cannot be silently omitted for the next provider.
 | `F23` | Type presentation | **Resolved.** Entry, Library, Updates, History, Browse, Download, Duplicate, Tracking, and notification vocabulary/icons/plurals come from discovered type-owned projections; presentation never authorizes an action. |
 | `F24` | Library-update notifications | **Migrated.** One Feature projection owns discovered routing/grouping, summary and child plans, Entry-details fallback, and F01/F09/F04-derived actions. F23 supplies vocabulary only; Book uses explicit neutral semantics and a derived route rather than Manga fallback. |
 | `F25` | Viewer settings | Provider discovery; reader/player settings hubs; provider-to-screen routing; settings search indexing; entry overrides; profile ownership; reset actions; backup/migration integration. |
-| `F26` | Media-cache maintenance | Cache-bucket discovery; settings labels; manual clear; launch auto-clear; preferences; cache invalidation and user-visible errors. |
+| `F26` | Media-cache maintenance | Provider-derived artifact discovery, settings labels/preferences, manual and launch clear, refreshed size, and structured user-visible errors. |
 | `F27` | Profile preference ownership | Discovery of profile/app/private keys; legacy ownership correction; profile creation/deletion/move; new feature preferences must participate without editing a recorder list. |
 
 ## Phase 6 — Contextual and External Register
@@ -204,7 +204,7 @@ application-wide graph through its real owner; it does not mean moving all code 
 | --- | --- | --- |
 | Library progress was a second required-per-type provider system | Former calculator factories, runtime-contribution field, root resolver list, and Domain consumer | **Resolved in F22.** Optional plugin-bound evidence providers feed one Feature; absence is structured and Library items remain visible. |
 | Viewer settings were discovered operationally but routed through a hardcoded UI map | Former `ViewerSettingsInteraction`, `EntryInteractionRuntime.kt`, `SettingsViewerHubScreens.kt`, `SettingsSearchScreen.kt` | **Resolved in F25.** An optional ordinary plugin provider contributes one or more surfaces; exact app-owned projections feed both hubs and search, and missing projections fail by surface ID. |
-| Media caches use a provider list but hardcoded keys, labels, and auto-clear policy | `EntryRuntimeContracts.kt`, `EntryInteractionRuntime.kt`, `SettingsDataScreen.kt`, `AutoClearMediaCache.kt`, `MainActivity.kt` | **Include.** Cache maintenance is a feature with provider-owned descriptors and selected settings/startup consequences. |
+| Media caches use a provider list but hardcoded keys, labels, and auto-clear policy | Former `EntryRuntimeContracts.kt`, `EntryInteractionRuntime.kt`, `SettingsDataScreen.kt`, `AutoClearMediaCache.kt`, and `MainActivity.kt` paths | **Resolved in F26.** Optional plugin-bound providers expose owned artifacts; one Feature derives settings, preferences, clearing, refresh, and errors without a root/key map. |
 | Profile preference ownership manually instantiates known preference owners | `ProfilePreferenceOwnership.kt`, `ProfileManager.kt` | **Include.** Feature preferences need an owned contribution so a new provider cannot be omitted from profile migration. |
 | Runtime type installation has several parallel lists | `EntryInteractionRuntime.kt`, `EntryLibraryProgressRuntime.kt`, `AppModule.kt`, `App.kt` | **Include.** Keep one environment installation boundary; remove parallel type/runtime/artifact lists. |
 | Tracking has its own applicability system | `TrackerCapabilities.kt`, `TrackerManager.kt`, entry/library/track consumers | **Include as external input.** Trackers retain ownership; tracking feature composes every consequence. |
@@ -302,7 +302,7 @@ rg -n --glob '*/src/main/**' 'EntryType\.(MANGA|ANIME|BOOK)|EntryType\.entries'
 rg -n --glob '*/src/main/**' 'supports[A-Z]|supportedEntryTypes|isSupported\(|can[A-Z]'
 rg -n --glob '*/src/main/**' 'Map<EntryType|Set<EntryType|associateBy.*(type|entryType)'
 rg -n --glob '*/src/main/**' 'Entry(Open|Continue|Download|Capability|Consumption|Bookmark|UpdateEligibility|Progress|PlaybackPreferences|ChildList|ChildGroupFilter|LibraryFilter|Preview|Immersive)Interaction'
-rg -n --glob '*/src/main/**' 'EntryMediaCacheBucketKeys|ViewerSettingsProvider|PROVIDER_ID'
+rg -n --glob '*/src/main/**' 'EntryMediaCache(Provider|Artifact|Feature)|ViewerSettingsProvider|PROVIDER_ID'
 rg -n --glob '*/src/main/**' 'EntryCatalogueSource|RelatedEntriesSource|EntryPreviewSource|EntryImageSource|SubtitleSource|ConfigurableSource|ResolvableSource|SourceHomePage|WebViewSource|UnmeteredSource'
 rg -n --glob '*/src/main/**' 'EntryCapabilityReport|EntryCapabilityCatalog|supportsTypeWide|EntryDownloadCapabilityPolicy'
 ```

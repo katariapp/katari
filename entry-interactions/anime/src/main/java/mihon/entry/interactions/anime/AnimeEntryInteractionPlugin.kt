@@ -12,6 +12,7 @@ import mihon.entry.interactions.EntryDownloadOptionsCapability
 import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryLibraryProgressCapability
+import mihon.entry.interactions.EntryMediaCacheCapability
 import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
@@ -117,6 +118,7 @@ internal fun animeEntryInteractionPlugin(
                     EntryPreviewConfigurationCapability.bind(previewProcessor),
                     EntryImmersiveCapability.bind(immersiveProcessor),
                     EntryTypePresentationCapability.bind(AnimeEntryTypePresentationProvider),
+                    EntryMediaCacheCapability.bind(AnimeMediaCacheProvider { Injekt.get() }),
                 ),
             )
             viewerSettingsProvider?.let { add(EntryViewerSettingsCapability.bind(it)) }

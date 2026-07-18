@@ -173,7 +173,6 @@ class AppModule(val app: Application) : InjektModule {
                 profilePreferenceStore = get<ProfileStore>().profileStore(),
                 basePreferenceStore = get<ProfileStore>().basePreferenceStore(),
                 privatePreferenceStore = get<ProfileStore>().privateStore(),
-                mediaCacheBuckets = listOf(mangaPageImageCache),
                 viewerSettingsScreenProjections = listOf(
                     SettingsMangaReaderScreen,
                     SettingsAnimePlayerScreen,

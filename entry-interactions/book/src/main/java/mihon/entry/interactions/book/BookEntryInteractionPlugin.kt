@@ -10,6 +10,7 @@ import mihon.entry.interactions.EntryDownloadCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionProviderBinding
 import mihon.entry.interactions.EntryLibraryProgressCapability
+import mihon.entry.interactions.EntryMediaCacheCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryProgressCapability
@@ -72,6 +73,7 @@ fun bookEntryInteractionPlugin(
             add(EntryLibraryProgressCapability.bind(libraryProgressProvider))
             add(EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider))
             add(EntryTypePresentationCapability.bind(BookEntryTypePresentationProvider))
+            add(EntryMediaCacheCapability.bind(BookMediaCacheProvider { Injekt.get() }))
             if (downloadProcessor != null) {
                 add(EntryDownloadCapability.bind(downloadProcessor))
                 add(EntryBulkDownloadCandidateCapability.bind(downloadProcessor))

@@ -120,8 +120,8 @@ import logcat.LogPriority
 import mihon.core.migration.Migrator
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadRuntimeState
-import mihon.entry.interactions.EntryMediaCacheMaintenance
-import mihon.entry.interactions.settings.EntryMediaCachePreferences
+import mihon.entry.interactions.EntryMediaCacheClearResult
+import mihon.entry.interactions.EntryMediaCacheFeature
 import mihon.feature.profiles.core.Profile
 import mihon.feature.profiles.core.ProfileManager
 import mihon.feature.profiles.core.ProfilesPreferences
@@ -148,7 +148,6 @@ import kotlin.time.times
 class MainActivity : BaseActivity() {
 
     private val libraryPreferences: LibraryPreferences by injectLazy()
-    private val mediaCachePreferences: EntryMediaCachePreferences by injectLazy()
     private val preferences: BasePreferences by injectLazy()
     private val uiPreferences: UiPreferences by injectLazy()
     private val securityPreferences: SecurityPreferences by injectLazy()
@@ -156,7 +155,7 @@ class MainActivity : BaseActivity() {
     private val profilesPreferences: ProfilesPreferences by injectLazy()
 
     private val downloadRuntime: EntryDownloadRuntimeFeature by injectLazy()
-    private val mediaCacheMaintenance: EntryMediaCacheMaintenance by injectLazy()
+    private val mediaCacheFeature: EntryMediaCacheFeature by injectLazy()
     private val extensionManager: ExtensionManager by injectLazy()
 
     private val getIncognitoState: GetIncognitoState by injectLazy()
@@ -811,12 +810,11 @@ class MainActivity : BaseActivity() {
             // Reset Incognito Mode on relaunch
             preferences.incognitoMode.set(false)
 
-            enabledMediaCacheBucketsForLaunchClear(
-                autoClearEntryPageImageCache = mediaCachePreferences.autoClearEntryPageImageCache.get(),
-                autoClearAnimePlaybackCache = mediaCachePreferences.autoClearAnimePlaybackCache.get(),
-            ).forEach { bucketKey ->
-                lifecycleScope.launchIO {
-                    mediaCacheMaintenance.clear(bucketKey)
+            lifecycleScope.launchIO {
+                mediaCacheFeature.clearEnabledOnLaunch().forEach { result ->
+                    if (result is EntryMediaCacheClearResult.Failed) {
+                        logcat(LogPriority.ERROR, result.error)
+                    }
                 }
             }
 

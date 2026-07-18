@@ -12,7 +12,6 @@ class EntryTypeRuntimeModule(
 
 data class EntryTypeRuntimeContribution(
     val plugin: EntryInteractionPlugin,
-    val mediaCacheBuckets: List<EntryMediaCacheBucket> = emptyList(),
     val warmups: List<() -> Unit> = emptyList(),
     val imageComponentInstallers: List<EntryImageComponentInstaller> = emptyList(),
 ) {

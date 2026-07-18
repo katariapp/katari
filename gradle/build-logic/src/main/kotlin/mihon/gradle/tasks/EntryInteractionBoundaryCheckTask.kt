@@ -499,13 +499,13 @@ private class EntryInteractionBoundaryRules(
     private fun checkMediaCacheMaintenanceReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
         if (!file.isMediaCacheMaintenanceGuardedPath()) return
 
-        MEDIA_CACHE_IMPLEMENTATION_TYPES.forEach { typeName ->
+        MEDIA_CACHE_MAINTENANCE_FORBIDDEN_TYPES.forEach { typeName ->
             file.findReference(typeName)?.let { reference ->
                 findings += Finding(
                     relativePath = file.relativePath,
                     lineNumber = reference.lineNumber,
-                    reason = "settings/UI cache maintenance must use EntryMediaCacheMaintenance and " +
-                        "EntryMediaCacheBucket keys, not concrete cache implementation: $typeName",
+                    reason = "settings/UI cache maintenance must use EntryMediaCacheFeature, not a raw cache " +
+                        "implementation or host port: $typeName",
                 )
             }
         }
@@ -744,7 +744,9 @@ private class EntryInteractionBoundaryRules(
             "app/src/main/java/eu/kanade/tachiyomi/data/cache/MangaPageCache.kt",
         )
 
-        private val MEDIA_CACHE_IMPLEMENTATION_TYPES = setOf(
+        private val MEDIA_CACHE_MAINTENANCE_FORBIDDEN_TYPES = setOf(
+            "EntryPageImageCache",
+            "EntryPlayerCache",
             "MangaPageCache",
             "AppMangaPageImageCache",
             "ReaderPageCache",

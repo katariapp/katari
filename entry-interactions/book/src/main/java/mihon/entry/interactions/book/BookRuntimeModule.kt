@@ -3,7 +3,6 @@ package mihon.entry.interactions.book
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
-import mihon.entry.interactions.EntryMediaCacheBucket
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryTypeRuntimeContribution
 import mihon.entry.interactions.EntryTypeRuntimeModule
@@ -42,7 +41,6 @@ fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTy
                     surfaces = runtime.viewerSettingsSurfaces,
                 ),
             ),
-            mediaCacheBuckets = runtime.mediaCacheBuckets,
         )
     }
 }
@@ -55,7 +53,8 @@ private fun InjektRegistrar.addBookEntryInteractionRuntime(
     val materializationCache = BookMaterializationCache(app)
     val readiumSettingsProvider = ReadiumEpubSettingsProvider(profilePreferenceStore)
     val proseSettingsProvider = HtmlProseSettingsProvider(profilePreferenceStore)
-    addSingletonFactory<BookMaterializationStore> { materializationCache }
+    addSingletonFactory { materializationCache }
+    addSingletonFactory<BookMaterializationStore> { get<BookMaterializationCache>() }
     addSingletonFactory { BookDownloadProvider(get<StorageManager>()) }
     addSingletonFactory {
         val storageManager = get<StorageManager>()
@@ -128,12 +127,10 @@ private fun InjektRegistrar.addBookEntryInteractionRuntime(
         )
     }
     return BookRuntimeArtifacts(
-        mediaCacheBuckets = listOf(materializationCache),
         viewerSettingsSurfaces = listOf(readiumSettingsProvider, proseSettingsProvider),
     )
 }
 
 private data class BookRuntimeArtifacts(
-    val mediaCacheBuckets: List<EntryMediaCacheBucket>,
     val viewerSettingsSurfaces: List<ViewerSettingsProvider>,
 )

@@ -21,6 +21,10 @@ Status meanings:
 | Show gaps between missing child items              |   ✓   |   —   |  —   |
 | Filter child items by release group                |   ✓   |   —   |  —   |
 | Migrate an entry to another source                 |   ✓   |   —   |  —   |
+| Clear temporary media cache manually/on app launch |   ✓   |   ✓   |  ✓   |
+
+The media-cache row records current built-in user-facing behavior. Runtime provider presence remains authoritative; this
+documentation table does not enable or enforce cache support.
 
 ## Downloads
 

@@ -282,7 +282,8 @@ This table maps every claim in `docs/features/content-type-reference.md` to curr
 ## Coverage and Documentation Gaps
 
 - The Phase 1 executable catalog and report enumerate reviewed fundamental capability facts, but consumer selection, shared contracts, and documentation projection have not migrated yet.
-- No shared contract yet instantiates every real content-type provider claiming migration, merge, notification, viewer-setting, or media-cache support. F01–F10 and F13–F23 use graph-selected feature contracts rather than support-label matrices.
+- No shared contract yet instantiates every real content-type provider claiming migration or merge support. F01–F10 and
+  F13–F26 use graph-selected feature contracts rather than support-label matrices.
 - `EntryType.entries` is used by one strong shared lifecycle test, but enum membership is not the same as capability applicability.
 - The content reference is entirely hand-maintained. Anime migration already demonstrates that executable support and documentation can disagree without validation failing.
 - The bookmark-based bulk-download rule drives shared runtime and application presentation; public documentation verification remains assigned to the Phase 2 integration gate.

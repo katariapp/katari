@@ -29,8 +29,8 @@ Updated: 2026-07-18
 - F09, F10, and F13 completion: `e175cbc3f` (`(refactor): migrate entry state features`)
 - F14, F18, and F19 completion: `a03ff2a71` (`(refactor): migrate entry filtering and preview features`)
 - F20, F21, and F22 completion: `dd8fc5106` (`(refactor): migrate immersive, related, and progress features`)
-- F23 Type Presentation, F24 Library-update Notifications, and F25 Viewer Settings are implemented and validated in
-  the current integration batch.
+- F23 Type Presentation, F24 Library-update Notifications, F25 Viewer Settings, and F26 Media-cache Maintenance are
+  implemented and validated in the current integration batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -38,8 +38,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F23`, `F24`, and `F25` — Type Presentation, Library-update Notifications, and Viewer Settings
-- State: complete and validated; F11 Migration and F26 Media-cache Maintenance are the active isolated migrations
+- Milestone: `F23`–`F26` — Presentation, Notifications, Viewer Settings, and Media-cache Maintenance
+- State: complete and validated; F11/F12 are active and F27 remains pending
 
 ## Why the Plan Was Reset
 
@@ -371,7 +371,7 @@ beside the graph.
 - `T01`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy; F23 resolves the former
   `T23` presentation-projection obligation through optional type-owned providers.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only real migrated owners; F11, F12, F26, and F27 remain deliberately absent until their owning milestones.
+  only real migrated owners; F11, F12, and F27 remain deliberately absent until their owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -505,7 +505,7 @@ Approved on 2026-07-18:
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
 - Remaining raw application boundary failures are exactly the three F11/F12 `EntryCapabilityInteraction` consumers.
-  F26 and F27 remain tracked feature migrations without raw interaction-facade failures. Re-exporting SPI, restoring
+  F27 remains a tracked feature migration without raw interaction-facade failures. Re-exporting SPI, restoring
   raw DI, or moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
@@ -597,8 +597,12 @@ Approved on 2026-07-18:
 - F25 moves Viewer Settings into the ordinary optional plugin/provider graph, validates exact app-owned screen
   projections, and derives hub/search, preference ownership, overrides, reset, backup, and migration consequences from
   the same provider definitions.
+- F26 makes optional Media Cache provider presence sufficient for discovery, settings, preferences, manual clearing,
+  launch clearing, size refresh, and structured error consequences.
+- F26 removes the root cache-bucket list, central cache-key map, hardcoded settings/startup policy, and dedicated
+  current-type preference holder. Type modules retain only genuine cache access and owned descriptors.
 
 ## Exact Next Action After Review
 
-Commit the validated `F23`, `F24`, and `F25` milestone and remove all three completed worktrees and branches while the
-`F11` and `F26` migrations continue in isolation.
+Complete the validated F26 integration, remove completed agent worktrees and branches, then continue F11/F12 and the
+pending F27 migration.

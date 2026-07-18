@@ -7,26 +7,15 @@ import tachiyomi.domain.entry.model.EntryChapter
 import java.io.File
 
 interface EntryPageImageCache {
+    val readableSize: String
     fun isImageInCache(imageUrl: String): Boolean
     fun getImageFile(imageUrl: String): File
-}
-
-object EntryMediaCacheBucketKeys {
-    const val MANGA_PAGE_IMAGE: String = "manga_page_image"
-    const val ANIME_PLAYBACK: String = "anime_playback"
-    const val BOOK_MATERIALIZED: String = "book_materialized"
-}
-
-interface EntryMediaCacheBucket {
-    val key: String
-    val readableSize: String
     fun clear(): Int
 }
 
-interface EntryMediaCacheMaintenance {
-    fun buckets(): List<EntryMediaCacheBucket>
-    fun bucket(key: String): EntryMediaCacheBucket?
-    fun clear(key: String): Int
+interface EntryPlayerCache {
+    val readableSize: String
+    fun clear(): Int
 }
 
 fun interface EntryInteractionActivityTheme {
@@ -40,11 +29,6 @@ interface EntryReaderIncognitoState {
 
 interface EntryReaderTracking {
     suspend fun updateChapterRead(context: Context, entryId: Long, chapterNumber: Double)
-}
-
-interface EntryPlayerCache : EntryMediaCacheBucket {
-    override val key: String
-        get() = EntryMediaCacheBucketKeys.ANIME_PLAYBACK
 }
 
 interface EntryChildGroupFilterDataSource {

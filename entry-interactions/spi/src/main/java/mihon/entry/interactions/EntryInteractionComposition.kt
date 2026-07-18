@@ -53,6 +53,7 @@ fun createEntryInteractionComposition(
             libraryProgressProviders = providers[EntryLibraryProgressCapability],
             typePresentationProviders = providers[EntryTypePresentationCapability],
             viewerSettingsProviders = providers[EntryViewerSettingsCapability],
+            mediaCacheProviders = providers[EntryMediaCacheCapability],
         ),
         featureGraph = featureGraph,
         featureGraphEvaluation = featureGraphEvaluation,
@@ -116,6 +117,7 @@ private class DefaultEntryInteractions(
     libraryProgressProviders: Map<EntryType, EntryLibraryProgressProvider>,
     typePresentationProviders: Map<EntryType, EntryTypePresentationProvider>,
     viewerSettingsProviders: Map<EntryType, EntryViewerSettingsProvider>,
+    mediaCacheProviders: Map<EntryType, EntryMediaCacheProvider>,
 ) : EntryInteractions {
     override val open: EntryOpenInteraction = ProviderBackedEntryOpenInteraction(openProcessors)
     override val continueEntry: EntryContinueInteraction = ProviderBackedEntryContinueInteraction(continueProcessors)
@@ -149,4 +151,6 @@ private class DefaultEntryInteractions(
         ProviderBackedEntryTypePresentationInteraction(typePresentationProviders)
     override val viewerSettings: EntryViewerSettingsInteraction =
         ProviderBackedEntryViewerSettingsInteraction(viewerSettingsProviders)
+    override val mediaCache: EntryMediaCacheInteraction =
+        ProviderBackedEntryMediaCacheInteraction(mediaCacheProviders)
 }
