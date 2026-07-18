@@ -19,7 +19,7 @@ internal class BookContinueProcessor(
 
     override suspend fun findNext(entry: Entry): EntryChapter? {
         entry.requireBook()
-        val chapters = getEntryWithChapters.awaitChapters(entry.id).sortedForReading(entry)
+        val chapters = getEntryWithChapters.awaitChapters(entry).sortedForReading(entry)
         val chapterById = chapters.associateBy(EntryChapter::id)
         return chapters
             .map(EntryChapter::entryId)

@@ -209,10 +209,11 @@ class EntryScreen(
                 consumptionSupported = consumptionApplicable,
             ),
             navigateUp = navigator::pop,
-            onChapterClicked = { chapter ->
+            onChapterClicked = { chapter: EntryChapter ->
                 scope.launch {
                     openChapter(context, entryOpenFeature, successState.entry, chapter)
                 }
+                Unit
             }.takeIf { openApplicable },
             onDownloadChapter = screenModel::runChapterDownloadActions.takeIf { downloadsAvailable },
             onAddToLibraryClicked = {
@@ -220,8 +221,7 @@ class EntryScreen(
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
             },
             onAddToMergeClicked = screenModel::showMergeTargetPicker.takeIf {
-                screenModel.supportsMerge() &&
-                    !successState.isPartOfMerge &&
+                !successState.isPartOfMerge &&
                     (successState.isFromSource || successState.entry.favorite)
             },
             onWebViewClicked = {
@@ -257,6 +257,7 @@ class EntryScreen(
                 scope.launch {
                     continueReading(context, screenModel, successState.entry)
                 }
+                Unit
             }.takeIf { screenModel.isContinueApplicable(successState.entry) },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = screenModel::showCoverDialog,

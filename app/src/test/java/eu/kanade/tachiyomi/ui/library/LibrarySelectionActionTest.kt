@@ -129,8 +129,8 @@ class LibrarySelectionActionTest {
             """
             fun openMergeDialog() {
                     val selectedItems = state.value.selectedLibraryItems
-                    if (!entryCapabilityInteraction.canMergeSelection(selectedItems.toEntryMergeCapabilityItems())) return
                     screenModelScope.launchIO {
+                        val entries = selectedItems.flatMap(LibraryItem::memberEntries).distinctBy(Entry::id)
             """.trimIndent(),
         ).forEach { expected -> assertTrue(source.contains(expected)) }
     }

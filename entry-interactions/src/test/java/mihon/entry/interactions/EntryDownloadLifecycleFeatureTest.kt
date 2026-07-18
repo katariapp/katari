@@ -141,7 +141,7 @@ class EntryDownloadLifecycleFeatureTest {
             coEvery { await(any()) } answers { categories[firstArg<Long>()].orEmpty() }
         }
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(any(), any()) } returns readingOrder
+            coEvery { awaitChapters(any(), any(), any()) } returns readingOrder
         }
         return Fixture(
             preferences = preferences,

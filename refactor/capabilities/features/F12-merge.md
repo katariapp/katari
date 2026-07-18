@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1 and F12.2 committed; F12.3 implemented and awaiting review
+Status: F12.1–F12.3 committed; F12.4 implemented and awaiting review
 
 ## Architectural Classification
 
@@ -177,6 +177,40 @@ Exit gate: these consumers obtain only the F12 projection needed for their own f
 Review request: report any observable behavior difference; no support-matrix or type-specific opt-in decision is
 expected.
 
+Implemented result:
+
+- Entry and Catalogue duplicate lookup, Entry/Library/Catalogue editors, and History/Updates/library-update navigation
+  consume purpose-specific F12 Features. They no longer inspect membership rows or reconstruct persistence and cleanup
+  steps.
+- Domain child loading and unified Library loading depend downward on narrow, purpose-owned resolution ports. The root
+  F12 coordinators implement those ports from the same explicit-profile host authority; the ports expose only ordered
+  child owners or grouping of a caller-supplied Library population and contain no membership mutation API.
+- Existing groups expand inside the shared editor at the point selected by the caller. Entry and Catalogue preserve the
+  established ordering distinction between extending an existing group and starting a group from a standalone target;
+  target choice, ordering, removal, Library removal, conflicts, and consequences are then submitted as one owned intent.
+- Entry child presentation, Child Group filtering, Continue implementations, reader/player navigation, Download
+  lifecycle child selection, and Book navigation now obtain ordered concrete owners from the shared child-resolution
+  boundary rather than querying or rebuilding groups independently. Ownership changes remain observable even when an
+  added or removed member has no children and the projected child list is otherwise equal.
+- UI Merge availability is the result of F12 preparation. The former Manga/Anime support gate is absent, so Book and
+  any future composed type receive the same base workflow without a type-module opt-in. Missing optional providers still
+  omit only their own consequences.
+- The orphan cover-enhancement wrapper and its DI-only tests were removed with the obsolete duplicate interactor path;
+  it had no production consumer. Active duplicate-detection scoring, merged-candidate collapse, tracker matching, and
+  preference observation moved behind the F12 candidate host in F12.3 and are now used by the migrated consumers.
+- Focused Domain child/Library behavior tests, API and Manga/Anime compilation, formatting, and Merge-boundary rule tests
+  pass. Root/app compilation remains intentionally blocked by the 16 classified F11, F12.5, and F12.6 migrations.
+
+Observable review points:
+
+- Book now exposes the same Merge entry points as Manga and Anime, as required by the approved shared-workflow
+  classification.
+- Editor dialogs remain open when the coordinator reports a conflict or operational failure; they close only after an
+  applied transition. The former callers had no structured result to distinguish those outcomes.
+- Manga reader child loading now uses the same ordered-owner path as Entry, Continue, and the other readers instead of
+  prepending the current Entry to an already complete membership list. This removes duplicate owner loading while
+  retaining stored member order.
+
 ### F12.5 — Download, lifecycle, and notification projections
 
 - Migrate queue identity, actions, lifecycle cleanup, and notification navigation using explicit profile and real-owner
@@ -225,6 +259,9 @@ raw authority, and establishes a boundary through which optional consequences ca
 providers. F12.2 pins every workflow to explicit identity and gives the owning feature an atomic database transition plus
 durable delivery of independently applicable consequences. F12.3 implements that architecture before migrating
 consumers: base participation is discovered from content-type composition, optional Download behavior is derived from
-its provider, and the obsolete authority is removed even though this exposes compile failures. No completed milestone
-uses a content-type matrix, mandatory provider, caller-owned completion checklist, ambient profile, or compiling
-compatibility implementation.
+its provider, and the obsolete authority is removed even though this exposes compile failures. F12.4 makes application
+surfaces consume feature-owned intent and projections and gives lower Domain aggregation only purpose-specific downward
+ports implemented by the same coordinator. Availability comes from preparation, not a duplicated type gate; behavior
+tests exercise shared ordering, ownership changes, and grouping rather than restating support declarations. No completed
+milestone uses a content-type matrix, mandatory provider, caller-owned completion checklist, ambient profile, or
+compiling compatibility implementation.

@@ -172,7 +172,7 @@ internal class DefaultEntryDownloadLifecycleFeature(
         currentChild: EntryChapter,
         deduplicateByNumber: Boolean,
     ): List<EntryChapter> {
-        val ordered = getEntryWithChapters.awaitChapters(visibleEntry.id).sortedForReading(visibleEntry)
+        val ordered = getEntryWithChapters.awaitChapters(visibleEntry).sortedForReading(visibleEntry)
         if (!deduplicateByNumber) return ordered
         return ordered.groupBy { it.entryId to it.chapterNumber }.values.map { children ->
             children.find { it.id == currentChild.id }

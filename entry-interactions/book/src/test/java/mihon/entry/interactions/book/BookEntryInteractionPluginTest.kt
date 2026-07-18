@@ -31,7 +31,7 @@ class BookEntryInteractionPluginTest {
         val first = chapter(id = 11L, chapterNumber = 1.0)
         val latest = chapter(id = 12L, chapterNumber = 2.0)
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(1L, any()) } returns listOf(latest, first)
+            coEvery { awaitChapters(any(), any(), any()) } returns listOf(latest, first)
         }
         val progressRepository = mockk<EntryProgressRepository> {
             coEvery { getByEntryId(1L) } returns emptyList()
@@ -49,7 +49,7 @@ class BookEntryInteractionPluginTest {
     fun `plugin registers generic book interactions without download support`() = runTest {
         val chapter = chapter()
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(1L, any()) } returns listOf(chapter)
+            coEvery { awaitChapters(any(), any(), any()) } returns listOf(chapter)
         }
         val progressRepository = mockk<EntryProgressRepository> {
             coEvery { getByEntryId(1L) } returns emptyList()

@@ -53,11 +53,21 @@ import kotlinx.coroutines.launch
 import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
-import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.entry.interactions.EntryImmersiveAvailability
 import mihon.entry.interactions.EntryImmersiveContext
 import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveSourceAvailability
+import mihon.entry.interactions.EntryMergeCandidateFeature
+import mihon.entry.interactions.EntryMergeCommitIntent
+import mihon.entry.interactions.EntryMergeEditReference
+import mihon.entry.interactions.EntryMergeEditorEntry
+import mihon.entry.interactions.EntryMergeEditorEntryOrigin
+import mihon.entry.interactions.EntryMergeEditorEntryReference
+import mihon.entry.interactions.EntryMergeExecutionResult
+import mihon.entry.interactions.EntryMergeFeature
+import mihon.entry.interactions.EntryMergeMemberPreparationIntent
+import mihon.entry.interactions.EntryMergePreparationResult
+import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.entry.interactions.EntryPreviewAvailability
 import mihon.entry.interactions.EntryPreviewContext
 import mihon.entry.interactions.EntryPreviewFeature
@@ -68,14 +78,10 @@ import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.category.repository.CategoryRepository
-import tachiyomi.domain.entry.interactor.GetDuplicateLibraryEntries
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
-import tachiyomi.domain.entry.interactor.GetMergedEntry
-import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
 import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryChapterFlags
-import tachiyomi.domain.entry.interactor.UpdateMergedEntry
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryRepository
@@ -110,18 +116,15 @@ class CatalogScreenModel(
     private val coverCache: CoverCache = Injekt.get(),
     private val getRemoteCatalog: GetRemoteCatalog = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val getDuplicateLibraryEntries: GetDuplicateLibraryEntries = Injekt.get(),
+    private val entryMergeCandidateFeature: EntryMergeCandidateFeature = Injekt.get(),
+    private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val categoryRepository: CategoryRepository = Injekt.get(),
     private val setEntryCategories: SetEntryCategories = Injekt.get(),
     private val setEntryChapterFlags: SetEntryChapterFlags = Injekt.get(),
     private val getLibraryEntries: GetLibraryEntries = Injekt.get(),
-    private val getMergedEntry: GetMergedEntry = Injekt.get(),
     private val duplicatePreferences: DuplicatePreferences = Injekt.get(),
-    private val networkToLocalEntry: NetworkToLocalEntry = Injekt.get(),
-    private val updateMergedEntry: UpdateMergedEntry = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
-    private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
     private val entryImmersiveFeature: EntryImmersiveFeature = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
@@ -456,7 +459,7 @@ class CatalogScreenModel(
         }
 
         setDialog(Dialog.CheckingDuplicates)
-        val duplicates = getDuplicateLibraryEntries(entry)
+        val duplicates = entryMergeCandidateFeature.candidates(entry)
         when {
             duplicates.isNotEmpty() -> setDialog(Dialog.DuplicateEntry(entry, duplicates))
             else -> {
@@ -591,7 +594,8 @@ class CatalogScreenModel(
             is Dialog.SelectEntryMergeTarget -> {
                 screenModelScope.launchIO {
                     val target = dialog.targets.firstOrNull { it.id == targetId } ?: return@launchIO
-                    setDialog(createEntryMergeEditorDialog(dialog.entry, target))
+                    val editor = createEntryMergeEditorDialog(dialog.entry, target) ?: return@launchIO
+                    setDialog(editor)
                 }
             }
             else -> {}
@@ -617,10 +621,13 @@ class CatalogScreenModel(
         mutableState.update { currentState ->
             when (val dialog = currentState.dialog) {
                 is Dialog.EditEntryMerge -> {
-                    if (dialog.targetLocked || dialog.entries.none { it.id == itemId }) return@update currentState
+                    val entry = dialog.entries.firstOrNull { it.id == itemId } ?: return@update currentState
+                    val reference = dialog.referencesById[itemId] ?: return@update currentState
+                    if (dialog.targetLocked) return@update currentState
                     currentState.copy(
                         dialog = dialog.copy(
                             targetId = itemId,
+                            targetReference = reference,
                             removedIds = dialog.removedIds - itemId,
                             libraryRemovalIds = dialog.libraryRemovalIds - itemId,
                         ),
@@ -667,20 +674,18 @@ class CatalogScreenModel(
         when (val dialog = state.value.dialog) {
             is Dialog.EditEntryMerge -> {
                 screenModelScope.launchIO {
-                    val remoteEntry = networkToLocalEntry(dialog.entry)
-                    ensureEntryFavorite(remoteEntry)
-                    setEntryCategories.await(remoteEntry.id, dialog.categoryIds)
-
-                    val orderedIds = dialog.entries
-                        .filterNot { it.id in (dialog.removedIds + dialog.libraryRemovalIds) }
-                        .map(MergeEditorEntry::id)
-                        .distinct()
-
-                    if (orderedIds.size > 1) {
-                        updateMergedEntry.awaitMerge(dialog.targetId, orderedIds)
+                    val result = entryMergeFeature.execute(
+                        EntryMergeCommitIntent(
+                            editReference = dialog.editReference,
+                            target = dialog.targetReference,
+                            orderedEntries = dialog.entries.mapNotNull { dialog.referencesById[it.id] },
+                            removedEntries = dialog.referencesById.referencesFor(dialog.removedIds),
+                            libraryRemovalEntries = dialog.referencesById.referencesFor(dialog.libraryRemovalIds),
+                        ),
+                    )
+                    if (result is EntryMergeExecutionResult.Applied) {
+                        dismissDialog()
                     }
-                    removeMergedMembersFromLibrary(dialog.libraryRemovalIds)
-                    dismissDialog()
                 }
             }
             else -> {}
@@ -690,102 +695,55 @@ class CatalogScreenModel(
     private suspend fun createEntryMergeEditorDialog(
         entry: Entry,
         target: MergeTarget,
-    ): Dialog.EditEntryMerge {
-        return createEntryMergeEditorDialog(
-            entry = entry,
-            targetId = target.id,
-            memberEntries = target.memberEntries,
-            categoryIds = target.categoryIds,
-            isMerged = target.isMerged,
-        )
-    }
-
-    private suspend fun createEntryMergeEditorDialog(
-        entry: Entry,
-        targetId: Long,
-        memberEntries: List<Entry>,
-        categoryIds: List<Long>,
-        isMerged: Boolean,
-    ): Dialog.EditEntryMerge {
-        val remoteEntry = networkToLocalEntry(entry)
-        val orderedMembers = if (isMerged) {
-            val membersById = memberEntries.associateBy(Entry::id)
-            getMergedEntry.awaitGroupByTargetId(targetId)
-                .sortedBy { it.position }
-                .mapNotNull { merge -> membersById[merge.entryId] }
-                .ifEmpty { memberEntries }
-        } else {
-            memberEntries
+    ): Dialog.EditEntryMerge? {
+        val targetEntry = target.memberEntries.firstOrNull { it.id == target.id }
+            ?: target.memberEntries.firstOrNull()
+            ?: return null
+        val categoryIds = target.categoryIds.ifEmpty {
+            categoryRepository.getCategoriesByEntryId(targetEntry.id).map(Category::id)
         }
-
-        val entries = buildList {
-            if (isMerged && orderedMembers.none { it.id == remoteEntry.id }) {
-                add(
-                    MergeEditorEntry(
-                        id = remoteEntry.id,
-                        entry = remoteEntry,
-                        subtitle = getEntrySourceSubtitle(remoteEntry) + " • New",
-                        isRemovable = false,
-                    ),
-                )
-            }
-            orderedMembers.forEach { member ->
-                add(
-                    MergeEditorEntry(
-                        id = member.id,
-                        entry = member,
-                        subtitle = getEntrySourceSubtitle(member),
-                        isRemovable = true,
-                        isMember = true,
-                    ),
-                )
-            }
-            if (!isMerged && none { it.id == remoteEntry.id }) {
-                add(
-                    MergeEditorEntry(
-                        id = remoteEntry.id,
-                        entry = remoteEntry,
-                        subtitle = getEntrySourceSubtitle(remoteEntry) + " • New",
-                        isRemovable = false,
-                    ),
-                )
-            }
-        }.toImmutableList()
-
+        val preparations = if (entry.favorite) {
+            emptyList()
+        } else {
+            listOf(EntryMergeMemberPreparationIntent(entry, categoryIds))
+        }
+        val editor = when (
+            val result = entryMergeFeature.prepare(
+                EntryMergePrepareIntent(
+                    selectedEntries = if (target.isMerged) {
+                        listOf(entry, targetEntry)
+                    } else {
+                        listOf(targetEntry, entry)
+                    },
+                    preparations = preparations,
+                ),
+            )
+        ) {
+            is EntryMergePreparationResult.Ready -> result.editor
+            is EntryMergePreparationResult.Rejected -> return null
+        }
+        val targetEditorEntry = editor.entries.firstOrNull { it.reference == editor.target } ?: return null
         return Dialog.EditEntryMerge(
-            entry = remoteEntry,
-            targetId = targetId,
-            targetLocked = false,
-            entries = entries,
+            entry = entry,
+            editReference = editor.editReference,
+            targetId = targetEditorEntry.entry.id,
+            targetReference = targetEditorEntry.reference,
+            targetLocked = editor.targetLocked,
+            entries = editor.entries.map(::toMergeEditorEntry).toImmutableList(),
+            referencesById = editor.entries.associate { it.entry.id to it.reference },
             removedIds = emptySet(),
             libraryRemovalIds = emptySet(),
-            categoryIds = categoryIds,
         )
     }
 
-    private suspend fun removeMergedMembersFromLibrary(entryIds: Collection<Long>) {
-        entryIds.distinct().forEach { entryId ->
-            val entry = getEntry.await(entryId) ?: return@forEach
-            val withRemovedCovers = entry.removeCovers()
-            val updated = withRemovedCovers.copy(favorite = false, dateAdded = 0L)
-            entryRepository.update(updated)
-            downloadMaintenance.removeEntryDownloads(entry)
-        }
-    }
-
-    private suspend fun ensureEntryFavorite(entry: Entry) {
-        if (entry.favorite) return
-        setEntryChapterFlags.await(entry.id, computeDefaultChapterFlags(libraryPreferences))
-        val source = sourceManager.getOrStub(sourceId)
-        addTracks.bindEnhancedTrackers(
-            entry = entry,
-            source = EntryTrackingSource.from(source, sourceManager.getDisplayInfo(sourceId)),
-        )
-        entryRepository.update(
-            entry.copy(
-                favorite = true,
-                dateAdded = Instant.now().toEpochMilli(),
-            ),
+    private fun toMergeEditorEntry(item: EntryMergeEditorEntry): MergeEditorEntry {
+        val existing = item.origin == EntryMergeEditorEntryOrigin.EXISTING_MEMBER
+        return MergeEditorEntry(
+            id = item.entry.id,
+            entry = item.entry,
+            subtitle = getEntrySourceSubtitle(item.entry) + if (existing) "" else " • New",
+            isRemovable = item.removable,
+            isMember = existing,
         )
     }
 
@@ -1090,12 +1048,14 @@ class CatalogScreenModel(
 
         data class EditEntryMerge(
             val entry: Entry,
+            val editReference: EntryMergeEditReference,
             val targetId: Long,
+            val targetReference: EntryMergeEditorEntryReference,
             val targetLocked: Boolean,
             val entries: ImmutableList<MergeEditorEntry>,
+            val referencesById: Map<Long, EntryMergeEditorEntryReference>,
             val removedIds: Set<Long>,
             val libraryRemovalIds: Set<Long>,
-            val categoryIds: List<Long>,
         ) : Dialog {
             val enabled: Boolean
                 get() = entries.count { it.id !in (removedIds + libraryRemovalIds) } > 1
@@ -1120,6 +1080,13 @@ class CatalogScreenModel(
         val isUserQuery get() = listing is Listing.Search && !listing.query.isNullOrEmpty()
         val hasFilterCapability get() = filterState !is FilterUiState.Unavailable
     }
+}
+
+private fun Map<Long, EntryMergeEditorEntryReference>.referencesFor(
+    entryIds: Collection<Long>,
+): Set<EntryMergeEditorEntryReference> {
+    val ids = entryIds.toSet()
+    return filterKeys { it in ids }.values.toSet()
 }
 
 sealed interface FilterUiState {

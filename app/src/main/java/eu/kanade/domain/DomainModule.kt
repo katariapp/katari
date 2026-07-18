@@ -58,8 +58,6 @@ import tachiyomi.domain.category.interactor.SetDisplayMode
 import tachiyomi.domain.category.interactor.SetSortModeForCategory
 import tachiyomi.domain.category.interactor.UpdateCategory
 import tachiyomi.domain.category.repository.CategoryRepository
-import tachiyomi.domain.entry.interactor.EnhanceDuplicateLibraryEntries
-import tachiyomi.domain.entry.interactor.GetEnhancedDuplicateLibraryEntries
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetEntryById
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -140,15 +138,13 @@ class DomainModule : InjektModule {
         addFactory { GetLibraryEntries(get(), get(), get(), get(), get(), get(), get()) }
         addFactory { SyncEntryWithSource(get(), get(), get(), get(), get(), get(), get()) }
 
-        addFactory { GetEntryWithChapters(get(), get(), get()) }
+        addFactory { GetEntryWithChapters(get(), get()) }
 
         addFactory { GetNextChapters(get(), get(), get(), get()) }
         addFactory { GetUpcomingEntries(get()) }
         addFactory { FetchInterval(get()) }
         addFactory { SetEntryViewerFlags(get()) }
         addFactory { UpdateEntry(get(), get()) }
-        addFactory { EnhanceDuplicateLibraryEntries(get(), get()) }
-        addFactory { GetEnhancedDuplicateLibraryEntries(get(), get(), get(), get()) }
         addFactory {
             MigrateEntryUseCase(
                 get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),

@@ -290,12 +290,13 @@ internal class AppEntryMergeHost(
             ) {
                 conflict()
             }
+            val visibleEntryId = transition.visibleEntryId
             if (
-                transition.visibleEntryId != null &&
+                visibleEntryId != null &&
                 (
-                    transition.visibleEntryId !in transition.expected.orderedEntryIds ||
-                        transition.visibleEntryId in transition.libraryRemovalEntryIds ||
-                        loadEntry(profileId, transition.visibleEntryId) == null
+                    visibleEntryId !in transition.expected.orderedEntryIds ||
+                        visibleEntryId in transition.libraryRemovalEntryIds ||
+                        loadEntry(profileId, visibleEntryId) == null
                     )
             ) {
                 conflict()
@@ -366,7 +367,7 @@ internal class AppEntryMergeHost(
             if (entries.map(Entry::type).distinct().size != 1) conflict()
         }
 
-        private fun Database.insertConsequences(
+        private suspend fun Database.insertConsequences(
             transition: EntryMergeHostTransition,
             resolvedIds: Map<EntryMergeHostMemberKey, Long>,
         ) {

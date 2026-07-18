@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryMergeCandidateFeature
+import mihon.entry.interactions.EntryMergeNavigationFeature
+import mihon.entry.interactions.EntryMergeSubject
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.launchIO
@@ -31,9 +34,7 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.category.repository.CategoryRepository
-import tachiyomi.domain.entry.interactor.GetDuplicateLibraryEntries
 import tachiyomi.domain.entry.interactor.GetEntry
-import tachiyomi.domain.entry.interactor.GetMergedEntry
 import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryFavorite
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
@@ -53,9 +54,9 @@ class HistoryScreenModel(
     private val addTracks: AddTracks = Injekt.get(),
     private val categoryRepository: CategoryRepository = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
-    private val getDuplicateLibraryEntries: GetDuplicateLibraryEntries = Injekt.get(),
+    private val entryMergeCandidateFeature: EntryMergeCandidateFeature = Injekt.get(),
+    private val entryMergeNavigationFeature: EntryMergeNavigationFeature = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val getMergedEntry: GetMergedEntry = Injekt.get(),
     private val getHistory: GetHistory = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val removeHistory: RemoveHistory = Injekt.get(),
@@ -92,8 +93,13 @@ class HistoryScreenModel(
 
         return map { historyWithRelations ->
             val historyItem = historyWithRelations.toHistoryItem()
+            val ownerEntry = entryCache.getOrPut(historyItem.entryId) { getEntry.await(historyItem.entryId) }
             val visibleEntryId = visibleTargetCache.getOrPut(historyItem.entryId) {
-                getMergedEntry.awaitVisibleTargetId(historyItem.entryId)
+                ownerEntry?.let { entry ->
+                    entryMergeNavigationFeature.resolveNavigation(
+                        EntryMergeSubject(entry.profileId, historyItem.entryId),
+                    ).visibleEntryId
+                } ?: historyItem.entryId
             }
             val entry = entryCache.getOrPut(visibleEntryId) {
                 getEntry.await(visibleEntryId)
@@ -202,7 +208,7 @@ class HistoryScreenModel(
         screenModelScope.launchIO {
             val entry = getEntry.await(entryId) ?: return@launchIO
 
-            val duplicates = getDuplicateLibraryEntries(entry)
+            val duplicates = entryMergeCandidateFeature.candidates(entry)
             if (duplicates.isNotEmpty()) {
                 mutableState.update { it.copy(dialog = Dialog.DuplicateEntry(entry, duplicates)) }
                 return@launchIO
@@ -268,7 +274,8 @@ class HistoryScreenModel(
     }
 
     suspend fun getVisibleEntryId(entryId: Long): Long {
-        return getMergedEntry.awaitVisibleTargetId(entryId)
+        val entry = getEntry.await(entryId) ?: return entryId
+        return entryMergeNavigationFeature.resolveNavigation(EntryMergeSubject(entry.profileId, entryId)).visibleEntryId
     }
 
     @Immutable

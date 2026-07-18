@@ -125,7 +125,7 @@ class BookDownloadProcessorTest {
             entries.forEach { (id, entry) -> coEvery { getEntryById(id) } returns entry }
         }
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(any(), any()) } returns chapters
+            coEvery { awaitChapters(any(), any(), any()) } returns chapters
         }
         val mergedEntryRepository = mockk<MergedEntryRepository> {
             every { subscribeAll() } returns flowOf(emptyList())

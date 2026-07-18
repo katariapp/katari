@@ -16,6 +16,6 @@ internal class BookChapterNavigationResolver(
 
     suspend fun resolveAll(entry: Entry): List<EntryChapter> {
         entry.requireBook()
-        return getEntryWithChapters.awaitChapters(entry.id).sortedForReading(entry)
+        return getEntryWithChapters.awaitChapters(entry).sortedForReading(entry)
     }
 }

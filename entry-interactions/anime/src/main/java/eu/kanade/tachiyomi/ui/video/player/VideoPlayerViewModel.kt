@@ -508,15 +508,15 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
     }
 
     private suspend fun resolveEpisodeNavigation(
-        visibleEntryId: Long,
+        visibleEntry: Entry,
+        ownerEntry: Entry,
         episodeId: Long,
     ): EntryChildWindow<EntryChapter>? {
-        val mergedChapterId = if (bypassMerge) this@VideoPlayerViewModel.ownerEntryId else visibleEntryId
+        val effectiveEntry = if (bypassMerge) ownerEntry else visibleEntry
         val sortedEpisodes = getEntryWithChapters?.let { getEntryWithChapters ->
-            val entry = getEntryWithChapters.awaitEntry(mergedChapterId)
-            val episodes = getEntryWithChapters.awaitChapters(id = mergedChapterId, bypassMerge = bypassMerge)
-            episodes.sortedForReading(entry)
-        } ?: entryChapterRepository.getChaptersByEntryIdAwait(mergedChapterId)
+            val episodes = getEntryWithChapters.awaitChapters(effectiveEntry, bypassMerge = bypassMerge)
+            episodes.sortedForReading(effectiveEntry)
+        } ?: entryChapterRepository.getChaptersByEntryIdAwait(effectiveEntry.id)
             .sortedBy(EntryChapter::sourceOrder)
 
         return sortedEpisodes.entryChildWindow(episodeId, EntryChapter::id)
@@ -526,10 +526,10 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
         entry: Entry,
         ownerEntry: Entry,
     ): EpisodeDrawerData {
-        val effectiveEntryId = if (bypassMerge) this@VideoPlayerViewModel.ownerEntryId else entry.id
-        val episodes = getEntryWithChapters?.awaitChapters(id = effectiveEntryId, bypassMerge = bypassMerge)
+        val effectiveEntry = if (bypassMerge) ownerEntry else entry
+        val episodes = getEntryWithChapters?.awaitChapters(effectiveEntry, bypassMerge = bypassMerge)
             ?: entryChapterRepository.getChaptersByEntryIdAwait(
-                effectiveEntryId,
+                effectiveEntry.id,
             )
         val memberIds = episodes.map(EntryChapter::entryId).distinct()
         val fallbackTitles = buildMap {
@@ -584,7 +584,8 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
             ?: entryProgressRepository.get(result.ownerEntry.id, "", result.chapter.progressResourceKey)?.positionMs
             ?: 0L
         val childWindow = resolveEpisodeNavigation(
-            visibleEntryId = result.visibleEntry.id,
+            visibleEntry = result.visibleEntry,
+            ownerEntry = result.ownerEntry,
             episodeId = result.chapter.id,
         ) ?: EntryChildWindow(current = result.chapter)
         val episodeDrawerData = resolveEpisodeDrawerData(

@@ -1,6 +1,6 @@
 # Capability Refactor Status
 
-Updated: 2026-07-18
+Updated: 2026-07-19
 
 ## Repository Snapshot
 
@@ -31,6 +31,7 @@ Updated: 2026-07-18
 - F20, F21, and F22 completion: `dd8fc5106` (`(refactor): migrate immersive, related, and progress features`)
 - F23 Type Presentation, F24 Library-update Notifications, F25 Viewer Settings, F26 Media-cache Maintenance, and F27
   Profile Preference Ownership are committed and validated.
+- F12.3 Shared Merge coordinator commit: `5812f0e47` (`(refactor): implement shared merge coordinator`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -38,19 +39,19 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12.3` — Shared Merge coordinator and persistence conformance
-- State: F12.1 is committed in `cc2d1aa54`, and F12.2 is committed in `b02566f5c`. F12.3 is implemented and awaiting
-  review. F12.4–F12.7 and F11 remain pending.
+- Milestone: `F12.4` — Entry ownership and navigation projections
+- State: F12.1–F12.3 are committed. F12.4 is implemented and awaiting review. F12.5–F12.7 and F11 remain pending.
 
-Focused F12.3 validation:
+Focused F12.4 validation:
 
-- `spotlessApply`, the Merge-boundary build-logic tests, and SQLDelight migration verification pass.
-- Permanent Kotlin sources and validation messages use product architecture vocabulary; the `F12` identifier exists
-  only in refactor planning records.
-- The boundary census intentionally fails on exactly 34 remaining consumer findings assigned to F12.4–F12.6 and F11.
-  It now rejects both raw Merge authority and attempts to restore the former type-support gate.
-- Domain/application compilation intentionally stops at consumers of the deleted raw Merge model/repository/interactors.
-  Compilation is restored by migrating those consumers, not by restoring a compatibility authority.
+- `spotlessApply`, focused child/Library Domain behavior tests, API and Manga/Anime compilation, and the Merge-boundary
+  build-logic tests pass.
+- Entry/Library/Catalogue editors, candidates, navigation, shared child ownership, and Library grouping now cross only
+  purpose-specific F12 contracts or narrow downward Domain ports.
+- The boundary census intentionally fails on exactly 16 remaining findings assigned to F12.5, F12.6, and F11. No F12.4
+  consumer remains on raw Merge authority.
+- Root/application compilation still stops at the deliberately unfinished Book/download notification, Library lifecycle,
+  backup/profile, and Migration consumers. These failures remain the migration queue, not compatibility exceptions.
 
 ## Why the Plan Was Reset
 
@@ -620,5 +621,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Begin F12.3 by adding the write-capable host transition, consequence journal, shared coordinator, and persistence adapter
-conforming to accepted decision 0020. Use one agent and stop at the F12.3 milestone before consumer migration.
+Commit F12.4 after its observable Entry/Library/Catalogue, navigation, and child-order behavior is reviewed. Then begin
+F12.5 by migrating Download ownership, queue/notification identity, lifecycle cleanup, and notification navigation to
+explicit-profile F12 projections. Use one agent and stop at the F12.5 milestone before lifecycle/backup work.

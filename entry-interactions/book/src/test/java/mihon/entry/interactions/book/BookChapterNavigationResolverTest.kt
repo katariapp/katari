@@ -17,7 +17,7 @@ class BookChapterNavigationResolverTest {
         val entry = Entry.create().copy(id = 1L, type = EntryType.BOOK)
         val chapters = listOf(chapter(1L, 1.0), chapter(2L, 2.0), chapter(3L, 3.0))
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(entry.id) } returns chapters
+            coEvery { awaitChapters(entry) } returns chapters
         }
 
         val result = BookChapterNavigationResolver(getEntryWithChapters).resolve(entry, chapters[1])
@@ -31,7 +31,7 @@ class BookChapterNavigationResolverTest {
     fun `returns no adjacent chapters when selected child is absent`() = runTest {
         val entry = Entry.create().copy(id = 1L, type = EntryType.BOOK)
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(entry.id) } returns listOf(chapter(1L, 1.0))
+            coEvery { awaitChapters(entry) } returns listOf(chapter(1L, 1.0))
         }
 
         val result = BookChapterNavigationResolver(getEntryWithChapters).resolve(entry, chapter(9L, 9.0))
@@ -44,7 +44,7 @@ class BookChapterNavigationResolverTest {
         val entry = Entry.create().copy(id = 1L, type = EntryType.BOOK)
         val chapters = listOf(chapter(3L, 3.0), chapter(1L, 1.0), chapter(2L, 2.0))
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(entry.id) } returns chapters
+            coEvery { awaitChapters(entry) } returns chapters
         }
 
         val result = BookChapterNavigationResolver(getEntryWithChapters).resolveAll(entry)

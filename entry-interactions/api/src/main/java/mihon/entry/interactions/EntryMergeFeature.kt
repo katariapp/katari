@@ -1,5 +1,8 @@
 package mihon.entry.interactions
 
+import kotlinx.coroutines.flow.Flow
+import tachiyomi.domain.entry.model.Entry
+
 /**
  * Application boundary for preparing and executing shared Merge workflows.
  *
@@ -9,6 +12,9 @@ package mihon.entry.interactions
  */
 interface EntryMergeFeature {
     suspend fun prepare(intent: EntryMergePrepareIntent): EntryMergePreparationResult
+
+    /** Observes an existing group as a feature-owned editor projection; standalone Entries emit `null`. */
+    fun observeExisting(entry: Entry): Flow<EntryMergeEditorProjection?>
 
     suspend fun execute(intent: EntryMergeWorkflowIntent): EntryMergeExecutionResult
 }

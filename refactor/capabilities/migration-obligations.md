@@ -1,6 +1,6 @@
 # Capability Architecture Migration Obligations
 
-Updated: 2026-07-18
+Updated: 2026-07-19
 
 This ledger records production and test code exposed by the Phase 3.5 dependency cut. These failures are expected until
 their owning phases migrate them to feature contributions and evaluated graph results. They must not be hidden with a
@@ -73,6 +73,18 @@ SPI boundary is not an exit gate for Phase 3.5.
   compatibility authority beside the Feature boundary.
 - Boundary validation reports 34 remaining application/domain/type consumer migrations. These failures are the input
   to F12.4-F12.6 and F11, not exceptions or a reason to restore the deleted path.
+
+### Resolved in F12.4: Entry ownership and navigation consumers
+
+- Entry, Library, Catalogue, History, Updates, and library-update notification routing consume F12 intents, editor,
+  candidate, and navigation projections rather than raw membership reads.
+- Shared child loading and unified Library loading use narrow domain resolution ports implemented by the root F12
+  coordinators. Neither port exposes membership rows, CRUD, active-profile lookup, or a caller-owned consequence list.
+- Manga/Anime/Book Continue, Manga reader, Anime player, Book navigation, Entry child presentation, and Download
+  lifecycle selection pass concrete Entries carrying explicit profile identity into the shared child-owner resolution.
+- The active boundary queue is exactly 16 findings: four F12.5 Download/notification consumers, seven F12.6
+  Library/backup/profile lifecycle consumers, and five F11 Migration consumers, including its two narrow Merge
+  cooperation calls. No F12.4 consumer remains.
 
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 

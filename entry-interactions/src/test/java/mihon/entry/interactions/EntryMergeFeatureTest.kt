@@ -61,6 +61,16 @@ class EntryMergeFeatureTest {
     }
 
     @Test
+    fun `shared workflow rejects a mixed-type selection`() = runTest {
+        val book = entry(1L, "book")
+        val anime = entry(2L, "anime").copy(type = EntryType.ANIME)
+        val feature = feature(FakeEntryMergeHost(listOf(book, anime)))
+
+        feature.prepare(EntryMergePrepareIntent(listOf(book, anime))) shouldBe
+            EntryMergePreparationResult.Rejected(EntryMergeRejection.MIXED_ENTRY_TYPES)
+    }
+
+    @Test
     fun `unpersisted selection remains read only until the owned commit transition`() = runTest {
         val persisted = entry(1L, "persisted")
         val remote = entry(-1L, "remote").copy(favorite = false)
@@ -87,6 +97,61 @@ class EntryMergeFeatureTest {
         val transition = host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
         transition.preparations.single().categoryIds shouldContainExactly listOf(4L, 5L)
         transition.expected.entries.single { it.persistedEntryId == null }.entry.url shouldBe remote.url
+    }
+
+    @Test
+    fun `existing membership expands where its selected member appears`() = runTest {
+        val existing = listOf(entry(1L, "one"), entry(2L, "two"))
+        val added = entry(3L, "three")
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, existing.map(Entry::id))
+        val feature = feature(FakeEntryMergeHost(existing + added, listOf(membership)))
+
+        val editor = feature.prepare(EntryMergePrepareIntent(listOf(added, existing.first())))
+            .shouldBeInstanceOf<EntryMergePreparationResult.Ready>()
+            .editor
+
+        editor.entries.map { it.entry.id } shouldContainExactly listOf(3L, 1L, 2L)
+        editor.entries.single { it.reference == editor.target }.entry.id shouldBe 1L
+    }
+
+    @Test
+    fun `single existing member prepares the whole group for editing`() = runTest {
+        val entries = listOf(entry(1L, "one"), entry(2L, "two"))
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
+        val feature = feature(FakeEntryMergeHost(entries, listOf(membership)))
+
+        val editor = feature.prepare(EntryMergePrepareIntent(listOf(entries.last())))
+            .shouldBeInstanceOf<EntryMergePreparationResult.Ready>()
+            .editor
+
+        editor.entries.map { it.entry.id } shouldContainExactly listOf(1L, 2L)
+        editor.entries.single { it.reference == editor.target }.entry.id shouldBe 1L
+    }
+
+    @Test
+    fun `editing an existing group can replace its target and remove the previous target`() = runTest {
+        val entries = listOf(entry(1L, "one"), entry(2L, "two"), entry(3L, "three"))
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
+        val host = FakeEntryMergeHost(entries, listOf(membership))
+        val feature = feature(host)
+        val editor = feature.prepare(EntryMergePrepareIntent(listOf(entries.first())))
+            .shouldBeInstanceOf<EntryMergePreparationResult.Ready>()
+            .editor
+        val referencesById = editor.entries.associate { it.entry.id to it.reference }
+
+        feature.execute(
+            EntryMergeCommitIntent(
+                editReference = editor.editReference,
+                target = referencesById.getValue(2L),
+                orderedEntries = editor.entries.map(EntryMergeEditorEntry::reference),
+                removedEntries = setOf(referencesById.getValue(1L)),
+            ),
+        ).shouldBeInstanceOf<EntryMergeExecutionResult.Applied>()
+
+        val transition = host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
+        val keysByEntryId = transition.expected.entries.associate { it.entry.id to it.key }
+        transition.target shouldBe keysByEntryId.getValue(2L)
+        transition.removedEntries shouldBe setOf(keysByEntryId.getValue(1L))
     }
 
     private fun feature(host: FakeEntryMergeHost): EntryMergeFeature {
@@ -121,6 +186,7 @@ class EntryMergeFeatureTest {
 
     private class FakeEntryMergeHost(
         entries: List<Entry>,
+        private val memberships: List<EntryMergeMembershipSnapshot> = emptyList(),
     ) : EntryMergeHost {
         private val entriesById = entries.filter { it.id > 0L }.associateBy(Entry::id)
         val transitions = mutableListOf<EntryMergeHostTransition>()
@@ -138,13 +204,17 @@ class EntryMergeFeatureTest {
                     }
                 }
 
-                override suspend fun membership(entryId: Long): EntryMergeMembershipSnapshot? = null
+                override suspend fun membership(entryId: Long): EntryMergeMembershipSnapshot? {
+                    return memberships.singleOrNull { entryId in it.orderedEntryIds }
+                }
 
-                override fun observeMembership(entryId: Long): Flow<EntryMergeMembershipSnapshot?> = flowOf(null)
+                override fun observeMembership(entryId: Long): Flow<EntryMergeMembershipSnapshot?> {
+                    return flowOf(memberships.singleOrNull { entryId in it.orderedEntryIds })
+                }
 
-                override suspend fun memberships(): List<EntryMergeMembershipSnapshot> = emptyList()
+                override suspend fun memberships(): List<EntryMergeMembershipSnapshot> = memberships
 
-                override fun observeMemberships(): Flow<List<EntryMergeMembershipSnapshot>> = flowOf(emptyList())
+                override fun observeMemberships(): Flow<List<EntryMergeMembershipSnapshot>> = flowOf(memberships)
 
                 override suspend fun duplicateCandidates(entry: Entry): List<DuplicateEntryCandidate> = emptyList()
 

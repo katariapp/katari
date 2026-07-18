@@ -18,7 +18,7 @@ internal class MangaContinueProcessor(
 
     override suspend fun findNext(entry: Entry): EntryChapter? {
         entry.requireManga()
-        val chapters = getEntryWithChapters.awaitChapters(entry.id)
+        val chapters = getEntryWithChapters.awaitChapters(entry)
         val chapterById = chapters.associateBy { it.id }
         return chapters
             .map { it.entryId }

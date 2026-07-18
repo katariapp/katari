@@ -182,13 +182,7 @@ class VideoPlayerViewModelTest {
         val historyRepository = FakeHistoryRepository()
         val resolver = RecordingVideoStreamResolver()
         val getEntryWithChapters = mockk<GetEntryWithChapters>()
-        coEvery { getEntryWithChapters.awaitEntry(100L) } returns Entry.create().copy(
-            id = 100L,
-            title = "Merged",
-            url = "/entry/100",
-            chapterFlags = Entry.CHAPTER_SORT_DESC or Entry.CHAPTER_SORTING_NUMBER,
-        )
-        coEvery { getEntryWithChapters.awaitChapters(id = 100L, bypassMerge = false) } returns listOf(
+        coEvery { getEntryWithChapters.awaitChapters(any(), false, any()) } returns listOf(
             chapter(id = 10L, entryId = 1L, sourceOrder = 1L, chapterNumber = 1.0),
             chapter(id = 30L, entryId = 1L, sourceOrder = 2L, chapterNumber = 2.0),
             chapter(id = 20L, entryId = 2L, sourceOrder = 1L, chapterNumber = 1.0),
@@ -226,13 +220,7 @@ class VideoPlayerViewModelTest {
         val historyRepository = FakeHistoryRepository()
         val resolver = RecordingVideoStreamResolver()
         val getEntryWithChapters = mockk<GetEntryWithChapters>()
-        coEvery { getEntryWithChapters.awaitEntry(1L) } returns Entry.create().copy(
-            id = 1L,
-            title = "Owner",
-            url = "/entry/1",
-            chapterFlags = Entry.CHAPTER_SORT_ASC or Entry.CHAPTER_SORTING_SOURCE,
-        )
-        coEvery { getEntryWithChapters.awaitChapters(id = 1L, bypassMerge = true) } returns listOf(
+        coEvery { getEntryWithChapters.awaitChapters(any(), true, any()) } returns listOf(
             chapter(id = 10L, entryId = 1L, sourceOrder = 2L),
             chapter(id = 30L, entryId = 1L, sourceOrder = 1L),
         )
@@ -310,6 +298,10 @@ class VideoPlayerViewModelTest {
             title = "Entry $id",
             initialized = true,
             url = "/entry/$id",
+            chapterFlags = when (id) {
+                100L -> Entry.CHAPTER_SORT_DESC or Entry.CHAPTER_SORTING_NUMBER
+                else -> Entry.CHAPTER_SORT_ASC or Entry.CHAPTER_SORTING_SOURCE
+            },
         )
     }
 

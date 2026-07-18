@@ -15,8 +15,10 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.entry.repository.MergedEntryRepository
 import tachiyomi.domain.entry.service.EntryLibraryContinueTarget
+import tachiyomi.domain.entry.service.EntryLibraryGroupResolution
+import tachiyomi.domain.entry.service.EntryLibraryGroupingResolution
+import tachiyomi.domain.entry.service.EntryLibraryGroupingResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryProgressSummary
@@ -29,7 +31,7 @@ class GetLibraryEntriesTest {
     private val entryRepository = mockk<EntryRepository>()
     private val entryChapterRepository = mockk<EntryChapterRepository>()
     private val categoryRepository = mockk<CategoryRepository>()
-    private val mergedEntryRepository = mockk<MergedEntryRepository>()
+    private val libraryGrouping = mockk<EntryLibraryGroupingResolutionPort>()
     private val hiddenSourceIds = mockk<HiddenSourceIds>()
     private val sourceManager = mockk<SourceManager>()
     private val unavailableSummaryEntryIds = mutableSetOf<Long>()
@@ -40,7 +42,7 @@ class GetLibraryEntriesTest {
         entryChapterRepository = entryChapterRepository,
         entryLibraryProgressResolver = entryLibraryProgressResolver,
         categoryRepository = categoryRepository,
-        mergedEntryRepository = mergedEntryRepository,
+        libraryGrouping = libraryGrouping,
         hiddenSourceIds = hiddenSourceIds,
         sourceManager = sourceManager,
     )
@@ -52,7 +54,7 @@ class GetLibraryEntriesTest {
 
         coEvery { entryRepository.getLibraryEntries() } returns listOf(manga, anime)
         coEvery { entryRepository.getLibraryLastRead() } returns emptyMap()
-        coEvery { mergedEntryRepository.getAll() } returns emptyList()
+        stubStandaloneGrouping(listOf(manga, anime))
         every { hiddenSourceIds.get() } returns setOf(10L, 20L)
         every { entryChapterRepository.getChaptersByEntryIds(listOf(1L, 2L)) } returns flowOf(emptyList())
         coEvery { categoryRepository.getCategoryIdsByEntryIds(listOf(1L, 2L)) } returns mapOf(
@@ -74,7 +76,7 @@ class GetLibraryEntriesTest {
 
         coEvery { entryRepository.getLibraryEntries() } returns listOf(manga, anime)
         coEvery { entryRepository.getLibraryLastRead() } returns mapOf(1L to 100L, 2L to 200L)
-        coEvery { mergedEntryRepository.getAll() } returns emptyList()
+        stubStandaloneGrouping(listOf(manga, anime))
         every { hiddenSourceIds.get() } returns emptySet()
         every { entryChapterRepository.getChaptersByEntryIds(listOf(1L, 2L)) } returns flowOf(emptyList())
         coEvery { categoryRepository.getCategoryIdsByEntryIds(listOf(1L, 2L)) } returns emptyMap()
@@ -97,7 +99,7 @@ class GetLibraryEntriesTest {
         unavailableSummaryEntryIds += book.id
         coEvery { entryRepository.getLibraryEntries() } returns listOf(book)
         coEvery { entryRepository.getLibraryLastRead() } returns emptyMap()
-        coEvery { mergedEntryRepository.getAll() } returns emptyList()
+        stubStandaloneGrouping(listOf(book))
         every { hiddenSourceIds.get() } returns emptySet()
         every { entryChapterRepository.getChaptersByEntryIds(listOf(book.id)) } returns flowOf(emptyList())
         coEvery { categoryRepository.getCategoryIdsByEntryIds(listOf(book.id)) } returns emptyMap()
@@ -111,6 +113,37 @@ class GetLibraryEntriesTest {
         item.totalCount shouldBe null
     }
 
+    @Test
+    fun `library grouping collapses supplied members in feature order`() = runTest {
+        val target = entry(id = 1L, source = 10L, type = EntryType.MANGA)
+        val member = entry(id = 2L, source = 20L, type = EntryType.MANGA)
+        val favorites = listOf(target, member)
+        coEvery { entryRepository.getLibraryEntries() } returns favorites
+        coEvery { entryRepository.getLibraryLastRead() } returns emptyMap()
+        coEvery { libraryGrouping.resolveLibraryGrouping(target.profileId, favorites) } returns
+            EntryLibraryGroupingResolution(
+                profileId = target.profileId,
+                groups = listOf(EntryLibraryGroupResolution(target, listOf(target, member))),
+            )
+        every { hiddenSourceIds.get() } returns emptySet()
+        every { entryChapterRepository.getChaptersByEntryIds(listOf(1L, 2L)) } returns flowOf(emptyList())
+        coEvery { categoryRepository.getCategoryIdsByEntryIds(listOf(1L, 2L)) } returns mapOf(
+            target.id to listOf(10L),
+            member.id to listOf(20L),
+        )
+        every { sourceManager.getOrStub(target.source) } returns source(target.source)
+        every { sourceManager.getOrStub(member.source) } returns source(member.source)
+        every { sourceManager.getDisplayInfo(target.source) } returns sourceDisplayInfo(target.source)
+        every { sourceManager.getDisplayInfo(member.source) } returns sourceDisplayInfo(member.source)
+
+        val item = interactor.await().single()
+
+        item.entry shouldBe target
+        item.isMerged shouldBe true
+        item.memberEntries shouldBe listOf(target, member)
+        item.categories shouldBe listOf(10L, 20L)
+    }
+
     private fun entry(id: Long, source: Long, type: EntryType): Entry {
         return Entry.create().copy(
             id = id,
@@ -119,6 +152,13 @@ class GetLibraryEntriesTest {
             initialized = true,
             title = "Entry $id",
             type = type,
+        )
+    }
+
+    private fun stubStandaloneGrouping(entries: List<Entry>) {
+        coEvery { libraryGrouping.resolveLibraryGrouping(any(), entries) } returns EntryLibraryGroupingResolution(
+            profileId = entries.firstOrNull()?.profileId ?: 0L,
+            groups = entries.map { entry -> EntryLibraryGroupResolution(entry, listOf(entry)) },
         )
     }
 

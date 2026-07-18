@@ -56,7 +56,6 @@ import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.model.EntryMerge
 import tachiyomi.domain.entry.model.EntryProgressLocator
 import tachiyomi.domain.entry.model.EntryProgressState
 import tachiyomi.domain.entry.model.PlaybackPreferences
@@ -66,8 +65,9 @@ import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.entry.repository.MergedEntryRepository
 import tachiyomi.domain.entry.repository.PlaybackPreferencesRepository
+import tachiyomi.domain.entry.service.EntryChildOwnershipResolution
+import tachiyomi.domain.entry.service.EntryChildOwnershipResolutionPort
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 
@@ -694,10 +694,7 @@ class AnimeEntryInteractionPluginTest {
                 chapter(id = 71L, entryId = 7L, read = true, sourceOrder = 0L),
                 memberEpisode,
             ),
-            merges = listOf(
-                EntryMerge(targetId = 7L, entryId = 7L, position = 0L),
-                EntryMerge(targetId = 7L, entryId = 8L, position = 1L),
-            ),
+            mergeMemberIds = listOf(7L, 8L),
             playbackStates = listOf(
                 playbackState(entryId = 8L, chapterId = 82L, positionMs = 5_000L, completed = false),
             ),
@@ -904,7 +901,7 @@ class AnimeEntryInteractionPluginTest {
     private fun dependencies(
         chapters: List<EntryChapter> = emptyList(),
         entries: List<Entry> = listOf(entry(EntryType.ANIME)),
-        merges: List<EntryMerge> = emptyList(),
+        mergeMemberIds: List<Long> = emptyList(),
         playbackStates: List<EntryProgressState> = emptyList(),
         playbackPreferences: PlaybackPreferences? = null,
         episodeDownloaded: Boolean = false,
@@ -920,9 +917,8 @@ class AnimeEntryInteractionPluginTest {
         return AnimeEntryInteractionRuntimeDependencies(
             entryChapterRepository = entryChapterRepository,
             getEntryWithChapters = GetEntryWithChapters(
-                entryRepository = entryRepository,
                 entryChapterRepository = entryChapterRepository,
-                mergedEntryRepository = fakeMergedEntryRepository(merges),
+                childOwnership = fakeChildOwnership(entries, mergeMemberIds),
             ),
             entryProgressRepository = FakeEntryProgressRepository(playbackStates),
             playbackPreferencesRepository = FakePlaybackPreferencesRepository(playbackPreferences),
@@ -977,13 +973,31 @@ class AnimeEntryInteractionPluginTest {
         }
     }
 
-    private fun fakeMergedEntryRepository(merges: List<EntryMerge>): MergedEntryRepository {
-        return mockk(relaxed = true) {
-            coEvery { this@mockk.getGroupByEntryId(any()) } answers {
-                val entryId = firstArg<Long>()
-                val targetId = merges.firstOrNull { it.entryId == entryId }?.targetId ?: return@answers emptyList()
-                merges.filter { it.targetId == targetId }
+    private fun fakeChildOwnership(
+        entries: List<Entry>,
+        mergeMemberIds: List<Long>,
+    ): EntryChildOwnershipResolutionPort {
+        return object : EntryChildOwnershipResolutionPort {
+            private fun resolution(profileId: Long, entryId: Long): EntryChildOwnershipResolution {
+                val owners = mergeMemberIds.mapNotNull { memberId -> entries.firstOrNull { it.id == memberId } }
+                    .ifEmpty { entries.filter { it.id == entryId } }
+                return EntryChildOwnershipResolution(
+                    profileId = profileId,
+                    requestedEntryId = entryId,
+                    visibleEntryId = mergeMemberIds.firstOrNull() ?: entryId,
+                    orderedOwners = owners,
+                )
             }
+
+            override suspend fun resolveChildOwnership(
+                profileId: Long,
+                entryId: Long,
+            ): EntryChildOwnershipResolution = resolution(profileId, entryId)
+
+            override fun observeChildOwnership(
+                profileId: Long,
+                entryId: Long,
+            ): Flow<EntryChildOwnershipResolution> = flowOf(resolution(profileId, entryId))
         }
     }
 

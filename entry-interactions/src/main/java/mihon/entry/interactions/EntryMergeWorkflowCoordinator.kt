@@ -1,5 +1,7 @@
 package mihon.entry.interactions
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapLatest
 import mihon.entry.interactions.host.EntryMergeConsequenceRequest
 import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.host.EntryMergeHostExpectation
@@ -29,7 +31,6 @@ internal class EntryMergeWorkflowCoordinator(
 
     override suspend fun prepare(intent: EntryMergePrepareIntent): EntryMergePreparationResult {
         if (intent.selectedEntries.isEmpty()) return rejected(EntryMergeRejection.EMPTY_SELECTION)
-        if (intent.selectedEntries.size < 2) return rejected(EntryMergeRejection.TOO_FEW_ENTRIES)
         if (intent.selectedEntries.map(Entry::type).distinct().size != 1) {
             return rejected(EntryMergeRejection.MIXED_ENTRY_TYPES)
         }
@@ -77,12 +78,16 @@ internal class EntryMergeWorkflowCoordinator(
         if (preparations.size != intent.preparations.size) {
             return rejected(EntryMergeRejection.DUPLICATE_ENTRIES)
         }
+        val existingMemberIds = existingGroup?.orderedEntryIds.orEmpty().toSet()
         val orderedEntries = buildList {
-            addAll(existingMembers)
-            resolvedSelected.forEach { entry ->
-                if (none { contentIdentity(it) == contentIdentity(entry) }) add(entry)
+            resolvedSelected.forEach { selected ->
+                val entriesAtSelection = if (selected.id in existingMemberIds) existingMembers else listOf(selected)
+                entriesAtSelection.forEach { entry ->
+                    if (none { contentIdentity(it) == contentIdentity(entry) }) add(entry)
+                }
             }
         }
+        if (orderedEntries.size < 2) return rejected(EntryMergeRejection.TOO_FEW_ENTRIES)
         val selectedIdentities = resolvedSelected.mapTo(mutableSetOf(), ::contentIdentity)
         val sessionId = newEntryMergeSessionId()
         val expectedEntries = mutableListOf<EntryMergeHostExpectedEntry>()
@@ -144,6 +149,20 @@ internal class EntryMergeWorkflowCoordinator(
                 targetLocked = false,
             ),
         )
+    }
+
+    override fun observeExisting(entry: Entry): Flow<EntryMergeEditorProjection?> {
+        if (entry.id <= 0L) return kotlinx.coroutines.flow.flowOf(null)
+        return host.profile(entry.profileId).observeMembership(entry.id).mapLatest { membership ->
+            if (membership == null) {
+                null
+            } else {
+                when (val result = prepare(EntryMergePrepareIntent(listOf(entry)))) {
+                    is EntryMergePreparationResult.Ready -> result.editor
+                    is EntryMergePreparationResult.Rejected -> null
+                }
+            }
+        }
     }
 
     override suspend fun execute(intent: EntryMergeWorkflowIntent): EntryMergeExecutionResult {

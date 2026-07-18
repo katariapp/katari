@@ -120,7 +120,7 @@ internal class BookDownloadProcessor(
         candidates: List<EntryChapter>?,
     ): List<EntryChapter> {
         entry.requireBook()
-        return (candidates ?: dependencies.getEntryWithChapters.awaitChapters(entry.id))
+        return (candidates ?: dependencies.getEntryWithChapters.awaitChapters(entry))
             .filterNot { isDownloadedByOwner(entry, it) }
     }
 

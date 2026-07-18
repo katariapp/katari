@@ -47,12 +47,13 @@ import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
+import mihon.entry.interactions.EntryMergeNavigationFeature
+import mihon.entry.interactions.EntryMergeSubject
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.lang.launchNonCancellable
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.interactor.GetEntry
-import tachiyomi.domain.entry.interactor.GetMergedEntry
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.EntryCover
@@ -78,7 +79,7 @@ class UpdatesScreenModel(
     private val entryBookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val getUpdates: GetUpdates = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val getMergedEntry: GetMergedEntry = Injekt.get(),
+    private val entryMergeNavigationFeature: EntryMergeNavigationFeature = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
@@ -186,9 +187,13 @@ class UpdatesScreenModel(
 
         return map { updateWithRelations ->
             val update = updateWithRelations.toUpdateItem(updateWithRelations.entryType)
-
+            val ownerEntry = entryCache.getOrPut(update.entryId) { getEntry.await(update.entryId) }
             val visibleEntryId = visibleTargetCache.getOrPut(update.entryId) {
-                getMergedEntry.awaitVisibleTargetId(update.entryId)
+                ownerEntry?.let { entry ->
+                    entryMergeNavigationFeature.resolveNavigation(
+                        EntryMergeSubject(entry.profileId, update.entryId),
+                    ).visibleEntryId
+                } ?: update.entryId
             }
             val entry = entryCache.getOrPut(visibleEntryId) {
                 getEntry.await(visibleEntryId)

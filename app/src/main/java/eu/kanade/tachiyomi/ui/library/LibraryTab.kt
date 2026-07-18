@@ -190,7 +190,7 @@ data object LibraryTab : Tab {
                 val actionLabels = state.selectedEntryTypes.entrySelectionActionLabels()
                 LibraryBottomActionMenu(
                     visible = state.selectionMode,
-                    onMergeClicked = screenModel::openMergeDialog.takeIf { screenModel.canMergeSelection() },
+                    onMergeClicked = screenModel::openMergeDialog.takeIf { screenModel.isMergeSelectionAvailable() },
                     onChangeCategoryClicked = screenModel::openChangeCategoryDialog,
                     onMarkAsReadClicked = { screenModel.markReadSelection(true) }
                         .takeIf { screenModel.canSetConsumedSelection() },

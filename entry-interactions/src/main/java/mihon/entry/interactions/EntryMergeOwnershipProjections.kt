@@ -3,28 +3,31 @@ package mihon.entry.interactions
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import mihon.entry.interactions.host.EntryMergeHost
+import tachiyomi.domain.entry.service.EntryChildOwnershipResolution
 
 internal class EntryMergeChildOwnershipCoordinator(
     private val host: EntryMergeHost,
 ) : EntryMergeChildOwnershipProjection {
-    override suspend fun resolveChildOwners(subject: EntryMergeSubject): EntryMergeChildOwners {
-        val profile = host.profile(subject.profileId)
-        val membership = profile.membership(subject.entryId)
-        val ownerIds = membership?.orderedEntryIds ?: listOf(subject.entryId)
-        return EntryMergeChildOwners(
-            requestedSubject = subject,
-            visibleEntryId = membership?.targetEntryId ?: subject.entryId,
+    override suspend fun resolveChildOwnership(profileId: Long, entryId: Long): EntryChildOwnershipResolution {
+        val profile = host.profile(profileId)
+        val membership = profile.membership(entryId)
+        val ownerIds = membership?.orderedEntryIds ?: listOf(entryId)
+        return EntryChildOwnershipResolution(
+            profileId = profileId,
+            requestedEntryId = entryId,
+            visibleEntryId = membership?.targetEntryId ?: entryId,
             orderedOwners = profile.entries(ownerIds),
         )
     }
 
-    override fun observeChildOwners(subject: EntryMergeSubject): Flow<EntryMergeChildOwners> {
-        val profile = host.profile(subject.profileId)
-        return profile.observeMembership(subject.entryId).map { membership ->
-            val ownerIds = membership?.orderedEntryIds ?: listOf(subject.entryId)
-            EntryMergeChildOwners(
-                requestedSubject = subject,
-                visibleEntryId = membership?.targetEntryId ?: subject.entryId,
+    override fun observeChildOwnership(profileId: Long, entryId: Long): Flow<EntryChildOwnershipResolution> {
+        val profile = host.profile(profileId)
+        return profile.observeMembership(entryId).map { membership ->
+            val ownerIds = membership?.orderedEntryIds ?: listOf(entryId)
+            EntryChildOwnershipResolution(
+                profileId = profileId,
+                requestedEntryId = entryId,
+                visibleEntryId = membership?.targetEntryId ?: entryId,
                 orderedOwners = profile.entries(ownerIds),
             )
         }

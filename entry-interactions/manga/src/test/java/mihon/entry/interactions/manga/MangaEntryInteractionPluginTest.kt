@@ -291,7 +291,7 @@ class MangaEntryInteractionPluginTest {
     fun `manga continue selects unread chapter from merged member`() = runTest {
         val siblingChapter = chapter(id = 3L, entryId = 2L, read = false)
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(1L) } returns listOf(
+            coEvery { awaitChapters(any()) } returns listOf(
                 chapter(id = 1L, entryId = 1L, read = true),
                 siblingChapter,
             )
@@ -312,7 +312,7 @@ class MangaEntryInteractionPluginTest {
         val rootChapter = chapter(id = 1L, entryId = 1L, read = false)
         val siblingChapter = chapter(id = 3L, entryId = 2L, read = false)
         val getEntryWithChapters = mockk<GetEntryWithChapters> {
-            coEvery { awaitChapters(1L) } returns listOf(rootChapter, siblingChapter)
+            coEvery { awaitChapters(any()) } returns listOf(rootChapter, siblingChapter)
         }
         val progressRepository = FakeEntryProgressRepository(
             listOf(

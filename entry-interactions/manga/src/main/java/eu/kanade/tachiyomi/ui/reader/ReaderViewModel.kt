@@ -63,7 +63,7 @@ import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.adapter.toSEntryChapter
 import tachiyomi.domain.entry.interactor.GetEntry
-import tachiyomi.domain.entry.interactor.GetMergedEntry
+import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.progressResourceKey
@@ -96,7 +96,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
     val readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
     private val readerTracking: EntryReaderTracking = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val getMergedEntry: GetMergedEntry = Injekt.get(),
+    private val getEntryWithChapters: GetEntryWithChapters = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val entryProgressRepository: EntryProgressRepository = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
@@ -159,7 +159,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
 
     private val unfilteredChapterList by lazy {
         val manga = manga!!
-        runBlocking { getAllEntryChapters(manga.id, applyScanlatorFilter = false) }
+        runBlocking { getAllEntryChapters(manga, applyScanlatorFilter = false) }
     }
 
     /**
@@ -170,7 +170,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
         val manga = manga!!
         val entry = runBlocking { getEntry.await(manga.id) }
             ?: error("Entry ${manga.id} not found")
-        val chapters = runBlocking { getAllEntryChapters(manga.id, applyScanlatorFilter = true) }
+        val chapters = runBlocking { getAllEntryChapters(manga, applyScanlatorFilter = true) }
         val mergedEntryIds = chapters.map { it.entryId }.distinct()
         val progressByChapterId = mergedEntryIds
             .flatMap { entryId -> runBlocking { entryProgressRepository.getByEntryId(entryId) } }
@@ -1047,14 +1047,8 @@ internal class ReaderViewModel @JvmOverloads constructor(
     /**
      * Loads chapters for [entryId], including merged member entries when present.
      */
-    private suspend fun getAllEntryChapters(entryId: Long, applyScanlatorFilter: Boolean): List<EntryChapter> {
-        val merges = getMergedEntry.awaitGroupByEntryId(entryId)
-        return if (merges.isEmpty()) {
-            entryChapterRepository.getChaptersByEntryIdAwait(entryId, applyScanlatorFilter)
-        } else {
-            (listOf(entryId) + merges.sortedBy { it.position }.map { it.entryId })
-                .flatMap { entryChapterRepository.getChaptersByEntryIdAwait(it, applyScanlatorFilter) }
-        }
+    private suspend fun getAllEntryChapters(entry: Entry, applyScanlatorFilter: Boolean): List<EntryChapter> {
+        return getEntryWithChapters.awaitChapters(entry, applyScanlatorFilter = applyScanlatorFilter)
     }
 
     @Immutable

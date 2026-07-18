@@ -19,7 +19,7 @@ internal class AnimeContinueProcessor(
 
     override suspend fun findNext(entry: Entry): EntryChapter? {
         entry.requireAnime()
-        val chapters = getEntryWithChapters.awaitChapters(entry.id)
+        val chapters = getEntryWithChapters.awaitChapters(entry)
         if (chapters.isEmpty()) return null
 
         val chapterIds = chapters.map { it.id }.toSet()

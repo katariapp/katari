@@ -35,6 +35,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -54,7 +55,13 @@ import mihon.entry.interactions.EntryLibraryFilterFeature
 import mihon.entry.interactions.EntryLibraryFilterPolicy
 import mihon.entry.interactions.EntryLibraryFilterRequest
 import mihon.entry.interactions.EntryLibraryFilterTarget
-import mihon.entry.interactions.EntryMergeCapabilityItem
+import mihon.entry.interactions.EntryMergeCommitIntent
+import mihon.entry.interactions.EntryMergeEditReference
+import mihon.entry.interactions.EntryMergeEditorEntryReference
+import mihon.entry.interactions.EntryMergeExecutionResult
+import mihon.entry.interactions.EntryMergeFeature
+import mihon.entry.interactions.EntryMergePreparationResult
+import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.feature.profiles.core.EntryProfileMoveConflictResolution
 import mihon.feature.profiles.core.EntryProfileMovePreview
 import mihon.feature.profiles.core.EntryProfileMoveRequest
@@ -116,6 +123,7 @@ class LibraryScreenModel(
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
+    private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryLibraryFilterFeature: EntryLibraryFilterFeature = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
@@ -133,6 +141,15 @@ class LibraryScreenModel(
         mutableState.update { state ->
             state.copy(activePageIndex = libraryPreferences.lastUsedCategory.get())
         }
+        state.map { current ->
+            current.selectedLibraryItems.flatMap(LibraryItem::memberEntries).distinctBy(Entry::id)
+        }
+            .distinctUntilChanged()
+            .mapLatest { entries ->
+                entryMergeFeature.prepare(EntryMergePrepareIntent(entries)) is EntryMergePreparationResult.Ready
+            }
+            .onEach { available -> mutableState.update { it.copy(mergeSelectionAvailable = available) } }
+            .launchIn(screenModelScope)
         profileStore.currentProfileIdFlow
             .drop(1)
             .onEach {
@@ -985,9 +1002,8 @@ class LibraryScreenModel(
         }
     }
 
-    fun canMergeSelection(): Boolean {
-        val items = state.value.selection.mapNotNull { state.value.libraryData.favoritesById[it] }
-        return entryCapabilityInteraction.canMergeSelection(items.toEntryMergeCapabilityItems())
+    fun isMergeSelectionAvailable(): Boolean {
+        return state.value.mergeSelectionAvailable
     }
 
     fun canMigrateSelection(): Boolean {
@@ -1002,9 +1018,27 @@ class LibraryScreenModel(
 
     fun openMergeDialog() {
         val selectedItems = state.value.selectedLibraryItems
-        if (!entryCapabilityInteraction.canMergeSelection(selectedItems.toEntryMergeCapabilityItems())) return
         screenModelScope.launchIO {
-            val dialog = buildMergeDialog(selectedItems) ?: return@launchIO
+            val entries = selectedItems.flatMap(LibraryItem::memberEntries).distinctBy(Entry::id)
+            val editor = when (val result = entryMergeFeature.prepare(EntryMergePrepareIntent(entries))) {
+                is EntryMergePreparationResult.Ready -> result.editor
+                is EntryMergePreparationResult.Rejected -> return@launchIO
+            }
+            val target = editor.entries.firstOrNull { it.reference == editor.target } ?: return@launchIO
+            val dialog = Dialog.MergeEntry(
+                editReference = editor.editReference,
+                entries = editor.entries.map { item ->
+                    MergeEntry(
+                        id = item.entry.id,
+                        reference = item.reference,
+                        entry = item.entry,
+                        isFromExistingMerge = item.removable,
+                    )
+                }.toImmutableList(),
+                targetId = target.entry.id,
+                targetReference = target.reference,
+                targetLocked = editor.targetLocked,
+            )
             mutableState.update {
                 it.copy(
                     dialog = dialog,
@@ -1033,8 +1067,9 @@ class LibraryScreenModel(
         mutableState.update { state ->
             when (val dialog = state.dialog) {
                 is Dialog.MergeEntry -> {
-                    if (dialog.targetLocked || dialog.entries.none { it.id == id }) return@update state
-                    state.copy(dialog = dialog.copy(targetId = id))
+                    val entry = dialog.entries.firstOrNull { it.id == id } ?: return@update state
+                    if (dialog.targetLocked) return@update state
+                    state.copy(dialog = dialog.copy(targetId = id, targetReference = entry.reference))
                 }
                 else -> state
             }
@@ -1045,20 +1080,21 @@ class LibraryScreenModel(
         when (val dialog = state.value.dialog) {
             is Dialog.MergeEntry -> {
                 screenModelScope.launchNonCancellable {
-                    val targetId = dialog.targetId.takeIf { targetId -> dialog.entries.any { it.id == targetId } }
-                        ?: dialog.entries.firstOrNull()?.id
-                        ?: return@launchNonCancellable
-                    val mergedIds = orderedMergeIds(dialog.entries)
-
-                    if (mergedIds.size > 1) {
-                        updateMergedEntry.awaitMerge(targetId, mergedIds)
+                    val result = entryMergeFeature.execute(
+                        EntryMergeCommitIntent(
+                            editReference = dialog.editReference,
+                            target = dialog.targetReference,
+                            orderedEntries = dialog.entries.map(MergeEntry::reference),
+                        ),
+                    )
+                    if (result is EntryMergeExecutionResult.Applied) {
+                        clearSelection()
+                        closeDialog()
                     }
                 }
             }
             else -> return
         }
-        clearSelection()
-        closeDialog()
     }
 
     fun closeDialog() {
@@ -1078,8 +1114,10 @@ class LibraryScreenModel(
             val initialSelection: List<CheckboxState<Category>>,
         ) : Dialog
         data class MergeEntry(
+            val editReference: EntryMergeEditReference,
             val entries: ImmutableList<LibraryScreenModel.MergeEntry>,
             val targetId: Long,
+            val targetReference: EntryMergeEditorEntryReference,
             val targetLocked: Boolean,
         ) : Dialog
         data class DeleteEntries(
@@ -1105,6 +1143,7 @@ class LibraryScreenModel(
     @Immutable
     data class MergeEntry(
         val id: Long,
+        val reference: EntryMergeEditorEntryReference,
         val entry: Entry,
         val isFromExistingMerge: Boolean,
     ) {
@@ -1183,6 +1222,7 @@ class LibraryScreenModel(
         val isLoading: Boolean = true,
         val searchQuery: String? = null,
         val selection: Set<LibraryItemKey> = setOf(),
+        val mergeSelectionAvailable: Boolean = false,
         val hasActiveFilters: Boolean = false,
         val showCategoryTabs: Boolean = false,
         val showEntryCount: Boolean = false,
@@ -1379,33 +1419,6 @@ internal fun availableMoveProfiles(
         .map { it.copy(requiresAuth = requiresUnlock(it.id)) }
 }
 
-internal fun buildMergeDialog(selection: List<LibraryItem>): LibraryScreenModel.Dialog.MergeEntry? {
-    if (selection.size < 2) return null
-    if (selection.map { it.entry.type }.distinct().size != 1) return null
-
-    val mergedSelections = selection.filter { it.isMerged }
-    if (mergedSelections.size > 1) return null
-
-    val existingMerge = mergedSelections.firstOrNull()
-    val newEntries = selection
-        .filterNot(LibraryItem::isMerged)
-        .flatMap { item -> item.toMergeEntries(isFromExistingMerge = false) }
-    val existingEntries = selection
-        .filter(LibraryItem::isMerged)
-        .flatMap { item -> item.toMergeEntries(isFromExistingMerge = true) }
-    val entries = (newEntries + existingEntries)
-        .distinctBy(LibraryScreenModel.MergeEntry::id)
-        .toImmutableList()
-
-    if (entries.size < 2) return null
-
-    return LibraryScreenModel.Dialog.MergeEntry(
-        entries = entries,
-        targetId = existingMerge?.entry?.id ?: entries.first().id,
-        targetLocked = false,
-    )
-}
-
 internal fun selectedActionEntryIds(selection: List<LibraryItem>): List<Long> {
     return selection
         .flatMap(LibraryItem::memberEntryIds)
@@ -1439,30 +1452,6 @@ internal suspend fun updateLibraryItemCategories(
             .toList()
         setCategoryIds(entryId, categoryIds)
     }
-}
-
-private fun LibraryItem.toMergeEntries(isFromExistingMerge: Boolean): List<LibraryScreenModel.MergeEntry> {
-    val memberEntriesByKey = memberEntries.associateBy { LibraryItemKey(it.type, it.id) }
-    return memberEntryIds.map { member ->
-        LibraryScreenModel.MergeEntry(
-            id = member.id,
-            entry = memberEntriesByKey[member] ?: entry.copy(id = member.id, type = member.type),
-            isFromExistingMerge = isFromExistingMerge,
-        )
-    }
-}
-
-private fun List<LibraryItem>.toEntryMergeCapabilityItems(): List<EntryMergeCapabilityItem> {
-    return map { item ->
-        EntryMergeCapabilityItem(
-            entry = item.entry,
-            isMerged = item.isMerged,
-        )
-    }
-}
-
-internal fun orderedMergeIds(entries: List<LibraryScreenModel.MergeEntry>): List<Long> {
-    return entries.map(LibraryScreenModel.MergeEntry::id).distinct()
 }
 
 private fun DownloadAction.toEntryBulkDownloadAction(): EntryBulkDownloadAction {

@@ -20,6 +20,8 @@ import tachiyomi.core.common.preference.ProfilePreferenceOwnerId
 import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryRepository
+import tachiyomi.domain.entry.service.EntryChildOwnershipResolutionPort
+import tachiyomi.domain.entry.service.EntryLibraryGroupingResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
@@ -139,14 +141,15 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     }
     addSingletonFactory<EntryMergeCandidateFeature> { EntryMergeCandidateCoordinator(dependencies.mergeHost) }
     addSingletonFactory<EntryMergeNavigationFeature> { EntryMergeNavigationCoordinator(dependencies.mergeHost) }
-    addSingletonFactory<EntryMergeLibraryGroupingFeature> {
-        EntryMergeLibraryGroupingCoordinator(dependencies.mergeHost)
-    }
+    addSingletonFactory { EntryMergeLibraryGroupingCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeLibraryGroupingFeature> { get<EntryMergeLibraryGroupingCoordinator>() }
+    addSingletonFactory<EntryLibraryGroupingResolutionPort> { get<EntryMergeLibraryGroupingCoordinator>() }
     addSingletonFactory<EntryMergeBackupFeature> { EntryMergeBackupCoordinator(dependencies.mergeHost) }
     addSingletonFactory<EntryMergeMigrationFeature> { EntryMergeMigrationCoordinator(dependencies.mergeHost) }
     addSingletonFactory<EntryMergeChildOwnershipProjection> {
         EntryMergeChildOwnershipCoordinator(dependencies.mergeHost)
     }
+    addSingletonFactory<EntryChildOwnershipResolutionPort> { get<EntryMergeChildOwnershipProjection>() }
     addSingletonFactory<EntryMergeDownloadOwnershipProjection> {
         EntryMergeDownloadOwnershipCoordinator(dependencies.mergeHost)
     }
@@ -337,9 +340,10 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             consumptionFeature = get(),
             downloadActionFeature = get(),
             resolveVisibleEntry = { entry ->
-                val visibleEntryId = get<tachiyomi.domain.entry.interactor.GetMergedEntry>()
-                    .awaitVisibleTargetId(entry.id)
-                get<tachiyomi.domain.entry.interactor.GetEntry>().await(visibleEntryId) ?: entry
+                val visibleEntryId = get<EntryMergeNavigationFeature>()
+                    .resolveNavigation(EntryMergeSubject(entry.profileId, entry.id))
+                    .visibleEntryId
+                get<EntryRepository>().getEntryById(visibleEntryId, entry.profileId) ?: entry
             },
         )
     }
