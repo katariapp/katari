@@ -1,6 +1,10 @@
 # Capability Atlas
 
-Status: current-behavior atlas complete; Phase 3 architecture complete; pre-Phase 4 migration census recorded separately
+Status: pre-migration behavior atlas retained as historical evidence; current architecture is tracked in `status.md`
+
+The registration/report descriptions below record the baseline that motivated the refactor. They are not descriptions
+of the post-Milestone-4.4 implementation: provider bindings now feed the feature graph and a generic operational provider
+index directly, and the old registry/report authority no longer exists.
 
 This file records the current executable evidence for capability support. It is an inventory of facts to review, not a new source of behavioral truth and not a proposal for the final capability model.
 
@@ -35,7 +39,7 @@ Milestone 0.1 inventoried declarations, defaults, unsupported results, and direc
 Primary evidence locations:
 
 - Processor contracts and defaults: `entry-interactions/spi/.../EntryInteractionPlugin.kt`
-- Registry dispatch and missing-provider fallbacks: `entry-interactions/spi/.../EntryInteractionRegistry.kt`
+- Provider-backed dispatch and missing-provider fallbacks: `entry-interactions/spi/.../EntryInteractionComposition.kt`
 - Type registrations and implementations: `entry-interactions/{manga,anime,book}`
 - Runtime assembly: `entry-interactions/.../EntryInteractionRuntime.kt`
 - Presentation metadata and remaining application gates: `app/src/main/java`

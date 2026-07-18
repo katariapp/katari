@@ -1,10 +1,6 @@
 package mihon.entry.interactions
 
-import android.app.PendingIntent
-import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import kotlinx.coroutines.flow.Flow
 import mihon.feature.graph.CapabilityId
 import mihon.feature.graph.CapabilityProvider
 import mihon.feature.graph.ContentTypeContribution
@@ -16,332 +12,37 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.capabilityDefinition
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.entry.model.EntryChapter
 
 interface EntryInteractionProvider {
     val type: EntryType
 }
 
-class EntryInteractionCapability<P : EntryInteractionProvider> internal constructor(
+open class EntryInteractionCapability<P : EntryInteractionProvider> internal constructor(
     val definition: mihon.feature.graph.CapabilityDefinition<P>,
-    private val installer: EntryInteractionRegistry.(P) -> Unit,
 ) {
     fun bind(implementation: P): EntryInteractionProviderBinding<P> {
         return EntryInteractionProviderBinding(this, implementation)
     }
-
-    internal fun install(registry: EntryInteractionRegistry, implementation: P) {
-        registry.installer(implementation)
-    }
 }
 
 class EntryInteractionProviderBinding<P : EntryInteractionProvider> internal constructor(
-    private val capability: EntryInteractionCapability<P>,
+    internal val capability: EntryInteractionCapability<P>,
     val implementation: P,
 ) {
     val graphProvider: CapabilityProvider<P> = CapabilityProvider(capability.definition, implementation)
-
-    fun install(registry: EntryInteractionRegistry) {
-        capability.install(registry, implementation)
-    }
 }
 
-private inline fun <reified P : EntryInteractionProvider> entryInteractionCapability(
+internal inline fun <reified P : EntryInteractionProvider> entryInteractionCapability(
     id: CapabilityId,
-    noinline installer: EntryInteractionRegistry.(P) -> Unit,
 ): EntryInteractionCapability<P> {
     return EntryInteractionCapability(
         definition = capabilityDefinition(id, ENTRY_INTERACTION_CONTRACT_OWNER),
-        installer = installer,
     )
 }
 
-interface EntryOpenProcessor : EntryInteractionProvider {
-
-    fun open(context: Context, entry: Entry, chapter: EntryChapter, options: EntryOpenOptions)
-    fun pendingIntent(context: Context, entry: Entry, chapter: EntryChapter, options: EntryOpenOptions): PendingIntent
-}
-
-interface EntryContinueProcessor : EntryInteractionProvider {
-    suspend fun findNext(entry: Entry): EntryChapter?
-    fun open(context: Context, entry: Entry, chapter: EntryChapter)
-}
-
-private val ENTRY_INTERACTION_CONTRACT_OWNER = ContributionOwner("entry-interactions")
+internal val ENTRY_INTERACTION_CONTRACT_OWNER = ContributionOwner("entry-interactions")
 
 fun EntryType.toContentTypeId(): ContentTypeId = ContentTypeId(name.lowercase())
-
-val EntryOpenCapability = entryInteractionCapability<EntryOpenProcessor>(
-    id = CapabilityId("entry.open"),
-    installer = EntryInteractionRegistry::registerOpenProcessor,
-)
-
-val EntryContinueCapability = entryInteractionCapability<EntryContinueProcessor>(
-    id = CapabilityId("entry.continue"),
-    installer = EntryInteractionRegistry::registerContinueProcessor,
-)
-
-interface EntryDownloadProcessor : EntryInteractionProvider {
-    val changes: Flow<Unit>
-    val isInitializing: Flow<Boolean>
-    val isRunning: Flow<Boolean>
-    val queueState: Flow<List<EntryDownloadQueueGroup>>
-    val events: Flow<EntryDownloadEvent>
-
-    fun updates(): Flow<EntryDownloadStatus>
-    fun queueStatusUpdates(): Flow<EntryDownloadQueueItem>
-    fun queueProgressUpdates(): Flow<EntryDownloadQueueItem>
-
-    /** Runs this media-specific downloader until its current queue is idle. */
-    suspend fun runDownloadsUntilIdle()
-
-    fun startDownloads()
-    fun pauseDownloads()
-    fun clearQueue()
-    fun invalidateCache()
-    fun renameSource(oldSource: UnifiedSource, newSource: UnifiedSource)
-    suspend fun renameEntry(entry: Entry, newTitle: String) = Unit
-
-    /** Reorders pending work without interrupting an unrelated active download. */
-    fun reorderQueue(items: List<EntryDownloadQueueItem>)
-    fun reorderSeries(entryId: Long, moveToTop: Boolean)
-
-    /** Cancels only the selected work. Pending-item cancellation must not restart active work. */
-    fun cancelQueuedDownloads(items: List<EntryDownloadQueueItem>)
-
-    /** Adds work to the queue and starts processing when [autoStart] is true. */
-    suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean)
-
-    /**
-     * Adds work and starts processing it. When [startNow] is true, the new work is promoted ahead of
-     * other pending work without interrupting an active download.
-     */
-    suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean)
-    suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
-    suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) = delete(entry, chapters)
-    suspend fun deleteEntryDownloads(entry: Entry)
-
-    fun hasDownloads(entry: Entry): Boolean
-    fun getDownloadCount(entry: Entry): Int
-    fun getTotalDownloadCount(): Int
-    fun isDownloaded(entry: Entry, chapter: EntryChapter, skipCache: Boolean = false): Boolean
-    fun getStatus(
-        chapterId: Long,
-        chapterName: String,
-        chapterScanlator: String?,
-        chapterUrl: String,
-        entryTitle: String,
-        sourceId: Long,
-    ): EntryDownloadStatus
-    fun cancelQueuedDownload(chapterId: Long): EntryDownloadStatus?
-}
-
-interface EntryDownloadOptionsProcessor : EntryInteractionProvider {
-    suspend fun downloadWithOptions(
-        entry: Entry,
-        chapters: List<EntryChapter>,
-        selection: EntryDownloadOptionSelection,
-        startNow: Boolean,
-    )
-
-    suspend fun resolveDownloadOptions(
-        context: Context,
-        entry: Entry,
-        chapter: EntryChapter,
-    ): EntryDownloadOptions?
-}
-
-/** Marker implemented by a type that provides one or more specialized download-setting behaviors. */
-interface EntryDownloadSettingProvider : EntryInteractionProvider
-
-interface EntryBulkDownloadCandidateProcessor : EntryInteractionProvider {
-    /** Loads media-specific candidates before shared bulk-action selection is applied. */
-    suspend fun resolveBulkDownloadCandidatePool(
-        entry: Entry,
-        candidates: List<EntryChapter>? = null,
-    ): List<EntryChapter>
-}
-
-interface EntryAutomaticDownloadFilterProcessor : EntryInteractionProvider {
-    suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
-}
-
-val EntryDownloadCapability = entryInteractionCapability<EntryDownloadProcessor>(
-    id = CapabilityId("entry.download"),
-    installer = EntryInteractionRegistry::registerDownloadProcessor,
-)
-
-val EntryDownloadOptionsCapability = entryInteractionCapability<EntryDownloadOptionsProcessor>(
-    id = CapabilityId("entry.download.options"),
-    installer = EntryInteractionRegistry::registerDownloadOptionsProcessor,
-)
-
-private fun entryDownloadSettingCapability(
-    id: String,
-    setting: EntryDownloadSettingCapability,
-): EntryInteractionCapability<EntryDownloadSettingProvider> {
-    return entryInteractionCapability(
-        id = CapabilityId(id),
-        installer = { provider -> registerDownloadSettingProvider(provider, setting) },
-    )
-}
-
-val EntryDownloadArchivePackagingCapability = entryDownloadSettingCapability(
-    id = "entry.download.setting.archive-packaging",
-    setting = EntryDownloadSettingCapability.ARCHIVE_PACKAGING,
-)
-
-val EntryDownloadTallImageSplittingCapability = entryDownloadSettingCapability(
-    id = "entry.download.setting.tall-image-splitting",
-    setting = EntryDownloadSettingCapability.TALL_IMAGE_SPLITTING,
-)
-
-val EntryDownloadParallelSourceTransfersCapability = entryDownloadSettingCapability(
-    id = "entry.download.setting.parallel-source-transfers",
-    setting = EntryDownloadSettingCapability.PARALLEL_SOURCE_TRANSFERS,
-)
-
-val EntryDownloadParallelItemTransfersCapability = entryDownloadSettingCapability(
-    id = "entry.download.setting.parallel-item-transfers",
-    setting = EntryDownloadSettingCapability.PARALLEL_ITEM_TRANSFERS,
-)
-
-val EntryBulkDownloadCandidateCapability = entryInteractionCapability<EntryBulkDownloadCandidateProcessor>(
-    id = CapabilityId("entry.download.bulk-candidates"),
-    installer = EntryInteractionRegistry::registerBulkDownloadCandidateProcessor,
-)
-
-val EntryAutomaticDownloadFilterCapability = entryInteractionCapability<EntryAutomaticDownloadFilterProcessor>(
-    id = CapabilityId("entry.download.automatic-filter"),
-    installer = EntryInteractionRegistry::registerAutomaticDownloadFilterProcessor,
-)
-
-interface EntryMigrationProvider : EntryInteractionProvider
-
-interface EntryMergeProvider : EntryInteractionProvider
-
-val EntryMigrationCapability = entryInteractionCapability<EntryMigrationProvider>(
-    id = CapabilityId("entry.migration"),
-    installer = EntryInteractionRegistry::registerMigrationProvider,
-)
-
-val EntryMergeCapability = entryInteractionCapability<EntryMergeProvider>(
-    id = CapabilityId("entry.merge"),
-    installer = EntryInteractionRegistry::registerMergeProvider,
-)
-
-interface EntryConsumptionProcessor : EntryInteractionProvider {
-
-    fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
-        return when (consumed) {
-            true -> !status.consumed
-            false -> status.consumed || status.hasPartialProgress
-        }
-    }
-
-    suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
-}
-
-val EntryConsumptionCapability = entryInteractionCapability<EntryConsumptionProcessor>(
-    id = CapabilityId("entry.consumption"),
-    installer = EntryInteractionRegistry::registerConsumptionProcessor,
-)
-
-interface EntryBookmarkProcessor : EntryInteractionProvider {
-
-    fun canSetBookmarked(status: EntryBookmarkStatus, bookmarked: Boolean): Boolean {
-        return status.bookmarked != bookmarked
-    }
-
-    suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
-}
-
-val EntryBookmarkCapability = entryInteractionCapability<EntryBookmarkProcessor>(
-    id = CapabilityId("entry.bookmarking"),
-    installer = EntryInteractionRegistry::registerBookmarkProcessor,
-)
-
-interface EntryProgressProcessor : EntryInteractionProvider {
-    suspend fun snapshot(entry: Entry): EntryProgressSnapshot
-    suspend fun restore(entry: Entry, snapshot: EntryProgressSnapshot)
-    suspend fun copy(
-        sourceEntry: Entry,
-        targetEntry: Entry,
-        resourceMappings: List<EntryProgressResourceMapping>,
-    )
-}
-
-val EntryProgressCapability = entryInteractionCapability<EntryProgressProcessor>(
-    id = CapabilityId("entry.progress-transfer"),
-    installer = EntryInteractionRegistry::registerProgressProcessor,
-)
-
-interface EntryPlaybackPreferencesProcessor : EntryInteractionProvider {
-    suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot?
-    suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot)
-    suspend fun copy(sourceEntry: Entry, targetEntry: Entry)
-}
-
-val EntryPlaybackPreferencesCapability = entryInteractionCapability<EntryPlaybackPreferencesProcessor>(
-    id = CapabilityId("entry.playback-preferences-transfer"),
-    installer = EntryInteractionRegistry::registerPlaybackPreferencesProcessor,
-)
-
-interface EntryImmersiveProcessor : EntryImmersiveInteraction, EntryInteractionProvider {
-    override fun preloadRadius(entryType: EntryType): Int
-}
-
-val EntryImmersiveCapability = entryInteractionCapability<EntryImmersiveProcessor>(
-    id = CapabilityId("entry.immersive"),
-    installer = EntryInteractionRegistry::registerImmersiveProcessor,
-)
-
-interface EntryChildListProcessor : EntryInteractionProvider {
-    fun sortedForReading(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
-    fun sortedForDisplay(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
-    fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow>
-}
-
-val EntryChildListCapability = entryInteractionCapability<EntryChildListProcessor>(
-    id = CapabilityId("entry.child-list"),
-    installer = EntryInteractionRegistry::registerChildListProcessor,
-)
-
-interface EntryChildProgressProcessor : EntryInteractionProvider {
-    fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>>
-}
-
-val EntryChildProgressCapability = entryInteractionCapability<EntryChildProgressProcessor>(
-    id = CapabilityId("entry.child-progress-labels"),
-    installer = EntryInteractionRegistry::registerChildProgressProcessor,
-)
-
-interface EntryChildGroupFilterProcessor : EntryInteractionProvider {
-    fun availableGroupsChanged(entryId: Long): Flow<Unit>
-    suspend fun availableGroups(entry: Entry, memberIds: Collection<Long>): Set<String>
-    fun excludedGroupsChanged(entryId: Long): Flow<Unit>
-    suspend fun excludedGroups(entry: Entry, memberIds: Collection<Long>): Set<String>
-    suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>)
-}
-
-val EntryChildGroupFilterCapability = entryInteractionCapability<EntryChildGroupFilterProcessor>(
-    id = CapabilityId("entry.child-group-filter"),
-    installer = EntryInteractionRegistry::registerChildGroupFilterProcessor,
-)
-
-interface EntryOutsideReleasePeriodFilterProvider : EntryInteractionProvider
-
-val EntryOutsideReleasePeriodFilterCapability = entryInteractionCapability<EntryOutsideReleasePeriodFilterProvider>(
-    id = CapabilityId("entry.outside-release-period-filter"),
-    installer = EntryInteractionRegistry::registerOutsideReleasePeriodFilterProvider,
-)
-
-interface EntryPreviewProcessor : EntryPreviewInteraction, EntryInteractionProvider
-
-val EntryPreviewCapability = entryInteractionCapability<EntryPreviewProcessor>(
-    id = CapabilityId("entry.preview"),
-    installer = EntryInteractionRegistry::registerPreviewProcessor,
-)
 
 interface EntryInteractionPlugin : FeatureGraphContributor {
     val type: EntryType
@@ -377,37 +78,4 @@ interface EntryInteractionPlugin : FeatureGraphContributor {
             }
         }
     }
-
-    fun installContributedProviders(registry: EntryInteractionRegistry) {
-        providerBindings.forEach { it.install(registry) }
-    }
-
-    fun register(registry: EntryInteractionRegistry) {
-        installContributedProviders(registry)
-    }
-}
-
-interface EntryInteractionRegistry {
-    fun registerOpenProcessor(processor: EntryOpenProcessor)
-    fun registerContinueProcessor(processor: EntryContinueProcessor)
-    fun registerDownloadProcessor(processor: EntryDownloadProcessor)
-    fun registerDownloadOptionsProcessor(processor: EntryDownloadOptionsProcessor)
-    fun registerDownloadSettingProvider(
-        provider: EntryDownloadSettingProvider,
-        setting: EntryDownloadSettingCapability,
-    )
-    fun registerBulkDownloadCandidateProcessor(processor: EntryBulkDownloadCandidateProcessor)
-    fun registerAutomaticDownloadFilterProcessor(processor: EntryAutomaticDownloadFilterProcessor)
-    fun registerMigrationProvider(provider: EntryMigrationProvider)
-    fun registerMergeProvider(provider: EntryMergeProvider)
-    fun registerConsumptionProcessor(processor: EntryConsumptionProcessor)
-    fun registerBookmarkProcessor(processor: EntryBookmarkProcessor)
-    fun registerProgressProcessor(processor: EntryProgressProcessor)
-    fun registerPlaybackPreferencesProcessor(processor: EntryPlaybackPreferencesProcessor)
-    fun registerChildListProcessor(processor: EntryChildListProcessor)
-    fun registerChildProgressProcessor(processor: EntryChildProgressProcessor)
-    fun registerChildGroupFilterProcessor(processor: EntryChildGroupFilterProcessor)
-    fun registerOutsideReleasePeriodFilterProvider(provider: EntryOutsideReleasePeriodFilterProvider)
-    fun registerPreviewProcessor(processor: EntryPreviewProcessor)
-    fun registerImmersiveProcessor(processor: EntryImmersiveProcessor)
 }

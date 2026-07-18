@@ -32,7 +32,6 @@ import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
-import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.entry.interactions.EntryProgressResourceMapping
@@ -356,35 +355,6 @@ class MangaEntryInteractionPluginTest {
         val result = processor.findNext(entry(EntryType.MANGA, id = 1L))
 
         result shouldBe siblingChapter
-    }
-
-    @Test
-    fun `facade continue opens through manga open processor`() = runTest {
-        val opened = mutableListOf<Pair<Long, Long>>()
-        val dependencies = dependencies(
-            chapters = listOf(chapter(id = 22L, entryId = 7L, read = false)),
-        )
-        val interactions = createEntryInteractions(
-            listOf(
-                EntryInteractionPlugin { registry ->
-                    val openProcessor = MangaOpenProcessor(openChapter = { _, entry, chapter, _ ->
-                        opened += entry.id to chapter.id
-                    })
-                    registry.registerContinueProcessor(
-                        MangaContinueProcessor(
-                            getEntryWithChapters = dependencies.getEntryWithChapters,
-                            entryProgressRepository = dependencies.entryProgressRepository,
-                            openProcessor = openProcessor,
-                        ),
-                    )
-                },
-            ),
-        )
-
-        val result = interactions.continueEntry.continueEntry(context, entry(EntryType.MANGA, id = 7L))
-
-        result?.id shouldBe 22L
-        opened.shouldContainExactly(7L to 22L)
     }
 
     @Test

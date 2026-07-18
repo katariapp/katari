@@ -86,6 +86,8 @@ Migration progress:
 - Milestone 4.3 migrates `T22` and `T24`–`T27` in the working tree through one owned runtime module per type. `T23`
   presentation vocabulary is deliberately deferred to its Phase 5 projection migration because its current app-owned
   model cannot enter the runtime service contract without mixing ownership.
+- Milestone 4.4 removes the transitional operational registry. One generic provider index derives typed dispatch maps
+  directly from bindings, and the old registry-shaped support tests are replaced by generic composition invariants.
 
 | ID | Provider or composition fact | Current evidence | Required migration outcome |
 | --- | --- | --- | --- |

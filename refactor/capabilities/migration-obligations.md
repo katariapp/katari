@@ -24,26 +24,22 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ## Active Obligations
 
-### `P4-PLUGIN-TEST-HARNESS` — Operational fixtures use superseded registration paths
+### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
 - Owning phase: Phase 4
-- Affected test paths:
-  - `entry-interactions/src/test/**/EntryInteractionRegistryTest.kt`
-  - `entry-interactions/manga/src/test/**/MangaEntryInteractionPluginTest.kt`
-  - `entry-interactions/anime/src/test/**/AnimeEntryInteractionPluginTest.kt`
-  - `entry-interactions/book/src/test/**/BookEntryInteractionPluginTest.kt`
-  - `entry-interactions/book/src/test/**/BookDownloadProcessorTest.kt`
-- Required outcome: test contributors use the same owned contribution boundary while retaining behavioral processor
-  tests. They must not add per-type capability-value assertions.
+- Resolution: all registry-method fixtures were removed. Generic composition tests now exercise partial construction,
+  binding dispatch, duplicate claims, and type ownership. Type-specific processor behavior remains in the type suites;
+  tests that need real feature contributors remain Phase 5/7 obligations rather than receiving empty placeholders.
 
 ### `P5-DOWNLOAD-REGISTRY` — Bulk and bookmarked download consequences remain in transitional dispatch
 
 - Responsible owner: Downloads feature
 - Owning phase: Phase 5
-- Affected path: `entry-interactions/spi/src/main/**/EntryInteractionRegistry.kt`
+- Affected path: `entry-interactions/spi/src/main/**/EntryInteractionComposition.kt`
 - Exposed condition: Milestone 4.2.2 selects media-specific bulk candidate construction by provider presence and
-  temporarily checks Bookmarking-provider presence before applying the shared bookmarked action. This removed the
+  temporarily checks Bookmarking-provider presence before applying the shared bookmarked action. The provider-backed
+  facade no longer uses a registry, but this cross-provider feature policy is still transitional. This removed the
   deleted report dependency and restored SPI compilation without recreating a support authority.
 - Required outcome: the download feature owns the prerequisite relationships and shared bulk/bookmark consequences. The
   registry consumes selected feature behavior instead of retaining the transitional cross-provider rule.
@@ -100,7 +96,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Responsible owners: Downloads, Entry UI, Library, and Updates feature tests
 - Owning phase: Phase 7, after their Phase 5 production migrations
 - Affected test paths:
-  - `entry-interactions/src/test/**/BookmarkDownloadVerticalContractTest.kt`
+  - the cleanup portion formerly covered by `entry-interactions/src/test/**/BookmarkDownloadVerticalContractTest.kt`;
+    its provider-backed bookmark/bulk behavior remains covered, while cleanup selection awaits the Phase 5 consumer
   - `entry-interactions/src/test/**/EntryDownloadLifecycleManagerTest.kt`
   - `app/src/test/**/DownloadDropdownMenuTest.kt`
   - `app/src/test/**/UpdatesSelectionActionsTest.kt`

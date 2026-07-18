@@ -22,17 +22,19 @@ register, including type-owned artifacts currently outside the interaction regis
     (`T13`, `T16`–`T21`).
 - [x] 4.3 — Join type-owned runtime artifacts and parallel composition paths in `T22`–`T27`, with `T23` explicitly
   deferred to its Phase 5 projection migration.
-- [ ] 4.4 — Remove superseded registration paths, reconcile the test harness, and close the Phase 4 exit gate.
+- [x] 4.4 — Remove superseded registration paths, reconcile the test harness, and close the Phase 4 exit gate.
+
+Milestone 4.4 and the Phase 4 exit gate are approved.
 
 Phase-level checks:
 
-- [ ] Port Open, Continue, and every other operational implementation through the same provider-contribution mechanism.
-- [ ] Account for every `T01`–`T27` row; record a completion, deliberate deferral, or corrected classification.
-- [ ] Preserve valid partial compositions and verify that omitting a provider means unsupported.
-- [ ] Port genuine media-specific adapters selected by applicable feature relationships.
-- [ ] Remove superseded registration, intrinsic evidence, and report paths as their authority moves.
-- [ ] Record unported consumer compile failures as Phase 5 or Phase 6 obligations.
-- [ ] Stop before migrating feature consumers.
+- [x] Port Open, Continue, and every other operational implementation through the same provider-contribution mechanism.
+- [x] Account for every `T01`–`T27` row; record a completion, deliberate deferral, or corrected classification.
+- [x] Preserve valid partial compositions and verify that omitting a provider means unsupported.
+- [x] Port genuine media-specific adapters selected by applicable feature relationships.
+- [x] Remove superseded registration, intrinsic evidence, and report paths as their authority moves.
+- [x] Record unported consumer compile failures as Phase 5 or Phase 6 obligations.
+- [x] Stop before migrating feature consumers.
 
 ## Constraints
 
@@ -57,3 +59,15 @@ Phase-level checks:
 ## Manifesto Review
 
 Confirm that adding a future type requires implementing one contribution boundary, not editing lists of features or tests.
+
+- Capability bindings now feed one generic typed provider index. The per-capability registry methods, installer
+  callbacks, registry class, registry-shaped tests, and support-matrix fixtures are removed.
+- Provider contracts and dispatch implementations are partitioned by cohesive interaction family; the plugin and
+  composition files are small ownership boundaries rather than catch-all implementation containers.
+- The provider index supplies operational dispatch only. It does not own feature prerequisites or consequences and does
+  not replace the Phase 5 feature integrations.
+
+## Exact Next Action After Review
+
+Phase 4 is complete. Begin Phase 5 with the `F01` Open feature row; inventory every Open consumer before changing feature
+code, then stop at that row's milestone gate.

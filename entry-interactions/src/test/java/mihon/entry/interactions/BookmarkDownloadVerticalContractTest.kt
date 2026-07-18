@@ -9,37 +9,57 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.feature.graph.CapabilityDefinition
+import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.FeatureId
+import mihon.feature.graph.FeatureIntegration
+import mihon.feature.graph.FeatureIntegrationId
+import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.featureGraphContributor
 import org.junit.jupiter.api.Test
-import tachiyomi.core.common.preference.InMemoryPreferenceStore
-import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.download.service.DownloadPreferences
-import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.repository.EntryRepository
 
 class BookmarkDownloadVerticalContractTest {
 
     @Test
-    fun `one Anime bookmark registration activates every shared bookmark download consequence`() = runTest {
+    fun `bookmark provider activates shared bookmark and bulk download behavior`() = runTest {
         val anime = entry()
         val normal = chapter(id = 11L, bookmark = false)
         val bookmarked = chapter(id = 12L, bookmark = true, read = true)
-        val downloadProcessor = animeDownloadProcessor()
-        val bookmarkProcessor = mockk<EntryBookmarkProcessor>(relaxed = true) {
+        val downloadProcessor = downloadProcessor()
+        val bulkProcessor = mockk<EntryBulkDownloadCandidateProcessor> {
+            every { type } returns EntryType.ANIME
+            coEvery { resolveBulkDownloadCandidatePool(any(), any()) } answers {
+                secondArg<List<EntryChapter>?>().orEmpty()
+            }
+        }
+        val bookmarkProcessor = mockk<EntryBookmarkProcessor> {
             every { type } returns EntryType.ANIME
             every { canSetBookmarked(any(), any()) } returns true
+            coEvery { setBookmarked(any(), any(), any()) } returns Unit
         }
-        val downloadPlugin = EntryInteractionPlugin { it.registerDownloadProcessor(downloadProcessor) }
-        val syntheticBookmarkRegistration = EntryInteractionPlugin {
-            it.registerBookmarkProcessor(bookmarkProcessor)
+        val plugin = object : EntryInteractionPlugin {
+            override val type = EntryType.ANIME
+            override val owner = ContributionOwner("test.anime")
+            override val providerBindings = listOf(
+                EntryDownloadCapability.bind(downloadProcessor),
+                EntryBulkDownloadCandidateCapability.bind(bulkProcessor),
+                EntryBookmarkCapability.bind(bookmarkProcessor),
+            )
         }
-
-        val composition = createEntryInteractionComposition(
-            listOf(downloadPlugin, syntheticBookmarkRegistration),
+        val interactions = createEntryInteractions(
+            plugins = listOf(plugin),
+            featureContributors = listOf(
+                featureUsing(EntryDownloadCapability.definition),
+                featureUsing(EntryBulkDownloadCandidateCapability.definition),
+                featureUsing(EntryBookmarkCapability.definition),
+            ),
         )
-        val interactions = composition.interactions
-        val report = composition.capabilityReport
 
         val status = EntryBookmarkStatus(bookmarked = false)
         interactions.bookmark.canSetBookmarked(EntryType.ANIME, status, bookmarked = true) shouldBe true
@@ -52,37 +72,13 @@ class BookmarkDownloadVerticalContractTest {
             candidates = listOf(normal, bookmarked),
         ) shouldBe EntryBulkDownloadCandidateResult.Supported(listOf(bookmarked))
         coVerify(exactly = 1) {
-            downloadProcessor.resolveBulkDownloadCandidatePool(anime, listOf(normal, bookmarked))
+            bulkProcessor.resolveBulkDownloadCandidatePool(anime, listOf(normal, bookmarked))
         }
-
-        val preferences = DownloadPreferences(InMemoryPreferenceStore()).apply {
-            removeAfterMarkedAsRead.set(true)
-        }
-        val manager = EntryDownloadLifecycleManager(
-            downloadPreferences = preferences,
-            getCategories = mockk<GetCategories> {
-                coEvery { await(any()) } returns emptyList()
-            },
-            getEntryWithChapters = mockk<GetEntryWithChapters>(relaxed = true),
-            entryRepository = mockk<EntryRepository>(relaxed = true),
-            downloadInteraction = { interactions.download },
-            capabilityReport = { report },
-        )
-
-        manager.onEvent(
-            EntryDownloadLifecycleEvent.MarkedConsumed(
-                visibleEntry = anime,
-                children = listOf(normal, bookmarked),
-            ),
-        )
-
-        coVerify(exactly = 1) { downloadProcessor.delete(anime, listOf(normal)) }
     }
 
-    private fun animeDownloadProcessor(): EntryDownloadProcessor {
+    private fun downloadProcessor(): EntryDownloadProcessor {
         return mockk(relaxed = true) {
             every { type } returns EntryType.ANIME
-            every { settingCapabilities } returns emptySet()
             every { changes } returns emptyFlow()
             every { isInitializing } returns flowOf(false)
             every { isRunning } returns flowOf(false)
@@ -91,9 +87,30 @@ class BookmarkDownloadVerticalContractTest {
             every { updates() } returns emptyFlow()
             every { queueStatusUpdates() } returns emptyFlow()
             every { queueProgressUpdates() } returns emptyFlow()
-            coEvery { resolveBulkDownloadCandidatePool(any(), any()) } answers {
-                secondArg<List<EntryChapter>?>().orEmpty()
-            }
+        }
+    }
+
+    private fun featureUsing(capability: CapabilityDefinition<*>): FeatureGraphContributor {
+        val owner = ContributionOwner("test.feature.${capability.id.value}")
+        val suffix = capability.id.value
+        return featureGraphContributor(owner) {
+            add(
+                FeatureContribution(
+                    feature = FeatureId("test.$suffix"),
+                    owner = owner,
+                    integrations = listOf(
+                        FeatureIntegration(
+                            id = FeatureIntegrationId("test.$suffix.integration"),
+                            prerequisites = CapabilityExpression.Provided(capability),
+                            sharedConsequences = listOf(
+                                object : SharedFeatureConsequence {
+                                    override val id = FeatureArtifactId("test.$suffix.consequence")
+                                },
+                            ),
+                        ),
+                    ),
+                ),
+            )
         }
     }
 

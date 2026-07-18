@@ -19,58 +19,6 @@ import tachiyomi.domain.entry.repository.EntryRepository
 
 class EntryDownloadLifecycleManagerTest {
     @Test
-    fun `marked consumed cleanup derives bookmark protection from capability support`() = runTest {
-        EntryType.entries.forEach { type ->
-            val visible = entry(id = 1L, type = type)
-            val member = entry(id = 2L, type = type, sourceId = 20L)
-            val normal = chapter(id = 11L, entryId = visible.id)
-            val bookmarked = chapter(id = 12L, entryId = visible.id, bookmark = true)
-            val excludedMember = chapter(id = 21L, entryId = member.id)
-            val fixture = fixture(
-                memberEntries = listOf(member),
-                categories = mapOf(member.id to listOf(category(9L))),
-            )
-            fixture.preferences.removeAfterMarkedAsRead.set(true)
-            fixture.preferences.removeExcludeCategories.set(setOf("9"))
-
-            fixture.manager.onEvent(
-                EntryDownloadLifecycleEvent.MarkedConsumed(
-                    visibleEntry = visible,
-                    children = listOf(normal, bookmarked, excludedMember),
-                ),
-            )
-
-            val expected = if (type == EntryType.MANGA) listOf(normal) else listOf(normal, bookmarked)
-            coVerify(exactly = 1) { fixture.downloads.delete(visible, expected) }
-            coVerify(exactly = 0) { fixture.downloads.delete(member, any()) }
-        }
-    }
-
-    @Test
-    fun `synthetic Anime bookmark provider activates cleanup protection`() = runTest {
-        val visible = entry(id = 1L, type = EntryType.ANIME)
-        val normal = chapter(id = 11L, entryId = visible.id)
-        val bookmarked = chapter(id = 12L, entryId = visible.id, bookmark = true)
-        val bookmarkProcessor = mockk<EntryBookmarkProcessor>(relaxed = true) {
-            every { type } returns EntryType.ANIME
-        }
-        val composition = createEntryInteractionComposition(
-            listOf(EntryInteractionPlugin { it.registerBookmarkProcessor(bookmarkProcessor) }),
-        )
-        val fixture = fixture(capabilityReport = composition.capabilityReport)
-        fixture.preferences.removeAfterMarkedAsRead.set(true)
-
-        fixture.manager.onEvent(
-            EntryDownloadLifecycleEvent.MarkedConsumed(
-                visibleEntry = visible,
-                children = listOf(normal, bookmarked),
-            ),
-        )
-
-        coVerify(exactly = 1) { fixture.downloads.delete(visible, listOf(normal)) }
-    }
-
-    @Test
     fun `remove bookmarked preference overrides capability protection`() = runTest {
         val visible = entry(id = 1L, type = EntryType.MANGA)
         val bookmarked = chapter(id = 12L, entryId = visible.id, bookmark = true)

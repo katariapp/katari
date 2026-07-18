@@ -10,18 +10,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
-import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
 import mihon.entry.interactions.EntryDownloadMessage
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
-import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
 import mihon.entry.interactions.book.download.model.BookDownload
 import mihon.entry.interactions.book.download.model.BookDownloadFailure
-import mihon.entry.interactions.createEntryInteractions
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
@@ -82,38 +78,6 @@ class BookDownloadProcessorTest {
         coVerify(exactly = 1) { fixture.manager.queueBooks(member, listOf(memberChapter), autoStart = false) }
         verify(exactly = 1) { fixture.manager.startDownloadsNow(listOf(11L, 21L)) }
         verify(exactly = 0) { fixture.manager.startDownloads() }
-    }
-
-    @Test
-    fun `next bulk download respects merged reading order and limit`() = runTest {
-        val visible = entry(id = 1L, source = 10L).copy(
-            chapterFlags = Entry.CHAPTER_SORT_DESC or Entry.CHAPTER_SORTING_NUMBER,
-        )
-        val chapters = listOf(
-            chapter(id = 11L, entryId = 1L, number = 1.0),
-            chapter(id = 23L, entryId = 2L, number = 3.0),
-            chapter(id = 22L, entryId = 2L, number = 2.0),
-            chapter(id = 21L, entryId = 2L, number = 1.0),
-        )
-        val fixture = fixture(
-            entries = mapOf(2L to entry(id = 2L, source = 20L)),
-            chapters = chapters,
-        )
-
-        val interactions = createEntryInteractions(
-            listOf(EntryInteractionPlugin { it.registerDownloadProcessor(fixture.processor) }),
-        )
-        val result = interactions.download.resolveBulkDownloadCandidates(
-            entry = visible,
-            action = EntryBulkDownloadAction.next(2),
-            candidates = null,
-            memberEntryIds = listOf(1L, 2L),
-        )
-
-        assertEquals(
-            listOf(21L, 22L),
-            assertIs<EntryBulkDownloadCandidateResult.Supported>(result).chapters.map(EntryChapter::id),
-        )
     }
 
     @Test

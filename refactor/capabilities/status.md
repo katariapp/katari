@@ -18,6 +18,7 @@ Updated: 2026-07-18
 - Milestone 4.2.2 commit: `f4a6d153c` (`(refactor): decompose download providers`)
 - Milestone 4.2.3 commit: `c046e1f8f` (`(refactor): split migration and merge providers`)
 - Milestone 4.2.4 commit: `c2ca736e4` (`(refactor): migrate remaining entry providers`)
+- Milestone 4.3 commit: `c88ff5fe9` (`(refactor): unify entry type runtime composition`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -25,8 +26,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.3 — Owned type runtime composition
-- State: implementation approved; committing Milestone 4.3 before starting Milestone 4.4
+- Milestone: 4.4 — Generic provider dispatch and transitional registry removal
+- State: complete and approved; next work begins Phase 5 with `F01` Open
 
 ## Why the Plan Was Reset
 
@@ -132,6 +133,13 @@ authority or weakening the architecture.
 - [x] Runtime plugin/calculator identity validated against the owning type
 - [x] Presentation vocabulary recorded as a Phase 5 projection obligation rather than mixed into runtime services
 - [x] Decision `0017-owned-type-runtime-modules.md` accepted
+- [x] Capability-owned installer callbacks and the `EntryInteractionRegistry` interface/implementation removed
+- [x] Operational interaction facades derive typed provider maps from one generic binding index
+- [x] Provider contracts and provider-backed dispatch split into cohesive interaction-family files
+- [x] `EntryInteractionPlugin` and `EntryInteractionComposition` reduced to their actual ownership boundaries
+- [x] Registry-shaped, per-capability duplicate tests replaced by generic composition invariants
+- [x] Superseded registry fixtures removed without adding capability-label or current-type matrix assertions
+- [x] Decision `0018-generic-provider-index.md` reviewed and accepted
 
 ## New Phase Sequence
 
@@ -329,8 +337,12 @@ Approved on 2026-07-18:
   components. Each list is derived from the one installed type-runtime contribution collection.
 - Presentation vocabulary is not treated as a runtime service or support fact; its remaining concrete-type map is
   visible Phase 5 projection work.
+- Milestone 4.4 removes the last two-step installation mechanism. A binding is now consumed directly by both the graph
+  and the generic operational provider index; no per-capability registration method remains.
+- The generic provider index is not a feature coordinator. Existing facade policies exposed by compilation remain Phase
+  5 obligations and must move to feature-owned integrations rather than into the index.
 
 ## Exact Next Action After Review
 
-Milestone 4.3 and decision `0017` are approved. Commit the milestone, then begin Milestone 4.4 by removing transitional
-registration and reconciling behavioral fixtures. Do not begin Phase 5.
+Commit the approved Phase 4 milestone, then begin Phase 5 with the `F01` Open feature inventory. Stop at the `F01`
+milestone gate before continuing to `F02`.

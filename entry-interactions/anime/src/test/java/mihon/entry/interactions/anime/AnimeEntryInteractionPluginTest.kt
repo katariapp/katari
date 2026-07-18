@@ -42,7 +42,6 @@ import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
-import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
@@ -736,35 +735,6 @@ class AnimeEntryInteractionPluginTest {
     }
 
     @Test
-    fun `facade continue opens through anime open processor`() = runTest {
-        val opened = mutableListOf<Pair<Long, Long>>()
-        val dependencies = dependencies(
-            chapters = listOf(chapter(id = 22L, entryId = 7L, read = false)),
-        )
-        val interactions = createEntryInteractions(
-            listOf(
-                EntryInteractionPlugin { registry ->
-                    val openProcessor = AnimeOpenProcessor(openEpisode = { _, entry, chapter, _ ->
-                        opened += entry.id to chapter.id
-                    })
-                    registry.registerContinueProcessor(
-                        AnimeContinueProcessor(
-                            getEntryWithChapters = dependencies.getEntryWithChapters,
-                            entryProgressRepository = dependencies.entryProgressRepository,
-                            openProcessor = openProcessor,
-                        ),
-                    )
-                },
-            ),
-        )
-
-        val result = interactions.continueEntry.continueEntry(context, entry(EntryType.ANIME, id = 7L))
-
-        result?.id shouldBe 22L
-        opened.shouldContainExactly(7L to 22L)
-    }
-
-    @Test
     fun `anime continue opens merged member episode from visible target entry`() = runTest {
         val opened = mutableListOf<Triple<Long, Long, Long>>()
         val targetEntry = entry(EntryType.ANIME, id = 7L, title = "Merged anime")
@@ -784,24 +754,16 @@ class AnimeEntryInteractionPluginTest {
                 playbackState(entryId = 8L, chapterId = 82L, positionMs = 5_000L, completed = false),
             ),
         )
-        val interactions = createEntryInteractions(
-            listOf(
-                EntryInteractionPlugin { registry ->
-                    val openProcessor = AnimeOpenProcessor(openEpisode = { _, entry, chapter, _ ->
-                        opened += Triple(entry.id, chapter.entryId, chapter.id)
-                    })
-                    registry.registerContinueProcessor(
-                        AnimeContinueProcessor(
-                            getEntryWithChapters = dependencies.getEntryWithChapters,
-                            entryProgressRepository = dependencies.entryProgressRepository,
-                            openProcessor = openProcessor,
-                        ),
-                    )
-                },
-            ),
+        val processor = AnimeContinueProcessor(
+            getEntryWithChapters = dependencies.getEntryWithChapters,
+            entryProgressRepository = dependencies.entryProgressRepository,
+            openProcessor = AnimeOpenProcessor(openEpisode = { _, entry, chapter, _ ->
+                opened += Triple(entry.id, chapter.entryId, chapter.id)
+            }),
         )
 
-        val result = interactions.continueEntry.continueEntry(context, targetEntry)
+        val result = processor.findNext(targetEntry)
+        processor.open(context, targetEntry, checkNotNull(result))
 
         result shouldBe memberEpisode
         opened.shouldContainExactly(Triple(7L, 8L, 82L))

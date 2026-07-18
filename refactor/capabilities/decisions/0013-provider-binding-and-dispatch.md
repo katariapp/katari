@@ -2,6 +2,10 @@
 
 Status: Accepted
 
+Milestone 4.4 supersedes the transitional installer and registry details below with decision
+[`0018-generic-provider-index.md`](0018-generic-provider-index.md). The durable part of this decision is the single
+capability binding: graph evidence and operational dispatch still derive from that one declaration.
+
 ## Context
 
 Milestone 4.1 proved that one operational provider object can also be graph evidence, but its first installation shape put
