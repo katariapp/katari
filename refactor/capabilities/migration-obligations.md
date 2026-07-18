@@ -35,17 +35,20 @@ SPI boundary is not an exit gate for Phase 3.5.
   objects. Provider-owned installation puts those same objects into operational dispatch without a second type-module
   registration. `EntryInteractionPlugin` validates provider type identity generically and does not require either
   provider.
-- Remaining outcome: migrate `T04`–`T21` without mechanically treating processor registration, default methods, false
-  support methods, or no-op processors as capability evidence; then migrate `T22`–`T27` type-owned artifacts.
+- Milestone 4.2.1 status: Consumption, Bookmarking, Progress transfer, and Playback-preference transfer now use
+  capability-owned bindings. Graph evidence and dispatch derive from the same declaration, including implementations
+  that supply more than one independent capability.
+- Remaining outcome: migrate `T04`–`T10`, `T13`, and `T16`–`T21` without mechanically treating processor registration,
+  default methods, false support methods, or no-op processors as capability evidence; then migrate `T22`–`T27`
+  type-owned artifacts.
 
 ### `P4-REMAINING-PROVIDER-CONTRACTS` — Operational processors are not yet graph providers
 
 - Responsible owners: Entry interaction SPI plus Manga, Anime, and Book provider implementations
 - Owning phase: Phase 4
-- Inventory scope: `T04`–`T21`
-- Exposed condition: Download, combined Migration/Merge, Consumption, Bookmarking, Update Eligibility, Progress,
-  Playback Preferences, Child List, Child Group Filter, Library Filter, Preview, and Immersive processors still enter
-  only the operational registry.
+- Inventory scope: `T04`–`T10`, `T13`, `T16`–`T21`
+- Exposed condition: Download, combined Migration/Merge, Update Eligibility, Child List, Child Group Filter, Library
+  Filter, Preview, and Immersive processors still enter only the operational registry.
 - Required outcome: define provider-backed contracts at their true granularity and contribute the same implementation
   objects used for dispatch. Split download options/settings/pools/filtering, Migration/Merge, child progress labels,
   registered no-op child-group behavior, and false-returning library-filter behavior before claiming support.

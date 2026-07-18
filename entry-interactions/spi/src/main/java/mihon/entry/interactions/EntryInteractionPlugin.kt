@@ -7,11 +7,14 @@ import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import mihon.feature.graph.CapabilityId
+import mihon.feature.graph.CapabilityProvider
 import mihon.feature.graph.ContentTypeContribution
 import mihon.feature.graph.ContentTypeId
+import mihon.feature.graph.ContractFixture
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.capabilityDefinition
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -20,24 +23,47 @@ interface EntryInteractionProvider {
     val type: EntryType
 }
 
-interface EntryInteractionDispatchProvider : EntryInteractionProvider {
-    fun install(registry: EntryInteractionRegistry)
+class EntryInteractionCapability<P : EntryInteractionProvider> internal constructor(
+    val definition: mihon.feature.graph.CapabilityDefinition<P>,
+    private val installer: EntryInteractionRegistry.(P) -> Unit,
+) {
+    fun bind(implementation: P): EntryInteractionProviderBinding<P> {
+        return EntryInteractionProviderBinding(this, implementation)
+    }
+
+    internal fun install(registry: EntryInteractionRegistry, implementation: P) {
+        registry.installer(implementation)
+    }
 }
 
-interface EntryOpenProcessor : EntryInteractionDispatchProvider {
-    override fun install(registry: EntryInteractionRegistry) {
-        registry.registerOpenProcessor(this)
+class EntryInteractionProviderBinding<P : EntryInteractionProvider> internal constructor(
+    private val capability: EntryInteractionCapability<P>,
+    val implementation: P,
+) {
+    val graphProvider: CapabilityProvider<P> = CapabilityProvider(capability.definition, implementation)
+
+    fun install(registry: EntryInteractionRegistry) {
+        capability.install(registry, implementation)
     }
+}
+
+private inline fun <reified P : EntryInteractionProvider> entryInteractionCapability(
+    id: CapabilityId,
+    noinline installer: EntryInteractionRegistry.(P) -> Unit,
+): EntryInteractionCapability<P> {
+    return EntryInteractionCapability(
+        definition = capabilityDefinition(id, ENTRY_INTERACTION_CONTRACT_OWNER),
+        installer = installer,
+    )
+}
+
+interface EntryOpenProcessor : EntryInteractionProvider {
 
     fun open(context: Context, entry: Entry, chapter: EntryChapter, options: EntryOpenOptions)
     fun pendingIntent(context: Context, entry: Entry, chapter: EntryChapter, options: EntryOpenOptions): PendingIntent
 }
 
-interface EntryContinueProcessor : EntryInteractionDispatchProvider {
-    override fun install(registry: EntryInteractionRegistry) {
-        registry.registerContinueProcessor(this)
-    }
-
+interface EntryContinueProcessor : EntryInteractionProvider {
     suspend fun findNext(entry: Entry): EntryChapter?
     fun open(context: Context, entry: Entry, chapter: EntryChapter)
 }
@@ -46,14 +72,14 @@ private val ENTRY_INTERACTION_CONTRACT_OWNER = ContributionOwner("entry-interact
 
 fun EntryType.toContentTypeId(): ContentTypeId = ContentTypeId(name.lowercase())
 
-val EntryOpenCapability = capabilityDefinition<EntryOpenProcessor>(
+val EntryOpenCapability = entryInteractionCapability<EntryOpenProcessor>(
     id = CapabilityId("entry.open"),
-    owner = ENTRY_INTERACTION_CONTRACT_OWNER,
+    installer = EntryInteractionRegistry::registerOpenProcessor,
 )
 
-val EntryContinueCapability = capabilityDefinition<EntryContinueProcessor>(
+val EntryContinueCapability = entryInteractionCapability<EntryContinueProcessor>(
     id = CapabilityId("entry.continue"),
-    owner = ENTRY_INTERACTION_CONTRACT_OWNER,
+    installer = EntryInteractionRegistry::registerContinueProcessor,
 )
 
 interface EntryDownloadProcessor : EntryInteractionProvider {
@@ -152,6 +178,11 @@ interface EntryConsumptionProcessor : EntryInteractionProvider {
     suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
 }
 
+val EntryConsumptionCapability = entryInteractionCapability<EntryConsumptionProcessor>(
+    id = CapabilityId("entry.consumption"),
+    installer = EntryInteractionRegistry::registerConsumptionProcessor,
+)
+
 interface EntryBookmarkProcessor : EntryInteractionProvider {
 
     fun canSetBookmarked(status: EntryBookmarkStatus, bookmarked: Boolean): Boolean {
@@ -160,6 +191,11 @@ interface EntryBookmarkProcessor : EntryInteractionProvider {
 
     suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
 }
+
+val EntryBookmarkCapability = entryInteractionCapability<EntryBookmarkProcessor>(
+    id = CapabilityId("entry.bookmarking"),
+    installer = EntryInteractionRegistry::registerBookmarkProcessor,
+)
 
 interface EntryUpdateEligibilityProcessor : EntryInteractionProvider {
     fun evaluate(request: EntryUpdateEligibilityRequest): EntryUpdateEligibility
@@ -175,11 +211,21 @@ interface EntryProgressProcessor : EntryInteractionProvider {
     )
 }
 
+val EntryProgressCapability = entryInteractionCapability<EntryProgressProcessor>(
+    id = CapabilityId("entry.progress-transfer"),
+    installer = EntryInteractionRegistry::registerProgressProcessor,
+)
+
 interface EntryPlaybackPreferencesProcessor : EntryInteractionProvider {
     suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot?
     suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot)
     suspend fun copy(sourceEntry: Entry, targetEntry: Entry)
 }
+
+val EntryPlaybackPreferencesCapability = entryInteractionCapability<EntryPlaybackPreferencesProcessor>(
+    id = CapabilityId("entry.playback-preferences-transfer"),
+    installer = EntryInteractionRegistry::registerPlaybackPreferencesProcessor,
+)
 
 interface EntryImmersiveProcessor : EntryImmersiveInteraction, EntryInteractionProvider {
     override fun preloadRadius(entryType: EntryType): Int
@@ -213,10 +259,21 @@ interface EntryPreviewProcessor : EntryPreviewInteraction, EntryInteractionProvi
 
 interface EntryInteractionPlugin : FeatureGraphContributor {
     val type: EntryType
-    val contentTypeContribution: ContentTypeContribution
-
     override val owner: ContributionOwner
-        get() = contentTypeContribution.owner
+    val providerBindings: List<EntryInteractionProviderBinding<*>>
+    val specializedAdapters: List<SpecializedAdapter<*>>
+        get() = emptyList()
+    val contractFixtures: List<ContractFixture<*>>
+        get() = emptyList()
+
+    val contentTypeContribution: ContentTypeContribution
+        get() = ContentTypeContribution(
+            contentType = type.toContentTypeId(),
+            owner = owner,
+            providers = providerBindings.map { it.graphProvider },
+            specializedAdapters = specializedAdapters,
+            contractFixtures = contractFixtures,
+        )
 
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(contentTypeContribution)
@@ -227,19 +284,16 @@ interface EntryInteractionPlugin : FeatureGraphContributor {
             "Entry interaction plugin $type must contribute content type ${type.toContentTypeId()}, not " +
                 contentTypeContribution.contentType
         }
-        contentTypeContribution.providers.forEach { provider ->
-            val interactionProvider = provider.implementation as? EntryInteractionProvider ?: return@forEach
-            require(interactionProvider.type == type) {
-                "Entry interaction plugin $type cannot contribute ${provider.capability.id} for " +
-                    interactionProvider.type
+        providerBindings.forEach { binding ->
+            require(binding.implementation.type == type) {
+                "Entry interaction plugin $type cannot contribute ${binding.graphProvider.capability.id} for " +
+                    binding.implementation.type
             }
         }
     }
 
     fun installContributedProviders(registry: EntryInteractionRegistry) {
-        contentTypeContribution.providers.forEach { provider ->
-            (provider.implementation as? EntryInteractionDispatchProvider)?.install(registry)
-        }
+        providerBindings.forEach { it.install(registry) }
     }
 
     fun register(registry: EntryInteractionRegistry) {

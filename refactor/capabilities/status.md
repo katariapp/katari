@@ -21,8 +21,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.1 — Owned type identity and Open/Continue provider migration
-- State: Milestone 4.1 committed; Phase 4.2 has not started
+- Milestone: 4.2.1 — Independent provider binding migration
+- State: implementation approved; committing Milestone 4.2.1; Milestone 4.2.2 has not started
 
 ## Why the Plan Was Reset
 
@@ -92,6 +92,14 @@ authority or weakening the architecture.
 - [x] Graph content-type identity is derived from `EntryType` rather than repeated as a type-owned string
 - [x] Decision `0012-entry-plugin-provider-identity.md` accepted
 - [x] Milestone 4.1 committed as `(refactor): migrate entry provider identity`
+- [x] Capability-owned bindings derive graph evidence and operational dispatch from one type-owned declaration
+- [x] Open and Continue moved to the binding mechanism without changing partial-support semantics
+- [x] Consumption bound for Manga, Anime, and Book
+- [x] Bookmarking bound only for Manga, independently from its shared Consumption implementation object
+- [x] Progress transfer bound for Manga, Anime, and Book
+- [x] Playback-preference transfer bound only for Anime
+- [x] Existing Anime consumption lifecycle event corrected to use the episodes whose state actually changed
+- [x] Decision `0013-provider-binding-and-dispatch.md` accepted
 
 ## New Phase Sequence
 
@@ -134,11 +142,13 @@ beside the graph.
 - A complete anonymous acceptance test proves future complete, incomplete, and partial types through unchanged discovery,
   evaluation, consequence, obligation, contract, and projection paths.
 - Accepted decision `0011-production-boundary-cut.md` and Phase 3.5 completion notes.
-- Milestone 4.1 production and refactor-workspace changes are uncommitted; Phase 4.2 has not started.
+- Milestone 4.1 is committed in `0accb3667`.
+- Milestone 4.2.1 production and refactor-workspace changes are uncommitted; Milestone 4.2.2 has not started.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
-- `T04`–`T21` processors remain operational-only migration obligations; `T22`–`T27` type artifacts remain unported.
+- `T04`–`T10`, `T13`, and `T16`–`T21` remain operational-only migration obligations; `T22`–`T27` type artifacts remain
+  unported.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
   blocked until real feature owners contribute relationships in their owning phase.
 
@@ -196,6 +206,9 @@ Approved on 2026-07-18:
 - `:entry-interactions:spi:compileDebugKotlin` reaches only the five previously recorded Phase 5 deleted-report errors;
   downstream type-module compilation remains blocked by that expected SPI failure.
 - No new compiler error was reported in the migrated provider contract before the known failure boundary.
+- Milestone 4.2.1 reran `spotlessApply`, the Feature Graph tests, and Entry interactions API compilation successfully.
+- SPI compilation still reaches only the same five recorded Phase 5 deleted-report errors; the new binding contracts
+  introduce no earlier compiler failure.
 
 ## Manifesto Comparison
 
@@ -245,10 +258,15 @@ Approved on 2026-07-18:
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
   reachability or old tests.
+- Milestone 4.2.1 eliminates the remaining two-call synchronization risk: a capability binding is the single source for
+  both graph evidence and operational dispatch.
+- A shared implementation object can bind multiple independent capabilities without creating a combined capability.
+- Current support is represented exactly: every type binds Consumption and Progress, only Manga binds Bookmarking, and
+  only Anime binds Playback-preference transfer.
 
 ## Exact Next Action After Review
 
-Review Milestone 4.1 and proposed decision `0012`. Feedback is needed only if the provider identity, partial-support
-semantics, or deliberate refusal to add dummy reachability differs from the intended architecture; no product decision
-is required. If approved, mark the decision accepted and commit Milestone 4.1 when explicitly authorized. Do not start
-Milestone 4.2 in the same step.
+Review Milestone 4.2.1 and proposed decision `0013`. Feedback is needed only if one binding should not be the shared
+source for graph evidence and dispatch, or if a single implementation binding multiple independent capabilities is not
+the intended model; no product decision is required. If approved, mark the decision accepted and commit Milestone 4.2.1
+when explicitly authorized. Do not start Milestone 4.2.2 in the same step.

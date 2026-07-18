@@ -2,15 +2,14 @@ package mihon.entry.interactions.book
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryOpenCapability
+import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.book.download.BookDownloadManager
-import mihon.entry.interactions.toContentTypeId
-import mihon.feature.graph.CapabilityProvider
-import mihon.feature.graph.ContentTypeContribution
 import mihon.feature.graph.ContributionOwner
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.repository.EntryChapterRepository
@@ -27,21 +26,28 @@ fun bookEntryInteractionPlugin(
         entryProgressRepository = dependencies.entryProgressRepository,
         openProcessor = openProcessor,
     )
+    val consumptionProcessor = BookConsumptionProcessor(
+        entryProgressRepository = dependencies.entryProgressRepository,
+        entryChapterRepository = dependencies.entryChapterRepository,
+        downloadLifecycle = dependencies.downloadLifecycle,
+    )
+    val progressProcessor = BookProgressProcessor(
+        entryProgressRepository = dependencies.entryProgressRepository,
+        entryChapterRepository = dependencies.entryChapterRepository,
+    )
     return object : EntryInteractionPlugin {
         override val type = EntryType.BOOK
-        override val contentTypeContribution = ContentTypeContribution(
-            contentType = type.toContentTypeId(),
-            owner = ContributionOwner("entry-interactions.book"),
-            providers = listOf(
-                CapabilityProvider(EntryOpenCapability, openProcessor),
-                CapabilityProvider(EntryContinueCapability, continueProcessor),
-            ),
+        override val owner = ContributionOwner("entry-interactions.book")
+        override val providerBindings = listOf(
+            EntryOpenCapability.bind(openProcessor),
+            EntryContinueCapability.bind(continueProcessor),
+            EntryConsumptionCapability.bind(consumptionProcessor),
+            EntryProgressCapability.bind(progressProcessor),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
             val downloadManager = if (dependencies.downloadsEnabled) Injekt.get<BookDownloadManager>() else null
-            val downloadLifecycle = dependencies.downloadLifecycle
-            installContributedProviders(registry)
+            super<EntryInteractionPlugin>.register(registry)
             registry.registerCapabilityProcessor(BookCapabilityProcessor())
             registry.registerChildListProcessor(BookChildListProcessor(dependencies.entryProgressRepository))
             if (dependencies.downloadsEnabled) {
@@ -61,20 +67,7 @@ fun bookEntryInteractionPlugin(
                     ),
                 )
             }
-            registry.registerConsumptionProcessor(
-                BookConsumptionProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    entryChapterRepository = dependencies.entryChapterRepository,
-                    downloadLifecycle = downloadLifecycle,
-                ),
-            )
             registry.registerUpdateEligibilityProcessor(BookUpdateEligibilityProcessor())
-            registry.registerProgressProcessor(
-                BookProgressProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    entryChapterRepository = dependencies.entryChapterRepository,
-                ),
-            )
             registry.registerLibraryFilterProcessor(BookLibraryFilterProcessor())
         }
     }

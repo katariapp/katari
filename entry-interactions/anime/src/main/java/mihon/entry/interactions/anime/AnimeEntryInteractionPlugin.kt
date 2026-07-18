@@ -2,17 +2,17 @@ package mihon.entry.interactions.anime
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryOpenCapability
+import mihon.entry.interactions.EntryPlaybackPreferencesCapability
+import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
 import mihon.entry.interactions.settings.EntryInteractionPreferences
-import mihon.entry.interactions.toContentTypeId
-import mihon.feature.graph.CapabilityProvider
-import mihon.feature.graph.ContentTypeContribution
 import mihon.feature.graph.ContributionOwner
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -58,19 +58,30 @@ internal fun animeEntryInteractionPlugin(
         entryProgressRepository = dependencies.entryProgressRepository,
         openProcessor = openProcessor,
     )
+    val consumptionProcessor = AnimeConsumptionProcessor(
+        entryProgressRepository = dependencies.entryProgressRepository,
+        downloadLifecycle = dependencies.downloadLifecycle,
+    )
+    val progressProcessor = AnimeProgressProcessor(
+        entryProgressRepository = dependencies.entryProgressRepository,
+        entryChapterRepository = dependencies.entryChapterRepository,
+    )
+    val playbackPreferencesProcessor = AnimePlaybackPreferencesProcessor(
+        playbackPreferencesRepository = dependencies.playbackPreferencesRepository,
+    )
     return object : EntryInteractionPlugin {
         override val type = EntryType.ANIME
-        override val contentTypeContribution = ContentTypeContribution(
-            contentType = type.toContentTypeId(),
-            owner = ContributionOwner("entry-interactions.anime"),
-            providers = listOf(
-                CapabilityProvider(EntryOpenCapability, openProcessor),
-                CapabilityProvider(EntryContinueCapability, continueProcessor),
-            ),
+        override val owner = ContributionOwner("entry-interactions.anime")
+        override val providerBindings = listOf(
+            EntryOpenCapability.bind(openProcessor),
+            EntryContinueCapability.bind(continueProcessor),
+            EntryConsumptionCapability.bind(consumptionProcessor),
+            EntryProgressCapability.bind(progressProcessor),
+            EntryPlaybackPreferencesCapability.bind(playbackPreferencesProcessor),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
-            installContributedProviders(registry)
+            super<EntryInteractionPlugin>.register(registry)
             registry.registerCapabilityProcessor(AnimeCapabilityProcessor())
             registry.registerChildListProcessor(
                 AnimeChildListProcessor(
@@ -82,24 +93,7 @@ internal fun animeEntryInteractionPlugin(
                     dependencies = dependencies,
                 ),
             )
-            registry.registerConsumptionProcessor(
-                AnimeConsumptionProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    downloadLifecycle = dependencies.downloadLifecycle,
-                ),
-            )
             registry.registerUpdateEligibilityProcessor(AnimeUpdateEligibilityProcessor())
-            registry.registerProgressProcessor(
-                AnimeProgressProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    entryChapterRepository = dependencies.entryChapterRepository,
-                ),
-            )
-            registry.registerPlaybackPreferencesProcessor(
-                AnimePlaybackPreferencesProcessor(
-                    playbackPreferencesRepository = dependencies.playbackPreferencesRepository,
-                ),
-            )
             registry.registerChildGroupFilterProcessor(AnimeChildGroupFilterProcessor())
             registry.registerLibraryFilterProcessor(AnimeLibraryFilterProcessor())
             registry.registerPreviewProcessor(

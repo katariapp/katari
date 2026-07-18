@@ -2,20 +2,20 @@ package mihon.entry.interactions.manga
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryBookmarkCapability
 import mihon.entry.interactions.EntryChildGroupFilterDataSource
+import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryOpenCapability
+import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
 import mihon.entry.interactions.manga.download.DownloadCache
 import mihon.entry.interactions.manga.download.DownloadManager
 import mihon.entry.interactions.settings.EntryInteractionPreferences
-import mihon.entry.interactions.toContentTypeId
-import mihon.feature.graph.CapabilityProvider
-import mihon.feature.graph.ContentTypeContribution
 import mihon.feature.graph.ContributionOwner
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -57,19 +57,28 @@ internal fun mangaEntryInteractionPlugin(
         entryProgressRepository = dependencies.entryProgressRepository,
         openProcessor = openProcessor,
     )
+    val consumptionProcessor = MangaConsumptionProcessor(
+        entryChapterRepository = dependencies.entryChapterRepository,
+        entryProgressRepository = dependencies.entryProgressRepository,
+        downloadLifecycle = dependencies.downloadLifecycle,
+    )
+    val progressProcessor = MangaProgressProcessor(
+        entryProgressRepository = dependencies.entryProgressRepository,
+        entryChapterRepository = dependencies.entryChapterRepository,
+    )
     return object : EntryInteractionPlugin {
         override val type = EntryType.MANGA
-        override val contentTypeContribution = ContentTypeContribution(
-            contentType = type.toContentTypeId(),
-            owner = ContributionOwner("entry-interactions.manga"),
-            providers = listOf(
-                CapabilityProvider(EntryOpenCapability, openProcessor),
-                CapabilityProvider(EntryContinueCapability, continueProcessor),
-            ),
+        override val owner = ContributionOwner("entry-interactions.manga")
+        override val providerBindings = listOf(
+            EntryOpenCapability.bind(openProcessor),
+            EntryContinueCapability.bind(continueProcessor),
+            EntryConsumptionCapability.bind(consumptionProcessor),
+            EntryBookmarkCapability.bind(consumptionProcessor),
+            EntryProgressCapability.bind(progressProcessor),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
-            installContributedProviders(registry)
+            super<EntryInteractionPlugin>.register(registry)
             registry.registerCapabilityProcessor(MangaCapabilityProcessor())
             registry.registerChildListProcessor(MangaChildListProcessor(dependencies.entryProgressRepository))
             registry.registerDownloadProcessor(
@@ -77,20 +86,7 @@ internal fun mangaEntryInteractionPlugin(
                     dependencies = dependencies,
                 ),
             )
-            val consumptionProcessor = MangaConsumptionProcessor(
-                entryChapterRepository = dependencies.entryChapterRepository,
-                entryProgressRepository = dependencies.entryProgressRepository,
-                downloadLifecycle = dependencies.downloadLifecycle,
-            )
-            registry.registerConsumptionProcessor(consumptionProcessor)
-            registry.registerBookmarkProcessor(consumptionProcessor)
             registry.registerUpdateEligibilityProcessor(MangaUpdateEligibilityProcessor())
-            registry.registerProgressProcessor(
-                MangaProgressProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    entryChapterRepository = dependencies.entryChapterRepository,
-                ),
-            )
             registry.registerChildGroupFilterProcessor(
                 MangaChildGroupFilterProcessor(
                     dataSource = dependencies.childGroupFilterDataSource,

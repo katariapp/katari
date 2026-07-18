@@ -19,15 +19,15 @@ internal class AnimeConsumptionProcessor(
 
     override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
         entry.requireAnime()
-        chapters.forEach { chapter ->
+        val chaptersToUpdate = chapters.filter { chapter ->
             val current = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
-            if (!canSetConsumed(
-                    chapter.consumptionStatus(hasPartialProgress = current?.hasPartialAnimeProgress == true),
-                    consumed,
-                )
-            ) {
-                return@forEach
-            }
+            canSetConsumed(
+                chapter.consumptionStatus(hasPartialProgress = current?.hasPartialAnimeProgress == true),
+                consumed,
+            )
+        }
+        chaptersToUpdate.forEach { chapter ->
+            val current = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
             val updated = if (consumed) {
                 current?.copy(
                     chapterId = chapter.id,
