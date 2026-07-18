@@ -65,7 +65,11 @@ import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCapabilityInteraction
-import mihon.entry.interactions.EntryChildGroupFilterInteraction
+import mihon.entry.interactions.EntryChildGroupFilterFeature
+import mihon.entry.interactions.EntryChildGroupFilterObservationResult
+import mihon.entry.interactions.EntryChildGroupFilterResult
+import mihon.entry.interactions.EntryChildGroupFilterScope
+import mihon.entry.interactions.EntryChildGroupFilterStateResult
 import mihon.entry.interactions.EntryChildListFeature
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListResult
@@ -88,10 +92,15 @@ import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
-import mihon.entry.interactions.EntryFirstChildResult
+import mihon.entry.interactions.EntryPreviewAvailability
+import mihon.entry.interactions.EntryPreviewChildCandidate
 import mihon.entry.interactions.EntryPreviewConfig
+import mihon.entry.interactions.EntryPreviewContext
+import mihon.entry.interactions.EntryPreviewFeature
 import mihon.entry.interactions.EntryPreviewHandle
-import mihon.entry.interactions.EntryPreviewInteraction
+import mihon.entry.interactions.EntryPreviewLoadRequest
+import mihon.entry.interactions.EntryPreviewLoadResult
+import mihon.entry.interactions.EntryPreviewOpenTargetResult
 import mihon.entry.interactions.EntryPreviewPage
 import mihon.entry.interactions.EntryPreviewPageStatus
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
@@ -156,9 +165,9 @@ class EntryScreenModel(
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryBookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val entryContinueFeature: EntryContinueFeature = Injekt.get(),
-    private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
+    private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
     private val entryChildListFeature: EntryChildListFeature = Injekt.get(),
-    private val entryChildGroupFilterInteraction: EntryChildGroupFilterInteraction = Injekt.get(),
+    private val entryChildGroupFilterFeature: EntryChildGroupFilterFeature = Injekt.get(),
     private val coverCache: CoverCache = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getMergedEntry: GetMergedEntry = Injekt.get(),
@@ -241,7 +250,7 @@ class EntryScreenModel(
     }
 
     fun isEntryPreviewEnabled(entry: Entry): Boolean {
-        return previewConfigState.value.enabled && entryPreviewInteraction.isSupported(entry)
+        return entryPreviewFeature.availability(previewContext(entry)) is EntryPreviewAvailability.Available
     }
 
     private fun isPreviewAvailable(entry: Entry? = successState?.entry): Boolean {
@@ -254,20 +263,35 @@ class EntryScreenModel(
 
         previewConfigEntryKey = key
         previewConfigJob?.cancel()
-        applyPreviewConfig(
-            config = entryPreviewInteraction.config(entry),
+        applyPreviewAvailability(
+            availability = entryPreviewFeature.availability(previewContext(entry)),
             reloadExpanded = false,
         )
         previewConfigJob = screenModelScope.launchIO {
-            entryPreviewInteraction.configChanges(entry)
+            entryPreviewFeature.availabilityChanges(previewContext(entry))
                 .flowWithLifecycle(lifecycle)
-                .collectLatest { config ->
-                    applyPreviewConfig(
-                        config = config,
+                .collectLatest { availability ->
+                    applyPreviewAvailability(
+                        availability = availability,
                         reloadExpanded = true,
                     )
                 }
         }
+    }
+
+    private fun previewContext(entry: Entry): EntryPreviewContext = EntryPreviewContext(
+        entry = entry,
+        source = sourceManager.getOrStub(entry.source),
+    )
+
+    private fun applyPreviewAvailability(
+        availability: EntryPreviewAvailability,
+        reloadExpanded: Boolean,
+    ) {
+        applyPreviewConfig(
+            config = availability.config.copy(enabled = availability is EntryPreviewAvailability.Available),
+            reloadExpanded = reloadExpanded,
+        )
     }
 
     private fun applyPreviewConfig(
@@ -298,6 +322,7 @@ class EntryScreenModel(
 
     init {
         observeChildProgressLabels()
+        observeChildGroupFilter()
 
         screenModelScope.launchIO {
             mergeAwareEntryAndChaptersFlow(
@@ -319,7 +344,6 @@ class EntryScreenModel(
                             mergedMemberTitles = mergePresentation.mergedMemberTitles,
                             mergeTargetId = mergePresentation.mergeTargetId,
                             mergeGroupMemberIds = mergePresentation.mergeGroupMemberIds,
-                            childGroupFilterSupported = entryChildGroupFilterInteraction.supports(entry),
                             chapters = chapters.toChapterListItems(entry),
                             duplicateCandidates = if (it.isFromSource && !entry.favorite) {
                                 it.duplicateCandidates
@@ -329,40 +353,6 @@ class EntryScreenModel(
                         )
                     }
                 }
-        }
-
-        if (!bypassMerge) {
-            screenModelScope.launchIO {
-                combine(
-                    getMergedEntry.subscribeGroupByEntryId(entryId).distinctUntilChanged(),
-                    entryChildGroupFilterInteraction.excludedGroupsChanged(entryId),
-                ) { _, _ -> Unit }
-                    .flowWithLifecycle(lifecycle)
-                    .collectLatest {
-                        val mergedMemberIds = getDisplayedMemberIds()
-                        updateSuccessState {
-                            it.copy(
-                                excludedScanlators = getExcludedChildGroups(it.entry, mergedMemberIds),
-                            )
-                        }
-                    }
-            }
-
-            screenModelScope.launchIO {
-                combine(
-                    getMergedEntry.subscribeGroupByEntryId(entryId).distinctUntilChanged(),
-                    entryChildGroupFilterInteraction.availableGroupsChanged(entryId),
-                ) { _, _ -> Unit }
-                    .flowWithLifecycle(lifecycle)
-                    .collectLatest {
-                        val mergedMemberIds = getDisplayedMemberIds()
-                        updateSuccessState {
-                            it.copy(
-                                availableScanlators = getAvailableChildGroups(it.entry, mergedMemberIds),
-                            )
-                        }
-                    }
-            }
         }
 
         observeDownloads()
@@ -375,8 +365,11 @@ class EntryScreenModel(
             }
 
             val mergePresentation = getMergePresentation(entry)
-            val chapters = getDisplayedChapters(entry)
+            val chapters = getDisplayedChapters()
                 .toChapterListItems(entry)
+            val childGroupFilterState = entryChildGroupFilterFeature.state(
+                EntryChildGroupFilterScope(entry, mergePresentation.memberIds),
+            )
 
             if (!entry.favorite) {
                 setDefaultChapterFlags(entry)
@@ -410,9 +403,8 @@ class EntryScreenModel(
                     isFromSource = isFromSource,
                     chapters = chapters,
                     childListFeature = entryChildListFeature,
-                    childGroupFilterSupported = entryChildGroupFilterInteraction.supports(entry),
-                    availableScanlators = getAvailableChildGroups(entry, mergePresentation.memberIds),
-                    excludedScanlators = getExcludedChildGroups(entry, mergePresentation.memberIds),
+                    childGroupFilterFeature = entryChildGroupFilterFeature,
+                    childGroupFilterState = childGroupFilterState,
                     duplicateCandidates = emptyList(),
                     isRefreshingData = needRefreshInfo || needRefreshChapter,
                     dialog = null,
@@ -469,6 +461,36 @@ class EntryScreenModel(
         }
     }
 
+    private fun observeChildGroupFilter() {
+        screenModelScope.launchIO {
+            combine(
+                getEntry.subscribe(entryId),
+                getMergedEntry.subscribeGroupByEntryId(entryId).distinctUntilChanged(),
+            ) { entry, mergeGroup ->
+                val memberIds = if (bypassMerge) {
+                    listOf(entryId)
+                } else {
+                    mergeGroup.sortedBy { it.position }.map { it.entryId }.ifEmpty { listOf(entryId) }
+                }
+                EntryChildGroupFilterScope(entry, memberIds)
+            }
+                .flatMapLatest { scope ->
+                    when (val observation = entryChildGroupFilterFeature.observe(scope)) {
+                        is EntryChildGroupFilterObservationResult.Available -> observation.states.map {
+                            EntryChildGroupFilterStateResult.Available(it)
+                        }
+                        is EntryChildGroupFilterObservationResult.Inapplicable -> flowOf(
+                            EntryChildGroupFilterStateResult.Inapplicable(observation.type),
+                        )
+                    }
+                }
+                .flowWithLifecycle(lifecycle)
+                .collectLatest { childGroupFilterState ->
+                    updateSuccessState { it.copy(childGroupFilterState = childGroupFilterState) }
+                }
+        }
+    }
+
     fun fetchAllFromSource(manualFetch: Boolean = true) {
         launchRefreshFromSource(
             manualFetch = manualFetch,
@@ -513,6 +535,7 @@ class EntryScreenModel(
                     chapterId = null,
                     pages = emptyList(),
                     pageCount = pageCount,
+                    hasLoaded = false,
                 )
             }
 
@@ -529,20 +552,28 @@ class EntryScreenModel(
             }
 
             runCatching {
-                val latestEntry = getEntry.await(entryId) ?: return@runCatching
-                val previewChapterItem = if (entryPreviewInteraction.requiresChapter(latestEntry)) {
-                    getFirstPreviewChapter()
-                        ?: error(context.stringResource(latestEntry.type.entryTypePresentation().noChildrenFoundLabel))
-                } else {
-                    null
+                val latestEntry = requireNotNull(getEntry.await(entryId)) {
+                    "Preview entry $entryId no longer exists"
                 }
-                val handle = entryPreviewInteraction.loadPreview(
-                    context = context,
-                    entry = latestEntry,
-                    chapter = previewChapterItem?.chapter,
-                    source = sourceManager.getOrStub(previewChapterItem?.entry?.source ?: latestEntry.source),
-                    pageCount = pageCount,
-                )
+                val candidates = getPreviewCandidates(latestEntry)
+                when (
+                    val result = entryPreviewFeature.load(
+                        EntryPreviewLoadRequest(
+                            context = context,
+                            previewContext = previewContext(latestEntry),
+                            children = candidates,
+                            memberIds = getMergePresentation(latestEntry).memberIds,
+                        ),
+                    )
+                ) {
+                    is EntryPreviewLoadResult.Loaded -> result.handle
+                    is EntryPreviewLoadResult.Disabled -> error("Preview was disabled before loading")
+                    is EntryPreviewLoadResult.Inapplicable -> error("Preview is not supported for ${result.type}")
+                    is EntryPreviewLoadResult.ContextuallyUnavailable -> error(
+                        context.stringResource(latestEntry.type.entryTypePresentation().noChildrenFoundLabel),
+                    )
+                }
+            }.onSuccess { handle ->
                 previewHandle = handle
                 val loadedPages = handle.pages.map(::PreviewPage)
 
@@ -554,6 +585,7 @@ class EntryScreenModel(
                         chapterId = handle.chapterId,
                         pages = loadedPages,
                         pageCount = pageCount,
+                        hasLoaded = true,
                     )
                 }
             }.onFailure { error ->
@@ -569,6 +601,7 @@ class EntryScreenModel(
                         chapterId = null,
                         pages = emptyList(),
                         pageCount = pageCount,
+                        hasLoaded = false,
                     )
                 }
             }
@@ -577,14 +610,14 @@ class EntryScreenModel(
 
     fun loadPreviewPage(pageIndex: Int) {
         val handle = previewHandle ?: return
-        val page = handle.pages.getOrNull(pageIndex) ?: return
+        val page = handle.pages.firstOrNull { it.index == pageIndex } ?: return
         if (page.status.value == EntryPreviewPageStatus.Ready) return
         if (previewPageJobs[pageIndex]?.isActive == true) return
 
         previewPageJobs = previewPageJobs + (
             pageIndex to screenModelScope.launchIO {
                 try {
-                    entryPreviewInteraction.loadPage(handle, pageIndex)
+                    entryPreviewFeature.loadPage(handle, pageIndex)
                 } catch (_: Throwable) {
                     // Page state carries the failure.
                 }
@@ -592,14 +625,24 @@ class EntryScreenModel(
             )
     }
 
-    private suspend fun getFirstPreviewChapter(): EntryChapterList.Item? {
-        val entry = getEntry.await(entryId) ?: return null
-        val mergePresentation = getMergePresentation(entry)
+    private suspend fun getPreviewCandidates(entry: Entry): List<EntryPreviewChildCandidate> {
         val chapters = getDisplayedChapters()
         val chapterItems = chapters.toChapterListItems(entry)
-        return chapterItems
-            .previewFirstReadingChapter(entry, mergePresentation.memberIds, entryChildListFeature)
+        return chapterItems.applyFiltersForPreview(entry).map { item ->
+            EntryPreviewChildCandidate(
+                entry = item.entry,
+                child = item.chapter,
+                source = sourceManager.getOrStub(item.entry.source),
+            )
+        }
     }
+
+    fun previewOpenTarget(pageIndex: Int): EntryPreviewOpenTargetResult {
+        val handle = previewHandle ?: return EntryPreviewOpenTargetResult.NotOpenable
+        return entryPreviewFeature.openTarget(handle, pageIndex)
+    }
+
+    fun isPreviewOpenApplicable(type: EntryType): Boolean = entryPreviewFeature.isOpenApplicable(type)
 
     private fun launchRefreshFromSource(
         manualFetch: Boolean,
@@ -649,7 +692,7 @@ class EntryScreenModel(
         }
         previewPageJobs.values.forEach(Job::cancel)
         previewPageJobs = emptyMap()
-        previewHandle?.let(entryPreviewInteraction::release)
+        previewHandle?.let(entryPreviewFeature::release)
         previewHandle = null
         if (resetState) {
             previewLoaderState.value = EntryPreviewState(pageCount = previewConfigState.value.pageCount)
@@ -2041,13 +2084,11 @@ class EntryScreenModel(
 
     fun setExcludedScanlators(excludedScanlators: Set<String>) {
         val state = successState ?: return
-        if (!state.childGroupFilterSupported) return
 
         screenModelScope.launchIO {
-            entryChildGroupFilterInteraction.setExcludedGroups(
-                entry = state.entry,
-                memberIds = getDisplayedMemberIds(),
-                excluded = excludedScanlators,
+            entryChildGroupFilterFeature.setExcludedGroups(
+                scope = EntryChildGroupFilterScope(state.entry, getDisplayedMemberIds()),
+                excludedGroups = excludedScanlators,
             )
         }
     }
@@ -2064,26 +2105,15 @@ class EntryScreenModel(
             .ifEmpty { listOf(entryId) }
     }
 
-    private suspend fun getDisplayedChapters(entry: Entry? = successState?.entry): List<EntryChapter> {
+    private suspend fun getDisplayedChapters(): List<EntryChapter> {
         val memberIds = getDisplayedMemberIds()
-        val applyScanlatorFilter = entry?.let(entryChildGroupFilterInteraction::shouldApplyFilter) == true
         return if (memberIds.size == 1) {
-            entryChapterRepository.getChaptersByEntryIdAwait(memberIds.single(), applyScanlatorFilter)
+            entryChapterRepository.getChaptersByEntryIdAwait(memberIds.single(), applyScanlatorFilter = false)
         } else {
             memberIds.flatMap { memberId ->
-                entryChapterRepository.getChaptersByEntryIdAwait(memberId, applyScanlatorFilter)
+                entryChapterRepository.getChaptersByEntryIdAwait(memberId, applyScanlatorFilter = false)
             }
         }
-    }
-
-    private suspend fun getAvailableChildGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
-        if (!entryChildGroupFilterInteraction.supports(entry)) return emptySet()
-        return entryChildGroupFilterInteraction.availableGroups(entry, memberIds)
-    }
-
-    private suspend fun getExcludedChildGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
-        if (!entryChildGroupFilterInteraction.supports(entry)) return emptySet()
-        return entryChildGroupFilterInteraction.excludedGroups(entry, memberIds)
     }
 
     private suspend fun entryAndChaptersFlow(): Flow<Pair<Entry, List<EntryChapter>>> {
@@ -2342,9 +2372,8 @@ class EntryScreenModel(
             val chapters: List<EntryChapterList.Item>,
             val childProgressLabels: Map<Long, EntryChildProgressLabel> = emptyMap(),
             val childListFeature: EntryChildListFeature,
-            val childGroupFilterSupported: Boolean,
-            val availableScanlators: Set<String>,
-            val excludedScanlators: Set<String>,
+            val childGroupFilterFeature: EntryChildGroupFilterFeature,
+            val childGroupFilterState: EntryChildGroupFilterStateResult,
             val trackingCount: Int = 0,
             val hasLoggedInTrackers: Boolean = false,
             val duplicateCandidates: List<DuplicateEntryCandidate> = emptyList(),
@@ -2354,7 +2383,25 @@ class EntryScreenModel(
             val hideMissingChapters: Boolean = false,
         ) : State {
             val processedChapters by lazy {
-                chapters.applyFilters(entry, childListFeature).toList()
+                val groupFilteredChapters = when (val result = childGroupFilterState) {
+                    is EntryChildGroupFilterStateResult.Available -> {
+                        when (
+                            val filtered = childGroupFilterFeature.filter(
+                                entry = entry,
+                                chapters = chapters.map { it.chapter },
+                                excludedGroups = result.state.excludedGroups,
+                            )
+                        ) {
+                            is EntryChildGroupFilterResult.Available -> {
+                                val visibleIds = filtered.chapters.mapTo(hashSetOf(), EntryChapter::id)
+                                chapters.filter { it.chapter.id in visibleIds }
+                            }
+                            is EntryChildGroupFilterResult.Inapplicable -> chapters
+                        }
+                    }
+                    is EntryChildGroupFilterStateResult.Inapplicable -> chapters
+                }
+                groupFilteredChapters.applyFilters(entry, childListFeature).toList()
             }
 
             val readingChapters by lazy {
@@ -2385,8 +2432,10 @@ class EntryScreenModel(
                 get() = childListFeature.isApplicable(entry.type)
 
             val scanlatorFilterActive: Boolean
-                get() = childGroupFilterSupported &&
-                    excludedScanlators.intersect(availableScanlators).isNotEmpty()
+                get() = (childGroupFilterState as? EntryChildGroupFilterStateResult.Available)?.state?.active == true
+
+            val childGroupFilterApplicable: Boolean
+                get() = childGroupFilterState is EntryChildGroupFilterStateResult.Available
 
             val filterActive: Boolean
                 get() = scanlatorFilterActive || entry.chaptersFiltered()
@@ -2430,9 +2479,10 @@ class EntryScreenModel(
         val chapterId: Long? = null,
         val pages: List<PreviewPage> = emptyList(),
         val pageCount: Int = 5,
+        val hasLoaded: Boolean = false,
     ) {
         val hasLoadedContent: Boolean
-            get() = chapterId != null && !isLoading && error == null
+            get() = (hasLoaded || chapterId != null) && !isLoading && error == null
     }
 
     @Immutable
@@ -2465,26 +2515,6 @@ sealed class EntryChapterList {
     ) : EntryChapterList() {
         val id = chapter.id
         val isDownloaded = downloadState == EntryDownloadState.DOWNLOADED
-    }
-}
-
-private fun List<EntryChapterList.Item>.previewFirstReadingChapter(
-    entry: Entry,
-    memberIds: List<Long>,
-    childListFeature: EntryChildListFeature,
-): EntryChapterList.Item? {
-    val filtered = applyFiltersForPreview(entry)
-    return when (
-        val result = childListFeature.firstReadingChild(
-            entry = entry,
-            chapters = filtered.map(EntryChapterList.Item::chapter),
-            memberIds = memberIds,
-        )
-    ) {
-        is EntryFirstChildResult.Available -> result.chapter?.let { chapter ->
-            filtered.firstOrNull { it.chapter.id == chapter.id }
-        }
-        is EntryFirstChildResult.Inapplicable -> null
     }
 }
 

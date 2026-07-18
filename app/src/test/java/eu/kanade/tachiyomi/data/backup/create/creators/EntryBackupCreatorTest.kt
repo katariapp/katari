@@ -9,6 +9,8 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.protobuf.ProtoBuf
+import mihon.entry.interactions.EntryChildGroupFilterFeature
+import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
 import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
@@ -65,6 +67,7 @@ class EntryBackupCreatorTest {
         decoded.chapters.map { it.url } shouldBe if (chaptersEnabled) listOf(chapter.url) else emptyList()
         decoded.chapters.map { it.lastPageRead } shouldBe if (chaptersEnabled) listOf(0L) else emptyList()
         decoded.playbackStates shouldBe emptyList()
+        decoded.excludedScanlators shouldBe if (type == EntryType.MANGA) listOf("Group A") else emptyList()
         decoded.progressStates.map { it.resourceKey } shouldBe if (chaptersEnabled) {
             listOf(chapter.url)
         } else {
@@ -99,6 +102,9 @@ class EntryBackupCreatorTest {
         coVerify(exactly = 1) {
             fixture.playbackPreferencesFeature.snapshot(entry)
         }
+        coVerify(exactly = 1) {
+            fixture.childGroupFilterFeature.snapshot(1L, entry)
+        }
         coVerify(exactly = if (chaptersEnabled) 1 else 0) {
             fixture.progressFeature.snapshot(entry)
         }
@@ -116,6 +122,7 @@ class EntryBackupCreatorTest {
         val downloadPreferencesRepository = mockk<DownloadPreferencesRepository>()
         val progressFeature = mockk<EntryProgressFeature>()
         val playbackPreferencesFeature = mockk<EntryPlaybackPreferencesFeature>()
+        val childGroupFilterFeature = mockk<EntryChildGroupFilterFeature>()
         private val viewerSettingOverrideRepository = mockk<ViewerSettingOverrideRepository>()
 
         val creator = EntryBackupCreator(
@@ -126,6 +133,7 @@ class EntryBackupCreatorTest {
             downloadPreferencesRepository = downloadPreferencesRepository,
             progressFeature = progressFeature,
             playbackPreferencesFeature = playbackPreferencesFeature,
+            childGroupFilterFeature = childGroupFilterFeature,
             viewerSettingOverrideRepository = viewerSettingOverrideRepository,
         )
 
@@ -165,6 +173,11 @@ class EntryBackupCreatorTest {
                     ),
                 ),
             )
+            coEvery { childGroupFilterFeature.snapshot(1L, entry) } returns if (entry.type == EntryType.MANGA) {
+                EntryChildGroupFilterSnapshotResult.Available(setOf("Group A"))
+            } else {
+                EntryChildGroupFilterSnapshotResult.Inapplicable(entry.type)
+            }
             coEvery { viewerSettingOverrideRepository.getByEntryId(entry.id) } returns listOf(
                 ViewerSettingOverride(
                     entryId = entry.id,

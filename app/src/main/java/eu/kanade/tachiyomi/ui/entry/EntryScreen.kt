@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
+import mihon.entry.interactions.EntryChildGroupFilterStateResult
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
@@ -77,6 +78,7 @@ import mihon.entry.interactions.EntryDownloadActionTarget
 import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
+import mihon.entry.interactions.EntryPreviewOpenTargetResult
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.feature.migration.config.MigrationConfigScreen
 import tachiyomi.core.common.i18n.stringResource
@@ -296,19 +298,24 @@ class EntryScreen(
             onPreviewExpandedChange = screenModel::setPreviewExpanded,
             onPreviewRetry = screenModel::retryPreview,
             onPreviewPageLoad = screenModel::loadPreviewPage,
-            onPreviewPageClick = { chapterId, pageIndex ->
-                scope.launch {
-                    openChapter(
-                        context,
-                        entryOpenFeature,
-                        successState.entry,
-                        successState.chapters.first {
-                            it.chapter.id == chapterId
-                        }.chapter,
-                        pageIndex,
-                    )
+            onPreviewPageClick = (
+                { _: Long, pageIndex: Int ->
+                    val target = screenModel.previewOpenTarget(pageIndex)
+                    if (target is EntryPreviewOpenTargetResult.Available) {
+                        scope.launch {
+                            openChapter(
+                                context,
+                                entryOpenFeature,
+                                successState.entry,
+                                successState.chapters.first {
+                                    it.chapter.id == target.childId
+                                }.chapter,
+                                target.pageIndex,
+                            )
+                        }
+                    }
                 }
-            }.takeIf { openApplicable },
+                ).takeIf { screenModel.isPreviewOpenApplicable(successState.entry.type) },
         )
 
         if (showRelatedEntriesDialog) {
@@ -453,7 +460,7 @@ class EntryScreen(
                 scanlatorFilterActive = successState.scanlatorFilterActive,
                 onScanlatorFilterClicked = {
                     showScanlatorsDialog = true
-                }.takeIf { successState.childGroupFilterSupported },
+                }.takeIf { successState.childGroupFilterApplicable },
             )
             EntryScreenModel.Dialog.TrackSheet -> {
                 NavigatorAdaptiveSheet(
@@ -505,10 +512,13 @@ class EntryScreen(
             }
         }
 
-        if (showScanlatorsDialog && successState.childGroupFilterSupported) {
+        val childGroupFilterState = (
+            successState.childGroupFilterState as? EntryChildGroupFilterStateResult.Available
+            )?.state
+        if (showScanlatorsDialog && childGroupFilterState != null) {
             ScanlatorFilterDialog(
-                availableScanlators = successState.availableScanlators,
-                excludedScanlators = successState.excludedScanlators,
+                availableScanlators = childGroupFilterState.availableGroups,
+                excludedScanlators = childGroupFilterState.excludedGroups,
                 onDismissRequest = { showScanlatorsDialog = false },
                 onConfirm = screenModel::setExcludedScanlators,
             )

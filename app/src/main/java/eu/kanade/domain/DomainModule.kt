@@ -1,12 +1,9 @@
 package eu.kanade.domain
 
-import eu.kanade.domain.chapter.interactor.GetAvailableScanlators
 import eu.kanade.domain.extension.interactor.GetExtensionLanguages
 import eu.kanade.domain.extension.interactor.GetExtensionSources
 import eu.kanade.domain.extension.interactor.GetExtensionsByType
 import eu.kanade.domain.extension.interactor.TrustExtension
-import eu.kanade.domain.scanlator.interactor.GetExcludedScanlators
-import eu.kanade.domain.scanlator.interactor.SetExcludedScanlators
 import eu.kanade.domain.source.interactor.GetEnabledCatalogSources
 import eu.kanade.domain.source.interactor.GetEnabledSources
 import eu.kanade.domain.source.interactor.GetIncognitoState
@@ -162,8 +159,6 @@ class DomainModule : InjektModule {
         addFactory { FetchInterval(get()) }
         addFactory { SetEntryViewerFlags(get()) }
         addFactory { UpdateEntry(get(), get()) }
-        addFactory { GetExcludedScanlators(get(), get()) }
-        addFactory { SetExcludedScanlators(get(), get()) }
         addFactory { EnhanceDuplicateLibraryEntries(get(), get()) }
         addFactory { GetEnhancedDuplicateLibraryEntries(get(), get(), get(), get()) }
         addFactory {
@@ -186,7 +181,6 @@ class DomainModule : InjektModule {
         addFactory { InsertTrack(get()) }
         addFactory { SyncChapterProgressWithTrack(get(), get(), get(), get()) }
 
-        addFactory { GetAvailableScanlators(get()) }
         addSingletonFactory<HistoryRepository> { HistoryRepositoryImpl(get(), get()) }
         addFactory { GetHistory(get(), get()) }
         addFactory { UpsertHistory(get()) }

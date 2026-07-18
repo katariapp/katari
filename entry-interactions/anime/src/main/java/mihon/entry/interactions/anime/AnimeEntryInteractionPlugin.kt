@@ -16,6 +16,7 @@ import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryPlaybackPreferencesCapability
 import mihon.entry.interactions.EntryPreviewCapability
+import mihon.entry.interactions.EntryPreviewConfigurationCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
@@ -79,7 +80,6 @@ internal fun animeEntryInteractionPlugin(
     val childListProcessor = AnimeChildListProcessor(dependencies.entryProgressRepository)
     val previewProcessor = AnimePreviewInteraction(
         entryInteractionPreferences = dependencies.entryInteractionPreferences,
-        sourceManager = dependencies.sourceManager,
     )
     val immersiveProcessor = AnimeImmersiveProcessor(
         entryProgressRepository = dependencies.entryProgressRepository,
@@ -103,6 +103,7 @@ internal fun animeEntryInteractionPlugin(
             EntryChildListCapability.bind(childListProcessor),
             EntryChildProgressCapability.bind(childListProcessor),
             EntryPreviewCapability.bind(previewProcessor),
+            EntryPreviewConfigurationCapability.bind(previewProcessor),
             EntryImmersiveCapability.bind(immersiveProcessor),
         )
     }

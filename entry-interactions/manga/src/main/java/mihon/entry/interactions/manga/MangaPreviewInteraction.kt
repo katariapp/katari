@@ -16,41 +16,49 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import mihon.entry.interactions.EntryPreviewConfig
+import mihon.entry.interactions.EntryPreviewConfigurationProvider
+import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryPreviewHandle
+import mihon.entry.interactions.EntryPreviewLoadMode
 import mihon.entry.interactions.EntryPreviewPage
 import mihon.entry.interactions.EntryPreviewPageStatus
 import mihon.entry.interactions.EntryPreviewProcessor
+import mihon.entry.interactions.EntryPreviewSettings
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
 internal class MangaPreviewInteraction(
     private val entryInteractionPreferences: EntryInteractionPreferences,
-) : EntryPreviewProcessor {
+) : EntryPreviewProcessor, EntryPreviewConfigurationProvider {
     override val type: EntryType = EntryType.MANGA
+    override val loadMode = EntryPreviewLoadMode.FIRST_READING_CHILD
+    override val settings = EntryPreviewSettings(
+        type = type,
+        enabled = entryInteractionPreferences.enableMangaPreview,
+        pageCount = entryInteractionPreferences.mangaPreviewPageCount,
+        size = entryInteractionPreferences.mangaPreviewSize,
+    )
 
-    override fun isSupported(entry: Entry): Boolean {
-        return entry.type == EntryType.MANGA
-    }
+    override fun contextAvailability(entry: Entry, source: UnifiedSource): EntryPreviewContextResult =
+        EntryPreviewContextResult.Available
 
-    override fun requiresChapter(entry: Entry): Boolean = true
-
-    override fun config(entry: Entry): EntryPreviewConfig {
+    override fun config(): EntryPreviewConfig {
         return EntryPreviewConfig(
-            enabled = isSupported(entry) && entryInteractionPreferences.enableMangaPreview.get(),
+            enabled = entryInteractionPreferences.enableMangaPreview.get(),
             pageCount = entryInteractionPreferences.mangaPreviewPageCount.get(),
             size = entryInteractionPreferences.mangaPreviewSize.get(),
         )
     }
 
-    override fun configChanges(entry: Entry): Flow<EntryPreviewConfig> {
+    override fun configChanges(): Flow<EntryPreviewConfig> {
         return combine(
             entryInteractionPreferences.enableMangaPreview.changes(),
             entryInteractionPreferences.mangaPreviewPageCount.changes(),
             entryInteractionPreferences.mangaPreviewSize.changes(),
         ) { enabled, pageCount, size ->
             EntryPreviewConfig(
-                enabled = isSupported(entry) && enabled,
+                enabled = enabled,
                 pageCount = pageCount,
                 size = size,
             )

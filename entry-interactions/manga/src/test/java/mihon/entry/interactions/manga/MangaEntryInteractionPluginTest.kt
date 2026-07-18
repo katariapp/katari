@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
-import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
@@ -144,6 +143,14 @@ class MangaEntryInteractionPluginTest {
             "missing:1-3:1",
             "child:3",
         )
+    }
+
+    @Test
+    fun `manga child groups use non-blank normalized scanlator names`() {
+        val entry = entry(EntryType.MANGA)
+
+        MangaChildGroupFilterProcessor.groupFor(entry, chapter().copy(scanlator = " Group A ")) shouldBe "Group A"
+        MangaChildGroupFilterProcessor.groupFor(entry, chapter().copy(scanlator = "  ")).shouldBeNull()
     }
 
     @Test
@@ -596,7 +603,7 @@ class MangaEntryInteractionPluginTest {
             ),
         )
 
-        val config = interactions.preview.config(entry(EntryType.MANGA))
+        val config = requireNotNull(interactions.preview.configuration(EntryType.MANGA)).config()
 
         config.enabled shouldBe true
         config.pageCount shouldBe 12
@@ -618,7 +625,6 @@ class MangaEntryInteractionPluginTest {
             },
             entryChapterRepository = FakeEntryChapterRepository(chapters),
             entryProgressRepository = FakeEntryProgressRepository(progressStates),
-            childGroupFilterDataSource = FakeEntryChildGroupFilterDataSource(),
             downloadPreferences = mockDownloadPreferences(),
             downloadManager = downloadManager,
             downloadCache = mockDownloadCache(),
@@ -842,18 +848,6 @@ class MangaEntryInteractionPluginTest {
             states += state
             upsertedStates += state
         }
-    }
-
-    private class FakeEntryChildGroupFilterDataSource : EntryChildGroupFilterDataSource {
-        override fun availableGroupsChanged(entryId: Long): Flow<Unit> = emptyFlow()
-
-        override suspend fun availableGroups(entryIds: Collection<Long>): Set<String> = emptySet()
-
-        override fun excludedGroupsChanged(entryId: Long): Flow<Unit> = emptyFlow()
-
-        override suspend fun excludedGroups(entryIds: Collection<Long>): Set<String> = emptySet()
-
-        override suspend fun setExcludedGroups(entryIds: Collection<Long>, excluded: Set<String>) = Unit
     }
 
     private suspend inline fun <reified T : Throwable> assertFailsWith(

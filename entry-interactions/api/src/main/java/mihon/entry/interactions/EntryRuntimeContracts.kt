@@ -3,6 +3,7 @@ package mihon.entry.interactions
 import android.app.Activity
 import android.content.Context
 import kotlinx.coroutines.flow.Flow
+import tachiyomi.domain.entry.model.EntryChapter
 import java.io.File
 
 interface EntryPageImageCache {
@@ -47,9 +48,9 @@ interface EntryPlayerCache : EntryMediaCacheBucket {
 }
 
 interface EntryChildGroupFilterDataSource {
-    fun availableGroupsChanged(entryId: Long): Flow<Unit>
-    suspend fun availableGroups(entryIds: Collection<Long>): Set<String>
-    fun excludedGroupsChanged(entryId: Long): Flow<Unit>
-    suspend fun excludedGroups(entryIds: Collection<Long>): Set<String>
-    suspend fun setExcludedGroups(entryIds: Collection<Long>, excluded: Set<String>)
+    fun childrenChanged(entryIds: Collection<Long>): Flow<Unit>
+    suspend fun children(entryIds: Collection<Long>): List<EntryChapter>
+    fun excludedGroupsChanged(profileId: Long?, entryIds: Collection<Long>): Flow<Unit>
+    suspend fun excludedGroups(profileId: Long?, entryIds: Collection<Long>): Map<Long, Set<String>>
+    suspend fun setExcludedGroups(profileId: Long?, entryIds: Collection<Long>, excluded: Set<String>)
 }

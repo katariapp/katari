@@ -1,36 +1,20 @@
 package mihon.entry.interactions.manga
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import kotlinx.coroutines.flow.Flow
-import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildGroupFilterProcessor
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.model.EntryChapter
 
-internal class MangaChildGroupFilterProcessor(
-    private val dataSource: EntryChildGroupFilterDataSource,
-) : EntryChildGroupFilterProcessor {
+internal object MangaChildGroupFilterProcessor : EntryChildGroupFilterProcessor {
     override val type: EntryType = EntryType.MANGA
 
-    override fun availableGroupsChanged(entryId: Long): Flow<Unit> {
-        return dataSource.availableGroupsChanged(entryId)
-    }
-
-    override suspend fun availableGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
+    override fun groupFor(entry: Entry, chapter: EntryChapter): String? {
         entry.requireManga()
-        return dataSource.availableGroups(memberIds)
+        return normalizeGroup(entry, chapter.scanlator.orEmpty())
     }
 
-    override fun excludedGroupsChanged(entryId: Long): Flow<Unit> {
-        return dataSource.excludedGroupsChanged(entryId)
-    }
-
-    override suspend fun excludedGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
+    override fun normalizeGroup(entry: Entry, group: String): String? {
         entry.requireManga()
-        return dataSource.excludedGroups(memberIds)
-    }
-
-    override suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>) {
-        entry.requireManga()
-        dataSource.setExcludedGroups(memberIds, excluded)
+        return group.trim().takeIf(String::isNotEmpty)
     }
 }

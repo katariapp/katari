@@ -30,12 +30,17 @@ Current progress:
 - [x] `F10` — Bookmarking complete. See [`../features/F10-bookmarking.md`](../features/F10-bookmarking.md).
 - [x] `F13` — Update Eligibility complete. See
   [`../features/F13-update-eligibility.md`](../features/F13-update-eligibility.md).
+- [x] `F14` — Library Filtering complete. See
+  [`../features/F14-library-filtering.md`](../features/F14-library-filtering.md).
 - [x] `F15` — Progress Transfer complete. See
   [`../features/F15-progress-transfer.md`](../features/F15-progress-transfer.md).
 - [x] `F16` — Playback-preference Transfer complete. See
   [`../features/F16-playback-preferences.md`](../features/F16-playback-preferences.md).
 - [x] `F17` — Child List complete. See [`../features/F17-child-list.md`](../features/F17-child-list.md).
-- [ ] `F11`, `F12`, `F14`, and `F18`–`F27` — Not started.
+- [x] `F18` — Child Group Filtering complete. See
+  [`../features/F18-child-group-filtering.md`](../features/F18-child-group-filtering.md).
+- [x] `F19` — Preview complete. See [`../features/F19-preview.md`](../features/F19-preview.md).
+- [ ] `F11`, `F12`, and `F20`–`F27` — Not started.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

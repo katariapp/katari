@@ -27,7 +27,7 @@ Updated: 2026-07-18
 - F03–F05 completion: `846c6029f` (`(refactor): migrate core download features`)
 - F06–F08 completion: `91d57f376` (`(refactor): migrate remaining download features`)
 - F09, F10, and F13 completion: `e175cbc3f` (`(refactor): migrate entry state features`)
-- F15–F17 are integrated and validated as the current review batch.
+- F14, F18, and F19 are integrated and validated as the current review batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -35,8 +35,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F15`, `F16`, and `F17` — Progress Transfer, Playback Preferences, and Child List
-- State: complete and validated; next implementation batch is `F14`, `F18`, and `F19`
+- Milestone: `F14`, `F18`, and `F19` — Library Filtering, Child Group Filtering, and Preview
+- State: complete and validated; next implementation batch is `F20`, `F21`, and `F22`
 
 ## Why the Plan Was Reset
 
@@ -188,6 +188,8 @@ authority or weakening the architecture.
 - [x] F17 Child List ordering, display rows, missing-count results, ordered-child consumers, and optional independent
   Child Progress relationship migrated behind one feature
 - [x] F15/F16/F17 application consumers reconciled together; no application production source imports their raw facades
+- [x] F14 Library filter policy, active state, and capability-dependent control availability migrated behind one feature
+- [x] F14 application consumers use neutral DTOs and no longer import raw Library-filter dispatch
 
 Focused F01 validation:
 
@@ -260,6 +262,43 @@ Focused F15/F16/F17 validation:
   feature-contributor argument to `createEntryInteractions`; F17 does not conceal that architecture obligation with an
   empty contributor placeholder or production fallback.
 
+Focused F14 validation:
+
+- `spotlessApply`, API/SPI/root compilation, and all root Entry-interactions tests pass in the isolated worktree.
+- The boundary census reports seven expected later-feature violations and no raw Library-filter application reference.
+- FOSS compilation reports no F14 error before stopping at the expected F11/F12/F18–F20 raw-facade queue.
+
+Focused F18 validation:
+
+- `spotlessApply`, API/SPI/Manga/root production compilation, and all root Entry-interactions unit tests pass, including
+  the synthetic Child Group Filtering contract.
+- The contract proves valid provider absence, supported-empty state, strict dispatch, normalization/filtering,
+  multi-member observation and mutation, profile-aware snapshot, and additive restore without a production type matrix.
+- Application production code has no raw `EntryChildGroupFilterInteraction` reference. The boundary census reports 7
+  expected remaining references assigned to F11, F12, F14, F19, and F20; FOSS compilation reports no F18 error before
+  stopping at those raw-feature migration failures.
+- The existing Manga type-test source still cannot compile because its pre-existing one-argument
+  `createEntryInteractions` calls omit the now-required feature contributors. F18 adds no empty-contributor shim.
+
+Focused F19 validation:
+
+- Preview provider presence selects every shared surface and lifecycle consequence. Configuration, Child List, Open,
+  and source-capability context remain independent relationships rather than a combined support label.
+- The provider-derived settings projection contains no Manga/Anime UI switch. A provider declares contextual source
+  requirements beside its settings, and generic presentation renders every discovered settings entry.
+- Child-backed providers fail coordinator construction when Preview plus Child List cannot be selected; fixed-config
+  and provider-less types remain valid.
+
+Combined F14/F18/F19 validation:
+
+- `spotlessApply`, Feature Graph and build-logic tests, API/SPI and every production type/root interaction compilation,
+  all root Entry-interactions tests, and FOSS application compilation pass after conflict reconciliation.
+- Application production and test code contain no raw Library Filter, Child Group Filter, or Preview interaction.
+- The boundary census is exactly four later-feature references: three F11/F12 capability-facade consumers and one F20
+  Immersive consumer.
+- The settings boundary caught and rejected a hardcoded Manga/Anime Preview text map during integration. It was removed
+  in favor of provider-declared context plus generic presentation; no allowlist exception was added.
+
 ## New Phase Sequence
 
 - Phase 3: General relationship architecture
@@ -313,8 +352,8 @@ beside the graph.
 - `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
   explicit Phase 5 presentation-projection obligation.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only the real F01–F10, F13, and F15–F17 owners migrated so far; F11, F12, F14, and F18–F27 remain deliberately absent
-  until their owning milestones.
+  only the real F01–F10 and F13–F19 owners migrated so far; F11, F12, and F20–F27 remain deliberately absent until their
+  owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -447,7 +486,7 @@ Approved on 2026-07-18:
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
-- Remaining application failures are the expected migration queue for F11, F12, F14, and F18–F27. Re-exporting SPI,
+- Remaining boundary failures are the expected migration queue for F11, F12, and F20–F27. Re-exporting SPI,
   restoring raw DI, or moving provider facades back into the API would contradict the manifesto rather than fix
   compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
@@ -512,8 +551,15 @@ Approved on 2026-07-18:
   type-mismatch outcomes.
 - F17 makes Child List provider presence the sole list applicability fact, derives optional labels from Child List plus
   Child Progress, and removes the app-owned missing-count type gate without introducing fallback behavior.
+- F14 applies one generic filter policy to every composed type, derives Bookmark-control and outside-release-period
+  applicability independently, and removes the raw application support query without absorbing F13 or contextual
+  Library navigation.
+- F18 makes Child Group Filtering provider presence the sole applicability fact. Shared state, multi-member
+  observation, live filtering, persistence, backup, and controls are Feature-owned without Manga authorization.
+- F19 makes Preview provider presence the sole type-wide support fact, derives configuration, Child List, Open, and
+  contextual source requirements independently, and removes raw Preview access and settings type enumeration.
 
 ## Exact Next Action After Review
 
-Commit the validated F15/F16/F17 batch, remove all three agent worktrees and branches, then start the dependency-ordered
-`F14` Library Filtering, `F18` Child Group Filtering, and `F19` Preview batch.
+Commit the validated F14/F18/F19 batch, remove all three agent worktrees and branches, then start the dependency-ordered
+`F20` Immersive, `F21` Migration, and `F22` Merge batch.

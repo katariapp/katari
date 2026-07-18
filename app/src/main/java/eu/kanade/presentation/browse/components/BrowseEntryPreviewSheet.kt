@@ -61,6 +61,7 @@ import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
+import mihon.entry.interactions.EntryPreviewOpenTargetResult
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.feature.profiles.core.ProfileManager
 import tachiyomi.domain.entry.model.Entry
@@ -156,14 +157,27 @@ fun BrowseEntryPreviewSheet(
                     },
                     onRetry = screenModel::retryPreview,
                     onPageLoad = screenModel::loadPreviewPage,
-                    onPageClick = { chapterId, pageIndex ->
-                        scope.launch {
-                            val chapter = currentState.chapters.firstOrNull {
-                                it.chapter.id == chapterId
-                            }?.chapter ?: return@launch
-                            openChapter(context, entryOpenFeature, currentState.entry, chapter, pageIndex)
+                    onPageClick = (
+                        { _: Long, pageIndex: Int ->
+                            val target = screenModel.previewOpenTarget(pageIndex)
+                            if (target is EntryPreviewOpenTargetResult.Available) {
+                                scope.launch {
+                                    val chapter = currentState.chapters.firstOrNull {
+                                        it.chapter.id == target.childId
+                                    }?.chapter ?: return@launch
+                                    openChapter(
+                                        context,
+                                        entryOpenFeature,
+                                        currentState.entry,
+                                        chapter,
+                                        target.pageIndex,
+                                    )
+                                }
+                            }
                         }
-                    }.takeIf { entryOpenFeature.isApplicable(currentState.entry.type) },
+                        ).takeIf {
+                        screenModel.isPreviewOpenApplicable(currentState.entry.type)
+                    },
                 )
             }
         }

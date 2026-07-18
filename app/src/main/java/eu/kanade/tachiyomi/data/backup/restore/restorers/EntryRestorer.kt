@@ -11,6 +11,7 @@ import eu.kanade.tachiyomi.data.backup.models.BackupPlaybackState
 import eu.kanade.tachiyomi.data.backup.models.BackupTracking
 import eu.kanade.tachiyomi.data.backup.models.toEntryProgressStateSnapshot
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.EntryChildGroupFilterFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
@@ -95,6 +96,7 @@ class EntryRestorer(
     private val downloadPreferencesRepository: DownloadPreferencesRepository = Injekt.get(),
     private val progressFeature: EntryProgressFeature = Injekt.get(),
     private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature = Injekt.get(),
+    private val childGroupFilterFeature: EntryChildGroupFilterFeature = Injekt.get(),
     private val upsertHistory: UpsertHistory = Injekt.get(),
     private val historyRepository: HistoryRepository = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
@@ -245,8 +247,8 @@ class EntryRestorer(
         restoreHistory(entry, backupEntry.history)
         if (entry.type == EntryType.MANGA) {
             restoreTracking(entry, backupEntry.tracking)
-            restoreExcludedScanlators(entry, backupEntry.excludedScanlators)
         }
+        childGroupFilterFeature.restore(entry, backupEntry.excludedScanlators.toSet())
         restorePlaybackPreferences(entry, backupEntry.playbackPreferences)
         val normalizedEntry = restoreViewerSettingOverrides(entry, backupEntry)
         restoreProgress(
@@ -438,21 +440,6 @@ class EntryRestorer(
     }
 
     private fun EntryTrack.forComparison() = this.copy(id = 0L, entryId = 0L)
-
-    private suspend fun restoreExcludedScanlators(entry: Entry, excludedScanlators: List<String>) {
-        if (excludedScanlators.isEmpty()) return
-        val existingExcludedScanlators = handler.awaitList {
-            excluded_scanlatorsQueries.getExcludedScanlatorsByEntryId(profileProvider.activeProfileId, entry.id)
-        }
-        val toInsert = excludedScanlators.filter { it !in existingExcludedScanlators }
-        if (toInsert.isNotEmpty()) {
-            handler.await {
-                toInsert.forEach {
-                    excluded_scanlatorsQueries.insert(profileProvider.activeProfileId, entry.id, it)
-                }
-            }
-        }
-    }
 
     private suspend fun restorePlaybackPreferences(
         entry: Entry,

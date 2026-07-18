@@ -6,6 +6,14 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import mihon.entry.interactions.EntryChildGroupFilterFeature
+import mihon.entry.interactions.EntryChildGroupFilterMutationResult
+import mihon.entry.interactions.EntryChildGroupFilterObservationResult
+import mihon.entry.interactions.EntryChildGroupFilterRestoreResult
+import mihon.entry.interactions.EntryChildGroupFilterResult
+import mihon.entry.interactions.EntryChildGroupFilterScope
+import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
+import mihon.entry.interactions.EntryChildGroupFilterStateResult
 import mihon.entry.interactions.EntryChildListDisplay
 import mihon.entry.interactions.EntryChildListFeature
 import mihon.entry.interactions.EntryChildListRequest
@@ -84,9 +92,8 @@ class EntryScreenModelStateTest {
             isFromSource = false,
             chapters = emptyList(),
             childListFeature = TestEntryChildListFeature,
-            childGroupFilterSupported = false,
-            availableScanlators = emptySet(),
-            excludedScanlators = emptySet(),
+            childGroupFilterFeature = TestEntryChildGroupFilterFeature,
+            childGroupFilterState = EntryChildGroupFilterStateResult.Inapplicable(entry.type),
         )
     }
 
@@ -134,5 +141,38 @@ class EntryScreenModelStateTest {
             val labels: Flow<Map<Long, EntryChildProgressLabel>> = flowOf(emptyMap())
             return EntryChildProgressResult.Available(labels)
         }
+    }
+
+    private object TestEntryChildGroupFilterFeature : EntryChildGroupFilterFeature {
+        override fun isApplicable(type: eu.kanade.tachiyomi.source.entry.EntryType): Boolean = false
+
+        override suspend fun state(scope: EntryChildGroupFilterScope): EntryChildGroupFilterStateResult {
+            return EntryChildGroupFilterStateResult.Inapplicable(scope.entry.type)
+        }
+
+        override fun observe(scope: EntryChildGroupFilterScope): EntryChildGroupFilterObservationResult {
+            return EntryChildGroupFilterObservationResult.Inapplicable(scope.entry.type)
+        }
+
+        override fun filter(
+            entry: Entry,
+            chapters: List<EntryChapter>,
+            excludedGroups: Set<String>,
+        ): EntryChildGroupFilterResult = EntryChildGroupFilterResult.Inapplicable(entry.type)
+
+        override suspend fun setExcludedGroups(
+            scope: EntryChildGroupFilterScope,
+            excludedGroups: Set<String>,
+        ): EntryChildGroupFilterMutationResult = EntryChildGroupFilterMutationResult.Inapplicable(scope.entry.type)
+
+        override suspend fun snapshot(
+            profileId: Long,
+            entry: Entry,
+        ): EntryChildGroupFilterSnapshotResult = EntryChildGroupFilterSnapshotResult.Inapplicable(entry.type)
+
+        override suspend fun restore(
+            entry: Entry,
+            excludedGroups: Set<String>,
+        ): EntryChildGroupFilterRestoreResult = EntryChildGroupFilterRestoreResult.Inapplicable(entry.type)
     }
 }

@@ -49,51 +49,15 @@ internal class ProviderBackedEntryChildProgressInteraction(
 internal class ProviderBackedEntryChildGroupFilterInteraction(
     private val processors: Map<EntryType, EntryChildGroupFilterProcessor>,
 ) : EntryChildGroupFilterInteraction {
-    override fun supports(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
+    override fun groupFor(entry: Entry, chapter: EntryChapter): String? {
+        val processor = processors.requireProcessor("child group filter", entry.type)
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        return true
+        return processor.groupFor(entry, chapter)
     }
 
-    override fun shouldApplyFilter(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
+    override fun normalizeGroup(entry: Entry, group: String): String? {
+        val processor = processors.requireProcessor("child group filter", entry.type)
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        return true
-    }
-
-    override fun availableGroupsChanged(entryId: Long): Flow<Unit> {
-        return processors.values.map { it.availableGroupsChanged(entryId) }.merged()
-    }
-
-    override suspend fun availableGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
-        val processor = processors[entry.type] ?: return emptySet()
-        processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        return processor.availableGroups(entry, memberIds)
-    }
-
-    override fun excludedGroupsChanged(entryId: Long): Flow<Unit> {
-        return processors.values.map { it.excludedGroupsChanged(entryId) }.merged()
-    }
-
-    override suspend fun excludedGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
-        val processor = processors[entry.type] ?: return emptySet()
-        processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        return processor.excludedGroups(entry, memberIds)
-    }
-
-    override suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>) {
-        val processor = processors[entry.type] ?: return
-        processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        processor.setExcludedGroups(entry, memberIds, excluded)
-    }
-}
-
-internal class ProviderBackedEntryLibraryFilterInteraction(
-    private val providers: Map<EntryType, EntryOutsideReleasePeriodFilterProvider>,
-) : EntryLibraryFilterInteraction {
-    override fun supportsOutsideReleasePeriodFilter(entry: Entry): Boolean {
-        val provider = providers[entry.type] ?: return false
-        provider.requireMatchingEntryType("outside release period filter", entry, providers.keys)
-        return true
+        return processor.normalizeGroup(entry, group)
     }
 }

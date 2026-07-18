@@ -42,6 +42,7 @@ import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
+import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryProgressResourceMapping
 import mihon.entry.interactions.EntryProgressSnapshot
 import mihon.entry.interactions.EntryProgressStateSnapshot
@@ -853,7 +854,7 @@ class AnimeEntryInteractionPluginTest {
     }
 
     @Test
-    fun `anime preview config stays disabled while preview implementation is unsupported`() = runTest {
+    fun `anime preview config remains independent from runtime source support`() = runTest {
         val entryInteractionPreferences = EntryInteractionPreferences(InMemoryPreferenceStore())
         entryInteractionPreferences.enableAnimePreview.set(true)
         val interactions = createEntryInteractions(
@@ -864,7 +865,7 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        interactions.preview.config(entry(EntryType.ANIME)).enabled shouldBe false
+        requireNotNull(interactions.preview.configuration(EntryType.ANIME)).config().enabled shouldBe true
     }
 
     @Test
@@ -886,8 +887,11 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        interactions.preview.isSupported(entry(EntryType.ANIME, sourceId = 1L)) shouldBe true
-        interactions.preview.config(entry(EntryType.ANIME, sourceId = 1L)).enabled shouldBe true
+        interactions.preview.processor(EntryType.ANIME)?.contextAvailability(
+            entry(EntryType.ANIME, sourceId = 1L),
+            previewSource,
+        ) shouldBe EntryPreviewContextResult.Available
+        requireNotNull(interactions.preview.configuration(EntryType.ANIME)).config().enabled shouldBe true
     }
 
     private fun dependencies(

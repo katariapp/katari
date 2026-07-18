@@ -93,6 +93,17 @@ SPI boundary is not an exit gate for Phase 3.5.
 - The redundant raw Update Eligibility provider, dispatch, and interaction facade are removed rather than retained as
   an always-present declaration.
 
+### Resolved in F14: Library Filtering feature ownership
+
+- F14 owns generic Library filter interpretation and active-state calculation for every composed content type.
+- Bookmark-filter control availability derives from Bookmark provider evidence, while outside-release-period
+  applicability derives independently from its compatibility marker. Provider absence removes only that optional
+  relationship.
+- The app supplies neutral preference, aggregate Library-state, tracker, local, and release-period DTO fields. It no
+  longer calls raw Library-filter dispatch or reconstructs shared tri-state/tracker policy.
+- Search and category/source/type grouping remain contextual Library navigation; F13 update eligibility, F03 download
+  inspection, F10 bookmark mutation, and F22 Library summaries remain with their owners.
+
 ### Resolved in F15: Progress Transfer feature ownership
 
 - F15 owns graph-derived applicability and structured snapshot, restore, and copy results for portable progress state.
@@ -122,6 +133,29 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Application production code has no raw `EntryChildListInteraction` or `EntryChildProgressInteraction` reference, and
   presentation no longer contains a Manga gate for missing-count behavior.
 
+### Resolved in F18: Child Group Filtering feature ownership
+
+- F18 owns provider-derived applicability, multi-member state observation, live child filtering, exclusion mutation,
+  and backup snapshot/restore through one generic host data source.
+- Type providers own only genuine group discovery and normalization. The raw dispatcher is strict and exposes no
+  support/apply booleans, empty fallbacks, or no-op mutation.
+- The former backup Manga authorization is removed. Profile movement/deletion, SQL and backup wire formats, and the
+  reader/download/history/sync/update/library/Updates paths are declared shared persistence consequences rather than
+  separate type opt-ins.
+- Application production code has no raw `EntryChildGroupFilterInteraction` reference. Provider absence remains valid
+  and yields structured inapplicability through the Feature.
+
+### Resolved in F19: Preview feature ownership
+
+- F19 owns provider-derived applicability, contextual source/preference availability, configuration, Entry and browse
+  surfaces, loading, lazy page loading, open targets, and strict handle release.
+- Child-backed providers declare their stable load mode and fail coordinator construction when the graph cannot select
+  the Preview-plus-Child-List relationship. Entry-level and fixed-config Preview remain valid partial contributions.
+- Preview configuration/settings and Preview-plus-Open are independent derived relationships. The settings screen no
+  longer enumerates Manga and Anime as support authority, and actual opening remains F01-owned.
+- Application production code has no raw `EntryPreviewInteraction` reference. F20 long-press Immersive evidence and F23
+  vocabulary remain separate migrations.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -149,8 +183,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F10, F13, and F15–F17 now install their contributors; providers
-  belonging to F11, F12, F14, and F18–F27 remain deliberately unreachable rather than receiving empty placeholder
+  content-type plugins that contribute themselves. F01–F10 and F13–F19 now install their contributors; providers
+  belonging to F11, F12, and F20–F27 remain deliberately unreachable rather than receiving empty placeholder
   contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
@@ -164,7 +198,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Resolution: bookmark-aware cleanup is installed from the Download-plus-Bookmarking relationship and receives
   non-optional structured events. The coordinator does not query a type report or contain a concrete type branch.
 
-### Partially resolved in F10/F17: `P5-ENTRY-UI`
+### Partially resolved in F10/F17/F18: `P5-ENTRY-UI`
 
 - Responsible owner: Entry-screen feature
 - Owning phase: Phase 5
@@ -177,6 +211,8 @@ SPI boundary is not an exit gate for Phase 3.5.
   removed. Presentation vocabulary remains F23-owned.
 - F17 resolution: list ordering/construction, merged and missing rows, aggregate missing count, and optional progress
   labels consume the selected Child List feature. Missing Child List support hides the list surface without a fallback.
+- F18 resolution: group state, live filtering, active state, controls, and multi-member persistence consume the selected
+  Child Group Filtering feature. The former raw support/apply gates and unfiltered live-list overwrite are removed.
 
 ### Resolved in F03–F05: `P5-LIBRARY-INTEGRATIONS`
 

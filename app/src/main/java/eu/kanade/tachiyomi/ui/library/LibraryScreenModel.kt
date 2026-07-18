@@ -2,7 +2,6 @@ package eu.kanade.tachiyomi.ui.library
 
 import android.content.Context
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import cafe.adriel.voyager.core.model.StateScreenModel
@@ -21,6 +20,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
 import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.source.sourceItemOrientation
+import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
@@ -48,7 +48,12 @@ import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadSourceAccess
-import mihon.entry.interactions.EntryLibraryFilterInteraction
+import mihon.entry.interactions.EntryLibraryFilterAvailability
+import mihon.entry.interactions.EntryLibraryFilterControlAvailability
+import mihon.entry.interactions.EntryLibraryFilterFeature
+import mihon.entry.interactions.EntryLibraryFilterPolicy
+import mihon.entry.interactions.EntryLibraryFilterRequest
+import mihon.entry.interactions.EntryLibraryFilterTarget
 import mihon.entry.interactions.EntryMergeCapabilityItem
 import mihon.feature.profiles.core.EntryProfileMoveConflictResolution
 import mihon.feature.profiles.core.EntryProfileMovePreview
@@ -88,7 +93,6 @@ import tachiyomi.domain.library.service.librarySortComparator
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracksPerEntry
 import tachiyomi.domain.track.model.EntryTrack
-import tachiyomi.domain.util.applyFilter
 import tachiyomi.i18n.MR
 import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
@@ -113,7 +117,7 @@ class LibraryScreenModel(
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
-    private val entryLibraryFilterInteraction: EntryLibraryFilterInteraction = Injekt.get(),
+    private val entryLibraryFilterFeature: EntryLibraryFilterFeature = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
     private val trackerManager: TrackerManager = Injekt.get(),
     private val profileStore: ProfileAwareStore = Injekt.get(),
@@ -152,8 +156,8 @@ class LibraryScreenModel(
             ) { searchQuery, categories, favorites, (tracksMap, trackingFilters), itemPreferences ->
                 val showSystemCategory = favorites.any { it.categories.contains(0L) }
                 val categoryNamesById = categories.associate { it.id to it.name }
-                val filteredFavorites = favorites
-                    .applyFilters(tracksMap, trackingFilters, itemPreferences)
+                val filterResult = favorites.applyFilters(tracksMap, trackingFilters, itemPreferences)
+                val filteredFavorites = filterResult.items
                     .let {
                         if (searchQuery ==
                             null
@@ -171,12 +175,17 @@ class LibraryScreenModel(
                     favorites = filteredFavorites,
                     tracksMap = tracksMap,
                     loggedInTrackerIds = trackingFilters.keys,
+                    hasActiveFilters = filterResult.hasActiveFilters,
+                    filterAvailability = filterResult.availability,
                 )
             }
                 .distinctUntilChanged()
                 .collectLatest { libraryData ->
                     mutableState.update { state ->
-                        state.copy(libraryData = libraryData)
+                        state.copy(
+                            libraryData = libraryData,
+                            hasActiveFilters = libraryData.hasActiveFilters,
+                        )
                     }
                 }
         }
@@ -239,102 +248,46 @@ class LibraryScreenModel(
                 }
             }
             .launchIn(screenModelScope)
-
-        combine(
-            getLibraryItemPreferencesFlow(),
-            getTrackingFiltersFlow(),
-        ) { prefs, trackFilters ->
-            listOf(
-                prefs.globalFilterDownloaded,
-                prefs.filterDownloaded,
-                prefs.filterUnread,
-                prefs.filterNotStarted,
-                prefs.filterBookmarked,
-                prefs.filterCompleted,
-                prefs.filterIntervalCustom,
-                *trackFilters.values.toTypedArray(),
-            )
-                .any { it != TriState.DISABLED }
-        }
-            .distinctUntilChanged()
-            .onEach {
-                mutableState.update { state ->
-                    state.copy(hasActiveFilters = it)
-                }
-            }
-            .launchIn(screenModelScope)
     }
 
     private fun List<LibraryItem>.applyFilters(
         trackMap: Map<Long, List<EntryTrack>>,
         trackingFilter: Map<Long, TriState>,
         preferences: ItemPreferences,
-    ): List<LibraryItem> {
-        val downloadedOnly = preferences.globalFilterDownloaded
-        val skipOutsideReleasePeriod = preferences.skipOutsideReleasePeriod
-        val filterDownloaded = if (downloadedOnly) TriState.ENABLED_IS else preferences.filterDownloaded
-        val filterUnread = preferences.filterUnread
-        val filterNotStarted = preferences.filterNotStarted
-        val filterBookmarked = preferences.filterBookmarked
-        val filterCompleted = preferences.filterCompleted
-        val filterIntervalCustom = preferences.filterIntervalCustom
-
-        val isNotLoggedInAnyTrack = trackingFilter.isEmpty()
-
-        val excludedTracks = trackingFilter.mapNotNull { if (it.value == TriState.ENABLED_NOT) it.key else null }
-        val includedTracks = trackingFilter.mapNotNull { if (it.value == TriState.ENABLED_IS) it.key else null }
-        val trackFiltersIsIgnored = includedTracks.isEmpty() && excludedTracks.isEmpty()
-
-        val filterFnDownloaded: (LibraryItem) -> Boolean = {
-            applyFilter(filterDownloaded) { it.isLocal || it.downloadCount > 0 }
+    ): AppliedLibraryFilters {
+        val targets = map { item ->
+            EntryLibraryFilterTarget(
+                type = item.entry.type,
+                isDownloadedOrLocal = item.isLocal || item.downloadCount > 0,
+                hasUnconsumed = item.unconsumedCount > 0,
+                hasStarted = item.hasStarted,
+                hasBookmarks = item.hasBookmarks,
+                isCompleted = item.entry.status == EntryStatus.COMPLETED,
+                isOutsideReleasePeriod = item.entry.fetchInterval < 0,
+                trackerIds = trackMap[item.key.id].orEmpty().mapTo(mutableSetOf(), EntryTrack::trackerId),
+            )
         }
-
-        val filterFnUnread: (LibraryItem) -> Boolean = { item ->
-            applyFilter(filterUnread) { item.unconsumedCount > 0 }
-        }
-
-        val filterFnNotStarted: (LibraryItem) -> Boolean = {
-            applyFilter(filterNotStarted) { !it.hasStarted }
-        }
-
-        val filterFnBookmarked: (LibraryItem) -> Boolean = { item ->
-            applyFilter(filterBookmarked) { item.hasBookmarks }
-        }
-
-        val filterFnCompleted: (LibraryItem) -> Boolean = { item ->
-            applyFilter(filterCompleted) { item.entry.status == EntryStatus.COMPLETED }
-        }
-
-        val filterFnIntervalCustom: (LibraryItem) -> Boolean = { item ->
-            if (skipOutsideReleasePeriod &&
-                entryLibraryFilterInteraction.supportsOutsideReleasePeriodFilter(item.entry)
-            ) {
-                applyFilter(filterIntervalCustom) { item.entry.fetchInterval < 0 }
-            } else {
-                true
-            }
-        }
-
-        val filterFnTracking: (LibraryItem) -> Boolean = tracking@{ item ->
-            if (isNotLoggedInAnyTrack || trackFiltersIsIgnored) return@tracking true
-
-            val entryTracks = trackMap[item.key.id].orEmpty().map { it.trackerId }
-
-            val isExcluded = excludedTracks.isNotEmpty() && entryTracks.fastAny { it in excludedTracks }
-            val isIncluded = includedTracks.isEmpty() || entryTracks.fastAny { it in includedTracks }
-
-            !isExcluded && isIncluded
-        }
-
-        return fastFilter {
-            filterFnDownloaded(it) &&
-                filterFnUnread(it) &&
-                filterFnNotStarted(it) &&
-                filterFnBookmarked(it) &&
-                filterFnCompleted(it) &&
-                filterFnIntervalCustom(it) &&
-                filterFnTracking(it)
-        }
+        val result = entryLibraryFilterFeature.filter(
+            EntryLibraryFilterRequest(
+                targets = targets,
+                policy = EntryLibraryFilterPolicy(
+                    downloadedOnly = preferences.globalFilterDownloaded,
+                    downloaded = preferences.filterDownloaded,
+                    unconsumed = preferences.filterUnread,
+                    notStarted = preferences.filterNotStarted,
+                    bookmarked = preferences.filterBookmarked,
+                    completed = preferences.filterCompleted,
+                    outsideReleasePeriod = preferences.filterIntervalCustom,
+                    outsideReleasePeriodEnabled = !isReleaseBuildType && preferences.skipOutsideReleasePeriod,
+                    tracking = trackingFilter,
+                ),
+            ),
+        )
+        return AppliedLibraryFilters(
+            items = result.includedTargetIndices.map(::get),
+            hasActiveFilters = result.hasActiveFilters,
+            availability = result.availability,
+        )
     }
 
     private fun List<LibraryItem>.applyGrouping(
@@ -1201,6 +1154,12 @@ class LibraryScreenModel(
         }
     }
 
+    private data class AppliedLibraryFilters(
+        val items: List<LibraryItem>,
+        val hasActiveFilters: Boolean,
+        val availability: EntryLibraryFilterAvailability,
+    )
+
     @Immutable
     data class LibraryData(
         val isInitialized: Boolean = false,
@@ -1209,6 +1168,11 @@ class LibraryScreenModel(
         val favorites: List<LibraryItem> = emptyList(),
         val tracksMap: Map<Long, List<EntryTrack>> = emptyMap(),
         val loggedInTrackerIds: Set<Long> = emptySet(),
+        val hasActiveFilters: Boolean = false,
+        val filterAvailability: EntryLibraryFilterAvailability = EntryLibraryFilterAvailability(
+            bookmarking = EntryLibraryFilterControlAvailability(emptySet(), emptySet()),
+            outsideReleasePeriod = EntryLibraryFilterControlAvailability(emptySet(), emptySet()),
+        ),
     ) {
         val favoritesById by lazy { favorites.associateBy { it.key } }
     }

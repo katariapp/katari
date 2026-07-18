@@ -88,6 +88,8 @@ Migration progress:
   model cannot enter the runtime service contract without mixing ownership.
 - Milestone 4.4 removes the transitional operational registry. One generic provider index derives typed dispatch maps
   directly from bindings, and the old registry-shaped support tests are replaced by generic composition invariants.
+- Phase 5 F14 now owns generic Library filter policy and active state. Bookmark-control and outside-release-period
+  applicability derive from their independent provider evidence; search/grouping and update scope remain contextual.
 
 | ID | Provider or composition fact | Current evidence | Required migration outcome |
 | --- | --- | --- | --- |
@@ -147,7 +149,7 @@ so it cannot be silently omitted for the next provider.
 | `F15` | Progress transfer | Backup create/restore and migration copy. Reader/player/Book persistence is type-owned live media behavior; independently contributed per-child labels remain F17. |
 | `F16` | Playback-preference transfer | Backup create/restore and migration; no direct Anime check may remain as authorization. |
 | `F17` | Child-list behavior | Entry sorting/filtering/display rows; merged headers; missing-count rows; immersive first-child selection; per-child progress labels. |
-| `F18` | Child-group filtering | Entry state flows, filter controls, excluded-group persistence, group data source, and settings dialog integration. |
+| `F18` | Child-group filtering | Entry state flows, live-list filtering, multi-member observation, filter controls, excluded-group persistence, backup snapshot/restore, generic storage consequences, group data source, and settings dialog integration. |
 | `F19` | Preview | Entry preview state; browse long-press preview; preference/configuration; page loader and open action; contextual source and child requirements. |
 | `F20` | Immersive browsing | Catalogue and feed mode entry; long-press action; view-mode fallback; renderer loading; preload radius; progress persistence; source opt-in. |
 | `F21` | Related entries | Entry action, related-entry screen model/dialog, source orientation, library membership, and normal open flow for returned mixed types. |

@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryBookmarkCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryChildGroupFilterCapability
-import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildListCapability
 import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
@@ -22,6 +21,7 @@ import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryPreviewCapability
+import mihon.entry.interactions.EntryPreviewConfigurationCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
@@ -47,7 +47,6 @@ fun mangaEntryInteractionPlugin(
             getEntryWithChapters = dependencies.getEntryWithChapters,
             entryChapterRepository = dependencies.entryChapterRepository,
             entryProgressRepository = dependencies.entryProgressRepository,
-            childGroupFilterDataSource = dependencies.childGroupFilterDataSource,
             downloadPreferences = dependencies.downloadPreferences,
             downloadManager = Injekt.get(),
             downloadCache = Injekt.get(),
@@ -79,7 +78,7 @@ internal fun mangaEntryInteractionPlugin(
     val downloadProcessor = MangaDownloadProcessor(dependencies)
     val migrationMergeProvider = MangaMigrationMergeProvider()
     val childListProcessor = MangaChildListProcessor(dependencies.entryProgressRepository)
-    val childGroupFilterProcessor = MangaChildGroupFilterProcessor(dependencies.childGroupFilterDataSource)
+    val childGroupFilterProcessor = MangaChildGroupFilterProcessor
     val outsideReleasePeriodFilterProvider = MangaOutsideReleasePeriodFilterProvider()
     val previewProcessor = MangaPreviewInteraction(dependencies.entryInteractionPreferences)
     val immersiveProcessor = MangaImmersiveProcessor(
@@ -111,6 +110,7 @@ internal fun mangaEntryInteractionPlugin(
             EntryChildGroupFilterCapability.bind(childGroupFilterProcessor),
             EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider),
             EntryPreviewCapability.bind(previewProcessor),
+            EntryPreviewConfigurationCapability.bind(previewProcessor),
             EntryImmersiveCapability.bind(immersiveProcessor),
         )
     }
@@ -120,7 +120,6 @@ data class MangaEntryInteractionDependencies(
     val getEntryWithChapters: GetEntryWithChapters,
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
-    val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val downloadPreferences: DownloadPreferences,
     val sourceManager: SourceManager,
     val downloadLifecycle: EntryDownloadLifecycleEventSink,
@@ -131,7 +130,6 @@ internal data class MangaEntryInteractionRuntimeDependencies(
     val getEntryWithChapters: GetEntryWithChapters,
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
-    val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val downloadPreferences: DownloadPreferences,
     val downloadManager: DownloadManager,
     val downloadCache: DownloadCache,

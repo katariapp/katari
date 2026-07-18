@@ -11,6 +11,8 @@ import eu.kanade.tachiyomi.data.backup.models.toBackupEntry
 import eu.kanade.tachiyomi.data.backup.models.toBackupEntryProgressState
 import eu.kanade.tachiyomi.data.backup.models.toBackupViewerSettingOverride
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.EntryChildGroupFilterFeature
+import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
 import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
 import mihon.entry.interactions.EntryPlaybackQualityMode
@@ -37,6 +39,7 @@ class EntryBackupCreator(
     private val downloadPreferencesRepository: DownloadPreferencesRepository = Injekt.get(),
     private val progressFeature: EntryProgressFeature = Injekt.get(),
     private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature = Injekt.get(),
+    private val childGroupFilterFeature: EntryChildGroupFilterFeature = Injekt.get(),
     private val viewerSettingOverrideRepository: ViewerSettingOverrideRepository = Injekt.get(),
 ) {
 
@@ -77,10 +80,9 @@ class EntryBackupCreator(
             null
         }
 
-        if (entry.type == EntryType.MANGA) {
-            entryObject.excludedScanlators = handler.awaitList {
-                excluded_scanlatorsQueries.getExcludedScanlatorsByEntryId(profileId, entry.id)
-            }
+        entryObject.excludedScanlators = when (val result = childGroupFilterFeature.snapshot(profileId, entry)) {
+            is EntryChildGroupFilterSnapshotResult.Available -> result.excludedGroups.toList()
+            is EntryChildGroupFilterSnapshotResult.Inapplicable -> emptyList()
         }
 
         if (options.chapters) {

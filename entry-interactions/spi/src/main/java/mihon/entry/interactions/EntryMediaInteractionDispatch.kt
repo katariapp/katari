@@ -3,29 +3,16 @@ package mihon.entry.interactions
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
 internal class ProviderBackedEntryPreviewInteraction(
-    private val processors: Map<EntryType, EntryPreviewInteraction>,
+    private val processors: Map<EntryType, EntryPreviewProcessor>,
+    private val configurations: Map<EntryType, EntryPreviewConfigurationProvider>,
 ) : EntryPreviewInteraction {
-    override fun isSupported(entry: Entry): Boolean {
-        return processors[entry.type]?.isSupported(entry) ?: false
-    }
+    override fun processor(type: EntryType): EntryPreviewProcessor? = processors[type]
 
-    override fun requiresChapter(entry: Entry): Boolean {
-        return processors[entry.type]?.requiresChapter(entry) ?: true
-    }
-
-    override fun config(entry: Entry): EntryPreviewConfig {
-        return processors[entry.type]?.config(entry) ?: EntryPreviewConfig.Disabled
-    }
-
-    override fun configChanges(entry: Entry): Flow<EntryPreviewConfig> {
-        return processors[entry.type]?.configChanges(entry) ?: flowOf(EntryPreviewConfig.Disabled)
-    }
+    override fun configuration(type: EntryType): EntryPreviewConfigurationProvider? = configurations[type]
 
     override suspend fun loadPreview(
         context: Context,
@@ -44,7 +31,7 @@ internal class ProviderBackedEntryPreviewInteraction(
     }
 
     override fun release(handle: EntryPreviewHandle) {
-        processors[handle.entryType]?.release(handle)
+        processors.requireProcessor("preview", handle.entryType).release(handle)
     }
 }
 

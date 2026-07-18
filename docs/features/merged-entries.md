@@ -19,6 +19,9 @@ The editor order matters: top to bottom is the order Katari uses when composing 
 
 Open the root to see the merged child sequence. A member opened directly displays a notice that it belongs to a merged entry and offers actions to open or manage the root.
 
+When the entry type supports release-group filtering, the filter includes groups from every displayed member. Changing
+the exclusions applies the same selection to each member so the composed child list stays consistent as sources update.
+
 Use **Manage merged entry** to:
 
 - Reorder members

@@ -3,15 +3,12 @@ package mihon.entry.interactions
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import kotlinx.coroutines.flow.Flow
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
 interface EntryPreviewInteraction {
-    fun isSupported(entry: Entry): Boolean
-    fun requiresChapter(entry: Entry): Boolean
-    fun config(entry: Entry): EntryPreviewConfig
-    fun configChanges(entry: Entry): Flow<EntryPreviewConfig>
+    fun processor(type: EntryType): EntryPreviewProcessor?
+    fun configuration(type: EntryType): EntryPreviewConfigurationProvider?
     suspend fun loadPreview(
         context: Context,
         entry: Entry,

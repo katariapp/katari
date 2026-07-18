@@ -2,7 +2,6 @@ package mihon.entry.interactions.manga
 
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryImageComponentInstaller
 import mihon.entry.interactions.EntryTypeRuntimeContribution
@@ -31,7 +30,6 @@ fun mangaEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     getEntryWithChapters = get(),
                     entryChapterRepository = get(),
                     entryProgressRepository = progressRepository,
-                    childGroupFilterDataSource = get<EntryChildGroupFilterDataSource>(),
                     downloadPreferences = get(),
                     sourceManager = get(),
                     downloadLifecycle = get<EntryDownloadLifecycleEventSink>(),

@@ -47,8 +47,8 @@ fun createEntryInteractionComposition(
             childListProcessors = providers[EntryChildListCapability],
             childProgressProcessors = providers[EntryChildProgressCapability],
             childGroupFilterProcessors = providers[EntryChildGroupFilterCapability],
-            outsideReleasePeriodFilterProviders = providers[EntryOutsideReleasePeriodFilterCapability],
             previewProcessors = providers[EntryPreviewCapability],
+            previewConfigurationProviders = providers[EntryPreviewConfigurationCapability],
             immersiveProcessors = providers[EntryImmersiveCapability],
         ),
         featureGraph = featureGraph,
@@ -107,8 +107,8 @@ private class DefaultEntryInteractions(
     childListProcessors: Map<EntryType, EntryChildListProcessor>,
     childProgressProcessors: Map<EntryType, EntryChildProgressProcessor>,
     childGroupFilterProcessors: Map<EntryType, EntryChildGroupFilterProcessor>,
-    outsideReleasePeriodFilterProviders: Map<EntryType, EntryOutsideReleasePeriodFilterProvider>,
-    previewProcessors: Map<EntryType, EntryPreviewInteraction>,
+    previewProcessors: Map<EntryType, EntryPreviewProcessor>,
+    previewConfigurationProviders: Map<EntryType, EntryPreviewConfigurationProvider>,
     immersiveProcessors: Map<EntryType, EntryImmersiveProcessor>,
 ) : EntryInteractions {
     override val open: EntryOpenInteraction = ProviderBackedEntryOpenInteraction(openProcessors)
@@ -133,9 +133,8 @@ private class DefaultEntryInteractions(
         ProviderBackedEntryChildProgressInteraction(childProgressProcessors)
     override val childGroupFilter: EntryChildGroupFilterInteraction =
         ProviderBackedEntryChildGroupFilterInteraction(childGroupFilterProcessors)
-    override val libraryFilter: EntryLibraryFilterInteraction =
-        ProviderBackedEntryLibraryFilterInteraction(outsideReleasePeriodFilterProviders)
-    override val preview: EntryPreviewInteraction = ProviderBackedEntryPreviewInteraction(previewProcessors)
+    override val preview: EntryPreviewInteraction =
+        ProviderBackedEntryPreviewInteraction(previewProcessors, previewConfigurationProviders)
     override val immersive: EntryImmersiveInteraction =
         ProviderBackedEntryImmersiveInteraction(immersiveProcessors)
 }

@@ -29,7 +29,7 @@ data class EntryInteractionRuntimeDependencies(
     val activityTheme: EntryInteractionActivityTheme,
     val notificationActions: EntryDownloadNotificationActions,
     val pageImageCache: EntryPageImageCache,
-    val mangaChildGroupFilterDataSource: EntryChildGroupFilterDataSource,
+    val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val readerIncognitoState: EntryReaderIncognitoState,
     val readerTracking: EntryReaderTracking,
     val profilePreferenceStore: PreferenceStore,
@@ -51,7 +51,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryPageImageCache> { dependencies.pageImageCache }
     addSingletonFactory<EntryReaderIncognitoState> { dependencies.readerIncognitoState }
     addSingletonFactory<EntryReaderTracking> { dependencies.readerTracking }
-    addSingletonFactory<EntryChildGroupFilterDataSource> { dependencies.mangaChildGroupFilterDataSource }
+    addSingletonFactory<EntryChildGroupFilterDataSource> { dependencies.childGroupFilterDataSource }
     addSingletonFactory<EntryDownloadWorkController> { DefaultEntryDownloadWorkController(app) }
     addSingletonFactory { EntryAutomaticDownloadPolicy(get(), get(), get()) }
     addSingletonFactory<EntryDownloadLifecycleEventSink> {
@@ -119,6 +119,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryProgressFeatureContributor,
                 EntryPlaybackPreferencesFeatureContributor,
                 EntryChildListFeatureContributor,
+                EntryLibraryFilterFeatureContributor,
+                EntryChildGroupFilterFeatureContributor,
+                EntryPreviewFeatureContributor,
             ),
         )
     }
@@ -233,6 +236,26 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             evaluation = composition.featureGraphEvaluation,
             childList = composition.interactions.childList,
             childProgress = composition.interactions.childProgress,
+        )
+    }
+    addSingletonFactory<EntryLibraryFilterFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryLibraryFilterFeature(composition.featureGraphEvaluation)
+    }
+    addSingletonFactory<EntryChildGroupFilterFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryChildGroupFilterFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.childGroupFilter,
+            dataSource = get(),
+        )
+    }
+    addSingletonFactory<EntryPreviewFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryPreviewFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.preview,
+            childList = get(),
         )
     }
     addSingletonFactory {

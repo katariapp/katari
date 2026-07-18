@@ -5,6 +5,7 @@ import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.string.shouldContain
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -34,7 +35,7 @@ class EntryInteractionCompositionTest {
         val entry = entry(EntryType.BOOK)
 
         interactions.download.hasDownloads(entry).shouldBeFalse()
-        interactions.preview.isSupported(entry).shouldBeFalse()
+        interactions.preview.processor(entry.type).shouldBeNull()
     }
 
     @Test

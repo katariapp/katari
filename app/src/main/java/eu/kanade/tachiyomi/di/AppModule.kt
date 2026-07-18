@@ -8,11 +8,10 @@ import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteConfiguration
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDatabaseType
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDriver
 import com.eygraber.sqldelight.androidx.driver.FileProvider
-import eu.kanade.domain.scanlator.interactor.GetExcludedScanlators
-import eu.kanade.domain.scanlator.interactor.SetExcludedScanlators
 import eu.kanade.domain.track.store.DelayedTrackingStore
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
+import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
 import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
@@ -28,10 +27,8 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.AndroidSourceManager
 import eu.kanade.tachiyomi.source.entry.EntryPreferenceProvider
 import eu.kanade.tachiyomi.ui.base.delegate.ThemingDelegateImpl
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.protobuf.ProtoBuf
-import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryInteractionActivityTheme
 import mihon.entry.interactions.EntryInteractionRuntimeDependencies
 import mihon.entry.interactions.EntryInteractionRuntimeWarmup
@@ -156,35 +153,7 @@ class AppModule(val app: Application) : InjektModule {
                 activityTheme = EntryInteractionActivityTheme(ThemingDelegateImpl()::applyAppTheme),
                 notificationActions = AppEntryDownloadNotificationActions(),
                 pageImageCache = mangaPageImageCache,
-                mangaChildGroupFilterDataSource = object : EntryChildGroupFilterDataSource {
-                    private val entryChapterRepository = get<EntryChapterRepository>()
-                    private val getExcludedScanlators = get<GetExcludedScanlators>()
-                    private val setExcludedScanlators = get<SetExcludedScanlators>()
-
-                    override fun availableGroupsChanged(entryId: Long) =
-                        entryChapterRepository.getScanlatorsByEntryIdAsFlow(entryId).map { Unit }
-
-                    override suspend fun availableGroups(entryIds: Collection<Long>): Set<String> {
-                        return entryIds.flatMapTo(linkedSetOf()) { entryId ->
-                            entryChapterRepository.getScanlatorsByEntryId(entryId)
-                        }
-                    }
-
-                    override fun excludedGroupsChanged(entryId: Long) =
-                        getExcludedScanlators.subscribe(entryId).map { Unit }
-
-                    override suspend fun excludedGroups(entryIds: Collection<Long>): Set<String> {
-                        return entryIds.flatMapTo(linkedSetOf()) { entryId ->
-                            getExcludedScanlators.await(entryId)
-                        }
-                    }
-
-                    override suspend fun setExcludedGroups(entryIds: Collection<Long>, excluded: Set<String>) {
-                        entryIds.forEach { entryId ->
-                            setExcludedScanlators.await(entryId, excluded)
-                        }
-                    }
-                },
+                childGroupFilterDataSource = AppEntryChildGroupFilterDataSource(get(), get(), get()),
                 readerIncognitoState = AppReaderIncognitoState(get()),
                 readerTracking = AppReaderTracking(get(), get()),
                 profilePreferenceStore = get<ProfileStore>().profileStore(),

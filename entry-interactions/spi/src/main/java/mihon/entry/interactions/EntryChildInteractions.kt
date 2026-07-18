@@ -15,15 +15,6 @@ interface EntryChildProgressInteraction {
 }
 
 interface EntryChildGroupFilterInteraction {
-    fun supports(entry: Entry): Boolean
-    fun shouldApplyFilter(entry: Entry): Boolean
-    fun availableGroupsChanged(entryId: Long): Flow<Unit>
-    suspend fun availableGroups(entry: Entry, memberIds: Collection<Long>): Set<String>
-    fun excludedGroupsChanged(entryId: Long): Flow<Unit>
-    suspend fun excludedGroups(entry: Entry, memberIds: Collection<Long>): Set<String>
-    suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>)
-}
-
-interface EntryLibraryFilterInteraction {
-    fun supportsOutsideReleasePeriodFilter(entry: Entry): Boolean
+    fun groupFor(entry: Entry, chapter: EntryChapter): String?
+    fun normalizeGroup(entry: Entry, group: String): String?
 }

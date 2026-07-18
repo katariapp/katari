@@ -54,7 +54,9 @@ import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
-import mihon.entry.interactions.EntryPreviewInteraction
+import mihon.entry.interactions.EntryPreviewAvailability
+import mihon.entry.interactions.EntryPreviewContext
+import mihon.entry.interactions.EntryPreviewFeature
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
@@ -116,7 +118,7 @@ class CatalogScreenModel(
     private val updateMergedEntry: UpdateMergedEntry = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
     private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
-    private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
+    private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
     private val application: Application = Injekt.get(),
@@ -414,7 +416,12 @@ class CatalogScreenModel(
             resolveBrowseLongPressAction(
                 priority = browseLongPressActionPriority,
                 supportsImmersive = supportsImmersive,
-                previewEnabled = entryPreviewInteraction.config(item.entry).enabled,
+                previewEnabled = entryPreviewFeature.availability(
+                    EntryPreviewContext(
+                        entry = item.entry,
+                        source = sourceManager.getOrStub(item.entry.source),
+                    ),
+                ) is EntryPreviewAvailability.Available,
             )
         ) {
             CustomPreferences.BrowseLongPressAction.LIBRARY_ACTION -> {

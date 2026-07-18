@@ -9,44 +9,57 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import mihon.entry.interactions.EntryPreviewConfig
+import mihon.entry.interactions.EntryPreviewConfigurationProvider
+import mihon.entry.interactions.EntryPreviewContextRequirement
+import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryPreviewHandle
+import mihon.entry.interactions.EntryPreviewLoadMode
 import mihon.entry.interactions.EntryPreviewPage
 import mihon.entry.interactions.EntryPreviewPageStatus
 import mihon.entry.interactions.EntryPreviewProcessor
+import mihon.entry.interactions.EntryPreviewSettings
+import mihon.entry.interactions.EntryPreviewUnavailableReason
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.domain.entry.adapter.toSEntry
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.source.service.SourceManager
 
 internal class AnimePreviewInteraction(
     private val entryInteractionPreferences: EntryInteractionPreferences,
-    private val sourceManager: SourceManager,
-) : EntryPreviewProcessor {
+) : EntryPreviewProcessor, EntryPreviewConfigurationProvider {
     override val type: EntryType = EntryType.ANIME
+    override val loadMode = EntryPreviewLoadMode.ENTRY
+    override val settings = EntryPreviewSettings(
+        type = type,
+        enabled = entryInteractionPreferences.enableAnimePreview,
+        pageCount = entryInteractionPreferences.animePreviewPageCount,
+        size = entryInteractionPreferences.animePreviewSize,
+        contextRequirement = EntryPreviewContextRequirement.SOURCE_CAPABILITY,
+    )
 
-    override fun isSupported(entry: Entry): Boolean {
-        return entry.type == EntryType.ANIME && sourceManager.get(entry.source) is EntryPreviewSource
-    }
+    override fun contextAvailability(entry: Entry, source: UnifiedSource): EntryPreviewContextResult =
+        if (source is EntryPreviewSource) {
+            EntryPreviewContextResult.Available
+        } else {
+            EntryPreviewContextResult.Unavailable(EntryPreviewUnavailableReason.SourceUnsupported)
+        }
 
-    override fun requiresChapter(entry: Entry): Boolean = false
-
-    override fun config(entry: Entry): EntryPreviewConfig {
+    override fun config(): EntryPreviewConfig {
         return EntryPreviewConfig(
-            enabled = isSupported(entry) && entryInteractionPreferences.enableAnimePreview.get(),
+            enabled = entryInteractionPreferences.enableAnimePreview.get(),
             pageCount = entryInteractionPreferences.animePreviewPageCount.get(),
             size = entryInteractionPreferences.animePreviewSize.get(),
         )
     }
 
-    override fun configChanges(entry: Entry): Flow<EntryPreviewConfig> {
+    override fun configChanges(): Flow<EntryPreviewConfig> {
         return combine(
             entryInteractionPreferences.enableAnimePreview.changes(),
             entryInteractionPreferences.animePreviewPageCount.changes(),
             entryInteractionPreferences.animePreviewSize.changes(),
         ) { enabled, pageCount, size ->
             EntryPreviewConfig(
-                enabled = isSupported(entry) && enabled,
+                enabled = enabled,
                 pageCount = pageCount,
                 size = size,
             )

@@ -20,6 +20,7 @@ import eu.kanade.presentation.components.TabbedDialog
 import eu.kanade.presentation.components.TabbedDialogPaddings
 import eu.kanade.tachiyomi.ui.library.LibrarySettingsScreenModel
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
+import mihon.entry.interactions.EntryLibraryFilterAvailability
 import tachiyomi.core.common.preference.TriState
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.library.model.LibraryDisplayMode
@@ -45,6 +46,7 @@ fun LibrarySettingsDialog(
     onDismissRequest: () -> Unit,
     screenModel: LibrarySettingsScreenModel,
     category: Category?,
+    filterAvailability: EntryLibraryFilterAvailability,
 ) {
     TabbedDialog(
         onDismissRequest = onDismissRequest,
@@ -63,6 +65,7 @@ fun LibrarySettingsDialog(
             when (page) {
                 0 -> FilterPage(
                     screenModel = screenModel,
+                    filterAvailability = filterAvailability,
                 )
                 1 -> SortPage(
                     category = category,
@@ -82,6 +85,7 @@ fun LibrarySettingsDialog(
 @Composable
 private fun FilterPage(
     screenModel: LibrarySettingsScreenModel,
+    filterAvailability: EntryLibraryFilterAvailability,
 ) {
     val filterDownloaded by screenModel.libraryPreferences.filterDownloaded.collectAsState()
     val downloadedOnly by screenModel.libraryPreferences.downloadedOnly.collectAsState()
@@ -109,12 +113,14 @@ private fun FilterPage(
         state = filterNotStarted,
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterNotStarted) },
     )
-    val filterBookmarked by screenModel.libraryPreferences.filterBookmarked.collectAsState()
-    TriStateItem(
-        label = stringResource(MR.strings.action_filter_bookmarked),
-        state = filterBookmarked,
-        onClick = { screenModel.toggleFilter(LibraryPreferences::filterBookmarked) },
-    )
+    if (filterAvailability.bookmarking.isAvailable) {
+        val filterBookmarked by screenModel.libraryPreferences.filterBookmarked.collectAsState()
+        TriStateItem(
+            label = stringResource(MR.strings.action_filter_bookmarked),
+            state = filterBookmarked,
+            onClick = { screenModel.toggleFilter(LibraryPreferences::filterBookmarked) },
+        )
+    }
     val filterCompleted by screenModel.libraryPreferences.filterCompleted.collectAsState()
     TriStateItem(
         label = stringResource(MR.strings.completed),
@@ -122,7 +128,11 @@ private fun FilterPage(
         onClick = { screenModel.toggleFilter(LibraryPreferences::filterCompleted) },
     )
     // TODO: re-enable when custom intervals are ready for stable
-    if ((!isReleaseBuildType) && LibraryPreferences.ENTRY_OUTSIDE_RELEASE_PERIOD in autoUpdateEntryRestrictions) {
+    if (
+        (!isReleaseBuildType) &&
+        filterAvailability.outsideReleasePeriod.isAvailable &&
+        LibraryPreferences.ENTRY_OUTSIDE_RELEASE_PERIOD in autoUpdateEntryRestrictions
+    ) {
         val filterIntervalCustom by screenModel.libraryPreferences.filterIntervalCustom.collectAsState()
         TriStateItem(
             label = stringResource(MR.strings.action_filter_interval_custom),

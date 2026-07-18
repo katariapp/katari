@@ -283,6 +283,7 @@ data object LibraryTab : Tab {
                     onDismissRequest = onDismissRequest,
                     screenModel = settingsScreenModel,
                     category = state.activeSortCategory,
+                    filterAvailability = state.libraryData.filterAvailability,
                 )
             }
             is LibraryScreenModel.Dialog.ChangeCategory -> {

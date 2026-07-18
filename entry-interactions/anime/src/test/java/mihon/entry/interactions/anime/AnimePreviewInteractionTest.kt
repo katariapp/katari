@@ -12,35 +12,30 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryPreviewPageStatus
+import mihon.entry.interactions.EntryPreviewUnavailableReason
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.source.service.SourceManager
 
 class AnimePreviewInteractionTest {
     private val context = mockk<Context>(relaxed = true)
 
     @Test
-    fun `preview support and config require anime preview source`() {
+    fun `source support is contextual while config remains independent`() {
         val source = previewSource()
         val preferences = EntryInteractionPreferences(InMemoryPreferenceStore()).apply {
             enableAnimePreview.set(true)
         }
-        val interaction = AnimePreviewInteraction(preferences, sourceManager(source))
+        val interaction = AnimePreviewInteraction(preferences)
 
-        interaction.isSupported(entry()) shouldBe true
-        interaction.config(entry()).enabled shouldBe true
-        interaction.isSupported(entry(type = EntryType.MANGA)) shouldBe false
-
-        val unsupportedInteraction = AnimePreviewInteraction(
-            preferences,
-            sourceManager(mockk<UnifiedSource>()),
-        )
-        unsupportedInteraction.isSupported(entry()) shouldBe false
-        unsupportedInteraction.config(entry()).enabled shouldBe false
+        interaction.contextAvailability(entry(), source) shouldBe EntryPreviewContextResult.Available
+        interaction.contextAvailability(entry(), mockk<UnifiedSource>()) shouldBe
+            EntryPreviewContextResult.Unavailable(EntryPreviewUnavailableReason.SourceUnsupported)
+        interaction.config().enabled shouldBe true
     }
 
     @Test
@@ -51,10 +46,7 @@ class AnimePreviewInteractionTest {
                 EntryPreviewImage(index = 5, imageUrl = "https://example.org/five.jpg"),
             ),
         )
-        val interaction = AnimePreviewInteraction(
-            EntryInteractionPreferences(InMemoryPreferenceStore()),
-            sourceManager(source),
-        )
+        val interaction = AnimePreviewInteraction(EntryInteractionPreferences(InMemoryPreferenceStore()))
         val entry = entry(title = "Requested anime")
         val handle = interaction.loadPreview(context, entry, chapter = null, source, pageCount = 1)
 
@@ -68,10 +60,6 @@ class AnimePreviewInteractionTest {
         coVerify(exactly = 1) {
             source.getEntryPreview(match { it.title == "Requested anime" && it.type == EntryType.ANIME })
         }
-    }
-
-    private fun sourceManager(source: UnifiedSource): SourceManager = mockk {
-        every { this@mockk.get(any()) } returns source
     }
 
     private fun previewSource(images: List<EntryPreviewImage> = emptyList()): EntryPreviewSource = mockk {
