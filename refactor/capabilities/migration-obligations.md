@@ -44,6 +44,21 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F12.1 intentionally leaves the application boundary check failing on this migration queue. Restoring compilation by
   exporting raw membership or weakening the rule is not an acceptable resolution.
 
+### Defined by F12.2: profile, transaction, and external-effect obligations
+
+- Every raw active-profile Merge call must be replaced by an explicitly scoped intent, projection, background event, or
+  named legacy identity resolver. A profile switch cannot redirect in-flight work.
+- Editor and Profile Move workflows require feature-issued optimistic snapshots and in-transaction revalidation.
+- All database effects of one Merge command must be atomic. Profile Move owns its broader outer transaction while Merge
+  remains responsible for deriving and applying membership changes inside it.
+- Backup creation/restoration must stop using active-profile switching as Merge identity. Restore remains best-effort by
+  group with structured skipped reasons.
+- Download removal and cover cleanup cannot run in the database transaction or be left to the initiating screen. The
+  approved design requires durable, at-least-once, idempotent consequence delivery and visible pending failure state.
+- Profile clear removes its explicit Merge query and relies on the existing foreign-key cascade inside the profile data
+  transaction.
+- These are F12.3–F12.6 conformance obligations. F12.2 changes no runtime behavior.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.

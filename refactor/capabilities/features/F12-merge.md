@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1 contract boundary implemented; awaiting architectural review before F12.2
+Status: F12.1 committed; F12.2 semantic decision accepted
 
 ## Architectural Classification
 
@@ -106,6 +106,25 @@ Exit gate: profile switching and every failure point have a documented authorita
 Review request: approve profile identity, transaction boundaries, and compensation semantics; these are product and
 architecture decisions.
 
+Completion record:
+
+- Decision [`0020-merge-profile-transaction-and-consequence-semantics.md`](../decisions/0020-merge-profile-transaction-and-consequence-semantics.md)
+  defines the authoritative outcome at every failure point. No write-capable host API or persistence implementation was
+  added before that decision is approved.
+- Every operation captures an explicit profile once. Active-profile lookup is limited to constructing an initial intent;
+  coordinators, repositories, background events, backup operations, and new notification payloads do not re-resolve it.
+- Editor and Profile Move references are opaque optimistic snapshots. Relevant membership/profile/type changes produce
+  conflict without holding a transaction open across UI work.
+- Interactive mutation is one database transition. Profile Move supplies an outer transaction and factual destination
+  ID mapping; Merge revalidates and derives its own changes inside that transaction.
+- Backup restore remains portable and best-effort per group, but is pinned to an explicit destination profile and
+  reports malformed/skipped groups.
+- External effects are proposed as durable, at-least-once, idempotent consequence delivery written with the database
+  transition. Database success is not misreported as total completion while cleanup remains pending.
+- Profile deletion relies on the profile/Entry foreign-key cascade and removes the explicit Merge SQL deletion rather
+  than inventing a lifecycle opt-in.
+- No production behavior or application consumer changed in F12.2.
+
 ### F12.3 — Shared Merge coordinator and persistence conformance
 
 - Remove the empty Merge provider, capability binding, and raw compatibility dispatch.
@@ -172,6 +191,6 @@ status to F12.
 
 F12.1 declares Merge once as a shared workflow, gives application code a workflow contract rather than a support flag or
 raw authority, and establishes a boundary through which optional consequences can later be derived from their real
-providers. It uses no content-type matrix, mandatory provider, or caller-owned completion checklist. The intentionally
-unresolved transaction and persistence details remain an explicit F12.2 decision rather than being hidden in a
-compiling compatibility implementation.
+providers. F12.2 pins every workflow to explicit identity and gives the owning feature an atomic database transition plus
+durable delivery of independently applicable consequences. Neither milestone uses a content-type matrix, mandatory
+provider, caller-owned completion checklist, ambient profile, or compiling compatibility implementation.

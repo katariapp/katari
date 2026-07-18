@@ -38,10 +38,10 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12.1` — Merge contract and ownership boundary
-- State: F12.1 is implemented and awaiting architectural review. It defines the application intent/result/projection
-  contract, segregated explicit-profile host reads, and enforceable raw-authority boundary. It does not change Merge
-  persistence or migrate a production consumer. F12.2–F12.7 and F11 remain pending.
+- Milestone: `F12.2` — Merge profile, transaction, and failure semantics
+- State: F12.1 is committed in `cc2d1aa54`. F12.2 has an accepted durable decision defining explicit profile capture,
+  optimistic snapshots, atomic database transitions, Profile Move participation, backup restore, and external
+  consequence delivery. F12.3–F12.7 and F11 remain pending.
 
 Focused F12.1 validation:
 
@@ -619,6 +619,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Begin F12.2 only after F12.1 architectural approval. Define explicit-profile snapshot, transaction, failure, and
-non-database consequence semantics before adding a write-capable host port or changing persistence. Use one agent and
-stop after the milestone for a product and architecture decision review.
+Begin F12.3 by adding the write-capable host transition, consequence journal, shared coordinator, and persistence adapter
+conforming to accepted decision 0020. Use one agent and stop at the F12.3 milestone before consumer migration.
