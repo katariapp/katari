@@ -184,6 +184,18 @@ private class EntryInteractionBoundaryRules(
         .distinctBy { it.qualifiedName }
         .toList()
 
+    private val typeRuntimeModuleBridgeNames = sourceIndex.files
+        .asSequence()
+        .filter { it.owningTypeModule() != null }
+        .flatMap { it.topLevelDeclarations.asSequence() }
+        .filter { declaration ->
+            declaration.kind == KotlinDeclarationKind.FUNCTION &&
+                declaration.isPublic &&
+                declaration.returnTypeName == "EntryTypeRuntimeModule"
+        }
+        .map(KotlinDeclaration::qualifiedName)
+        .toSet()
+
     fun check(): List<Finding> {
         val findings = mutableListOf<Finding>()
 
@@ -285,13 +297,14 @@ private class EntryInteractionBoundaryRules(
             val importedFqName = import.importedFqName ?: return@forEach
             val module = typeModules.firstOrNull { importedFqName.startsWith("${it.packagePrefix}.") }
                 ?: return@forEach
-            if (importedFqName in ROOT_TYPE_MODULE_IMPORT_ALLOWLIST) return@forEach
+            if (importedFqName in typeRuntimeModuleBridgeNames) return@forEach
 
             findings += Finding(
                 relativePath = file.relativePath,
                 lineNumber = import.lineNumber,
-                reason = "root Entry interaction composition may import only public ${module.name} installer/plugin " +
-                    "bridges, not type-module implementation symbols: $importedFqName",
+                reason =
+                "root Entry interaction composition may import only the public ${module.name} runtime-module " +
+                    "bridge, not type-module implementation symbols: $importedFqName",
             )
         }
     }
@@ -694,22 +707,6 @@ private class EntryInteractionBoundaryRules(
             Regex("""\bEntryType\.[A-Z_]+\b"""),
             Regex("""\bentry\.type\b"""),
             Regex("""\bentryType\b"""),
-        )
-
-        private val ROOT_TYPE_MODULE_IMPORT_ALLOWLIST = setOf(
-            "mihon.entry.interactions.anime.AnimeEntryInteractionDependencies",
-            "mihon.entry.interactions.anime.addAnimeEntryInteractionRuntime",
-            "mihon.entry.interactions.anime.animeEntryInteractionPlugin",
-            "mihon.entry.interactions.anime.animeEntryLibraryProgressCalculator",
-            "mihon.entry.interactions.book.BookEntryInteractionDependencies",
-            "mihon.entry.interactions.book.addBookEntryInteractionRuntime",
-            "mihon.entry.interactions.book.bookEntryInteractionPlugin",
-            "mihon.entry.interactions.book.bookEntryLibraryProgressCalculator",
-            "mihon.entry.interactions.manga.MangaEntryInteractionDependencies",
-            "mihon.entry.interactions.manga.addMangaEntryInteractionRuntime",
-            "mihon.entry.interactions.manga.mangaEntryInteractionPlugin",
-            "mihon.entry.interactions.manga.mangaEntryLibraryProgressCalculator",
-            "mihon.entry.interactions.manga.reader.addMangaReaderImageComponents",
         )
 
         private val PUBLIC_TYPE_MODULE_ANDROID_COMPONENT_FILES = setOf(

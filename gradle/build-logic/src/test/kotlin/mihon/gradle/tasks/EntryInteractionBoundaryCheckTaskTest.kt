@@ -234,6 +234,15 @@ class EntryInteractionBoundaryCheckTaskTest {
     fun `root composition cannot import concrete type module runtime classes`() {
         createBaseFixture(
             additionalFiles = mapOf(
+                "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/" +
+                    "MangaEntryInteractionRuntimeModule.kt" to
+                    """
+                        package mihon.entry.interactions.manga
+
+                        import mihon.entry.interactions.EntryTypeRuntimeModule
+
+                        fun mangaEntryTypeRuntimeModule(): EntryTypeRuntimeModule = EntryTypeRuntimeModule()
+                    """.trimIndent(),
                 "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/download/DownloadManager.kt" to
                     """
                         package mihon.entry.interactions.manga.download
@@ -244,8 +253,7 @@ class EntryInteractionBoundaryCheckTaskTest {
                     """
                         package mihon.entry.interactions
 
-                        import mihon.entry.interactions.manga.MangaEntryInteractionDependencies
-                        import mihon.entry.interactions.manga.mangaEntryInteractionPlugin
+                        import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
                         import mihon.entry.interactions.manga.download.DownloadManager
 
                         class EntryInteractionRuntime(
@@ -258,8 +266,35 @@ class EntryInteractionBoundaryCheckTaskTest {
         val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
 
         error.message shouldContain
-            "root Entry interaction composition may import only public manga installer/plugin bridges"
+            "root Entry interaction composition may import only the public manga runtime-module bridge"
         error.message shouldContain "mihon.entry.interactions.manga.download.DownloadManager"
+    }
+
+    @Test
+    fun `root composition accepts a discovered type runtime module bridge`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/" +
+                    "MangaEntryInteractionRuntimeModule.kt" to
+                    """
+                        package mihon.entry.interactions.manga
+
+                        import mihon.entry.interactions.EntryTypeRuntimeModule
+
+                        fun mangaEntryTypeRuntimeModule(): EntryTypeRuntimeModule = EntryTypeRuntimeModule()
+                    """.trimIndent(),
+                "entry-interactions/src/main/java/mihon/entry/interactions/EntryInteractionRuntime.kt" to
+                    """
+                        package mihon.entry.interactions
+
+                        import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
+
+                        class EntryInteractionRuntime
+                    """.trimIndent(),
+            ),
+        )
+
+        runBoundaryCheck()
     }
 
     @Test
