@@ -38,19 +38,19 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12.2` — Merge profile, transaction, and failure semantics
-- State: F12.1 is committed in `cc2d1aa54`. F12.2 has an accepted durable decision defining explicit profile capture,
-  optimistic snapshots, atomic database transitions, Profile Move participation, backup restore, and external
-  consequence delivery. F12.3–F12.7 and F11 remain pending.
+- Milestone: `F12.3` — Shared Merge coordinator and persistence conformance
+- State: F12.1 is committed in `cc2d1aa54`, and F12.2 is committed in `b02566f5c`. F12.3 is implemented and awaiting
+  review. F12.4–F12.7 and F11 remain pending.
 
-Focused F12.1 validation:
+Focused F12.3 validation:
 
-- `spotlessApply`, Entry-interactions API/root debug Kotlin compilation, and build-logic tests pass.
+- `spotlessApply`, the Merge-boundary build-logic tests, and SQLDelight migration verification pass.
 - Permanent Kotlin sources and validation messages use product architecture vocabulary; the `F12` identifier exists
   only in refactor planning records.
-- The boundary census intentionally fails on exactly 45 findings: 42 raw Merge authority references assigned to
-  F12.3–F12.6 and three transitional capability-facade references shared with F11.
-- No persistence implementation or application consumer behavior changed in F12.1.
+- The boundary census intentionally fails on exactly 34 remaining consumer findings assigned to F12.4–F12.6 and F11.
+  It now rejects both raw Merge authority and attempts to restore the former type-support gate.
+- Domain/application compilation intentionally stops at consumers of the deleted raw Merge model/repository/interactors.
+  Compilation is restored by migrating those consumers, not by restoring a compatibility authority.
 
 ## Why the Plan Was Reset
 
@@ -136,8 +136,9 @@ authority or weakening the architecture.
 - [x] Default false/null/empty download sub-capability declarations removed from the core downloader contract
 - [x] Decision `0014-download-provider-decomposition.md` accepted
 - [x] Milestone 4.2.2 committed in `f4a6d153c`
-- [x] Migration and Merge split into independent provider contracts and bindings
-- [x] Manga and Anime bind both capabilities independently
+- [x] Migration and Merge were split into independent provider contracts and bindings for audit; F12.3 later removed
+  the empty Merge provider path
+- [x] Manga and Anime retain the independent Migration binding; provider-free F12 now supplies shared Merge
 - [x] Book's combined default-false capability processor removed without replacement absence declarations
 - [x] Shared selection constraints retained as transitional feature policy rather than type provider behavior
 - [x] Decision `0015-migration-and-merge-provider-boundary.md` accepted

@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1 committed; F12.2 semantic decision accepted
+Status: F12.1 and F12.2 committed; F12.3 implemented and awaiting review
 
 ## Architectural Classification
 
@@ -137,6 +137,35 @@ Exit gate: base Merge behavior is feature-owned, profile-safe, and inaccessible 
 Review request: verify the implemented workflow against the approved F12.1/F12.2 contracts; no new decisions are
 expected unless implementation exposes a contradiction.
 
+Completion record:
+
+- The empty Merge provider, capability binding, capability item, and raw compatibility dispatch are removed. Manga and
+  Anime retain only their independent Migration providers; Book needs no Merge-specific type declaration.
+- `EntryMergeFeatureContributor` contributes the base workflow with `Always`, so every discovered content type receives
+  it automatically. Download ownership and removal are a separate relationship selected from the real Download
+  provider; missing Download support does not invalidate Merge.
+- The application contract now uses opaque editor-row references as well as an opaque edit reference. This is required
+  because an Entry may remain unpersisted until the approved commit transaction; a pre-commit database ID cannot be its
+  authority.
+- Split coordinators own preparation, validation, workflow execution, navigation, candidates, Library grouping,
+  backup, child/download ownership, and Migration replacement. Context rejects individual operations without creating
+  a type-wide support fact.
+- The explicit-profile host adapter performs optimistic revalidation, optional materialization, Library/category
+  changes, membership replacement, and consequence journaling in one transaction. It exposes one sealed transition
+  boundary rather than raw save/delete/remove CRUD.
+- Durable consequences are selected by feature artifacts, stored with the database transition, retried after process
+  restart, acknowledged only after idempotent delivery, and reflected as `COMPLETE` or `PENDING` in the workflow result.
+  Library initialization and cover cleanup are shared consequences; Download removal is emitted only for types whose
+  Download relationship was selected. The journal retains attempt and failure details; its application-facing
+  diagnostics and manual retry surface remain F12.6 migration work.
+- The legacy `EntryMerge` model, repository, repository implementation, and Get/Update interactors are deleted. Their
+  remaining consumers intentionally do not compile and cannot fall back to the old authority.
+- Boundary enforcement now also rejects reintroduction of `EntryMergeProvider`, `EntryMergeCapability`,
+  `EntryMergeCapabilityItem`, `supportsMerge`, or `canMergeSelection`.
+- Focused formatting, Merge-boundary tests, and SQLDelight migration verification pass. The full boundary check fails
+  on 34 classified consumer migrations owned by F12.4-F12.6 and F11; Domain/application compilation stops at those
+  deliberately removed raw types.
+
 ### F12.4 — Entry ownership and navigation projections
 
 - Migrate visible-entry, concrete child-owner, member ordering, and selection consumers.
@@ -161,6 +190,8 @@ Review request: verify identity and user-visible navigation semantics, especiall
 ### F12.6 — Library state, metadata, backup, and profile lifecycle
 
 - Migrate Library removal, metadata refresh, backup representation, restore, profile move, and deletion consequences.
+- Expose durable consequence diagnostics and manual retry through a feature-owned status surface without exposing raw
+  journal records to application consumers.
 - Use feature-issued projections or snapshots for every cross-boundary operation.
 - Do not fold F11 Migration into this milestone; any F11 cooperation remains an explicit narrow boundary until F11.
 
@@ -192,5 +223,8 @@ status to F12.
 F12.1 declares Merge once as a shared workflow, gives application code a workflow contract rather than a support flag or
 raw authority, and establishes a boundary through which optional consequences can later be derived from their real
 providers. F12.2 pins every workflow to explicit identity and gives the owning feature an atomic database transition plus
-durable delivery of independently applicable consequences. Neither milestone uses a content-type matrix, mandatory
-provider, caller-owned completion checklist, ambient profile, or compiling compatibility implementation.
+durable delivery of independently applicable consequences. F12.3 implements that architecture before migrating
+consumers: base participation is discovered from content-type composition, optional Download behavior is derived from
+its provider, and the obsolete authority is removed even though this exposes compile failures. No completed milestone
+uses a content-type matrix, mandatory provider, caller-owned completion checklist, ambient profile, or compiling
+compatibility implementation.

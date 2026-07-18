@@ -1,12 +1,6 @@
 package mihon.entry.interactions
 
-import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-
-data class EntryMergeCapabilityItem(
-    val entry: Entry,
-    val isMerged: Boolean,
-)
 
 data class EntryConsumptionStatus(
     val consumed: Boolean,

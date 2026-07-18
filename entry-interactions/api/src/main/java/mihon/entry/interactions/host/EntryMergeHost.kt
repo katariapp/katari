@@ -11,12 +11,26 @@ import tachiyomi.domain.entry.model.Entry
  */
 interface EntryMergeHost {
     fun profile(profileId: Long): EntryMergeProfileHost
+
+    suspend fun pendingConsequences(limit: Int): List<EntryMergePendingConsequence>
+
+    suspend fun acknowledgeConsequence(consequenceId: String)
+
+    suspend fun recordConsequenceFailure(
+        consequenceId: String,
+        message: String,
+        retryAtMillis: Long,
+    )
+
+    suspend fun pendingConsequenceCount(operationId: String): Long
 }
 
 interface EntryMergeProfileHost {
     val profileId: Long
 
     suspend fun entries(entryIds: List<Long>): List<Entry>
+
+    suspend fun resolveEntryIdentity(entry: Entry): Entry?
 
     suspend fun membership(entryId: Long): EntryMergeMembershipSnapshot?
 
@@ -29,4 +43,6 @@ interface EntryMergeProfileHost {
     suspend fun duplicateCandidates(entry: Entry): List<DuplicateEntryCandidate>
 
     fun observeDuplicateCandidates(entry: Flow<Entry>): Flow<List<DuplicateEntryCandidate>>
+
+    suspend fun applyTransition(transition: EntryMergeHostTransition): EntryMergeHostTransitionResult
 }

@@ -18,7 +18,6 @@ import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryMediaCacheCapability
-import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
@@ -84,7 +83,7 @@ internal fun mangaEntryInteractionPlugin(
         entryChapterRepository = dependencies.entryChapterRepository,
     )
     val downloadProcessor = MangaDownloadProcessor(dependencies)
-    val migrationMergeProvider = MangaMigrationMergeProvider()
+    val migrationProvider = MangaMigrationProvider()
     val childListProcessor = MangaChildListProcessor(dependencies.entryProgressRepository)
     val libraryProgressProvider = MangaLibraryProgressProvider(dependencies.entryProgressRepository)
     val childGroupFilterProcessor = MangaChildGroupFilterProcessor
@@ -114,8 +113,7 @@ internal fun mangaEntryInteractionPlugin(
                     EntryDownloadParallelSourceTransfersCapability.bind(downloadProcessor),
                     EntryDownloadParallelItemTransfersCapability.bind(downloadProcessor),
                     EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
-                    EntryMigrationCapability.bind(migrationMergeProvider),
-                    EntryMergeCapability.bind(migrationMergeProvider),
+                    EntryMigrationCapability.bind(migrationProvider),
                     EntryChildListCapability.bind(childListProcessor),
                     EntryChildProgressCapability.bind(childListProcessor),
                     EntryLibraryProgressCapability.bind(libraryProgressProvider),

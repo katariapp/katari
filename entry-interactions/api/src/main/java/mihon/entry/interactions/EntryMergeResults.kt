@@ -21,12 +21,22 @@ sealed interface EntryMergeExecutionResult {
 
     /** The Merge-feature-issued edit reference no longer describes authoritative state. */
     data object Conflict : EntryMergeExecutionResult
+
+    data class OperationalFailure(
+        val retryable: Boolean,
+    ) : EntryMergeExecutionResult
 }
 
 /** Optional navigation target produced by the completed workflow; it exposes no group or member list. */
 data class EntryMergeWorkflowOutcome(
     val visibleSubject: EntryMergeSubject?,
+    val followUp: EntryMergeFollowUp,
 )
+
+enum class EntryMergeFollowUp {
+    COMPLETE,
+    PENDING,
+}
 
 enum class EntryMergeRejection {
     EMPTY_SELECTION,
@@ -39,4 +49,5 @@ enum class EntryMergeRejection {
     ENTRY_NOT_IN_EDITOR,
     TARGET_REMOVED,
     INVALID_ORDER,
+    PREPARATION_MISSING,
 }

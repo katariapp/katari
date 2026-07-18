@@ -9,6 +9,8 @@ interface EntryRepository {
 
     suspend fun getEntryById(id: Long): Entry?
 
+    suspend fun getEntryById(id: Long, profileId: Long): Entry?
+
     suspend fun getEntryByIdAsFlow(id: Long): Flow<Entry>
 
     suspend fun getEntryByUrlAndSourceId(

@@ -16,11 +16,30 @@ internal fun checkEntryMergeBoundaries(
         if (!source.isTestPath()) {
             checkHostApiReferences(source, hostApiNames, findings)
             checkRawAuthorityReferences(source, findings)
+            checkTransitionalSupportReferences(source, findings)
             checkApplicationApiSurface(source, findings)
         }
     }
 
     return findings
+}
+
+private fun checkTransitionalSupportReferences(
+    source: EntryMergeBoundarySource,
+    findings: MutableList<EntryMergeBoundaryFinding>,
+) {
+    if (!source.isRawAuthorityGuardedPath() && !source.relativePath.startsWith("entry-interactions/spi/src/main/")) {
+        return
+    }
+    TRANSITIONAL_MERGE_SUPPORT_NAMES.forEach { name ->
+        source.references[name]?.let { lineNumber ->
+            findings += EntryMergeBoundaryFinding(
+                relativePath = source.relativePath,
+                lineNumber = lineNumber,
+                reason = "Merge is a shared feature workflow and cannot be gated by transitional type support: $name",
+            )
+        }
+    }
 }
 
 private fun checkHostApiReferences(
@@ -153,6 +172,14 @@ private val RAW_MERGE_AUTHORITY_NAMES = setOf(
     "MergedEntryRepository",
     "EntryMerge",
     "merged_entriesQueries",
+)
+
+private val TRANSITIONAL_MERGE_SUPPORT_NAMES = setOf(
+    "EntryMergeProvider",
+    "EntryMergeCapability",
+    "EntryMergeCapabilityItem",
+    "supportsMerge",
+    "canMergeSelection",
 )
 
 private val RAW_MERGE_APPLICATION_TYPES = setOf(

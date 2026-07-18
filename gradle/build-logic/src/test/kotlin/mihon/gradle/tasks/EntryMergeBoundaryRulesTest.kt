@@ -171,6 +171,32 @@ class EntryMergeBoundaryRulesTest {
         error.message shouldContain "MergedEntryRepository"
     }
 
+    @Test
+    fun `type modules and consumers cannot restore a Merge support gate`() {
+        createFixture(
+            appSource = """
+                package app
+
+                class AppFeature {
+                    fun supportsMerge(): Boolean = true
+                }
+            """.trimIndent(),
+            additionalFiles = mapOf(
+                "entry-interactions/manga/src/main/java/test/MangaPlugin.kt" to
+                    """
+                        package test
+
+                        class MangaPlugin(private val capability: EntryMergeCapability)
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "cannot be gated by transitional type support: supportsMerge"
+        error.message shouldContain "cannot be gated by transitional type support: EntryMergeCapability"
+    }
+
     private fun hostApiFixture(): Map<String, String> = mapOf(
         "entry-interactions/api/src/main/java/mihon/entry/interactions/host/EntryMergeHost.kt" to
             """

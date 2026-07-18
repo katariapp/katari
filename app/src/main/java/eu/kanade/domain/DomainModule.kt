@@ -39,7 +39,6 @@ import tachiyomi.data.entry.EntryCoverHashesRepositoryImpl
 import tachiyomi.data.entry.EntryProgressRepositoryImpl
 import tachiyomi.data.entry.EntryRepositoryImpl
 import tachiyomi.data.entry.EntrySyncRepositoryImpl
-import tachiyomi.data.entry.MergedEntryRepositoryImpl
 import tachiyomi.data.entry.PlaybackPreferencesRepositoryImpl
 import tachiyomi.data.entry.ViewerSettingOverrideRepositoryImpl
 import tachiyomi.data.history.HistoryRepositoryImpl
@@ -60,13 +59,11 @@ import tachiyomi.domain.category.interactor.SetSortModeForCategory
 import tachiyomi.domain.category.interactor.UpdateCategory
 import tachiyomi.domain.category.repository.CategoryRepository
 import tachiyomi.domain.entry.interactor.EnhanceDuplicateLibraryEntries
-import tachiyomi.domain.entry.interactor.GetDuplicateLibraryEntries
 import tachiyomi.domain.entry.interactor.GetEnhancedDuplicateLibraryEntries
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetEntryById
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
-import tachiyomi.domain.entry.interactor.GetMergedEntry
 import tachiyomi.domain.entry.interactor.GetNextUnreadChapter
 import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
 import tachiyomi.domain.entry.interactor.SetEntryCategories
@@ -75,14 +72,12 @@ import tachiyomi.domain.entry.interactor.SetEntryFavorite
 import tachiyomi.domain.entry.interactor.SetEntryViewerFlags
 import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.interactor.UpdateEntry
-import tachiyomi.domain.entry.interactor.UpdateMergedEntry
 import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryCoverHashesRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.EntrySyncRepository
-import tachiyomi.domain.entry.repository.MergedEntryRepository
 import tachiyomi.domain.entry.repository.PlaybackPreferencesRepository
 import tachiyomi.domain.entry.service.FetchInterval
 import tachiyomi.domain.history.interactor.GetHistory
@@ -126,8 +121,6 @@ class DomainModule : InjektModule {
         addFactory { UpdateCategory(get()) }
         addFactory { DeleteCategory(get(), get(), get()) }
 
-        addSingletonFactory<MergedEntryRepository> { MergedEntryRepositoryImpl(get(), get()) }
-
         addSingletonFactory<EntryRepository> { EntryRepositoryImpl(get(), get()) }
         addSingletonFactory<EntryChapterRepository> { EntryChapterRepositoryImpl(get(), get()) }
         addSingletonFactory<EntryProgressRepository> { EntryProgressRepositoryImpl(get()) }
@@ -146,9 +139,6 @@ class DomainModule : InjektModule {
         addFactory { NetworkToLocalEntry(get()) }
         addFactory { GetLibraryEntries(get(), get(), get(), get(), get(), get(), get()) }
         addFactory { SyncEntryWithSource(get(), get(), get(), get(), get(), get(), get()) }
-        addFactory { GetDuplicateLibraryEntries(get(), get(), get(), get(), get()) }
-        addFactory { GetMergedEntry(get()) }
-        addFactory { UpdateMergedEntry(get(), get()) }
 
         addFactory { GetEntryWithChapters(get(), get(), get()) }
 

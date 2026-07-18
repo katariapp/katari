@@ -223,6 +223,14 @@ SET favorite = :favorite
 WHERE profile_id = :profileId
 AND _id = :entryId;
 
+prepareForLibrary:
+UPDATE entries
+SET favorite = 1,
+    date_added = CASE WHEN favorite = 0 THEN :dateAdded ELSE date_added END,
+    chapter_flags = CASE WHEN favorite = 0 THEN :chapterFlags ELSE chapter_flags END
+WHERE profile_id = :profileId
+AND _id = :entryId;
+
 deleteByProfile:
 DELETE FROM entries
 WHERE profile_id = :profileId;

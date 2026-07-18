@@ -6,7 +6,6 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 internal class ProviderBackedEntryCapabilityInteraction(
     private val migrationProviders: Map<EntryType, EntryMigrationProvider>,
-    private val mergeProviders: Map<EntryType, EntryMergeProvider>,
 ) : EntryCapabilityInteraction {
     override fun supportsMigration(entry: Entry): Boolean {
         val provider = migrationProviders[entry.type] ?: return false
@@ -20,20 +19,6 @@ internal class ProviderBackedEntryCapabilityInteraction(
 
     override fun migrationEntries(entries: List<Entry>): List<Entry> {
         return entries.filter(::supportsMigration)
-    }
-
-    override fun supportsMerge(entry: Entry): Boolean {
-        val provider = mergeProviders[entry.type] ?: return false
-        provider.requireMatchingEntryType("merge", entry, mergeProviders.keys)
-        return true
-    }
-
-    override fun canMergeSelection(selection: List<EntryMergeCapabilityItem>): Boolean {
-        if (selection.size < 2) return false
-        if (selection.map { it.entry.type }.distinct().size != 1) return false
-        if (selection.count { it.isMerged } > 1) return false
-
-        return selection.all { supportsMerge(it.entry) }
     }
 }
 

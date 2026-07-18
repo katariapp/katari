@@ -7,6 +7,7 @@ import eu.kanade.tachiyomi.data.track.supportsEntryType
 import logcat.LogPriority
 import mihon.entry.interactions.EntryConsumptionFeature
 import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.track.interactor.InsertTrack
@@ -29,11 +30,19 @@ class SyncChapterProgressWithTrack(
             return
         }
         val entry = entryRepository.getEntryById(entryId) ?: return
+        await(entry, remoteTrack, tracker)
+    }
+
+    suspend fun await(
+        entry: Entry,
+        remoteTrack: EntryTrack,
+        tracker: Tracker,
+    ) {
         if (!tracker.supportsEntryType(entry.type)) {
             return
         }
 
-        val sortedChapters = entryChapterRepository.getChaptersByEntryIdAwait(entryId)
+        val sortedChapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
             .sortedBy { it.chapterNumber }
             .filter { it.isRecognizedNumber }
 
@@ -50,7 +59,7 @@ class SyncChapterProgressWithTrack(
             if (chaptersToUpdate.isNotEmpty()) {
                 entryConsumptionFeature.setConsumed(entry, chaptersToUpdate, consumed = true)
             }
-            insertTrack.await(updatedTrack)
+            insertTrack.await(entry.profileId, updatedTrack)
         } catch (e: Throwable) {
             logcat(LogPriority.WARN, e)
         }

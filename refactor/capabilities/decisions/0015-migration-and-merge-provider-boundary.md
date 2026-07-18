@@ -34,6 +34,15 @@ capability. Its selection and entry-state restrictions are contextual feature po
 - Operational compatibility queries dispatch through separate Migration and Merge provider maps during the transition.
 - The combined `EntryCapabilityProcessor` and its type-module registration calls are removed.
 
+## F12 Application
+
+- The audited Merge marker, binding, provider map, capability item, and support/selection compatibility methods are now
+  removed. Manga and Anime retain only the separate Migration provider described above.
+- One provider-free Merge contribution applies its base workflow to every discovered content type.
+- Selection shape and membership are evaluated by the Merge feature for each request. Optional Download consequences
+  are selected independently from the Download provider.
+- Boundary validation rejects restoration of the transitional Merge support vocabulary.
+
 ## Consequences
 
 - A future composed type receives base Merge without adding a marker or type-module edit.

@@ -70,7 +70,6 @@ class BookEntryInteractionPluginTest {
         assertEquals(chapter, interactions.continueEntry.findNext(entry))
         assertFalse(interactions.download.supportsDownloads(EntryType.BOOK))
         assertFalse(interactions.capability.supportsMigration(entry))
-        assertFalse(interactions.capability.supportsMerge(entry))
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteConfiguration
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDatabaseType
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDriver
 import com.eygraber.sqldelight.androidx.driver.FileProvider
+import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.store.DelayedTrackingStore
 import eu.kanade.presentation.more.settings.screen.SettingsAnimePlayerScreen
 import eu.kanade.presentation.more.settings.screen.SettingsHtmlProseReaderScreen
@@ -17,6 +18,7 @@ import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
 import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
 import eu.kanade.tachiyomi.data.saver.ImageSaver
+import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
 import eu.kanade.tachiyomi.entry.AppEntryMetadataUpdateHooks
@@ -37,6 +39,8 @@ import mihon.entry.interactions.EntryInteractionActivityTheme
 import mihon.entry.interactions.EntryInteractionRuntimeDependencies
 import mihon.entry.interactions.EntryInteractionRuntimeWarmup
 import mihon.entry.interactions.addEntryInteractionRuntime
+import mihon.entry.interactions.host.AppEntryMergeDuplicateCandidateHost
+import mihon.entry.interactions.host.AppEntryMergeHost
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
 import mihon.feature.profiles.core.ProfileManager
@@ -59,8 +63,11 @@ import tachiyomi.data.History
 import tachiyomi.data.MemoColumnAdapter
 import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
+import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.service.EntryMetadataUpdateHooks
+import tachiyomi.domain.library.service.DuplicatePreferences
+import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.source.local.image.LocalCoverManager
@@ -162,6 +169,17 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { DelayedTrackingStore(app) }
 
         val mangaPageImageCache = AppMangaPageImageCache(get())
+        val mergeHost = AppEntryMergeHost(
+            handler = get(),
+            duplicateCandidates = AppEntryMergeDuplicateCandidateHost(get(), get<DuplicatePreferences>()),
+            defaultChildFlags = {
+                val preferences = get<LibraryPreferences>()
+                Entry.SHOW_ALL or
+                    preferences.sortChapterBySourceOrNumber.get() or
+                    preferences.displayChapterByNameOrNumber.get() or
+                    preferences.sortChapterByAscendingOrDescending.get()
+            },
+        )
         addEntryInteractionRuntime(
             app = app,
             dependencies = EntryInteractionRuntimeDependencies(
@@ -181,6 +199,18 @@ class AppModule(val app: Application) : InjektModule {
                     SettingsReadiumEpubReaderScreen,
                     SettingsHtmlProseReaderScreen,
                 ),
+                mergeHost = mergeHost,
+                mergeLibraryEntryInitializer = { entry ->
+                    val sourceManager = get<SourceManager>()
+                    val source = sourceManager.getOrStub(entry.source)
+                    get<AddTracks>().bindEnhancedTrackers(
+                        entry = entry,
+                        source = EntryTrackingSource.from(source, sourceManager.getDisplayInfo(entry.source)),
+                    )
+                },
+                mergeCoverCleanup = { entry ->
+                    get<EntryRemovalCleanupInteraction>().cleanupAfterLibraryRemoval(entry)
+                },
             ),
         )
 

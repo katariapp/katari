@@ -27,14 +27,15 @@ data class EntryMergeMemberPreparationIntent(
 /**
  * User choices made against a Merge-feature-issued editor projection.
  *
- * The ordered and removed IDs are editable form values, not a list of downstream integrations for the caller to run.
+ * The ordered and removed references are editable form values, not a list of downstream integrations for the caller
+ * to run.
  */
 data class EntryMergeCommitIntent(
     val editReference: EntryMergeEditReference,
-    val targetEntryId: Long,
-    val orderedEntryIds: List<Long>,
-    val removedEntryIds: Set<Long> = emptySet(),
-    val libraryRemovalEntryIds: Set<Long> = emptySet(),
+    val target: EntryMergeEditorEntryReference,
+    val orderedEntries: List<EntryMergeEditorEntryReference>,
+    val removedEntries: Set<EntryMergeEditorEntryReference> = emptySet(),
+    val libraryRemovalEntries: Set<EntryMergeEditorEntryReference> = emptySet(),
 ) : EntryMergeWorkflowIntent
 
 /** Dissolves the authoritative group containing [subject] without reconstructing it in the caller. */

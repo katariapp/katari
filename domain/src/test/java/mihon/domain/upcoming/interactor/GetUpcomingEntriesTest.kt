@@ -25,6 +25,7 @@ class GetUpcomingEntriesTest {
         var upcomingTypes: Set<EntryType> = emptySet()
 
         override suspend fun getEntryById(id: Long): Entry? = null
+        override suspend fun getEntryById(id: Long, profileId: Long): Entry? = null
         override suspend fun getEntryByIdAsFlow(id: Long): Flow<Entry> = error("Not used")
         override suspend fun getEntryByUrlAndSourceId(
             url: String,

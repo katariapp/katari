@@ -88,10 +88,10 @@ class AddTracks(
                         service.match(entry)?.let { track ->
                             track.manga_id = entry.id
                             (service as Tracker).bind(track)
-                            insertTrack.await(track.toDomainTrack(idRequired = false)!!)
+                            insertTrack.await(entry.profileId, track.toDomainTrack(idRequired = false)!!)
 
                             syncChapterProgressWithTrack.await(
-                                entry.id,
+                                entry,
                                 track.toDomainTrack(idRequired = false)!!,
                                 service,
                             )

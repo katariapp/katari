@@ -5,8 +5,10 @@ import coil3.ComponentRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
 import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
+import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
@@ -16,6 +18,7 @@ import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.core.common.preference.ProfilePreferenceOwnerId
 import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
+import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -34,6 +37,9 @@ data class EntryInteractionRuntimeDependencies(
     val basePreferenceStore: PreferenceStore,
     val profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
     val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
+    val mergeHost: EntryMergeHost,
+    val mergeLibraryEntryInitializer: suspend (Entry) -> Unit,
+    val mergeCoverCleanup: suspend (Entry) -> Unit,
 )
 
 fun interface EntryInteractionRuntimeWarmup {
@@ -112,8 +118,37 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryLibraryUpdateNotificationFeatureContributor,
                 EntryViewerSettingsFeatureContributor,
                 EntryMediaCacheFeatureContributor,
+                EntryMergeFeatureContributor,
             ),
         )
+    }
+    addSingletonFactory {
+        EntryMergeConsequenceDelivery(
+            host = dependencies.mergeHost,
+            libraryEntryInitializer = dependencies.mergeLibraryEntryInitializer,
+            coverCleanup = dependencies.mergeCoverCleanup,
+            downloadMaintenance = { get() },
+        )
+    }
+    addSingletonFactory<EntryMergeFeature> {
+        EntryMergeWorkflowCoordinator(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            host = dependencies.mergeHost,
+            consequences = get(),
+        )
+    }
+    addSingletonFactory<EntryMergeCandidateFeature> { EntryMergeCandidateCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeNavigationFeature> { EntryMergeNavigationCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeLibraryGroupingFeature> {
+        EntryMergeLibraryGroupingCoordinator(dependencies.mergeHost)
+    }
+    addSingletonFactory<EntryMergeBackupFeature> { EntryMergeBackupCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeMigrationFeature> { EntryMergeMigrationCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeChildOwnershipProjection> {
+        EntryMergeChildOwnershipCoordinator(dependencies.mergeHost)
+    }
+    addSingletonFactory<EntryMergeDownloadOwnershipProjection> {
+        EntryMergeDownloadOwnershipCoordinator(dependencies.mergeHost)
     }
     addSingletonFactory<EntryOpenFeature> {
         val composition = get<EntryInteractionComposition>()
@@ -330,6 +365,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             get<EntryViewerSettingsFeature>()
             typeRuntimeContributions.flatMap(EntryTypeRuntimeContribution::warmups).forEach { it() }
             get<EntryDownloadNotificationManager>().start()
+            CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                get<EntryMergeConsequenceDelivery>().runRetryLoop()
+            }
         }
     }
 }

@@ -8,8 +8,6 @@ interface EntryCapabilityInteraction {
     fun supportsMigration(entry: Entry): Boolean
     fun canMigrate(entries: List<Entry>): Boolean
     fun migrationEntries(entries: List<Entry>): List<Entry>
-    fun supportsMerge(entry: Entry): Boolean
-    fun canMergeSelection(selection: List<EntryMergeCapabilityItem>): Boolean
 }
 
 interface EntryConsumptionInteraction {

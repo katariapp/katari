@@ -105,7 +105,7 @@ Migration progress:
 | `T07` | Bulk candidate pool | Required method on each download processor | Preserve media-specific pool construction; bulk action selection and intersections belong to the Downloads feature. |
 | `T08` | Automatic-download filtering | The three former methods only asserted type and delegated to one shared policy | Remove the artificial provider and derive Automatic Downloads from core Download support. F05 owns shared policy; future genuine media differences must be modeled from their actual requirement without restoring no-op providers. |
 | `T09` | Migration | `EntryCapabilityProcessor.supportsMigration`, default false | Split from the combined capability processor. Provider absence means unavailable; do not contribute a false result. |
-| `T10` | Merge | Transitional `EntryMergeProvider` marker | F12 removes the empty marker. Merge is a provider-free shared workflow for every composed type; entry type, profile, selection shape, and existing membership remain feature-owned context. |
+| `T10` | Merge | Provider-free F12 contribution plus feature-owned runtime context | The empty marker is removed. Every composed type receives base Merge automatically; entry type, profile, selection shape, and existing membership remain feature-owned context. |
 | `T11` | Consumption mutation | `EntryConsumptionProcessor` | Contribute the provider independently from Bookmarking and Downloads. |
 | `T12` | Bookmark mutation | `EntryBookmarkProcessor`; Manga only | Contribute only where implemented. Anime and Book contribute no absence declaration. |
 | `T13` | Update eligibility | Three nearly identical type processors | Preserve operational behavior during type migration, then let the Library Update feature own shared policy in Phase 5. |

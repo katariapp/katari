@@ -33,6 +33,12 @@ class EntryRepositoryImpl(
         }
     }
 
+    override suspend fun getEntryById(id: Long, profileId: Long): Entry? {
+        return handler.awaitOneOrNull {
+            entriesQueries.getEntryById(id, profileId, EntryMapper::mapEntry)
+        }
+    }
+
     override suspend fun getEntryByIdAsFlow(id: Long): Flow<Entry> {
         return profileProvider.activeProfileIdFlow.flatMapLatest { profileId ->
             handler.subscribeToOneOrNull {

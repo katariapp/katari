@@ -6,14 +6,8 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 interface EntryMigrationProvider : EntryInteractionProvider
 
-interface EntryMergeProvider : EntryInteractionProvider
-
 val EntryMigrationCapability = entryInteractionCapability<EntryMigrationProvider>(
     id = CapabilityId("entry.migration"),
-)
-
-val EntryMergeCapability = entryInteractionCapability<EntryMergeProvider>(
-    id = CapabilityId("entry.merge"),
 )
 
 interface EntryConsumptionProcessor : EntryInteractionProvider {

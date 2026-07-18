@@ -59,6 +59,21 @@ SPI boundary is not an exit gate for Phase 3.5.
   transaction.
 - These are F12.3–F12.6 conformance obligations. F12.2 changes no runtime behavior.
 
+### Resolved in F12.3: shared workflow and persistence authority
+
+- Base Merge is an unconditional feature contribution for every discovered content type. Manga and Anime no longer
+  bind an empty Merge marker, and Book requires no opt-in.
+- Optional Download ownership/removal is derived from the real Download provider. No Merge-wide support fact implies
+  Download behavior.
+- The feature owns opaque editor/member references, contextual validation, explicit-profile projections, workflow
+  execution, and the narrow Migration replacement operation.
+- The host adapter accepts sealed owned transitions, revalidates feature-issued expectations in one transaction, and
+  atomically persists membership, preparation/Library state, and durable consequence records.
+- The raw model, repository, repository implementation, and Get/Update interactors are deleted. There is no compiling
+  compatibility authority beside the Feature boundary.
+- Boundary validation reports 34 remaining application/domain/type consumer migrations. These failures are the input
+  to F12.4-F12.6 and F11, not exceptions or a reason to restore the deleted path.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.
