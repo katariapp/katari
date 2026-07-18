@@ -11,6 +11,8 @@ import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadOptionsCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
+import mihon.entry.interactions.EntryMergeCapability
+import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryPlaybackPreferencesCapability
 import mihon.entry.interactions.EntryProgressCapability
@@ -74,6 +76,7 @@ internal fun animeEntryInteractionPlugin(
         playbackPreferencesRepository = dependencies.playbackPreferencesRepository,
     )
     val downloadProcessor = AnimeDownloadProcessor(dependencies)
+    val migrationMergeProvider = AnimeMigrationMergeProvider()
     return object : EntryInteractionPlugin {
         override val type = EntryType.ANIME
         override val owner = ContributionOwner("entry-interactions.anime")
@@ -87,11 +90,12 @@ internal fun animeEntryInteractionPlugin(
             EntryDownloadOptionsCapability.bind(downloadProcessor),
             EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
             EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
+            EntryMigrationCapability.bind(migrationMergeProvider),
+            EntryMergeCapability.bind(migrationMergeProvider),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
             super<EntryInteractionPlugin>.register(registry)
-            registry.registerCapabilityProcessor(AnimeCapabilityProcessor())
             registry.registerChildListProcessor(
                 AnimeChildListProcessor(
                     entryProgressRepository = dependencies.entryProgressRepository,

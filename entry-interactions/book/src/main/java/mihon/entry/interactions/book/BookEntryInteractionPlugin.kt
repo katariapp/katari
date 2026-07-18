@@ -73,7 +73,6 @@ fun bookEntryInteractionPlugin(
 
         override fun register(registry: EntryInteractionRegistry) {
             super<EntryInteractionPlugin>.register(registry)
-            registry.registerCapabilityProcessor(BookCapabilityProcessor())
             registry.registerChildListProcessor(BookChildListProcessor(dependencies.entryProgressRepository))
             registry.registerUpdateEligibilityProcessor(BookUpdateEligibilityProcessor())
             registry.registerLibraryFilterProcessor(BookLibraryFilterProcessor())

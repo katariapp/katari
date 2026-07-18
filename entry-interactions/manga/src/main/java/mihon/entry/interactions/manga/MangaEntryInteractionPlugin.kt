@@ -16,6 +16,8 @@ import mihon.entry.interactions.EntryDownloadParallelSourceTransfersCapability
 import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
+import mihon.entry.interactions.EntryMergeCapability
+import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.EntryReaderIncognitoState
@@ -74,6 +76,7 @@ internal fun mangaEntryInteractionPlugin(
         entryChapterRepository = dependencies.entryChapterRepository,
     )
     val downloadProcessor = MangaDownloadProcessor(dependencies)
+    val migrationMergeProvider = MangaMigrationMergeProvider()
     return object : EntryInteractionPlugin {
         override val type = EntryType.MANGA
         override val owner = ContributionOwner("entry-interactions.manga")
@@ -90,11 +93,12 @@ internal fun mangaEntryInteractionPlugin(
             EntryDownloadParallelItemTransfersCapability.bind(downloadProcessor),
             EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
             EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
+            EntryMigrationCapability.bind(migrationMergeProvider),
+            EntryMergeCapability.bind(migrationMergeProvider),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
             super<EntryInteractionPlugin>.register(registry)
-            registry.registerCapabilityProcessor(MangaCapabilityProcessor())
             registry.registerChildListProcessor(MangaChildListProcessor(dependencies.entryProgressRepository))
             registry.registerUpdateEligibilityProcessor(MangaUpdateEligibilityProcessor())
             registry.registerChildGroupFilterProcessor(

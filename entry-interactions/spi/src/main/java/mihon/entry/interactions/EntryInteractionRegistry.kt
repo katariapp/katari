@@ -70,7 +70,8 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     private val downloadSettingCapabilities = mutableMapOf<EntryType, MutableSet<EntryDownloadSettingCapability>>()
     private val bulkDownloadCandidateProcessors = mutableMapOf<EntryType, EntryBulkDownloadCandidateProcessor>()
     private val automaticDownloadFilterProcessors = mutableMapOf<EntryType, EntryAutomaticDownloadFilterProcessor>()
-    private val capabilityProcessors = mutableMapOf<EntryType, EntryCapabilityProcessor>()
+    private val migrationProviders = mutableMapOf<EntryType, EntryMigrationProvider>()
+    private val mergeProviders = mutableMapOf<EntryType, EntryMergeProvider>()
     private val consumptionProcessors = mutableMapOf<EntryType, EntryConsumptionProcessor>()
     private val bookmarkProcessors = mutableMapOf<EntryType, EntryBookmarkProcessor>()
     private val updateEligibilityProcessors = mutableMapOf<EntryType, EntryUpdateEligibilityProcessor>()
@@ -115,8 +116,12 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
         registerProcessor("automatic download filter", processor.type, processor, automaticDownloadFilterProcessors)
     }
 
-    override fun registerCapabilityProcessor(processor: EntryCapabilityProcessor) {
-        registerProcessor("capability", processor.type, processor, capabilityProcessors)
+    override fun registerMigrationProvider(provider: EntryMigrationProvider) {
+        registerProcessor("migration", provider.type, provider, migrationProviders)
+    }
+
+    override fun registerMergeProvider(provider: EntryMergeProvider) {
+        registerProcessor("merge", provider.type, provider, mergeProviders)
     }
 
     override fun registerConsumptionProcessor(processor: EntryConsumptionProcessor) {
@@ -175,7 +180,8 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
                 },
                 bulkDownloadCandidateProcessors = bulkDownloadCandidateProcessors.toMap(),
                 automaticDownloadFilterProcessors = automaticDownloadFilterProcessors.toMap(),
-                capabilityProcessors = capabilityProcessors.toMap(),
+                migrationProviders = migrationProviders.toMap(),
+                mergeProviders = mergeProviders.toMap(),
                 consumptionProcessors = consumptionProcessors.toMap(),
                 bookmarkProcessors = bookmarkProcessors.toMap(),
                 updateEligibilityProcessors = updateEligibilityProcessors.toMap(),
@@ -215,7 +221,8 @@ private class DefaultEntryInteractions(
     downloadSettingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
     bulkDownloadCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
     automaticDownloadFilterProcessors: Map<EntryType, EntryAutomaticDownloadFilterProcessor>,
-    capabilityProcessors: Map<EntryType, EntryCapabilityProcessor>,
+    migrationProviders: Map<EntryType, EntryMigrationProvider>,
+    mergeProviders: Map<EntryType, EntryMergeProvider>,
     consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
     bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
     updateEligibilityProcessors: Map<EntryType, EntryUpdateEligibilityProcessor>,
@@ -239,7 +246,7 @@ private class DefaultEntryInteractions(
             bookmarkProviderTypes = bookmarkProcessors.keys,
         )
     override val capability: EntryCapabilityInteraction =
-        RegistryEntryCapabilityInteraction(capabilityProcessors)
+        RegistryEntryCapabilityInteraction(migrationProviders, mergeProviders)
     override val consumption: EntryConsumptionInteraction =
         RegistryEntryConsumptionInteraction(consumptionProcessors)
     override val bookmark: EntryBookmarkInteraction = RegistryEntryBookmarkInteraction(bookmarkProcessors)
@@ -618,12 +625,13 @@ private fun List<EntryChapter>.selectBulkDownloadCandidates(
 }
 
 private class RegistryEntryCapabilityInteraction(
-    private val processors: Map<EntryType, EntryCapabilityProcessor>,
+    private val migrationProviders: Map<EntryType, EntryMigrationProvider>,
+    private val mergeProviders: Map<EntryType, EntryMergeProvider>,
 ) : EntryCapabilityInteraction {
     override fun supportsMigration(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
-        processor.requireMatchingEntryType("capability", entry, processors.keys)
-        return processor.supportsMigration(entry)
+        val provider = migrationProviders[entry.type] ?: return false
+        provider.requireMatchingEntryType("migration", entry, migrationProviders.keys)
+        return true
     }
 
     override fun canMigrate(entries: List<Entry>): Boolean {
@@ -635,9 +643,9 @@ private class RegistryEntryCapabilityInteraction(
     }
 
     override fun supportsMerge(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
-        processor.requireMatchingEntryType("capability", entry, processors.keys)
-        return processor.supportsMerge(entry)
+        val provider = mergeProviders[entry.type] ?: return false
+        provider.requireMatchingEntryType("merge", entry, mergeProviders.keys)
+        return true
     }
 
     override fun canMergeSelection(selection: List<EntryMergeCapabilityItem>): Boolean {
@@ -872,16 +880,6 @@ private fun EntryContinueProcessor.requireMatchingEntryType(
 }
 
 private fun EntryDownloadProcessor.requireMatchingEntryType(
-    category: String,
-    entry: Entry,
-    registeredTypes: Set<EntryType>,
-) {
-    require(type == entry.type) {
-        processorMismatchMessage(category, entry.type, type, registeredTypes)
-    }
-}
-
-private fun EntryCapabilityProcessor.requireMatchingEntryType(
     category: String,
     entry: Entry,
     registeredTypes: Set<EntryType>,

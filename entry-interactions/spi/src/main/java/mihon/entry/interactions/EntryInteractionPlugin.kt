@@ -217,12 +217,19 @@ val EntryAutomaticDownloadFilterCapability = entryInteractionCapability<EntryAut
     installer = EntryInteractionRegistry::registerAutomaticDownloadFilterProcessor,
 )
 
-interface EntryCapabilityProcessor : EntryInteractionProvider {
+interface EntryMigrationProvider : EntryInteractionProvider
 
-    fun supportsMigration(entry: Entry): Boolean = false
+interface EntryMergeProvider : EntryInteractionProvider
 
-    fun supportsMerge(entry: Entry): Boolean = false
-}
+val EntryMigrationCapability = entryInteractionCapability<EntryMigrationProvider>(
+    id = CapabilityId("entry.migration"),
+    installer = EntryInteractionRegistry::registerMigrationProvider,
+)
+
+val EntryMergeCapability = entryInteractionCapability<EntryMergeProvider>(
+    id = CapabilityId("entry.merge"),
+    installer = EntryInteractionRegistry::registerMergeProvider,
+)
 
 interface EntryConsumptionProcessor : EntryInteractionProvider {
 
@@ -370,7 +377,8 @@ interface EntryInteractionRegistry {
     )
     fun registerBulkDownloadCandidateProcessor(processor: EntryBulkDownloadCandidateProcessor)
     fun registerAutomaticDownloadFilterProcessor(processor: EntryAutomaticDownloadFilterProcessor)
-    fun registerCapabilityProcessor(processor: EntryCapabilityProcessor)
+    fun registerMigrationProvider(provider: EntryMigrationProvider)
+    fun registerMergeProvider(provider: EntryMergeProvider)
     fun registerConsumptionProcessor(processor: EntryConsumptionProcessor)
     fun registerBookmarkProcessor(processor: EntryBookmarkProcessor)
     fun registerUpdateEligibilityProcessor(processor: EntryUpdateEligibilityProcessor)

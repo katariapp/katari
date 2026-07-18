@@ -15,6 +15,7 @@ Updated: 2026-07-18
 - Latest upstream reconciliation: `5e3f948b4` (`Merge branch 'upcoming' into features-arch-refactor`)
 - Milestone 4.1 commit: `0accb3667` (`(refactor): migrate entry provider identity`)
 - Milestone 4.2.1 commit: `62c9741a1` (`(refactor): bind independent entry providers`)
+- Milestone 4.2.2 commit: `f4a6d153c` (`(refactor): decompose download providers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -22,8 +23,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.2.2 — Download provider decomposition
-- State: implementation approved; committing Milestone 4.2.2 before starting Milestone 4.2.3
+- Milestone: 4.2.3 — Migration and Merge provider split
+- State: implementation approved; committing Milestone 4.2.3 before starting Milestone 4.2.4
 
 ## Why the Plan Was Reset
 
@@ -108,6 +109,12 @@ authority or weakening the architecture.
 - [x] Manga, Anime, and Book downloaders contribute bulk-candidate and automatic-filter providers independently
 - [x] Default false/null/empty download sub-capability declarations removed from the core downloader contract
 - [x] Decision `0014-download-provider-decomposition.md` accepted
+- [x] Milestone 4.2.2 committed in `f4a6d153c`
+- [x] Migration and Merge split into independent provider contracts and bindings
+- [x] Manga and Anime bind both capabilities independently
+- [x] Book's combined default-false capability processor removed without replacement absence declarations
+- [x] Shared selection constraints retained as transitional feature policy rather than type provider behavior
+- [x] Decision `0015-migration-and-merge-provider-boundary.md` accepted
 
 ## New Phase Sequence
 
@@ -152,12 +159,13 @@ beside the graph.
 - Accepted decision `0011-production-boundary-cut.md` and Phase 3.5 completion notes.
 - Milestone 4.1 is committed in `0accb3667`.
 - Milestone 4.2.1 is committed in `62c9741a1`.
-- Milestone 4.2.2 production and refactor-workspace changes are uncommitted and awaiting review.
+- Milestone 4.2.2 is committed in `f4a6d153c`.
+- Milestone 4.2.3 production and refactor-workspace changes are uncommitted and awaiting review.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
-- `T04`–`T08` now use independent provider bindings. `T09`, `T10`, `T13`, and `T16`–`T21` remain operational-only
-  migration obligations; `T22`–`T27` type artifacts remain unported.
+- `T04`–`T10` now use independent provider bindings. `T13` and `T16`–`T21` remain operational-only migration
+  obligations; `T22`–`T27` type artifacts remain unported.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
   blocked until real feature owners contribute relationships in their owning phase.
 
@@ -217,6 +225,7 @@ Approved on 2026-07-18:
 - Milestone 4.2.2 passes `:entry-interactions:spi:compileDebugKotlin` plus Manga, Anime, and Book debug Kotlin
   compilation. The former five deleted-report errors are removed; the remaining bookmarked-bulk dispatch rule is a
   recorded Phase 5 feature-consumer migration, not a replacement authority.
+- Milestone 4.2.3 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
 - `:entry-interactions:compileDebugKotlin` still fails at the intentionally unported download-lifecycle report input and
   missing feature-contributor installation recorded as Phase 5 obligations.
 
@@ -281,8 +290,14 @@ Approved on 2026-07-18:
   authority.
 - Shared bulk selection and automatic-download orchestration remain feature-owned Phase 5 work; type providers expose
   only the genuinely media-specific operations those features need.
+- Milestone 4.2.3 removes the combined Migration/Merge boolean holder instead of wrapping it as one broad provider.
+- Migration and Merge bindings are independent even though each current supporting type uses one object to carry both
+  compatibility markers.
+- The marker contracts state compatibility with shared feature behavior; they do not misrepresent the marker object as
+  the owner of migration or merge operations.
+- Book contributes neither marker. Its valid type contribution is not made incomplete by those absences.
 
 ## Exact Next Action After Review
 
-Milestone 4.2.2 and decision `0014` are approved. Commit the milestone, then begin Milestone 4.2.3 by splitting Migration
-and Merge into independent provider contracts. Stop before Milestone 4.2.4.
+Milestone 4.2.3 and decision `0015` are approved. Commit the milestone, then begin Milestone 4.2.4 with the remaining
+interaction contracts in `T13` and `T16`–`T21`. Stop before Milestone 4.3.

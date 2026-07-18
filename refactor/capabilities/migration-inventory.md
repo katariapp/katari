@@ -78,7 +78,9 @@ Migration progress:
 - Milestone 4.2.2 implements `T04`–`T08` in the working tree. The former monolithic downloader is split into independent
   core, options, per-setting, bulk-candidate, and automatic-filter provider claims. Current types contribute only the
   contracts their concrete implementations supply.
-- `T09`, `T10`, `T13`, and `T16`–`T21` remain unported until their provider contracts are decomposed without flattening
+- Milestone 4.2.3 implements `T09` and `T10` in the working tree. Migration and Merge are independent compatibility
+  providers for their shared workflows; Manga and Anime bind both, while Book binds neither.
+- `T13` and `T16`–`T21` remain unported until their provider contracts are decomposed without flattening
   optional behavior or registered no-ops into false capability claims.
 - `T22`–`T27` remain unported type-owned artifact and runtime-composition work.
 

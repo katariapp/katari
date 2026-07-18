@@ -42,7 +42,9 @@ SPI boundary is not an exit gate for Phase 3.5.
   that supply more than one independent capability.
 - Milestone 4.2.2 status: Downloads are decomposed into core, options, individual settings, bulk candidates, and
   automatic filtering. Each is contributed independently from the same concrete implementation where appropriate.
-- Remaining outcome: migrate `T09`, `T10`, `T13`, and `T16`–`T21` without mechanically treating processor registration,
+- Milestone 4.2.3 status: Migration and Merge are split into independent compatibility providers. Manga and Anime bind
+  both; Book's combined default-false processor is removed without an absence declaration.
+- Remaining outcome: migrate `T13` and `T16`–`T21` without mechanically treating processor registration,
   default methods, false support methods, or no-op processors as capability evidence; then migrate `T22`–`T27`
   type-owned artifacts.
 
@@ -50,12 +52,12 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 - Responsible owners: Entry interaction SPI plus Manga, Anime, and Book provider implementations
 - Owning phase: Phase 4
-- Inventory scope: `T09`, `T10`, `T13`, `T16`–`T21`
-- Exposed condition: Combined Migration/Merge, Update Eligibility, Child List, Child Group Filter, Library Filter,
-  Preview, and Immersive processors still enter only the operational registry.
+- Inventory scope: `T13`, `T16`–`T21`
+- Exposed condition: Update Eligibility, Child List, Child Group Filter, Library Filter, Preview, and Immersive
+  processors still enter only the operational registry.
 - Required outcome: define provider-backed contracts at their true granularity and contribute the same implementation
-  objects used for dispatch. Split Migration/Merge, child progress labels, registered no-op child-group behavior, and
-  false-returning library-filter behavior before claiming support.
+  objects used for dispatch. Split child progress labels, registered no-op child-group behavior, and false-returning
+  library-filter behavior before claiming support.
 - Forbidden shortcut: a generic legacy-registration adapter or one capability definition per current processor category.
 
 ### `P4-PLUGIN-TEST-HARNESS` — Operational plugin fixtures use the old lambda-only boundary

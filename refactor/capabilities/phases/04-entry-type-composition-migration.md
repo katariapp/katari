@@ -17,7 +17,7 @@ register, including type-owned artifacts currently outside the interaction regis
   - [x] 4.2.1 — Introduce capability-owned bindings and migrate Consumption, Bookmarking, Progress transfer, and
     Playback-preference transfer (`T11`, `T12`, `T14`, `T15`).
   - [x] 4.2.2 — Decompose and migrate Downloads (`T04`–`T08`).
-  - [ ] 4.2.3 — Split and migrate Migration and Merge (`T09`, `T10`).
+  - [x] 4.2.3 — Split and migrate Migration and Merge (`T09`, `T10`).
   - [ ] 4.2.4 — Migrate Update Eligibility and decompose Child List, filtering, Preview, and Immersive contracts
     (`T13`, `T16`–`T21`).
 - [ ] 4.3 — Join type-owned runtime artifacts and parallel composition paths in `T22`–`T27`.
