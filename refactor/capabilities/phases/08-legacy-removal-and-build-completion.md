@@ -15,6 +15,8 @@ the architecture. The central catalog/report authority must already have been re
 - [ ] Run an unknown type/capability/feature acceptance scenario across graph evaluation, obligations, contracts,
   reporting, and documentation.
 - [ ] Review every manifesto failure mode and success criterion.
+- [ ] Rerun every repeatable census probe in `../migration-inventory.md` and classify every remaining candidate.
+- [ ] Verify every `T`, `F`, and `C` register row and every out-of-boundary finding has a final disposition.
 
 ## Exit Gate
 
@@ -22,6 +24,7 @@ the architecture. The central catalog/report authority must already have been re
 - No fallback or duplicate authority exists solely to preserve the migration.
 - Generic feature code does not branch on content type for applicability.
 - Unknown contributions participate automatically through their owners.
+- No unclassified support-like method, direct type gate, manual participation list, or feature consequence remains.
 - Full CI-style and documentation validation passes.
 
 ## Validation

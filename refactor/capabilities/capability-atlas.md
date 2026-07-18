@@ -1,8 +1,16 @@
 # Capability Atlas
 
-Status: architecture-first reset complete; Phase 3 general relationship architecture is next
+Status: current-behavior atlas complete; Phase 3 architecture complete; pre-Phase 4 migration census recorded separately
 
 This file records the current executable evidence for capability support. It is an inventory of facts to review, not a new source of behavioral truth and not a proposal for the final capability model.
+
+The exhaustive migration control surface is now
+[`migration-inventory.md`](migration-inventory.md). The wider census found additional participation systems outside the
+original interaction audit: library-progress calculators, viewer-setting routing, media-cache descriptors and
+auto-clear policy, profile preference ownership, runtime installation lists, tracker applicability, source SDK
+capabilities, backup/migration gates, notification routing, settings navigation, and boundary-check allowlists. Those
+systems must be migrated or explicitly retained through their real owners; this atlas must not be mistaken for the
+complete migration checklist.
 
 ## Classification
 

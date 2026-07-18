@@ -6,6 +6,10 @@ This ledger records production and test code exposed by the Phase 3.5 dependency
 their owning phases migrate them to feature contributions and evaluated graph results. They must not be hidden with a
 replacement boolean, a recreated capability catalog, an empty graph contribution, or a compatibility report facade.
 
+This is deliberately only a compile-failure ledger. It is not the complete migration scope: code that still compiles,
+code outside `entry-interactions`, and already-generic consumers can still require architectural migration. The
+exhaustive pre-migration register is [`migration-inventory.md`](migration-inventory.md).
+
 ## Valid Lower Boundary
 
 The following checks pass after the cut:

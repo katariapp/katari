@@ -139,7 +139,7 @@ are migration input, not the architecture template.
 
 See [`phases/02-bookmark-download-proof.md`](phases/02-bookmark-download-proof.md).
 
-### Phase 3 — General Relationship Architecture
+### Phase 3 — General Relationship Architecture — Complete
 
 Build the architecture kernel before migrating another real capability group.
 
@@ -169,12 +169,32 @@ Exit gate:
 
 See [`phases/03-general-relationship-architecture.md`](phases/03-general-relationship-architecture.md).
 
+### Pre-Phase 4 — Migration Readiness Gate
+
+Phase 3 completion does not authorize migration from the interaction registry alone. Before Phase 4 begins, the
+[`migration inventory`](migration-inventory.md) must account for every operational provider, support-like method,
+direct type gate, independent provider registry, source/tracker input, and feature consequence found by the repository
+census.
+
+The inventory is a control surface, not a runtime list. Its rows assign ownership and a migration disposition so later
+phases cannot mistake compilation or an already-generic call site for complete participation.
+
+Exit gate:
+
+- Every finding outside the current interaction boundary has a reviewed classification.
+- Every current provider and support-like default maps to a type or contextual register row.
+- Every UI, policy, worker, setting, notification, navigation, backup, migration, profile, cache, and documentation
+  consequence maps to a feature register row.
+- Every direct type branch is assigned to migration, projection, compatibility, storage, or tooling.
+- Phase 4 has not started.
+
 ### Phase 4 — Entry-Type Composition Migration
 
 Move real Manga, Anime, and Book composition onto the architectural boundary.
 
 Primary work:
 
+- Execute the complete `T01`–`T27` register in `migration-inventory.md`, not only the interaction-processor list.
 - Contribute Open, Continue, and every other existing interaction through the same provider-backed model.
 - Preserve genuine media-specific implementations and adapters.
 - Replace provider registration and composition patterns superseded by the generic contribution model.
@@ -196,7 +216,9 @@ Move UI, policies, workers, settings, notifications, and cross-feature behavior 
 
 Primary work:
 
-- Use the atlas to identify feature ownership, not to create a migration allowlist.
+- Execute the complete `F01`–`F27` register in `migration-inventory.md`; an already-generic consumer still requires an
+  explicit selected or compatibility disposition.
+- Use the atlas and inventory to identify feature ownership, not to create a runtime allowlist.
 - Migrate each feature as a contribution with prerequisites, consequences, obligations, contracts, and projections.
 - Replace direct type checks, presentation support flags, compatibility facades, and local capability queries.
 - Make shared consequences operate over every compatible entry type discovered by the graph.
@@ -218,6 +240,7 @@ flattening them into type-wide facts.
 
 Primary work:
 
+- Execute the complete `C01`–`C24` register in `migration-inventory.md`.
 - Model contextual subjects and blockers.
 - Preserve existing source and tracker ownership.
 - Migrate preview, immersive, download options, related entries, latest feeds, local/stub restrictions, and selection
@@ -240,6 +263,7 @@ owned by features.
 
 Primary work:
 
+- Execute the test, reporting, and documentation register in `migration-inventory.md`.
 - Execute shared contracts selected by evaluated feature applicability.
 - Require specialized fixtures only when an applicable feature declares them.
 - Remove type tests that merely restate capability declarations.
@@ -262,6 +286,7 @@ retired at the Phase 3.5 boundary cut and production contributions and consumers
 
 Primary work:
 
+- Rerun the repeatable census probes from `migration-inventory.md` and classify every remaining match.
 - Remove residual support APIs, presentation flags, migration adapters, and compatibility paths.
 - Strengthen module boundaries against new type gates and parallel support declarations.
 - Resolve remaining compile failures by moving code into architectural conformance.
@@ -275,6 +300,7 @@ Exit gate:
 - A simulated unknown type, capability, and feature automatically enter graph evaluation, obligations, contracts,
   reporting, and documentation.
 - Every manifesto failure mode and success criterion is reviewed.
+- No census candidate is unclassified, including candidates outside `entry-interactions`.
 - Full CI-style validation passes.
 
 See [`phases/08-legacy-removal-and-build-completion.md`](phases/08-legacy-removal-and-build-completion.md).

@@ -12,10 +12,11 @@ Before doing capability-refactor work, read:
 2. [`plan.md`](plan.md)
 3. [`status.md`](status.md)
 4. [`capability-atlas.md`](capability-atlas.md)
-5. [`legacy-artifacts.md`](legacy-artifacts.md)
-6. [`migration-obligations.md`](migration-obligations.md)
-7. The active file under [`phases/`](phases/)
-8. Relevant records under [`decisions/`](decisions/)
+5. [`migration-inventory.md`](migration-inventory.md)
+6. [`legacy-artifacts.md`](legacy-artifacts.md)
+7. [`migration-obligations.md`](migration-obligations.md)
+8. The active file under [`phases/`](phases/)
+9. Relevant records under [`decisions/`](decisions/)
 
 Then inspect the current branch, recent commits, working tree, and tests rather than assuming this workspace is newer than Git.
 
@@ -81,7 +82,9 @@ A future continuation can use:
 - `plan.md`: stable phase sequence, scope, dependencies, and exit gates
 - `status.md`: concise operational resume point
 - `capability-atlas.md`: inventory of capability facts, consumers, duplication, and coverage
+- `migration-inventory.md`: exhaustive pre-migration register and completeness gates for Phases 4 through 8
 - `legacy-artifacts.md`: committed prototype artifacts to retain, retire, or rehome
-- `migration-obligations.md`: compile failures exposed by the architecture cut and their owning migration phases
+- `migration-obligations.md`: compile failures exposed by the architecture cut; a narrower ledger than the migration
+  inventory
 - `phases/`: bounded phase checklists and validation requirements
 - `decisions/`: accepted architectural decisions with consequences
