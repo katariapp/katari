@@ -114,7 +114,7 @@ interface EntryConsumptionProcessor {
     fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
         return when (consumed) {
             true -> !status.consumed
-            false -> status.consumed
+            false -> status.consumed || status.hasPartialProgress
         }
     }
 

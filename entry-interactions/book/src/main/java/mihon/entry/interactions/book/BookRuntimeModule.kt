@@ -4,6 +4,7 @@ import android.app.Application
 import mihon.entry.interactions.EntryInteractionRuntimeContribution
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.book.download.BookDownloadCache
+import mihon.entry.interactions.book.download.BookDownloadIndexStore
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.entry.interactions.book.download.BookDownloadProvider
 import mihon.entry.interactions.book.download.BookDownloadStore
@@ -28,7 +29,14 @@ fun InjektRegistrar.addBookEntryInteractionRuntime(
     val proseSettingsProvider = HtmlProseSettingsProvider(profilePreferenceStore)
     addSingletonFactory<BookMaterializationStore> { materializationCache }
     addSingletonFactory { BookDownloadProvider(get<StorageManager>()) }
-    addSingletonFactory { BookDownloadCache(get()) }
+    addSingletonFactory {
+        val storageManager = get<StorageManager>()
+        BookDownloadCache(
+            provider = get(),
+            indexStore = BookDownloadIndexStore(app),
+            storageChanges = storageManager.changes,
+        )
+    }
     addSingletonFactory { BookDownloadStore(app) }
     addSingletonFactory { BookReaderSessionRegistry() }
     addSingletonFactory { BookChapterNavigationResolver(get()) }

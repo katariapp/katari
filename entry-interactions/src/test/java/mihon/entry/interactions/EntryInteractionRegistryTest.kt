@@ -643,14 +643,16 @@ class EntryInteractionRegistryTest {
 
     @Test
     fun `consumption and bookmark eligibility dispatch independently by entry type`() {
-        val mangaProcessor = RecordingConsumptionProcessor(EntryType.MANGA, resetsPartialProgress = true)
+        val mangaProcessor = RecordingConsumptionProcessor(EntryType.MANGA)
         val animeProcessor = RecordingConsumptionProcessor(EntryType.ANIME)
+        val bookProcessor = RecordingConsumptionProcessor(EntryType.BOOK)
         val mangaBookmarkProcessor = RecordingBookmarkProcessor(EntryType.MANGA)
         val interactions = createEntryInteractions(
             listOf(
                 EntryInteractionPlugin { registry ->
                     registry.registerConsumptionProcessor(mangaProcessor)
                     registry.registerConsumptionProcessor(animeProcessor)
+                    registry.registerConsumptionProcessor(bookProcessor)
                     registry.registerBookmarkProcessor(mangaBookmarkProcessor)
                 },
             ),
@@ -671,7 +673,12 @@ class EntryInteractionRegistryTest {
             EntryType.ANIME,
             unreadWithProgress,
             consumed = false,
-        ) shouldBe false
+        ) shouldBe true
+        interactions.consumption.canSetConsumed(
+            EntryType.BOOK,
+            unreadWithProgress,
+            consumed = false,
+        ) shouldBe true
         interactions.bookmark.canSetBookmarked(
             EntryType.MANGA,
             bookmarked,
@@ -1343,17 +1350,9 @@ class EntryInteractionRegistryTest {
 
     private open class RecordingConsumptionProcessor(
         open override val type: EntryType,
-        private val resetsPartialProgress: Boolean = false,
     ) : EntryConsumptionProcessor {
         val consumedEntryIds = mutableListOf<Long>()
         val consumedValues = mutableListOf<Boolean>()
-
-        override fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
-            return when (consumed) {
-                true -> !status.consumed
-                false -> status.consumed || (resetsPartialProgress && status.hasPartialProgress)
-            }
-        }
 
         override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
             consumedEntryIds += entry.id

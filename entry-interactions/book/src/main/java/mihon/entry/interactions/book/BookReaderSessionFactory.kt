@@ -191,8 +191,7 @@ internal class BookReaderSessionFactory(
             return null
         }
         return try {
-            downloadCache.ensureInitialized()
-            downloadCache.get(packageKey)?.let(PreparedBookContent::Downloaded)
+            downloadCache.getVerified(packageKey)?.let(PreparedBookContent::Downloaded)
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {

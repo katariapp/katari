@@ -3,7 +3,6 @@ package mihon.entry.interactions.manga
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryBookmarkProcessor
 import mihon.entry.interactions.EntryConsumptionProcessor
-import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.bookmarkStatus
@@ -22,19 +21,12 @@ internal class MangaConsumptionProcessor(
 ) : EntryConsumptionProcessor, EntryBookmarkProcessor {
     override val type: EntryType = EntryType.MANGA
 
-    override fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
-        return when (consumed) {
-            true -> !status.consumed
-            false -> status.consumed || status.hasPartialProgress
-        }
-    }
-
     override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
         entry.requireManga()
         val chaptersToUpdate = chapters.filter { chapter ->
             val progress = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
             canSetConsumed(
-                chapter.consumptionStatus(hasPartialProgress = progress?.pageIndex?.let { it > 0L } == true),
+                chapter.consumptionStatus(hasPartialProgress = progress?.hasPartialMangaProgress == true),
                 consumed,
             )
         }
