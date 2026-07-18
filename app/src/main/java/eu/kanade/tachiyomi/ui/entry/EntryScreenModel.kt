@@ -60,7 +60,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.entry.interactions.EntryAutomaticDownloadFeature
-import mihon.entry.interactions.EntryBookmarkInteraction
+import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCapabilityInteraction
@@ -70,7 +70,7 @@ import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryChildProgressRequest
-import mihon.entry.interactions.EntryConsumptionInteraction
+import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
@@ -148,8 +148,8 @@ class EntryScreenModel(
     private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get(),
     private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
-    private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
-    private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
+    private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
+    private val entryBookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val entryContinueFeature: EntryContinueFeature = Injekt.get(),
     private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
     private val entryChildListInteraction: EntryChildListInteraction = Injekt.get(),
@@ -1237,7 +1237,7 @@ class EntryScreenModel(
     private suspend fun setReadStatus(read: Boolean, chapters: List<EntryChapter>) {
         chapters.groupBy { it.entryId }.forEach { (memberEntryId, memberChapters) ->
             val entry = entryRepository.getEntryById(memberEntryId) ?: return@forEach
-            entryConsumptionInteraction.setConsumed(entry, memberChapters, read)
+            entryConsumptionFeature.setConsumed(entry, memberChapters, read)
         }
     }
 
@@ -1297,7 +1297,7 @@ class EntryScreenModel(
         screenModelScope.launchIO {
             chapters.groupBy { it.entryId }.forEach { (memberEntryId, memberChapters) ->
                 val entry = entryRepository.getEntryById(memberEntryId) ?: return@forEach
-                entryBookmarkInteraction.setBookmarked(entry, memberChapters, bookmarked)
+                entryBookmarkFeature.setBookmarked(entry, memberChapters, bookmarked)
             }
         }
         toggleAllSelection(false)

@@ -8,7 +8,6 @@ interface EntryInteractions {
     val capability: EntryCapabilityInteraction
     val consumption: EntryConsumptionInteraction
     val bookmark: EntryBookmarkInteraction
-    val updateEligibility: EntryUpdateEligibilityInteraction
     val preview: EntryPreviewInteraction
     val immersive: EntryImmersiveInteraction
     val progress: EntryProgressInteraction

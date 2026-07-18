@@ -66,7 +66,6 @@ internal fun animeEntryInteractionPlugin(
     )
     val consumptionProcessor = AnimeConsumptionProcessor(
         entryProgressRepository = dependencies.entryProgressRepository,
-        downloadLifecycle = dependencies.downloadLifecycle,
     )
     val progressProcessor = AnimeProgressProcessor(
         entryProgressRepository = dependencies.entryProgressRepository,

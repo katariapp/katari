@@ -2,9 +2,8 @@ package mihon.entry.interactions.book
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryConsumptionProcessor
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.consumptionStatus
+import mihon.entry.interactions.shouldChangeConsumption
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.EntryProgressLocator
@@ -14,12 +13,15 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 internal class BookConsumptionProcessor(
     private val entryProgressRepository: EntryProgressRepository,
     private val entryChapterRepository: EntryChapterRepository,
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
     private val now: () -> Long = System::currentTimeMillis,
 ) : EntryConsumptionProcessor {
     override val type = EntryType.BOOK
 
-    override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
+    override suspend fun setConsumed(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        consumed: Boolean,
+    ): List<EntryChapter> {
         entry.requireBook()
         val chapterIds = chapters.mapTo(mutableSetOf(), EntryChapter::id)
         val progressStates = chapters
@@ -29,7 +31,7 @@ internal class BookConsumptionProcessor(
             .filter { it.chapterId in chapterIds }
         val progressStatesByChapterId = progressStates.groupBy { it.chapterId }
         val chaptersToUpdate = chapters.filter { chapter ->
-            canSetConsumed(
+            shouldChangeConsumption(
                 chapter.consumptionStatus(
                     hasPartialProgress = progressStatesByChapterId[chapter.id]
                         .orEmpty()
@@ -38,7 +40,7 @@ internal class BookConsumptionProcessor(
                 consumed,
             )
         }
-        if (chaptersToUpdate.isEmpty()) return
+        if (chaptersToUpdate.isEmpty()) return emptyList()
 
         val timestamp = now()
         val chapterIdsToUpdate = chaptersToUpdate.mapTo(mutableSetOf(), EntryChapter::id)
@@ -61,8 +63,6 @@ internal class BookConsumptionProcessor(
             )
         }
 
-        if (consumed) {
-            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
-        }
+        return chaptersToUpdate
     }
 }

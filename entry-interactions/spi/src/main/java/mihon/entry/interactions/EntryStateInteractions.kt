@@ -13,17 +13,15 @@ interface EntryCapabilityInteraction {
 }
 
 interface EntryConsumptionInteraction {
-    fun canSetConsumed(entryType: EntryType, status: EntryConsumptionStatus, consumed: Boolean): Boolean
-    suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
+    suspend fun setConsumed(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        consumed: Boolean,
+    ): List<EntryChapter>
 }
 
 interface EntryBookmarkInteraction {
-    fun canSetBookmarked(entryType: EntryType, status: EntryBookmarkStatus, bookmarked: Boolean): Boolean
     suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
-}
-
-interface EntryUpdateEligibilityInteraction {
-    fun evaluate(request: EntryUpdateEligibilityRequest): EntryUpdateEligibility
 }
 
 interface EntryProgressInteraction {

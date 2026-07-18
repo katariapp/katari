@@ -27,31 +27,3 @@ data class EntryBookmarkStatus(
 fun EntryChapter.bookmarkStatus(): EntryBookmarkStatus {
     return EntryBookmarkStatus(bookmarked = bookmark)
 }
-
-data class EntryUpdateEligibilityRequest(
-    val entry: Entry,
-    val totalCount: Long,
-    val unconsumedCount: Long,
-    val hasStarted: Boolean,
-    val restrictions: Set<EntryUpdateRestriction>,
-    val fetchWindowUpperBound: Long? = null,
-)
-
-enum class EntryUpdateRestriction {
-    NON_COMPLETED,
-    HAS_UNCONSUMED,
-    NON_STARTED,
-    OUTSIDE_RELEASE_PERIOD,
-}
-
-sealed interface EntryUpdateEligibility {
-    data object Eligible : EntryUpdateEligibility
-    data class Skipped(val reason: EntryUpdateSkipReason) : EntryUpdateEligibility
-}
-
-enum class EntryUpdateSkipReason {
-    COMPLETED,
-    NOT_CAUGHT_UP,
-    NOT_STARTED,
-    OUTSIDE_RELEASE_PERIOD,
-}

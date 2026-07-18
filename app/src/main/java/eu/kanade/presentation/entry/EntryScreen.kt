@@ -129,8 +129,8 @@ fun EntryScreen(
 
     // For bottom action menu
     onMultiBookmarkClicked: ((List<EntryChapter>, bookmarked: Boolean) -> Unit)?,
-    onMultiMarkAsReadClicked: (List<EntryChapter>, markAsRead: Boolean) -> Unit,
-    onMarkPreviousAsReadClicked: (EntryChapter) -> Unit,
+    onMultiMarkAsReadClicked: ((List<EntryChapter>, markAsRead: Boolean) -> Unit)?,
+    onMarkPreviousAsReadClicked: ((EntryChapter) -> Unit)?,
     onMultiDeleteClicked: (List<EntryChapter>) -> Unit,
 
     // For chapter swipe
@@ -302,8 +302,8 @@ private fun EntryScreenSmallImpl(
 
     // For bottom action menu
     onMultiBookmarkClicked: ((List<EntryChapter>, bookmarked: Boolean) -> Unit)?,
-    onMultiMarkAsReadClicked: (List<EntryChapter>, markAsRead: Boolean) -> Unit,
-    onMarkPreviousAsReadClicked: (EntryChapter) -> Unit,
+    onMultiMarkAsReadClicked: ((List<EntryChapter>, markAsRead: Boolean) -> Unit)?,
+    onMarkPreviousAsReadClicked: ((EntryChapter) -> Unit)?,
     onMultiDeleteClicked: (List<EntryChapter>) -> Unit,
 
     // For chapter swipe
@@ -595,8 +595,8 @@ fun EntryScreenLargeImpl(
 
     // For bottom action menu
     onMultiBookmarkClicked: ((List<EntryChapter>, bookmarked: Boolean) -> Unit)?,
-    onMultiMarkAsReadClicked: (List<EntryChapter>, markAsRead: Boolean) -> Unit,
-    onMarkPreviousAsReadClicked: (EntryChapter) -> Unit,
+    onMultiMarkAsReadClicked: ((List<EntryChapter>, markAsRead: Boolean) -> Unit)?,
+    onMarkPreviousAsReadClicked: ((EntryChapter) -> Unit)?,
     onMultiDeleteClicked: (List<EntryChapter>) -> Unit,
 
     // For swipe actions
@@ -883,8 +883,8 @@ private fun SharedEntryBottomActionMenu(
     selected: List<EntryChapterList.Item>,
     childProgressLabels: Map<Long, EntryChildProgressLabel>,
     onMultiBookmarkClicked: ((List<EntryChapter>, bookmarked: Boolean) -> Unit)?,
-    onMultiMarkAsReadClicked: (List<EntryChapter>, markAsRead: Boolean) -> Unit,
-    onMarkPreviousAsReadClicked: (EntryChapter) -> Unit,
+    onMultiMarkAsReadClicked: ((List<EntryChapter>, markAsRead: Boolean) -> Unit)?,
+    onMarkPreviousAsReadClicked: ((EntryChapter) -> Unit)?,
     onDownloadChapter: ((List<EntryChapterList.Item>, ChapterDownloadAction) -> Unit)?,
     onMultiDeleteClicked: (List<EntryChapter>) -> Unit,
     fillFraction: Float,
@@ -901,21 +901,21 @@ private fun SharedEntryBottomActionMenu(
         }?.takeIf { selected.fastAll { it.chapter.bookmark } },
         bookmarkLabel = selected.map { it.entry.type }.selectionEntryTypePresentation().bookmarkChildLabel,
         removeBookmarkLabel = selected.map { it.entry.type }.selectionEntryTypePresentation().removeBookmarkChildLabel,
-        onMarkAsReadClicked = {
-            onMultiMarkAsReadClicked(selected.fastMap { it.chapter }, true)
-        }.takeIf { selected.fastAny { !it.chapter.read } },
-        onMarkAsUnreadClicked = {
-            onMultiMarkAsReadClicked(selected.fastMap { it.chapter }, false)
-        }.takeIf { selected.fastAny { it.chapter.read || it.chapter.id in childProgressLabels } },
+        onMarkAsReadClicked = onMultiMarkAsReadClicked?.let { callback ->
+            { callback(selected.fastMap { it.chapter }, true) }
+        }?.takeIf { selected.fastAny { !it.chapter.read } },
+        onMarkAsUnreadClicked = onMultiMarkAsReadClicked?.let { callback ->
+            { callback(selected.fastMap { it.chapter }, false) }
+        }?.takeIf { selected.fastAny { it.chapter.read || it.chapter.id in childProgressLabels } },
         markAsReadLabel = selected.map { it.entry.type }.entrySelectionActionLabels().markAsReadLabel,
         markAsUnreadLabel = selected.map { it.entry.type }.entrySelectionActionLabels().markAsUnreadLabel,
         markPreviousAsReadLabel = selected.map { it.entry.type }
             .selectionEntryTypePresentation()
             .markPreviousAsConsumedLabel,
         downloadPresentation = selected.map { it.entry.type }.selectionEntryTypePresentation(),
-        onMarkPreviousAsReadClicked = {
-            onMarkPreviousAsReadClicked(selected[0].chapter)
-        }.takeIf { selected.size == 1 },
+        onMarkPreviousAsReadClicked = onMarkPreviousAsReadClicked?.let { callback ->
+            { callback(selected[0].chapter) }
+        }?.takeIf { selected.size == 1 },
         onDownloadClicked = {
             onDownloadChapter!!(selected.toList(), ChapterDownloadAction.START)
         }.takeIf {

@@ -20,7 +20,6 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.entry.EntryUpdateStrategy
 import eu.kanade.tachiyomi.source.visualName
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.createFileInCacheDir
@@ -38,9 +37,8 @@ import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
 import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryUpdateEligibility
-import mihon.entry.interactions.EntryUpdateEligibilityInteraction
+import mihon.entry.interactions.EntryUpdateEligibilityFeature
 import mihon.entry.interactions.EntryUpdateEligibilityRequest
-import mihon.entry.interactions.EntryUpdateRestriction
 import mihon.entry.interactions.EntryUpdateSkipReason
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.getAndSet
@@ -58,10 +56,6 @@ import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_CHARGING
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_NETWORK_NOT_METERED
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_ONLY_ON_WIFI
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_HAS_UNCONSUMED
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_NON_COMPLETED
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_NON_STARTED
-import tachiyomi.domain.library.service.LibraryPreferences.Companion.ENTRY_OUTSIDE_RELEASE_PERIOD
 import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
@@ -83,7 +77,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val sourceManager: SourceManager = Injekt.get()
     private val libraryPreferences: LibraryPreferences = Injekt.get()
     private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get()
-    private val entryUpdateEligibility: EntryUpdateEligibilityInteraction = Injekt.get()
+    private val entryUpdateEligibility: EntryUpdateEligibilityFeature = Injekt.get()
     private val getLibraryEntries: GetLibraryEntries = Injekt.get()
     private val entryRepository: EntryRepository = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
@@ -189,39 +183,27 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             }
         }
 
-        val restrictions = libraryPreferences.autoUpdateEntryRestrictions.get()
-            .toEntryUpdateRestrictions()
         val skippedUpdates = mutableListOf<Pair<Entry, String?>>()
         currentFetchWindow = fetchInterval.getWindow(ZonedDateTime.now())
         val fetchWindowUpperBound = currentFetchWindow.second
 
         val eligibleLibraryEntries = listToUpdate
             .filter {
-                when {
-                    it.entry.updateStrategy == EntryUpdateStrategy.ONLY_FETCH_ONCE && it.totalCount > 0L -> {
-                        skippedUpdates.add(
-                            it.entry to context.stringResource(MR.strings.skipped_reason_not_always_update),
-                        )
+                when (
+                    val eligibility = entryUpdateEligibility.evaluate(
+                        EntryUpdateEligibilityRequest(
+                            entry = it.entry,
+                            totalCount = it.totalCount,
+                            unconsumedCount = it.unconsumedCount,
+                            hasStarted = it.hasStarted,
+                            fetchWindowUpperBound = fetchWindowUpperBound,
+                        ),
+                    )
+                ) {
+                    EntryUpdateEligibility.Eligible -> true
+                    is EntryUpdateEligibility.Skipped -> {
+                        skippedUpdates.add(it.entry to eligibility.reason.toSkippedReasonString(context))
                         false
-                    }
-
-                    else -> when (
-                        val eligibility = entryUpdateEligibility.evaluate(
-                            EntryUpdateEligibilityRequest(
-                                entry = it.entry,
-                                totalCount = it.totalCount,
-                                unconsumedCount = it.unconsumedCount,
-                                hasStarted = it.hasStarted,
-                                restrictions = restrictions,
-                                fetchWindowUpperBound = fetchWindowUpperBound,
-                            ),
-                        )
-                    ) {
-                        EntryUpdateEligibility.Eligible -> true
-                        is EntryUpdateEligibility.Skipped -> {
-                            skippedUpdates.add(it.entry to eligibility.reason.toSkippedReasonString(context))
-                            false
-                        }
                     }
                 }
             }
@@ -259,25 +241,10 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
             .distinctBy(Entry::id)
     }
 
-    private fun Set<String>.toEntryUpdateRestrictions(): Set<EntryUpdateRestriction> {
-        return buildSet {
-            if (ENTRY_NON_COMPLETED in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.NON_COMPLETED)
-            }
-            if (ENTRY_HAS_UNCONSUMED in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.HAS_UNCONSUMED)
-            }
-            if (ENTRY_NON_STARTED in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.NON_STARTED)
-            }
-            if (ENTRY_OUTSIDE_RELEASE_PERIOD in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.OUTSIDE_RELEASE_PERIOD)
-            }
-        }
-    }
-
     private fun EntryUpdateSkipReason.toSkippedReasonString(context: Context): String {
         return when (this) {
+            EntryUpdateSkipReason.NOT_ALWAYS_UPDATE ->
+                context.stringResource(MR.strings.skipped_reason_not_always_update)
             EntryUpdateSkipReason.COMPLETED -> context.stringResource(MR.strings.skipped_reason_completed)
             EntryUpdateSkipReason.NOT_CAUGHT_UP -> context.stringResource(MR.strings.skipped_reason_not_caught_up)
             EntryUpdateSkipReason.NOT_STARTED -> context.stringResource(MR.strings.skipped_reason_not_started)

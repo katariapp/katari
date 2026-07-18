@@ -124,8 +124,6 @@ private class DefaultEntryInteractions(
     override val consumption: EntryConsumptionInteraction =
         ProviderBackedEntryConsumptionInteraction(consumptionProcessors)
     override val bookmark: EntryBookmarkInteraction = ProviderBackedEntryBookmarkInteraction(bookmarkProcessors)
-    override val updateEligibility: EntryUpdateEligibilityInteraction =
-        ProviderBackedEntryUpdateEligibilityInteraction()
     override val progress: EntryProgressInteraction = ProviderBackedEntryProgressInteraction(progressProcessors)
     override val playbackPreferences: EntryPlaybackPreferencesInteraction =
         ProviderBackedEntryPlaybackPreferencesInteraction(playbackPreferencesProcessors)

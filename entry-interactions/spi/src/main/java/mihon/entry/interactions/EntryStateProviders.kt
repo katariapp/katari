@@ -17,15 +17,19 @@ val EntryMergeCapability = entryInteractionCapability<EntryMergeProvider>(
 )
 
 interface EntryConsumptionProcessor : EntryInteractionProvider {
+    /** Returns exactly the children whose persisted consumed state changed. */
+    suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean): List<EntryChapter>
+}
 
-    fun canSetConsumed(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
-        return when (consumed) {
-            true -> !status.consumed
-            false -> status.consumed || status.hasPartialProgress
-        }
+/**
+ * Shared state-transition semantics for Consumption providers and the feature coordinator.
+ * Provider presence remains the only support authority.
+ */
+fun shouldChangeConsumption(status: EntryConsumptionStatus, consumed: Boolean): Boolean {
+    return when (consumed) {
+        true -> !status.consumed
+        false -> status.consumed || status.hasPartialProgress
     }
-
-    suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean)
 }
 
 val EntryConsumptionCapability = entryInteractionCapability<EntryConsumptionProcessor>(
@@ -33,11 +37,6 @@ val EntryConsumptionCapability = entryInteractionCapability<EntryConsumptionProc
 )
 
 interface EntryBookmarkProcessor : EntryInteractionProvider {
-
-    fun canSetBookmarked(status: EntryBookmarkStatus, bookmarked: Boolean): Boolean {
-        return status.bookmarked != bookmarked
-    }
-
     suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean)
 }
 

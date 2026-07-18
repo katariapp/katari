@@ -37,19 +37,15 @@ inspection, queueing, starting, physical deletion, and deferred cleanup.
 
 | Producer or consumer | Disposition |
 | --- | --- |
-| Manga consumption processor | Emits `MarkedConsumed` for the children whose consumption state actually changed. |
-| Anime consumption processor | Emits `MarkedConsumed` for the children whose consumption state actually changed. |
-| Book consumption processor | Emits `MarkedConsumed` for the children whose consumption state actually changed. |
+| F09 Consumption feature | Emits `MarkedConsumed` once for the children returned by a successful consume mutation. |
 | Manga reader | Emits progress and completion with number-deduplication context. |
 | Anime player | Emits progress or completion for the current owner Entry and episode. |
 | Book reader session | Emits progress and completion as persisted Book location changes. |
 | Runtime composition | Installs the F06 contributor, graph-backed feature, and non-optional lazy event sink. |
 | Lifecycle coordinator | Resolves merged-child owners, evaluates actual owner applicability, serializes events, applies shared policy, and dispatches media-specific Download operations. |
 
-Consumption itself remains F09-owned. The three current consumption processors temporarily emit the lifecycle event at
-the point where they know which children changed. F09 must centralize that producer boundary when Consumption migrates,
-for example by returning the changed children to its feature coordinator; F06 does not make type-specific consumption
-wiring a permanent requirement.
+Consumption itself remains F09-owned. Type processors return the children whose persisted state changed, and the F09
+coordinator emits the structured lifecycle event. F06 does not make type-specific consumption wiring a requirement.
 
 ## Shared Policy
 

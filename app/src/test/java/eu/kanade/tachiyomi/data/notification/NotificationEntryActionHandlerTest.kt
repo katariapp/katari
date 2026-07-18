@@ -10,7 +10,8 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.test.runTest
-import mihon.entry.interactions.EntryConsumptionInteraction
+import mihon.entry.interactions.EntryConsumptionFeature
+import mihon.entry.interactions.EntryConsumptionResult
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
@@ -26,7 +27,7 @@ class NotificationEntryActionHandlerTest {
     private val context = mockk<Context>(relaxed = true)
     private val entryRepository = mockk<EntryRepository>()
     private val entryChapterRepository = mockk<EntryChapterRepository>()
-    private val entryConsumptionInteraction = mockk<EntryConsumptionInteraction>(relaxed = true)
+    private val entryConsumptionFeature = mockk<EntryConsumptionFeature>()
     private val entryDownloadActionFeature = mockk<EntryDownloadActionFeature>(relaxed = true)
     private val sourceManager = mockk<SourceManager>(relaxed = true)
     private val entryOpenFeature = mockk<EntryOpenFeature>(relaxed = true) {
@@ -35,7 +36,7 @@ class NotificationEntryActionHandlerTest {
     private val handler = NotificationEntryActionHandler(
         entryRepository = entryRepository,
         entryChapterRepository = entryChapterRepository,
-        entryConsumptionInteraction = entryConsumptionInteraction,
+        entryConsumptionFeature = entryConsumptionFeature,
         entryDownloadActionFeature = entryDownloadActionFeature,
         entryOpenFeature = entryOpenFeature,
         sourceManager = sourceManager,
@@ -48,10 +49,13 @@ class NotificationEntryActionHandlerTest {
         coEvery { entryRepository.getEntryById(1L) } returns entry
         coEvery { entryChapterRepository.getChapterById(10L) } returns chapters[0]
         coEvery { entryChapterRepository.getChapterById(11L) } returns chapters[1]
+        coEvery {
+            entryConsumptionFeature.setConsumed(entry, chapters, consumed = true)
+        } returns EntryConsumptionResult.Changed(chapters)
 
         handler.markConsumed(entryId = 1L, childIds = longArrayOf(10L, 11L))
 
-        coVerify { entryConsumptionInteraction.setConsumed(entry, chapters, consumed = true) }
+        coVerify { entryConsumptionFeature.setConsumed(entry, chapters, consumed = true) }
     }
 
     @Test
@@ -79,11 +83,14 @@ class NotificationEntryActionHandlerTest {
         coEvery { entryChapterRepository.getChaptersByEntryIdAwait(6L) } returns chapters
         coEvery { entryChapterRepository.getChapterById(60L) } returns chapters[0]
         coEvery { entryChapterRepository.getChapterById(62L) } returns chapters[2]
+        coEvery {
+            entryConsumptionFeature.setConsumed(entry, listOf(chapters[0], chapters[2]), consumed = true)
+        } returns EntryConsumptionResult.Changed(listOf(chapters[0], chapters[2]))
 
         handler.markConsumed(entryId = 6L, childUrls = arrayOf("chapter-1", "chapter-3"))
 
         coVerify {
-            entryConsumptionInteraction.setConsumed(
+            entryConsumptionFeature.setConsumed(
                 entry,
                 listOf(chapters[0], chapters[2]),
                 consumed = true,

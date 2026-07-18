@@ -25,7 +25,8 @@ Updated: 2026-07-18
 - Architecture Gate 5.0: `83b2f93e7` (`(refactor): enforce feature-facing entry boundary`)
 - F02 Continue completion: `0480ffeff` (`(refactor): migrate continue feature integration`)
 - F03–F05 completion: `846c6029f` (`(refactor): migrate core download features`)
-- F06–F08 are integrated and validated as the current review batch.
+- F06–F08 completion: `91d57f376` (`(refactor): migrate remaining download features`)
+- F09, F10, and F13 are integrated and validated as the current review batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -33,8 +34,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F06`–`F08` — Download Lifecycle, Download Configuration, and Download Maintenance
-- State: complete and validated; next implementation batch is `F09`, `F10`, and `F13`
+- Milestone: `F09`, `F10`, and `F13` — Consumption, Bookmarking, and Update Eligibility
+- State: complete and validated; next implementation batch is `F15`, `F16`, and `F17`
 
 ## Why the Plan Was Reset
 
@@ -173,6 +174,13 @@ authority or weakening the architecture.
 - [x] F08 download maintenance routes source/title rename, cache invalidation, whole-Entry removal, and source purge through
   one feature-owned boundary
 - [x] F06–F08 application consumers reconciled together; no application production source imports the raw Download facade
+- [x] F09 Consumption applicability, shared transition policy, media mutation, application consumers, and F06 lifecycle
+  emission migrated behind one feature
+- [x] F10 Bookmark applicability, selection policy, mutation, Entry/Updates consumers, and derived Download relationships
+  migrated without a support matrix
+- [x] F13 Update Eligibility deduplicated into one provider-free shared feature for every composed type
+- [x] F09/F10/F13 application consumers reconciled together; no application production source imports their raw facades
+  or the deleted capability report/catalog
 
 Focused F01 validation:
 
@@ -201,7 +209,7 @@ Focused F02 validation:
 - No application production source imports `EntryContinueInteraction`.
 - Root compilation reaches only the previously recorded Download Lifecycle report/policy errors; it reports no Continue
   migration error.
-- Full application compilation and a clean boundary check remain intentionally deferred while F09–F27 raw consumers are
+- Full application compilation and a clean boundary check remain intentionally deferred while F11, F12, and F14–F27 raw consumers are
   inaccessible.
 
 Focused F03–F05 validation:
@@ -224,6 +232,15 @@ Focused F06–F08 validation:
   production code has no raw `EntryDownloadInteraction` reference.
 - FOSS application compilation advances to the recorded F09–F27 migration queue and reports no F06–F08 symbol or
   dispatch error.
+
+Focused F09/F10/F13 validation:
+
+- `spotlessApply`, Feature Graph tests, build-logic tests, API/SPI and all production type/root interaction compilation,
+  and all root Entry-interactions unit tests pass after combining the three isolated implementations.
+- The boundary census has 16 remaining raw application references, all assigned to F11, F12, and F14–F27. Application
+  production code has no raw Consumption, Bookmark, or Update Eligibility interaction and no capability report/catalog.
+- FOSS application compilation advances to the recorded later-feature migration queue and reports no F09, F10, or F13
+  symbol or dispatch error.
 
 ## New Phase Sequence
 
@@ -278,7 +295,8 @@ beside the graph.
 - `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
   explicit Phase 5 presentation-projection obligation.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only the real F01–F08 owners migrated so far; F09–F27 remain deliberately absent until their owning milestones.
+  only the real F01–F10 and F13 owners migrated so far; F11, F12, and F14–F27 remain deliberately absent until their
+  owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -411,7 +429,7 @@ Approved on 2026-07-18:
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
-- Remaining application failures are the expected migration queue for F09–F27. Re-exporting SPI, restoring raw DI, or
+- Remaining application failures are the expected migration queue for F11, F12, and F14–F27. Re-exporting SPI, restoring raw DI, or
   moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
@@ -462,8 +480,14 @@ Approved on 2026-07-18:
 - F06 derives bookmark protection from Download plus Bookmarking and keeps event delivery non-optional. F07 derives
   options and each specialized setting independently from provider presence. F08 covers every inventoried maintenance
   event, including cleanup before source/database purge.
+- F09 centralizes consumption applicability and shared state-transition policy while type providers retain only genuine
+  persistence differences; its F06 lifecycle consequence is emitted by the feature coordinator.
+- F10 makes Bookmark provider presence the only support fact and derives both its application actions and existing
+  Download intersections without another opt-in or type list.
+- F13 removes the artificial universal provider declaration: Update Eligibility is an always-applicable shared feature
+  for every composed type and owns one policy across update and Stats consumers.
 
 ## Exact Next Action After Review
 
-Commit the validated F06–F08 batch, remove both its agent worktrees and branches, then start the dependency-ordered
-`F09` Consumption, `F10` Bookmarking, and `F13` Update Eligibility batch.
+Commit the validated F09/F10/F13 batch, remove both its agent worktrees and branches, then start the dependency-ordered
+`F15` Progress, `F16` Playback Preferences, and `F17` Child List batch.

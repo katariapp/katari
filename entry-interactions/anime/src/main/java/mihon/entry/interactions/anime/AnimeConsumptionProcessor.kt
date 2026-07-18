@@ -2,9 +2,8 @@ package mihon.entry.interactions.anime
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryConsumptionProcessor
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.consumptionStatus
+import mihon.entry.interactions.shouldChangeConsumption
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.EntryProgressLocator
@@ -13,15 +12,18 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 
 internal class AnimeConsumptionProcessor(
     private val entryProgressRepository: EntryProgressRepository,
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
 ) : EntryConsumptionProcessor {
     override val type: EntryType = EntryType.ANIME
 
-    override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
+    override suspend fun setConsumed(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        consumed: Boolean,
+    ): List<EntryChapter> {
         entry.requireAnime()
         val chaptersToUpdate = chapters.filter { chapter ->
             val current = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
-            canSetConsumed(
+            shouldChangeConsumption(
                 chapter.consumptionStatus(hasPartialProgress = current?.hasPartialAnimeProgress == true),
                 consumed,
             )
@@ -62,8 +64,6 @@ internal class AnimeConsumptionProcessor(
             }
             entryProgressRepository.upsertAndSyncChild(updated)
         }
-        if (consumed) {
-            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
-        }
+        return chaptersToUpdate
     }
 }

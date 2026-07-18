@@ -142,7 +142,7 @@ so it cannot be silently omitted for the next provider.
 | `F10` | Bookmarking | Entry and Updates actions; bookmarked child/library filters; bookmarked bulk downloads; cleanup protection; selection eligibility and vocabulary. |
 | `F11` | Migration | Entry and Library actions; migration source/list/search/configuration UI; use-case validation; progress, playback preferences, viewer overrides, downloads, categories, tracking, and chapter transfer. |
 | `F12` | Merge | Entry and Library actions; duplicate/merge dialogs; same-type and selection-shape rules; merged child lists, continue, downloads, progress, library state, metadata refresh, and backup representation. |
-| `F13` | Library update eligibility | Update worker; skip reasons and notifications; Stats calculations; smart-update settings; release-window policy; current duplicate Manga/Anime/Book implementations. |
+| `F13` | Library update eligibility | Update worker; structured skip reasons; Stats calculations; smart-update settings; release-window policy; one unconditional feature replacing the former duplicate Manga/Anime/Book implementations. |
 | `F14` | Library filtering | Downloaded, bookmarked, consumed/progress, tracker, outside-release-period, source, category, and content-type filters; only capability-dependent filters use graph applicability. |
 | `F15` | Progress transfer | Backup create/restore; migration; reader/player/book persistence; per-child progress labels where applicable. |
 | `F16` | Playback-preference transfer | Backup create/restore and migration; no direct Anime check may remain as authorization. |

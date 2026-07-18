@@ -42,7 +42,7 @@ import mihon.core.common.utils.mutate
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCapabilityInteraction
-import mihon.entry.interactions.EntryConsumptionInteraction
+import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
@@ -112,7 +112,7 @@ class LibraryScreenModel(
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
-    private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
+    private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryLibraryFilterInteraction: EntryLibraryFilterInteraction = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
     private val trackerManager: TrackerManager = Injekt.get(),
@@ -728,11 +728,15 @@ class LibraryScreenModel(
             entries.forEach { entry ->
                 val chapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
                 if (chapters.isNotEmpty()) {
-                    entryConsumptionInteraction.setConsumed(entry, chapters, read)
+                    entryConsumptionFeature.setConsumed(entry, chapters, read)
                 }
             }
         }
         clearSelection()
+    }
+
+    fun canSetConsumedSelection(): Boolean {
+        return state.value.selectedEntryTypes.any(entryConsumptionFeature::isApplicable)
     }
 
     /**

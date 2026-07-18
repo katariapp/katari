@@ -25,7 +25,6 @@ import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.EntryDownloadPhase
@@ -227,7 +226,6 @@ class MangaEntryInteractionPluginTest {
         val consumptionProcessor = MangaConsumptionProcessor(
             entryChapterRepository = dependencies.entryChapterRepository,
             entryProgressRepository = dependencies.entryProgressRepository,
-            downloadLifecycle = noOpDownloadLifecycle(),
         )
         val animeEntry = entry(EntryType.ANIME)
 
@@ -436,41 +434,38 @@ class MangaEntryInteractionPluginTest {
     }
 
     @Test
-    fun `manga consumption reports newly consumed children to shared lifecycle policy`() = runTest {
+    fun `manga consumption returns exactly the newly consumed children`() = runTest {
         val repository = FakeEntryChapterRepository(emptyList())
-        val lifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
-        val processor = mangaConsumptionProcessor(
-            repository = repository,
-            downloadLifecycle = lifecycle,
-        )
+        val processor = mangaConsumptionProcessor(repository = repository)
         val entry = entry(EntryType.MANGA)
         val chapter = chapter(id = 1L, read = false)
 
-        processor.setConsumed(entry, listOf(chapter), consumed = true)
-        processor.setConsumed(entry, listOf(chapter.copy(read = true)), consumed = false)
+        val changed = processor.setConsumed(
+            entry,
+            listOf(chapter, chapter(id = 2L, read = true)),
+            consumed = true,
+        )
 
-        coVerify(exactly = 1) {
-            lifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, listOf(chapter)))
-        }
+        changed.shouldContainExactly(chapter)
     }
 
     @Test
-    fun `manga consumption does not report lifecycle cleanup when marking unread`() = runTest {
+    fun `manga consumption returns no children when state does not change`() = runTest {
         val repository = FakeEntryChapterRepository(emptyList())
-        val lifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
-        val processor = mangaConsumptionProcessor(
-            repository = repository,
-            downloadLifecycle = lifecycle,
-        )
+        val processor = mangaConsumptionProcessor(repository = repository)
         val entry = entry(EntryType.MANGA)
 
-        processor.setConsumed(entry, listOf(chapter(id = 1L, read = true)), consumed = false)
+        val changed = processor.setConsumed(
+            entry,
+            listOf(chapter(id = 1L, read = true)),
+            consumed = true,
+        )
 
-        coVerify(exactly = 0) { lifecycle.onEvent(any()) }
+        changed shouldBe emptyList()
     }
 
     @Test
-    fun `manga consumption updates bookmarks`() = runTest {
+    fun `manga bookmark provider persists supplied mutations`() = runTest {
         val repository = FakeEntryChapterRepository(
             listOf(
                 chapter(id = 1L, bookmark = false),
@@ -481,10 +476,7 @@ class MangaEntryInteractionPluginTest {
 
         processor.setBookmarked(
             entry = entry(EntryType.MANGA),
-            chapters = listOf(
-                chapter(id = 1L, bookmark = false),
-                chapter(id = 2L, bookmark = true),
-            ),
+            chapters = listOf(chapter(id = 1L, bookmark = false)),
             bookmarked = true,
         )
 
@@ -644,12 +636,10 @@ class MangaEntryInteractionPluginTest {
     private fun mangaConsumptionProcessor(
         repository: EntryChapterRepository,
         progressRepository: EntryProgressRepository = FakeEntryProgressRepository(emptyList()),
-        downloadLifecycle: EntryDownloadLifecycleEventSink = noOpDownloadLifecycle(),
     ): MangaConsumptionProcessor {
         return MangaConsumptionProcessor(
             entryChapterRepository = repository,
             entryProgressRepository = progressRepository,
-            downloadLifecycle = downloadLifecycle,
         )
     }
 

@@ -33,7 +33,6 @@ import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.EntryDownloadOptionSelection
@@ -575,7 +574,6 @@ class AnimeEntryInteractionPluginTest {
         val downloadProcessor = AnimeDownloadProcessor(dependencies)
         val consumptionProcessor = AnimeConsumptionProcessor(
             entryProgressRepository = dependencies.entryProgressRepository,
-            downloadLifecycle = noOpDownloadLifecycle(),
         )
         val mangaEntry = entry(EntryType.MANGA)
 
@@ -733,7 +731,6 @@ class AnimeEntryInteractionPluginTest {
         )
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
-            downloadLifecycle = noOpDownloadLifecycle(),
         )
 
         processor.setConsumed(
@@ -762,7 +759,6 @@ class AnimeEntryInteractionPluginTest {
         )
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
-            downloadLifecycle = noOpDownloadLifecycle(),
         )
 
         processor.setConsumed(
@@ -793,14 +789,12 @@ class AnimeEntryInteractionPluginTest {
                 playbackState(chapterId = 2L, positionMs = 10_000L, completed = false),
             ),
         )
-        val downloadLifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
-            downloadLifecycle = downloadLifecycle,
         )
         val anime = entry(EntryType.ANIME)
 
-        processor.setConsumed(
+        val changed = processor.setConsumed(
             entry = anime,
             chapters = listOf(newlyWatched, alreadyWatched),
             consumed = true,
@@ -809,18 +803,14 @@ class AnimeEntryInteractionPluginTest {
         playbackRepository.upsertedStates.shouldContainExactly(
             playbackState(chapterId = 1L, positionMs = 20_000L, completed = true, lastWatchedAt = 70L),
         )
-        coVerify(exactly = 1) {
-            downloadLifecycle.onEvent(
-                EntryDownloadLifecycleEvent.MarkedConsumed(anime, listOf(newlyWatched)),
-            )
-        }
+        changed.shouldContainExactly(newlyWatched)
     }
 
     @Test
     fun `anime consumption uses legacy progress key for blank chapter url`() = runTest {
         val target = chapter(id = 7L, url = "")
         val progressRepository = FakeEntryProgressRepository(emptyList())
-        val processor = AnimeConsumptionProcessor(progressRepository, noOpDownloadLifecycle())
+        val processor = AnimeConsumptionProcessor(progressRepository)
 
         processor.setConsumed(entry(EntryType.ANIME), listOf(target), consumed = true)
 

@@ -19,6 +19,7 @@ import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import mihon.entry.viewer.settings.ViewerSettingsInteraction
 import tachiyomi.core.common.preference.PreferenceStore
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolver
+import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
@@ -112,6 +113,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryDownloadLifecycleFeatureContributor,
                 EntryDownloadConfigurationFeatureContributor,
                 EntryDownloadMaintenanceFeatureContributor,
+                EntryConsumptionFeatureContributor,
+                EntryBookmarkFeatureContributor,
+                EntryUpdateEligibilityFeatureContributor,
             ),
         )
     }
@@ -181,6 +185,31 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             interaction = composition.interactions.download,
         )
     }
+    addSingletonFactory<EntryConsumptionFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryConsumptionFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.consumption,
+            downloadLifecycle = get(),
+        )
+    }
+    addSingletonFactory<EntryBookmarkFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryBookmarkFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.bookmark,
+        )
+    }
+    addSingletonFactory<EntryUpdateEligibilityFeature> {
+        val composition = get<EntryInteractionComposition>()
+        val preferences = get<LibraryPreferences>()
+        DefaultEntryUpdateEligibilityFeature(
+            evaluation = composition.featureGraphEvaluation,
+            currentPolicy = {
+                preferences.autoUpdateEntryRestrictions.get().toEntryUpdateEligibilityPolicy()
+            },
+        )
+    }
     addSingletonFactory {
         EntryDownloadNotificationManager(
             context = app,
@@ -196,6 +225,15 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             get<EntryDownloadNotificationManager>().start()
         }
     }
+}
+
+private fun Set<String>.toEntryUpdateEligibilityPolicy(): EntryUpdateEligibilityPolicy {
+    return EntryUpdateEligibilityPolicy(
+        skipCompleted = LibraryPreferences.ENTRY_NON_COMPLETED in this,
+        skipWhenUnconsumed = LibraryPreferences.ENTRY_HAS_UNCONSUMED in this,
+        skipWhenNotStarted = LibraryPreferences.ENTRY_NON_STARTED in this,
+        skipOutsideReleasePeriod = LibraryPreferences.ENTRY_OUTSIDE_RELEASE_PERIOD in this,
+    )
 }
 
 fun ComponentRegistry.Builder.addEntryInteractionImageComponents(): ComponentRegistry.Builder {

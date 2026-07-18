@@ -26,7 +26,11 @@ Current progress:
   [`../features/F07-download-settings-and-options.md`](../features/F07-download-settings-and-options.md).
 - [x] `F08` — Download Maintenance complete. See
   [`../features/F08-download-maintenance.md`](../features/F08-download-maintenance.md).
-- [ ] `F09`–`F27` — Not started.
+- [x] `F09` — Consumption complete. See [`../features/F09-consumption.md`](../features/F09-consumption.md).
+- [x] `F10` — Bookmarking complete. See [`../features/F10-bookmarking.md`](../features/F10-bookmarking.md).
+- [x] `F13` — Update Eligibility complete. See
+  [`../features/F13-update-eligibility.md`](../features/F13-update-eligibility.md).
+- [ ] `F11`, `F12`, and `F14`–`F27` — Not started.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

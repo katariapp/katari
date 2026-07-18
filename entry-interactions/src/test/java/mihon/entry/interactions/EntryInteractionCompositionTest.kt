@@ -33,11 +33,6 @@ class EntryInteractionCompositionTest {
         val interactions = createEntryInteractions(emptyList(), emptyList())
         val entry = entry(EntryType.BOOK)
 
-        interactions.bookmark.canSetBookmarked(
-            entry.type,
-            EntryBookmarkStatus(bookmarked = false),
-            bookmarked = true,
-        ).shouldBeFalse()
         interactions.download.hasDownloads(entry).shouldBeFalse()
         interactions.preview.isSupported(entry).shouldBeFalse()
     }
@@ -72,11 +67,6 @@ class EntryInteractionCompositionTest {
 
         interactions.open.open(context, book, chapter)
         interactions.download.hasDownloads(book).shouldBeFalse()
-        interactions.bookmark.canSetBookmarked(
-            book.type,
-            EntryBookmarkStatus(bookmarked = false),
-            bookmarked = true,
-        ).shouldBeFalse()
     }
 
     @Test

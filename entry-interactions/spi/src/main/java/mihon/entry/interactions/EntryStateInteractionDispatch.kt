@@ -3,7 +3,6 @@ package mihon.entry.interactions
 import eu.kanade.tachiyomi.source.entry.EntryType
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.model.EntryStatus
 
 internal class ProviderBackedEntryCapabilityInteraction(
     private val migrationProviders: Map<EntryType, EntryMigrationProvider>,
@@ -41,59 +40,24 @@ internal class ProviderBackedEntryCapabilityInteraction(
 internal class ProviderBackedEntryConsumptionInteraction(
     private val consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
 ) : EntryConsumptionInteraction {
-    override fun canSetConsumed(entryType: EntryType, status: EntryConsumptionStatus, consumed: Boolean): Boolean {
-        val processor = consumptionProcessors.requireProcessor("consumption", entryType)
-        return processor.canSetConsumed(status, consumed)
-    }
-
-    override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
+    override suspend fun setConsumed(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        consumed: Boolean,
+    ): List<EntryChapter> {
         val processor = consumptionProcessors.requireProcessor("consumption", entry.type)
         processor.requireMatchingEntryType("consumption", entry, consumptionProcessors.keys)
-        processor.setConsumed(entry, chapters, consumed)
+        return processor.setConsumed(entry, chapters, consumed)
     }
 }
 
 internal class ProviderBackedEntryBookmarkInteraction(
     private val bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
 ) : EntryBookmarkInteraction {
-    override fun canSetBookmarked(
-        entryType: EntryType,
-        status: EntryBookmarkStatus,
-        bookmarked: Boolean,
-    ): Boolean {
-        return bookmarkProcessors[entryType]?.canSetBookmarked(status, bookmarked) ?: false
-    }
-
     override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
-        val processor = bookmarkProcessors[entry.type] ?: return
+        val processor = bookmarkProcessors.requireProcessor("bookmark", entry.type)
         processor.requireMatchingEntryType("bookmark", entry, bookmarkProcessors.keys)
         processor.setBookmarked(entry, chapters, bookmarked)
-    }
-}
-
-internal class ProviderBackedEntryUpdateEligibilityInteraction : EntryUpdateEligibilityInteraction {
-    override fun evaluate(request: EntryUpdateEligibilityRequest): EntryUpdateEligibility {
-        val fetchWindowUpperBound = request.fetchWindowUpperBound
-        return when {
-            EntryUpdateRestriction.NON_COMPLETED in request.restrictions &&
-                request.entry.status == EntryStatus.COMPLETED -> {
-                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.COMPLETED)
-            }
-            EntryUpdateRestriction.HAS_UNCONSUMED in request.restrictions && request.unconsumedCount != 0L -> {
-                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_CAUGHT_UP)
-            }
-            EntryUpdateRestriction.NON_STARTED in request.restrictions &&
-                request.totalCount > 0L &&
-                !request.hasStarted -> {
-                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_STARTED)
-            }
-            EntryUpdateRestriction.OUTSIDE_RELEASE_PERIOD in request.restrictions &&
-                fetchWindowUpperBound != null &&
-                request.entry.nextUpdate > fetchWindowUpperBound -> {
-                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.OUTSIDE_RELEASE_PERIOD)
-            }
-            else -> EntryUpdateEligibility.Eligible
-        }
     }
 }
 

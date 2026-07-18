@@ -68,9 +68,9 @@ import eu.kanade.tachiyomi.util.system.toShareIntent
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryCapabilityCatalog
-import mihon.entry.interactions.EntryCapabilityReport
+import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
@@ -115,8 +115,9 @@ class EntryScreen(
         val scope = rememberCoroutineScope()
         val lifecycleOwner = LocalLifecycleOwner.current
         val entryOpenFeature = remember { Injekt.get<EntryOpenFeature>() }
+        val entryConsumptionFeature = remember { Injekt.get<EntryConsumptionFeature>() }
         val entryDownloadActionFeature = remember { Injekt.get<EntryDownloadActionFeature>() }
-        val entryCapabilityReport = remember { Injekt.get<EntryCapabilityReport>() }
+        val entryBookmarkFeature = remember { Injekt.get<EntryBookmarkFeature>() }
         val screenModel = rememberScreenModel {
             EntryScreenModel(
                 context = context,
@@ -157,10 +158,7 @@ class EntryScreen(
             targets = listOf(downloadTarget),
             action = EntryBulkDownloadAction.unread,
         ) == EntryDownloadActionAvailability.Available
-        val bookmarksSupported = entryCapabilityReport.supportsTypeWide(
-            successState.entry.type,
-            EntryCapabilityCatalog.BOOKMARKING,
-        )
+        val bookmarksSupported = entryBookmarkFeature.isApplicable(successState.entry.type)
         val bookmarkedDownloadsSupported = entryDownloadActionFeature.bulkAvailability(
             targets = listOf(downloadTarget),
             action = EntryBulkDownloadAction.bookmarked,
@@ -174,6 +172,7 @@ class EntryScreen(
         }
         var showRelatedEntriesDialog by rememberSaveable(successState.entry.id) { mutableStateOf(false) }
         val openApplicable = entryOpenFeature.isApplicable(successState.entry.type)
+        val consumptionApplicable = entryConsumptionFeature.isApplicable(successState.entry.type)
 
         LaunchedEffect(successState.entry, webViewSource) {
             if (webViewSource != null) {
@@ -195,10 +194,12 @@ class EntryScreen(
             chapterSwipeStartAction = screenModel.chapterSwipeStartAction.availableFor(
                 downloadsSupported = downloadsAvailable,
                 bookmarksSupported = bookmarksSupported,
+                consumptionSupported = consumptionApplicable,
             ),
             chapterSwipeEndAction = screenModel.chapterSwipeEndAction.availableFor(
                 downloadsSupported = downloadsAvailable,
                 bookmarksSupported = bookmarksSupported,
+                consumptionSupported = consumptionApplicable,
             ),
             navigateUp = navigator::pop,
             onChapterClicked = { chapter ->
@@ -277,8 +278,8 @@ class EntryScreen(
                 navigator.push(eu.kanade.tachiyomi.ui.entry.notes.EntryNotesScreen(entry = successState.entry))
             },
             onMultiBookmarkClicked = screenModel::bookmarkChapters.takeIf { bookmarksSupported },
-            onMultiMarkAsReadClicked = screenModel::markChaptersRead,
-            onMarkPreviousAsReadClicked = screenModel::markPreviousChapterRead,
+            onMultiMarkAsReadClicked = screenModel::markChaptersRead.takeIf { consumptionApplicable },
+            onMarkPreviousAsReadClicked = screenModel::markPreviousChapterRead.takeIf { consumptionApplicable },
             onMultiDeleteClicked = screenModel::showDeleteChapterDialog,
             onChapterSwipe = screenModel::chapterSwipe,
             onChapterSelected = screenModel::toggleSelection,
@@ -623,10 +624,12 @@ class EntryScreen(
 private fun LibraryPreferences.ChapterSwipeAction.availableFor(
     downloadsSupported: Boolean,
     bookmarksSupported: Boolean,
+    consumptionSupported: Boolean,
 ): LibraryPreferences.ChapterSwipeAction {
     return when (this) {
         LibraryPreferences.ChapterSwipeAction.Download -> takeIf { downloadsSupported }
         LibraryPreferences.ChapterSwipeAction.ToggleBookmark -> takeIf { bookmarksSupported }
+        LibraryPreferences.ChapterSwipeAction.ToggleRead -> takeIf { consumptionSupported }
         else -> this
     } ?: LibraryPreferences.ChapterSwipeAction.Disabled
 }

@@ -71,7 +71,6 @@ internal fun mangaEntryInteractionPlugin(
     val consumptionProcessor = MangaConsumptionProcessor(
         entryChapterRepository = dependencies.entryChapterRepository,
         entryProgressRepository = dependencies.entryProgressRepository,
-        downloadLifecycle = dependencies.downloadLifecycle,
     )
     val progressProcessor = MangaProgressProcessor(
         entryProgressRepository = dependencies.entryProgressRepository,

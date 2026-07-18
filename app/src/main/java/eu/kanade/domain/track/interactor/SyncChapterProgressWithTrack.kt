@@ -5,7 +5,7 @@ import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.Tracker
 import eu.kanade.tachiyomi.data.track.supportsEntryType
 import logcat.LogPriority
-import mihon.entry.interactions.EntryConsumptionInteraction
+import mihon.entry.interactions.EntryConsumptionFeature
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
@@ -16,7 +16,7 @@ import kotlin.math.max
 class SyncChapterProgressWithTrack(
     private val entryRepository: EntryRepository,
     private val entryChapterRepository: EntryChapterRepository,
-    private val entryConsumptionInteraction: EntryConsumptionInteraction,
+    private val entryConsumptionFeature: EntryConsumptionFeature,
     private val insertTrack: InsertTrack,
 ) {
 
@@ -48,7 +48,7 @@ class SyncChapterProgressWithTrack(
         try {
             tracker.update(updatedTrack.toDbTrack())
             if (chaptersToUpdate.isNotEmpty()) {
-                entryConsumptionInteraction.setConsumed(entry, chaptersToUpdate, consumed = true)
+                entryConsumptionFeature.setConsumed(entry, chaptersToUpdate, consumed = true)
             }
             insertTrack.await(updatedTrack)
         } catch (e: Throwable) {

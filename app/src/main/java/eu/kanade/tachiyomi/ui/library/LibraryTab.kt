@@ -192,8 +192,10 @@ data object LibraryTab : Tab {
                     visible = state.selectionMode,
                     onMergeClicked = screenModel::openMergeDialog.takeIf { screenModel.canMergeSelection() },
                     onChangeCategoryClicked = screenModel::openChangeCategoryDialog,
-                    onMarkAsReadClicked = { screenModel.markReadSelection(true) },
-                    onMarkAsUnreadClicked = { screenModel.markReadSelection(false) },
+                    onMarkAsReadClicked = { screenModel.markReadSelection(true) }
+                        .takeIf { screenModel.canSetConsumedSelection() },
+                    onMarkAsUnreadClicked = { screenModel.markReadSelection(false) }
+                        .takeIf { screenModel.canSetConsumedSelection() },
                     markAsReadLabel = actionLabels.markAsReadLabel,
                     markAsUnreadLabel = actionLabels.markAsUnreadLabel,
                     downloadPresentation = state.selectedEntryTypes.selectionEntryTypePresentation(),

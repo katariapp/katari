@@ -10,9 +10,8 @@ import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.coroutines.flow.update
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryUpdateEligibility
-import mihon.entry.interactions.EntryUpdateEligibilityInteraction
+import mihon.entry.interactions.EntryUpdateEligibilityFeature
 import mihon.entry.interactions.EntryUpdateEligibilityRequest
-import mihon.entry.interactions.EntryUpdateRestriction
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
 import tachiyomi.domain.entry.model.EntryStatus
@@ -28,7 +27,7 @@ import uy.kohesive.injekt.api.get
 
 class StatsScreenModel(
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
-    private val entryUpdateEligibility: EntryUpdateEligibilityInteraction = Injekt.get(),
+    private val entryUpdateEligibility: EntryUpdateEligibilityFeature = Injekt.get(),
     private val getLibraryEntries: GetLibraryEntries = Injekt.get(),
     private val getTotalReadDuration: GetTotalReadDuration = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
@@ -89,9 +88,6 @@ class StatsScreenModel(
     private fun getGlobalUpdateItemCount(libraryEntries: List<LibraryItem>): Int {
         val includedCategories = preferences.updateCategories.get().map { it.toLong() }
         val excludedCategories = preferences.updateCategoriesExclude.get().map { it.toLong() }
-        val updateRestrictions = preferences.autoUpdateEntryRestrictions.get()
-            .toEntryUpdateRestrictions()
-
         return libraryEntries.filter {
             val included = includedCategories.isEmpty() || it.categories.intersect(includedCategories).isNotEmpty()
             val excluded = it.categories.intersect(excludedCategories).isNotEmpty()
@@ -104,24 +100,9 @@ class StatsScreenModel(
                         totalCount = it.totalCount,
                         unconsumedCount = it.unconsumedCount,
                         hasStarted = it.hasStarted,
-                        restrictions = updateRestrictions,
                     ),
                 ) is EntryUpdateEligibility.Eligible
             }
-    }
-
-    private fun Set<String>.toEntryUpdateRestrictions(): Set<EntryUpdateRestriction> {
-        return buildSet {
-            if (LibraryPreferences.ENTRY_NON_COMPLETED in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.NON_COMPLETED)
-            }
-            if (LibraryPreferences.ENTRY_HAS_UNCONSUMED in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.HAS_UNCONSUMED)
-            }
-            if (LibraryPreferences.ENTRY_NON_STARTED in this@toEntryUpdateRestrictions) {
-                add(EntryUpdateRestriction.NON_STARTED)
-            }
-        }
     }
 
     private suspend fun getEntryTrackMap(libraryEntries: List<LibraryItem>): Map<LibraryItemKey, List<EntryTrack>> {

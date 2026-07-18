@@ -33,11 +33,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
-import mihon.entry.interactions.EntryBookmarkInteraction
+import mihon.entry.interactions.EntryBookmarkAvailability
+import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBookmarkStatus
-import mihon.entry.interactions.EntryCapabilityCatalog
-import mihon.entry.interactions.EntryCapabilityReport
-import mihon.entry.interactions.EntryConsumptionInteraction
+import mihon.entry.interactions.EntryBookmarkTarget
+import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
@@ -74,9 +74,8 @@ import java.time.ZonedDateTime
 class UpdatesScreenModel(
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
-    private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
-    private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
-    private val entryCapabilityReport: EntryCapabilityReport = Injekt.get(),
+    private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
+    private val entryBookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val getUpdates: GetUpdates = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getMergedEntry: GetMergedEntry = Injekt.get(),
@@ -330,7 +329,7 @@ class UpdatesScreenModel(
         screenModelScope.launchNonCancellable {
             updates.entryChapterSelections()
                 .forEach { (entry, chapters) ->
-                    entryConsumptionInteraction.setConsumed(entry, chapters, consumed)
+                    entryConsumptionFeature.setConsumed(entry, chapters, consumed)
                 }
         }
         toggleAllSelection(false)
@@ -344,7 +343,7 @@ class UpdatesScreenModel(
         screenModelScope.launchNonCancellable {
             updates.entryChapterSelections()
                 .forEach { (entry, chapters) ->
-                    entryBookmarkInteraction.setBookmarked(entry, chapters, bookmark)
+                    entryBookmarkFeature.setBookmarked(entry, chapters, bookmark)
                 }
         }
         toggleAllSelection(false)
@@ -353,15 +352,14 @@ class UpdatesScreenModel(
     fun hasBookmarkAction(updates: List<UpdatesItem>, bookmark: Boolean): Boolean {
         return updates.hasBookmarkAction(
             bookmark = bookmark,
-            capabilityReport = entryCapabilityReport,
-            canSetBookmarked = entryBookmarkInteraction::canSetBookmarked,
+            feature = entryBookmarkFeature,
         )
     }
 
     fun hasConsumedAction(updates: List<UpdatesItem>, consumed: Boolean): Boolean {
         return updates.hasConsumedAction(
             consumed = consumed,
-            canSetConsumed = entryConsumptionInteraction::canSetConsumed,
+            canSetConsumed = entryConsumptionFeature::canSetConsumed,
         )
     }
 
@@ -589,20 +587,12 @@ data class UpdatesItem(
 
 internal fun List<UpdatesItem>.hasBookmarkAction(
     bookmark: Boolean,
-    capabilityReport: EntryCapabilityReport,
-    canSetBookmarked: (entryType: EntryType, status: EntryBookmarkStatus, bookmarked: Boolean) -> Boolean,
+    feature: EntryBookmarkFeature,
 ): Boolean {
-    val supportedUpdates = mapNotNull { it.update as? UpdateItem.EntryUpdate }
-        .filter {
-            capabilityReport.supportsTypeWide(it.entryType, EntryCapabilityCatalog.BOOKMARKING)
-        }
-
-    return supportedUpdates.isNotEmpty() &&
-        supportedUpdates.size == size &&
-        when (bookmark) {
-            true -> supportedUpdates.any { canSetBookmarked(it.entryType, it.bookmarkStatus(), true) }
-            false -> supportedUpdates.all { canSetBookmarked(it.entryType, it.bookmarkStatus(), false) }
-        }
+    val entryUpdates = mapNotNull { it.update as? UpdateItem.EntryUpdate }
+    if (entryUpdates.size != size) return false
+    val targets = entryUpdates.map { EntryBookmarkTarget(it.entryType, it.bookmarkStatus()) }
+    return feature.selectionAvailability(targets, bookmark) == EntryBookmarkAvailability.Available
 }
 
 internal fun List<UpdatesItem>.hasConsumedAction(

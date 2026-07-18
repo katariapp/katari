@@ -3,10 +3,8 @@ package mihon.entry.interactions.manga
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryBookmarkProcessor
 import mihon.entry.interactions.EntryConsumptionProcessor
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.bookmarkStatus
 import mihon.entry.interactions.consumptionStatus
+import mihon.entry.interactions.shouldChangeConsumption
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.EntryProgressLocator
@@ -17,20 +15,23 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 internal class MangaConsumptionProcessor(
     private val entryChapterRepository: EntryChapterRepository,
     private val entryProgressRepository: EntryProgressRepository,
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
 ) : EntryConsumptionProcessor, EntryBookmarkProcessor {
     override val type: EntryType = EntryType.MANGA
 
-    override suspend fun setConsumed(entry: Entry, chapters: List<EntryChapter>, consumed: Boolean) {
+    override suspend fun setConsumed(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        consumed: Boolean,
+    ): List<EntryChapter> {
         entry.requireManga()
         val chaptersToUpdate = chapters.filter { chapter ->
             val progress = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
-            canSetConsumed(
+            shouldChangeConsumption(
                 chapter.consumptionStatus(hasPartialProgress = progress?.hasPartialMangaProgress == true),
                 consumed,
             )
         }
-        if (chaptersToUpdate.isEmpty()) return
+        if (chaptersToUpdate.isEmpty()) return emptyList()
 
         chaptersToUpdate.forEach { chapter ->
             val current = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
@@ -69,18 +70,11 @@ internal class MangaConsumptionProcessor(
             entryProgressRepository.upsertAndSyncChild(updated)
         }
 
-        if (consumed) {
-            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
-        }
+        return chaptersToUpdate
     }
 
     override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) {
         entry.requireManga()
-        val chaptersToUpdate = chapters
-            .filter { canSetBookmarked(it.bookmarkStatus(), bookmarked) }
-            .map { it.copy(bookmark = bookmarked) }
-        if (chaptersToUpdate.isEmpty()) return
-
-        entryChapterRepository.updateAll(chaptersToUpdate)
+        entryChapterRepository.updateAll(chapters.map { it.copy(bookmark = bookmarked) })
     }
 }

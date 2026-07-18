@@ -67,6 +67,32 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Application production code has no raw `EntryDownloadInteraction` reference. The boundary census now reports 25
   references assigned to F09–F27.
 
+### Resolved in F09: Consumption feature ownership
+
+- F09 owns consumed-state applicability, shared transition eligibility, mutation dispatch, Entry/Library/Updates UI
+  gates, notification actions, tracking synchronization, and F06 lifecycle emission.
+- Media providers return their exact changed children after genuine type-specific persistence. They no longer receive
+  the Download lifecycle sink.
+- Application production code has no raw `EntryConsumptionInteraction` reference. Provider absence remains valid and
+  returns `Inapplicable` through the feature boundary.
+
+### Resolved in F10: Bookmarking feature ownership
+
+- F10 owns Bookmark applicability, individual and selection availability, and mutation dispatch for Entry and Updates
+  surfaces.
+- Shared selection policy filters unchanged children before the Manga provider performs its genuine persistence work.
+- Application production code has no raw `EntryBookmarkInteraction`, capability report, or capability catalog reference.
+  Download-plus-Bookmark consequences remain derived relationships, so a future Bookmark provider activates them
+  without an application or Download edit.
+
+### Resolved in F13: Update Eligibility feature ownership
+
+- F13 owns the universal library-update eligibility policy and the consequences used by the update worker and Stats.
+- Eligibility is shared behavior for every composed type rather than a provider capability or per-type opt-in. An
+  uncomposed type is a composition error; a composed type is evaluated from shared preferences and runtime context.
+- The redundant raw Update Eligibility provider, dispatch, and interaction facade are removed rather than retained as
+  an always-present declaration.
+
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
@@ -94,8 +120,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F08 now install their contributors; providers belonging to
-  F09–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
+  content-type plugins that contribute themselves. F01–F10 and F13 now install their contributors; providers belonging
+  to F11, F12, and F14–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
 
@@ -108,7 +134,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Resolution: bookmark-aware cleanup is installed from the Download-plus-Bookmarking relationship and receives
   non-optional structured events. The coordinator does not query a type report or contain a concrete type branch.
 
-### `P5-ENTRY-UI` — Entry actions still reconstruct capability support
+### Partially resolved in F10: `P5-ENTRY-UI`
 
 - Responsible owner: Entry-screen feature
 - Owning phase: Phase 5
@@ -117,7 +143,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F04 resolution: download and bookmarked-bulk controls consume selected action applicability with contextual source and
   selection blockers.
 - F07 resolution: the contextual options branch resolves and executes through the graph-selected options feature.
-- Remaining outcome: Bookmark-owned controls consume F10 applicability and presentation metadata.
+- F10 resolution: Bookmark-owned controls consume feature applicability and mutation; the former report/catalog gate is
+  removed. Presentation vocabulary remains F23-owned.
 
 ### Resolved in F03–F05: `P5-LIBRARY-INTEGRATIONS`
 
@@ -132,16 +159,17 @@ SPI boundary is not an exit gate for Phase 3.5.
   library-update automatic-download batch uses F05. Contextual selection, local/stub, queue, and notification-size
   constraints remain structured inputs rather than support flags.
 
-### Partially resolved in F03/F04: `P5-UPDATES-INTEGRATIONS`
+### Resolved in F03/F04/F10: `P5-UPDATES-INTEGRATIONS`
 
 - Responsible owner: Updates feature
 - Owning phase: Phase 5
 - Affected path: `app/src/main/**/ui/updates/UpdatesScreenModel.kt`
 - F01 resolution: Updates row Open availability and dispatch consume the selected Open feature gate.
 - F03/F04 resolution: download status and action availability/dispatch consume the runtime and action features.
-- Remaining outcome: Bookmark actions migrate with F10 without recreating a type support matrix.
+- F10 resolution: Bookmark actions and mutation consume structured feature selection and provider-derived
+  applicability without recreating a type support matrix.
 
-### `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS` — Retained behavioral proofs still construct report fixtures
+### Partially resolved in F04/F06/F10: `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS`
 
 - Responsible owners: Downloads, Entry UI, Library, and Updates feature tests
 - Owning phase: Phase 7, after their Phase 5 production migrations
@@ -153,8 +181,8 @@ SPI boundary is not an exit gate for Phase 3.5.
   it no longer constructs a support report.
 - F06 resolution: cleanup assertions now use anonymous graph-selected Download and Bookmark providers; the old lifecycle
   manager/report fixture was removed.
-- Required outcome: preserve remaining Bookmark selection assertions as graph-selected contracts. Remove synthetic
-  report construction and do not replace it with hardcoded production type expectations.
+- F10 resolution: Bookmark selection assertions now exercise one graph-selected synthetic provider and valid provider
+  absence. The stale report fixture and hardcoded production support expectations were removed.
 
 ### `P5-PRESENTATION-PROJECTION` — Type vocabulary remains an app-owned concrete-type map
 

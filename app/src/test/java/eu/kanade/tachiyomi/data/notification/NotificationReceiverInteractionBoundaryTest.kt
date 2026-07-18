@@ -16,7 +16,7 @@ class NotificationReceiverInteractionBoundaryTest {
             .readText()
 
         assertTrue(source.contains("import mihon.entry.interactions.EntryOpenFeature"))
-        assertTrue(source.contains("import mihon.entry.interactions.EntryConsumptionInteraction"))
+        assertTrue(source.contains("import mihon.entry.interactions.EntryConsumptionFeature"))
         assertTrue(source.contains("import mihon.entry.interactions.EntryDownloadActionFeature"))
 
         assertActionRoutesTo(
@@ -50,7 +50,7 @@ class NotificationReceiverInteractionBoundaryTest {
         assertActionRoutesTo(source, "ACTION_MARK_CONSUMED", """markConsumed\(intent\.childIdsPayload\(\)\)""")
         assertTrue(source.contains("entryActionHandler.markConsumed(entryId, childIds)"))
         assertTrue(source.contains("entryActionHandler.markConsumed(entryId, childUrls)"))
-        assertTrue(source.contains("entryConsumptionInteraction.setConsumed(entry, chapters, consumed = true)"))
+        assertTrue(source.contains("entryConsumptionFeature.setConsumed(entry, chapters, consumed = true)"))
 
         assertActionRoutesTo(
             source,

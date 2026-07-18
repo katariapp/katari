@@ -21,7 +21,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import mihon.entry.interactions.EntryConsumptionInteraction
+import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
@@ -53,7 +53,7 @@ class NotificationReceiver : BroadcastReceiver() {
     private val getMergedEntry: GetMergedEntry by injectLazy()
     private val entryRepository: EntryRepository by injectLazy()
     private val entryChapterRepository: EntryChapterRepository by injectLazy()
-    private val entryConsumptionInteraction: EntryConsumptionInteraction by injectLazy()
+    private val entryConsumptionFeature: EntryConsumptionFeature by injectLazy()
     private val downloadRuntime: EntryDownloadRuntimeFeature by injectLazy()
     private val entryDownloadActionFeature: EntryDownloadActionFeature by injectLazy()
     private val entryOpenFeature: EntryOpenFeature by injectLazy()
@@ -63,7 +63,7 @@ class NotificationReceiver : BroadcastReceiver() {
         NotificationEntryActionHandler(
             entryRepository = entryRepository,
             entryChapterRepository = entryChapterRepository,
-            entryConsumptionInteraction = entryConsumptionInteraction,
+            entryConsumptionFeature = entryConsumptionFeature,
             entryDownloadActionFeature = entryDownloadActionFeature,
             entryOpenFeature = entryOpenFeature,
             sourceManager = sourceManager,
@@ -862,7 +862,7 @@ class NotificationReceiver : BroadcastReceiver() {
 internal class NotificationEntryActionHandler(
     private val entryRepository: EntryRepository,
     private val entryChapterRepository: EntryChapterRepository,
-    private val entryConsumptionInteraction: EntryConsumptionInteraction,
+    private val entryConsumptionFeature: EntryConsumptionFeature,
     private val entryDownloadActionFeature: EntryDownloadActionFeature,
     private val entryOpenFeature: EntryOpenFeature,
     private val sourceManager: SourceManager,
@@ -896,7 +896,7 @@ internal class NotificationEntryActionHandler(
         val entry = entryRepository.getEntryById(entryId) ?: return
         val chapters = loadChapters(childIds)
         if (chapters.isNotEmpty()) {
-            entryConsumptionInteraction.setConsumed(entry, chapters, consumed = true)
+            entryConsumptionFeature.setConsumed(entry, chapters, consumed = true)
         }
     }
 
