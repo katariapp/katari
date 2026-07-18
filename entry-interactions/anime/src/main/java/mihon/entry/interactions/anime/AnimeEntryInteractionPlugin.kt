@@ -2,9 +2,13 @@ package mihon.entry.interactions.anime
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
+import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
+import mihon.entry.interactions.EntryDownloadCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadOptionsCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryOpenCapability
@@ -69,6 +73,7 @@ internal fun animeEntryInteractionPlugin(
     val playbackPreferencesProcessor = AnimePlaybackPreferencesProcessor(
         playbackPreferencesRepository = dependencies.playbackPreferencesRepository,
     )
+    val downloadProcessor = AnimeDownloadProcessor(dependencies)
     return object : EntryInteractionPlugin {
         override val type = EntryType.ANIME
         override val owner = ContributionOwner("entry-interactions.anime")
@@ -78,6 +83,10 @@ internal fun animeEntryInteractionPlugin(
             EntryConsumptionCapability.bind(consumptionProcessor),
             EntryProgressCapability.bind(progressProcessor),
             EntryPlaybackPreferencesCapability.bind(playbackPreferencesProcessor),
+            EntryDownloadCapability.bind(downloadProcessor),
+            EntryDownloadOptionsCapability.bind(downloadProcessor),
+            EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
+            EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
@@ -86,11 +95,6 @@ internal fun animeEntryInteractionPlugin(
             registry.registerChildListProcessor(
                 AnimeChildListProcessor(
                     entryProgressRepository = dependencies.entryProgressRepository,
-                ),
-            )
-            registry.registerDownloadProcessor(
-                AnimeDownloadProcessor(
-                    dependencies = dependencies,
                 ),
             )
             registry.registerUpdateEligibilityProcessor(AnimeUpdateEligibilityProcessor())

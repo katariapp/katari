@@ -2,11 +2,18 @@ package mihon.entry.interactions.manga
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
+import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBookmarkCapability
+import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryChildGroupFilterDataSource
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
+import mihon.entry.interactions.EntryDownloadArchivePackagingCapability
+import mihon.entry.interactions.EntryDownloadCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadParallelItemTransfersCapability
+import mihon.entry.interactions.EntryDownloadParallelSourceTransfersCapability
+import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryOpenCapability
@@ -66,6 +73,7 @@ internal fun mangaEntryInteractionPlugin(
         entryProgressRepository = dependencies.entryProgressRepository,
         entryChapterRepository = dependencies.entryChapterRepository,
     )
+    val downloadProcessor = MangaDownloadProcessor(dependencies)
     return object : EntryInteractionPlugin {
         override val type = EntryType.MANGA
         override val owner = ContributionOwner("entry-interactions.manga")
@@ -75,17 +83,19 @@ internal fun mangaEntryInteractionPlugin(
             EntryConsumptionCapability.bind(consumptionProcessor),
             EntryBookmarkCapability.bind(consumptionProcessor),
             EntryProgressCapability.bind(progressProcessor),
+            EntryDownloadCapability.bind(downloadProcessor),
+            EntryDownloadArchivePackagingCapability.bind(downloadProcessor),
+            EntryDownloadTallImageSplittingCapability.bind(downloadProcessor),
+            EntryDownloadParallelSourceTransfersCapability.bind(downloadProcessor),
+            EntryDownloadParallelItemTransfersCapability.bind(downloadProcessor),
+            EntryBulkDownloadCandidateCapability.bind(downloadProcessor),
+            EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
         )
 
         override fun register(registry: EntryInteractionRegistry) {
             super<EntryInteractionPlugin>.register(registry)
             registry.registerCapabilityProcessor(MangaCapabilityProcessor())
             registry.registerChildListProcessor(MangaChildListProcessor(dependencies.entryProgressRepository))
-            registry.registerDownloadProcessor(
-                MangaDownloadProcessor(
-                    dependencies = dependencies,
-                ),
-            )
             registry.registerUpdateEligibilityProcessor(MangaUpdateEligibilityProcessor())
             registry.registerChildGroupFilterProcessor(
                 MangaChildGroupFilterProcessor(

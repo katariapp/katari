@@ -66,6 +66,10 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     private val openProcessors = mutableMapOf<EntryType, EntryOpenProcessor>()
     private val continueProcessors = mutableMapOf<EntryType, EntryContinueProcessor>()
     private val downloadProcessors = mutableMapOf<EntryType, EntryDownloadProcessor>()
+    private val downloadOptionsProcessors = mutableMapOf<EntryType, EntryDownloadOptionsProcessor>()
+    private val downloadSettingCapabilities = mutableMapOf<EntryType, MutableSet<EntryDownloadSettingCapability>>()
+    private val bulkDownloadCandidateProcessors = mutableMapOf<EntryType, EntryBulkDownloadCandidateProcessor>()
+    private val automaticDownloadFilterProcessors = mutableMapOf<EntryType, EntryAutomaticDownloadFilterProcessor>()
     private val capabilityProcessors = mutableMapOf<EntryType, EntryCapabilityProcessor>()
     private val consumptionProcessors = mutableMapOf<EntryType, EntryConsumptionProcessor>()
     private val bookmarkProcessors = mutableMapOf<EntryType, EntryBookmarkProcessor>()
@@ -87,6 +91,28 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
 
     override fun registerDownloadProcessor(processor: EntryDownloadProcessor) {
         registerProcessor("download", processor.type, processor, downloadProcessors)
+    }
+
+    override fun registerDownloadOptionsProcessor(processor: EntryDownloadOptionsProcessor) {
+        registerProcessor("download options", processor.type, processor, downloadOptionsProcessors)
+    }
+
+    override fun registerDownloadSettingProvider(
+        provider: EntryDownloadSettingProvider,
+        setting: EntryDownloadSettingCapability,
+    ) {
+        val settings = downloadSettingCapabilities.getOrPut(provider.type, ::mutableSetOf)
+        check(settings.add(setting)) {
+            "Duplicate download setting $setting registered for EntryType ${provider.type}"
+        }
+    }
+
+    override fun registerBulkDownloadCandidateProcessor(processor: EntryBulkDownloadCandidateProcessor) {
+        registerProcessor("bulk download candidates", processor.type, processor, bulkDownloadCandidateProcessors)
+    }
+
+    override fun registerAutomaticDownloadFilterProcessor(processor: EntryAutomaticDownloadFilterProcessor) {
+        registerProcessor("automatic download filter", processor.type, processor, automaticDownloadFilterProcessors)
     }
 
     override fun registerCapabilityProcessor(processor: EntryCapabilityProcessor) {
@@ -143,6 +169,12 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
                 openProcessors = openProcessors.toMap(),
                 continueProcessors = continueProcessors.toMap(),
                 downloadProcessors = downloadProcessors.toMap(),
+                downloadOptionsProcessors = downloadOptionsProcessors.toMap(),
+                downloadSettingCapabilities = downloadSettingCapabilities.mapValues { (_, settings) ->
+                    settings.toSet()
+                },
+                bulkDownloadCandidateProcessors = bulkDownloadCandidateProcessors.toMap(),
+                automaticDownloadFilterProcessors = automaticDownloadFilterProcessors.toMap(),
                 capabilityProcessors = capabilityProcessors.toMap(),
                 consumptionProcessors = consumptionProcessors.toMap(),
                 bookmarkProcessors = bookmarkProcessors.toMap(),
@@ -179,6 +211,10 @@ private class DefaultEntryInteractions(
     openProcessors: Map<EntryType, EntryOpenProcessor>,
     continueProcessors: Map<EntryType, EntryContinueProcessor>,
     downloadProcessors: Map<EntryType, EntryDownloadProcessor>,
+    downloadOptionsProcessors: Map<EntryType, EntryDownloadOptionsProcessor>,
+    downloadSettingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
+    bulkDownloadCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
+    automaticDownloadFilterProcessors: Map<EntryType, EntryAutomaticDownloadFilterProcessor>,
     capabilityProcessors: Map<EntryType, EntryCapabilityProcessor>,
     consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
     bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
@@ -194,7 +230,14 @@ private class DefaultEntryInteractions(
     override val open: EntryOpenInteraction = RegistryEntryOpenInteraction(openProcessors)
     override val continueEntry: EntryContinueInteraction = RegistryEntryContinueInteraction(continueProcessors)
     override val download: EntryDownloadInteraction =
-        RegistryEntryDownloadInteraction(downloadProcessors)
+        RegistryEntryDownloadInteraction(
+            processors = downloadProcessors,
+            optionsProcessors = downloadOptionsProcessors,
+            settingCapabilities = downloadSettingCapabilities,
+            bulkCandidateProcessors = bulkDownloadCandidateProcessors,
+            automaticFilterProcessors = automaticDownloadFilterProcessors,
+            bookmarkProviderTypes = bookmarkProcessors.keys,
+        )
     override val capability: EntryCapabilityInteraction =
         RegistryEntryCapabilityInteraction(capabilityProcessors)
     override val consumption: EntryConsumptionInteraction =
@@ -333,7 +376,11 @@ private class RegistryEntryContinueInteraction(
 
 private class RegistryEntryDownloadInteraction(
     private val processors: Map<EntryType, EntryDownloadProcessor>,
-    private val capabilityReport: EntryCapabilityReport,
+    private val optionsProcessors: Map<EntryType, EntryDownloadOptionsProcessor>,
+    private val settingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
+    private val bulkCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
+    private val automaticFilterProcessors: Map<EntryType, EntryAutomaticDownloadFilterProcessor>,
+    private val bookmarkProviderTypes: Set<EntryType>,
 ) : EntryDownloadInteraction {
     private val paused = MutableStateFlow(false)
 
@@ -416,7 +463,7 @@ private class RegistryEntryDownloadInteraction(
     }
 
     override fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>> {
-        return processors.mapValues { (_, processor) -> processor.settingCapabilities }
+        return settingCapabilities
     }
 
     override suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
@@ -439,16 +486,16 @@ private class RegistryEntryDownloadInteraction(
         selection: EntryDownloadOptionSelection,
         startNow: Boolean,
     ) {
-        val processor = processors.requireProcessor("download", entry.type)
-        processor.requireMatchingEntryType("download", entry, processors.keys)
+        val processor = optionsProcessors.requireProcessor("download options", entry.type)
+        processor.requireMatchingEntryType("download options", entry, optionsProcessors.keys)
         processor.downloadWithOptions(entry, chapters, selection, startNow)
         paused.value = false
     }
 
     override fun supportsDownloadOptions(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
-        processor.requireMatchingEntryType("download", entry, processors.keys)
-        return processor.supportsDownloadOptions(entry)
+        val processor = optionsProcessors[entry.type] ?: return false
+        processor.requireMatchingEntryType("download options", entry, optionsProcessors.keys)
+        return true
     }
 
     override suspend fun resolveDownloadOptions(
@@ -456,8 +503,8 @@ private class RegistryEntryDownloadInteraction(
         entry: Entry,
         chapter: EntryChapter,
     ): EntryDownloadOptions? {
-        val processor = processors[entry.type] ?: return null
-        processor.requireMatchingEntryType("download", entry, processors.keys)
+        val processor = optionsProcessors[entry.type] ?: return null
+        processor.requireMatchingEntryType("download options", entry, optionsProcessors.keys)
         return processor.resolveDownloadOptions(context, entry, chapter)
     }
 
@@ -467,14 +514,11 @@ private class RegistryEntryDownloadInteraction(
         candidates: List<EntryChapter>?,
         memberEntryIds: List<Long>,
     ): EntryBulkDownloadCandidateResult {
-        val processor = processors[entry.type] ?: return EntryBulkDownloadCandidateResult.Unsupported
-        processor.requireMatchingEntryType("download", entry, processors.keys)
-        if (!capabilityReport.supportsTypeWide(entry.type, EntryCapabilityCatalog.BULK_DOWNLOADS)) {
-            return EntryBulkDownloadCandidateResult.Unsupported
-        }
+        val processor = bulkCandidateProcessors[entry.type] ?: return EntryBulkDownloadCandidateResult.Unsupported
+        processor.requireMatchingEntryType("bulk download candidates", entry, bulkCandidateProcessors.keys)
         if (
             action.type == EntryBulkDownloadActionType.BOOKMARKED &&
-            !EntryDownloadCapabilityPolicy.supportsBookmarkedBulkDownloads(capabilityReport, entry.type)
+            entry.type !in bookmarkProviderTypes
         ) {
             return EntryBulkDownloadCandidateResult.Unsupported
         }
@@ -488,8 +532,8 @@ private class RegistryEntryDownloadInteraction(
         entry: Entry,
         chapters: List<EntryChapter>,
     ): List<EntryChapter> {
-        val processor = processors[entry.type] ?: return emptyList()
-        processor.requireMatchingEntryType("download", entry, processors.keys)
+        val processor = automaticFilterProcessors[entry.type] ?: return emptyList()
+        processor.requireMatchingEntryType("automatic download filter", entry, automaticFilterProcessors.keys)
         return processor.filterAutoDownloadCandidates(entry, chapters)
     }
 
@@ -795,6 +839,16 @@ private fun <T> Map<EntryType, T>.requireProcessor(category: String, type: Entry
     return this[type] ?: error(
         "No $category processor registered for EntryType $type. Registered types: ${registeredTypes()}",
     )
+}
+
+private fun EntryInteractionProvider.requireMatchingEntryType(
+    category: String,
+    entry: Entry,
+    registeredTypes: Set<EntryType>,
+) {
+    require(type == entry.type) {
+        processorMismatchMessage(category, entry.type, type, registeredTypes)
+    }
 }
 
 private fun EntryOpenProcessor.requireMatchingEntryType(

@@ -1,6 +1,5 @@
 package mihon.entry.interactions.book
 
-import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.CoroutineScope
@@ -10,9 +9,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
-import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadActionType
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryAutomaticDownloadFilterProcessor
+import mihon.entry.interactions.EntryBulkDownloadCandidateProcessor
 import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
 import mihon.entry.interactions.EntryDownloadQueueGroup
@@ -29,7 +27,9 @@ import tachiyomi.domain.entry.repository.EntryRepository
 
 internal class BookDownloadProcessor(
     private val dependencies: BookDownloadProcessorDependencies,
-) : EntryDownloadProcessor {
+) : EntryDownloadProcessor,
+    EntryBulkDownloadCandidateProcessor,
+    EntryAutomaticDownloadFilterProcessor {
     private val manager: BookDownloadManager = dependencies.manager
     private val cache: BookDownloadCache = dependencies.cache
     private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
@@ -116,17 +116,6 @@ internal class BookDownloadProcessor(
             manager.startDownloads()
         }
     }
-
-    override fun supportsDownloadOptions(entry: Entry): Boolean {
-        entry.requireBook()
-        return false
-    }
-
-    override suspend fun resolveDownloadOptions(
-        context: Context,
-        entry: Entry,
-        chapter: EntryChapter,
-    ) = null
 
     override suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,

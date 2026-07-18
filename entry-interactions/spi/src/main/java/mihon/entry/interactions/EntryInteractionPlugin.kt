@@ -83,7 +83,6 @@ val EntryContinueCapability = entryInteractionCapability<EntryContinueProcessor>
 )
 
 interface EntryDownloadProcessor : EntryInteractionProvider {
-    val settingCapabilities: Set<EntryDownloadSettingCapability> get() = emptySet()
     val changes: Flow<Unit>
     val isInitializing: Flow<Boolean>
     val isRunning: Flow<Boolean>
@@ -119,27 +118,6 @@ interface EntryDownloadProcessor : EntryInteractionProvider {
      * other pending work without interrupting an active download.
      */
     suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean)
-    suspend fun downloadWithOptions(
-        entry: Entry,
-        chapters: List<EntryChapter>,
-        selection: EntryDownloadOptionSelection,
-        startNow: Boolean,
-    ) {
-        download(entry, chapters, startNow)
-    }
-    fun supportsDownloadOptions(entry: Entry): Boolean = false
-    suspend fun resolveDownloadOptions(
-        context: Context,
-        entry: Entry,
-        chapter: EntryChapter,
-    ): EntryDownloadOptions? = null
-
-    /** Loads media-specific candidates before shared bulk-action selection is applied. */
-    suspend fun resolveBulkDownloadCandidatePool(
-        entry: Entry,
-        candidates: List<EntryChapter>? = null,
-    ): List<EntryChapter>
-    suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
     suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) = delete(entry, chapters)
     suspend fun deleteEntryDownloads(entry: Entry)
@@ -158,6 +136,86 @@ interface EntryDownloadProcessor : EntryInteractionProvider {
     ): EntryDownloadStatus
     fun cancelQueuedDownload(chapterId: Long): EntryDownloadStatus?
 }
+
+interface EntryDownloadOptionsProcessor : EntryInteractionProvider {
+    suspend fun downloadWithOptions(
+        entry: Entry,
+        chapters: List<EntryChapter>,
+        selection: EntryDownloadOptionSelection,
+        startNow: Boolean,
+    )
+
+    suspend fun resolveDownloadOptions(
+        context: Context,
+        entry: Entry,
+        chapter: EntryChapter,
+    ): EntryDownloadOptions?
+}
+
+/** Marker implemented by a type that provides one or more specialized download-setting behaviors. */
+interface EntryDownloadSettingProvider : EntryInteractionProvider
+
+interface EntryBulkDownloadCandidateProcessor : EntryInteractionProvider {
+    /** Loads media-specific candidates before shared bulk-action selection is applied. */
+    suspend fun resolveBulkDownloadCandidatePool(
+        entry: Entry,
+        candidates: List<EntryChapter>? = null,
+    ): List<EntryChapter>
+}
+
+interface EntryAutomaticDownloadFilterProcessor : EntryInteractionProvider {
+    suspend fun filterAutoDownloadCandidates(entry: Entry, chapters: List<EntryChapter>): List<EntryChapter>
+}
+
+val EntryDownloadCapability = entryInteractionCapability<EntryDownloadProcessor>(
+    id = CapabilityId("entry.download"),
+    installer = EntryInteractionRegistry::registerDownloadProcessor,
+)
+
+val EntryDownloadOptionsCapability = entryInteractionCapability<EntryDownloadOptionsProcessor>(
+    id = CapabilityId("entry.download.options"),
+    installer = EntryInteractionRegistry::registerDownloadOptionsProcessor,
+)
+
+private fun entryDownloadSettingCapability(
+    id: String,
+    setting: EntryDownloadSettingCapability,
+): EntryInteractionCapability<EntryDownloadSettingProvider> {
+    return entryInteractionCapability(
+        id = CapabilityId(id),
+        installer = { provider -> registerDownloadSettingProvider(provider, setting) },
+    )
+}
+
+val EntryDownloadArchivePackagingCapability = entryDownloadSettingCapability(
+    id = "entry.download.setting.archive-packaging",
+    setting = EntryDownloadSettingCapability.ARCHIVE_PACKAGING,
+)
+
+val EntryDownloadTallImageSplittingCapability = entryDownloadSettingCapability(
+    id = "entry.download.setting.tall-image-splitting",
+    setting = EntryDownloadSettingCapability.TALL_IMAGE_SPLITTING,
+)
+
+val EntryDownloadParallelSourceTransfersCapability = entryDownloadSettingCapability(
+    id = "entry.download.setting.parallel-source-transfers",
+    setting = EntryDownloadSettingCapability.PARALLEL_SOURCE_TRANSFERS,
+)
+
+val EntryDownloadParallelItemTransfersCapability = entryDownloadSettingCapability(
+    id = "entry.download.setting.parallel-item-transfers",
+    setting = EntryDownloadSettingCapability.PARALLEL_ITEM_TRANSFERS,
+)
+
+val EntryBulkDownloadCandidateCapability = entryInteractionCapability<EntryBulkDownloadCandidateProcessor>(
+    id = CapabilityId("entry.download.bulk-candidates"),
+    installer = EntryInteractionRegistry::registerBulkDownloadCandidateProcessor,
+)
+
+val EntryAutomaticDownloadFilterCapability = entryInteractionCapability<EntryAutomaticDownloadFilterProcessor>(
+    id = CapabilityId("entry.download.automatic-filter"),
+    installer = EntryInteractionRegistry::registerAutomaticDownloadFilterProcessor,
+)
 
 interface EntryCapabilityProcessor : EntryInteractionProvider {
 
@@ -305,6 +363,13 @@ interface EntryInteractionRegistry {
     fun registerOpenProcessor(processor: EntryOpenProcessor)
     fun registerContinueProcessor(processor: EntryContinueProcessor)
     fun registerDownloadProcessor(processor: EntryDownloadProcessor)
+    fun registerDownloadOptionsProcessor(processor: EntryDownloadOptionsProcessor)
+    fun registerDownloadSettingProvider(
+        provider: EntryDownloadSettingProvider,
+        setting: EntryDownloadSettingCapability,
+    )
+    fun registerBulkDownloadCandidateProcessor(processor: EntryBulkDownloadCandidateProcessor)
+    fun registerAutomaticDownloadFilterProcessor(processor: EntryAutomaticDownloadFilterProcessor)
     fun registerCapabilityProcessor(processor: EntryCapabilityProcessor)
     fun registerConsumptionProcessor(processor: EntryConsumptionProcessor)
     fun registerBookmarkProcessor(processor: EntryBookmarkProcessor)

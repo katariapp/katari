@@ -1,6 +1,6 @@
 # Capability Architecture Migration Obligations
 
-Updated: 2026-07-17
+Updated: 2026-07-18
 
 This ledger records production and test code exposed by the Phase 3.5 dependency cut. These failures are expected until
 their owning phases migrate them to feature contributions and evaluated graph results. They must not be hidden with a
@@ -16,6 +16,8 @@ The following checks pass after the cut:
 
 - `:feature-graph:testDebugUnitTest`
 - `:entry-interactions:api:compileDebugKotlin`
+- `:entry-interactions:spi:compileDebugKotlin`
+- Manga, Anime, and Book Entry-interaction debug Kotlin compilation
 
 This proves that the generic kernel and the provider-contract API point in the intended direction. Compilation above the
 SPI boundary is not an exit gate for Phase 3.5.
@@ -38,7 +40,9 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Milestone 4.2.1 status: Consumption, Bookmarking, Progress transfer, and Playback-preference transfer now use
   capability-owned bindings. Graph evidence and dispatch derive from the same declaration, including implementations
   that supply more than one independent capability.
-- Remaining outcome: migrate `T04`–`T10`, `T13`, and `T16`–`T21` without mechanically treating processor registration,
+- Milestone 4.2.2 status: Downloads are decomposed into core, options, individual settings, bulk candidates, and
+  automatic filtering. Each is contributed independently from the same concrete implementation where appropriate.
+- Remaining outcome: migrate `T09`, `T10`, `T13`, and `T16`–`T21` without mechanically treating processor registration,
   default methods, false support methods, or no-op processors as capability evidence; then migrate `T22`–`T27`
   type-owned artifacts.
 
@@ -46,12 +50,12 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 - Responsible owners: Entry interaction SPI plus Manga, Anime, and Book provider implementations
 - Owning phase: Phase 4
-- Inventory scope: `T04`–`T10`, `T13`, `T16`–`T21`
-- Exposed condition: Download, combined Migration/Merge, Update Eligibility, Child List, Child Group Filter, Library
-  Filter, Preview, and Immersive processors still enter only the operational registry.
+- Inventory scope: `T09`, `T10`, `T13`, `T16`–`T21`
+- Exposed condition: Combined Migration/Merge, Update Eligibility, Child List, Child Group Filter, Library Filter,
+  Preview, and Immersive processors still enter only the operational registry.
 - Required outcome: define provider-backed contracts at their true granularity and contribute the same implementation
-  objects used for dispatch. Split download options/settings/pools/filtering, Migration/Merge, child progress labels,
-  registered no-op child-group behavior, and false-returning library-filter behavior before claiming support.
+  objects used for dispatch. Split Migration/Merge, child progress labels, registered no-op child-group behavior, and
+  false-returning library-filter behavior before claiming support.
 - Forbidden shortcut: a generic legacy-registration adapter or one capability definition per current processor category.
 
 ### `P4-PLUGIN-TEST-HARNESS` — Operational plugin fixtures use the old lambda-only boundary
@@ -67,18 +71,16 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Required outcome: test contributors use the same owned contribution boundary while retaining behavioral processor
   tests. They must not add per-type capability-value assertions.
 
-### `P5-DOWNLOAD-REGISTRY` — Bulk and bookmarked download policy still consumes the deleted report
+### `P5-DOWNLOAD-REGISTRY` — Bulk and bookmarked download consequences remain in transitional dispatch
 
 - Responsible owner: Downloads feature
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/spi/src/main/**/EntryInteractionRegistry.kt`
-- Compiler evidence from `:entry-interactions:spi:compileDebugKotlin`:
-  - missing `EntryCapabilityReport` constructor input;
-  - unresolved `EntryCapabilityReport`;
-  - unresolved `supportsTypeWide` and `EntryCapabilityCatalog`; and
-  - unresolved `EntryDownloadCapabilityPolicy`.
+- Exposed condition: Milestone 4.2.2 selects media-specific bulk candidate construction by provider presence and
+  temporarily checks Bookmarking-provider presence before applying the shared bookmarked action. This removed the
+  deleted report dependency and restored SPI compilation without recreating a support authority.
 - Required outcome: the download feature owns the prerequisite relationships and shared bulk/bookmark consequences. The
-  registry consumes selected feature behavior instead of reconstructing support or falling back to processor presence.
+  registry consumes selected feature behavior instead of retaining the transitional cross-provider rule.
 
 ### `P5-FEATURE-CONTRIBUTOR-INSTALLATION` — Runtime has no migrated feature contributors to install yet
 

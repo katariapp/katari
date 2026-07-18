@@ -75,7 +75,10 @@ Migration progress:
 - Milestone 4.2.1 implements `T11`, `T12`, `T14`, and `T15` in the working tree. Capability-owned bindings derive graph
   providers and dispatch from one declaration, including the Manga object that independently binds Consumption and
   Bookmarking.
-- `T04`–`T10`, `T13`, and `T16`–`T21` remain unported until their provider contracts are decomposed without flattening
+- Milestone 4.2.2 implements `T04`–`T08` in the working tree. The former monolithic downloader is split into independent
+  core, options, per-setting, bulk-candidate, and automatic-filter provider claims. Current types contribute only the
+  contracts their concrete implementations supply.
+- `T09`, `T10`, `T13`, and `T16`–`T21` remain unported until their provider contracts are decomposed without flattening
   optional behavior or registered no-ops into false capability claims.
 - `T22`–`T27` remain unported type-owned artifact and runtime-composition work.
 

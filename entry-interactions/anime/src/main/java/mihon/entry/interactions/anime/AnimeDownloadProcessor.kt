@@ -11,13 +11,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import mihon.entry.interactions.EntryBulkDownloadAction
-import mihon.entry.interactions.EntryBulkDownloadActionType
-import mihon.entry.interactions.EntryBulkDownloadCandidateResult
+import mihon.entry.interactions.EntryAutomaticDownloadFilterProcessor
+import mihon.entry.interactions.EntryBulkDownloadCandidateProcessor
 import mihon.entry.interactions.EntryDownloadOption
 import mihon.entry.interactions.EntryDownloadOptionGroup
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
+import mihon.entry.interactions.EntryDownloadOptionsProcessor
 import mihon.entry.interactions.EntryDownloadOwnerResolver
 import mihon.entry.interactions.EntryDownloadProcessor
 import mihon.entry.interactions.EntryDownloadQueueGroup
@@ -36,7 +36,10 @@ import tachiyomi.i18n.MR
 
 internal class AnimeDownloadProcessor(
     private val dependencies: AnimeEntryInteractionRuntimeDependencies,
-) : EntryDownloadProcessor {
+) : EntryDownloadProcessor,
+    EntryDownloadOptionsProcessor,
+    EntryBulkDownloadCandidateProcessor,
+    EntryAutomaticDownloadFilterProcessor {
     private val animeDownloadManager = dependencies.animeDownloadManager
     private val ownerResolver = EntryDownloadOwnerResolver(dependencies.entryRepository)
 
@@ -152,11 +155,6 @@ internal class AnimeDownloadProcessor(
             ).also { dependencies.downloadPreferencesRepository.upsert(it) }
         }
         startQueuedDownloads(chapters, startNow)
-    }
-
-    override fun supportsDownloadOptions(entry: Entry): Boolean {
-        entry.requireAnime()
-        return true
     }
 
     override suspend fun resolveDownloadOptions(

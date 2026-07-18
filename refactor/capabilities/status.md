@@ -13,7 +13,8 @@ Updated: 2026-07-18
 - Phase 3 completion: `c795c505c` (`(refactor): complete feature graph architecture`)
 - Migration-readiness commit: `7ab311608` (`(docs): update migration plan`)
 - Latest upstream reconciliation: `5e3f948b4` (`Merge branch 'upcoming' into features-arch-refactor`)
-- Milestone 4.1 commit: `(refactor): migrate entry provider identity`
+- Milestone 4.1 commit: `0accb3667` (`(refactor): migrate entry provider identity`)
+- Milestone 4.2.1 commit: `62c9741a1` (`(refactor): bind independent entry providers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -21,8 +22,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.2.1 — Independent provider binding migration
-- State: implementation approved; committing Milestone 4.2.1; Milestone 4.2.2 has not started
+- Milestone: 4.2.2 — Download provider decomposition
+- State: implementation approved; committing Milestone 4.2.2 before starting Milestone 4.2.3
 
 ## Why the Plan Was Reset
 
@@ -100,6 +101,13 @@ authority or weakening the architecture.
 - [x] Playback-preference transfer bound only for Anime
 - [x] Existing Anime consumption lifecycle event corrected to use the episodes whose state actually changed
 - [x] Decision `0013-provider-binding-and-dispatch.md` accepted
+- [x] Milestone 4.2.1 committed in `62c9741a1`
+- [x] Core downloads separated from options, settings, bulk candidates, and automatic filtering
+- [x] Download support contributed through capability-owned bindings for Manga, Anime, and optional Book construction
+- [x] Anime alone contributes interactive options; Manga contributes each implemented download setting independently
+- [x] Manga, Anime, and Book downloaders contribute bulk-candidate and automatic-filter providers independently
+- [x] Default false/null/empty download sub-capability declarations removed from the core downloader contract
+- [x] Decision `0014-download-provider-decomposition.md` accepted
 
 ## New Phase Sequence
 
@@ -143,12 +151,13 @@ beside the graph.
   evaluation, consequence, obligation, contract, and projection paths.
 - Accepted decision `0011-production-boundary-cut.md` and Phase 3.5 completion notes.
 - Milestone 4.1 is committed in `0accb3667`.
-- Milestone 4.2.1 production and refactor-workspace changes are uncommitted; Milestone 4.2.2 has not started.
+- Milestone 4.2.1 is committed in `62c9741a1`.
+- Milestone 4.2.2 production and refactor-workspace changes are uncommitted and awaiting review.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
-- `T04`–`T10`, `T13`, and `T16`–`T21` remain operational-only migration obligations; `T22`–`T27` type artifacts remain
-  unported.
+- `T04`–`T08` now use independent provider bindings. `T09`, `T10`, `T13`, and `T16`–`T21` remain operational-only
+  migration obligations; `T22`–`T27` type artifacts remain unported.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
   blocked until real feature owners contribute relationships in their owning phase.
 
@@ -188,8 +197,7 @@ Approved on 2026-07-18:
 - `./gradlew --quiet spotlessApply :feature-graph:testDebugUnitTest :entry-interactions:api:compileDebugKotlin` passed.
 - The complete synthetic test covers automatic future participation, shared artifact identity, missing specialized
   obligations, and a valid partial type without production vocabulary.
-- `:entry-interactions:spi:compileDebugKotlin` fails at the deleted report-based download policy, as recorded in
-  `migration-obligations.md`.
+- `:entry-interactions:spi:compileDebugKotlin` now passes after download dispatch stopped consuming the deleted report.
 - Search confirms no legacy catalog/report definition, explicit unsupported outcome, or production report DI binding
   remains.
 - `git diff --check` passed.
@@ -203,12 +211,14 @@ Approved on 2026-07-18:
   capability contracts or capability-bearing contracts.
 - `git diff --check` passes for the migration-readiness documentation.
 - Milestone 4.1 ran `./gradlew --quiet spotlessApply` successfully.
-- `:entry-interactions:spi:compileDebugKotlin` reaches only the five previously recorded Phase 5 deleted-report errors;
-  downstream type-module compilation remains blocked by that expected SPI failure.
-- No new compiler error was reported in the migrated provider contract before the known failure boundary.
+- During Milestones 4.1 and 4.2.1, `:entry-interactions:spi:compileDebugKotlin` reached only the five then-recorded
+  deleted-report errors; no migrated provider contract introduced an earlier failure.
 - Milestone 4.2.1 reran `spotlessApply`, the Feature Graph tests, and Entry interactions API compilation successfully.
-- SPI compilation still reaches only the same five recorded Phase 5 deleted-report errors; the new binding contracts
-  introduce no earlier compiler failure.
+- Milestone 4.2.2 passes `:entry-interactions:spi:compileDebugKotlin` plus Manga, Anime, and Book debug Kotlin
+  compilation. The former five deleted-report errors are removed; the remaining bookmarked-bulk dispatch rule is a
+  recorded Phase 5 feature-consumer migration, not a replacement authority.
+- `:entry-interactions:compileDebugKotlin` still fails at the intentionally unported download-lifecycle report input and
+  missing feature-contributor installation recorded as Phase 5 obligations.
 
 ## Manifesto Comparison
 
@@ -263,10 +273,16 @@ Approved on 2026-07-18:
 - A shared implementation object can bind multiple independent capabilities without creating a combined capability.
 - Current support is represented exactly: every type binds Consumption and Progress, only Manga binds Bookmarking, and
   only Anime binds Playback-preference transfer.
+- Milestone 4.2.2 does not turn the old downloader into one broad capability. Each behavior that a future type may add
+  independently has its own provider contract and binding.
+- Core downloads imply neither options, settings, bulk candidates, nor automatic filtering. Book remains valid when its
+  optional downloader is omitted.
+- Each Manga download setting is an individual graph-visible provider claim, not an enum set treated as another support
+  authority.
+- Shared bulk selection and automatic-download orchestration remain feature-owned Phase 5 work; type providers expose
+  only the genuinely media-specific operations those features need.
 
 ## Exact Next Action After Review
 
-Review Milestone 4.2.1 and proposed decision `0013`. Feedback is needed only if one binding should not be the shared
-source for graph evidence and dispatch, or if a single implementation binding multiple independent capabilities is not
-the intended model; no product decision is required. If approved, mark the decision accepted and commit Milestone 4.2.1
-when explicitly authorized. Do not start Milestone 4.2.2 in the same step.
+Milestone 4.2.2 and decision `0014` are approved. Commit the milestone, then begin Milestone 4.2.3 by splitting Migration
+and Merge into independent provider contracts. Stop before Milestone 4.2.4.
