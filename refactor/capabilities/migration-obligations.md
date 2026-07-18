@@ -24,15 +24,12 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ## Active Obligations
 
-### `P4-TYPE-CONTRIBUTIONS` — Entry-type plugins do not yet contribute to the graph
+### `P4-TYPE-COMPOSITION` — Type-owned participation remains split across composition paths
 
 - Responsible owners: `entry-interactions.manga`, `entry-interactions.anime`, `entry-interactions.book`
 - Owning phase: Phase 4
-- Affected production paths:
-  - `entry-interactions/*/src/main/**/MangaEntryInteractionPlugin.kt`
-  - `entry-interactions/*/src/main/**/AnimeEntryInteractionPlugin.kt`
-  - `entry-interactions/*/src/main/**/BookEntryInteractionPlugin.kt`
-  - `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
+- Affected production paths: the `T22`–`T27` runtime artifacts and root composition paths listed in
+  `migration-inventory.md`
 - Milestone 4.1 status: Manga, Anime, and Book now contribute owned identity plus their actual Open and Continue provider
   objects. Provider-owned installation puts those same objects into operational dispatch without a second type-module
   registration. `EntryInteractionPlugin` validates provider type identity generically and does not require either
@@ -44,23 +41,11 @@ SPI boundary is not an exit gate for Phase 3.5.
   automatic filtering. Each is contributed independently from the same concrete implementation where appropriate.
 - Milestone 4.2.3 status: Migration and Merge are split into independent compatibility providers. Manga and Anime bind
   both; Book's combined default-false processor is removed without an absence declaration.
-- Remaining outcome: migrate `T13` and `T16`–`T21` without mechanically treating processor registration,
-  default methods, false support methods, or no-op processors as capability evidence; then migrate `T22`–`T27`
-  type-owned artifacts.
+- Milestone 4.2.4 status: all `T01`–`T21` interaction contracts now use provider bindings or, for universal Update
+  Eligibility, one shared policy. Optional child progress is split and false/no-op filtering providers are removed.
+- Remaining outcome: migrate `T22`–`T27` type-owned artifacts.
 
-### `P4-REMAINING-PROVIDER-CONTRACTS` — Operational processors are not yet graph providers
-
-- Responsible owners: Entry interaction SPI plus Manga, Anime, and Book provider implementations
-- Owning phase: Phase 4
-- Inventory scope: `T13`, `T16`–`T21`
-- Exposed condition: Update Eligibility, Child List, Child Group Filter, Library Filter, Preview, and Immersive
-  processors still enter only the operational registry.
-- Required outcome: define provider-backed contracts at their true granularity and contribute the same implementation
-  objects used for dispatch. Split child progress labels, registered no-op child-group behavior, and false-returning
-  library-filter behavior before claiming support.
-- Forbidden shortcut: a generic legacy-registration adapter or one capability definition per current processor category.
-
-### `P4-PLUGIN-TEST-HARNESS` — Operational plugin fixtures use the old lambda-only boundary
+### `P4-PLUGIN-TEST-HARNESS` — Operational fixtures use superseded registration paths
 
 - Responsible owners: entry-interaction SPI and the Manga, Anime, and Book test suites
 - Owning phase: Phase 4

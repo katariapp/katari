@@ -16,6 +16,7 @@ Updated: 2026-07-18
 - Milestone 4.1 commit: `0accb3667` (`(refactor): migrate entry provider identity`)
 - Milestone 4.2.1 commit: `62c9741a1` (`(refactor): bind independent entry providers`)
 - Milestone 4.2.2 commit: `f4a6d153c` (`(refactor): decompose download providers`)
+- Milestone 4.2.3 commit: `c046e1f8f` (`(refactor): split migration and merge providers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -23,8 +24,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 4 — Entry-Type Composition Migration
-- Milestone: 4.2.3 — Migration and Merge provider split
-- State: implementation approved; committing Milestone 4.2.3 before starting Milestone 4.2.4
+- Milestone: 4.2.4 — Remaining interaction contract migration
+- State: implementation approved; committing Milestone 4.2.4 before starting Milestone 4.3
 
 ## Why the Plan Was Reset
 
@@ -115,6 +116,14 @@ authority or weakening the architecture.
 - [x] Book's combined default-false capability processor removed without replacement absence declarations
 - [x] Shared selection constraints retained as transitional feature policy rather than type provider behavior
 - [x] Decision `0015-migration-and-merge-provider-boundary.md` accepted
+- [x] Milestone 4.2.3 committed in `c046e1f8f`
+- [x] Universal Update Eligibility policy deduplicated from three type processors
+- [x] Child List and optional child-progress labels split into independent bindings
+- [x] Manga-only operational child-group filtering contributed; Anime no-op provider removed
+- [x] Manga/Book outside-release-period filtering contributed; Anime false provider removed
+- [x] Manga/Anime Preview and Immersive implementations contributed with contextual conditions retained
+- [x] Production type plugins no longer contain direct registry calls or custom installation overrides
+- [x] Decision `0016-remaining-interaction-provider-boundaries.md` accepted
 
 ## New Phase Sequence
 
@@ -160,12 +169,13 @@ beside the graph.
 - Milestone 4.1 is committed in `0accb3667`.
 - Milestone 4.2.1 is committed in `62c9741a1`.
 - Milestone 4.2.2 is committed in `f4a6d153c`.
-- Milestone 4.2.3 production and refactor-workspace changes are uncommitted and awaiting review.
+- Milestone 4.2.3 is committed in `c046e1f8f`.
+- Milestone 4.2.4 production and refactor-workspace changes are uncommitted and awaiting review.
 - Manga, Anime, and Book plugins expose their operational `EntryType` and one owned `ContentTypeContribution`.
 - Open and Continue are the first graph-backed provider contracts. Neither is mandatory, no explicit unsupported
   declaration exists, and type plugins contain no separate Open/Continue registry call.
-- `T04`–`T10` now use independent provider bindings. `T13` and `T16`–`T21` remain operational-only migration
-  obligations; `T22`–`T27` type artifacts remain unported.
+- `T01`–`T21` now use independent provider bindings or deliberate shared policy. `T22`–`T27` type artifacts remain
+  unported.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly remains
   blocked until real feature owners contribute relationships in their owning phase.
 
@@ -226,6 +236,7 @@ Approved on 2026-07-18:
   compilation. The former five deleted-report errors are removed; the remaining bookmarked-bulk dispatch rule is a
   recorded Phase 5 feature-consumer migration, not a replacement authority.
 - Milestone 4.2.3 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
+- Milestone 4.2.4 reruns formatting and passes SPI plus Manga, Anime, and Book debug Kotlin compilation.
 - `:entry-interactions:compileDebugKotlin` still fails at the intentionally unported download-lifecycle report input and
   missing feature-contributor installation recorded as Phase 5 obligations.
 
@@ -296,8 +307,16 @@ Approved on 2026-07-18:
 - The marker contracts state compatibility with shared feature behavior; they do not misrepresent the marker object as
   the owner of migration or merge operations.
 - Book contributes neither marker. Its valid type contribution is not made incomplete by those absences.
+- Milestone 4.2.4 does not manufacture an Update Eligibility capability from identical type implementations; the common
+  rule applies to future types without another opt-in.
+- Child-list presence no longer implies child-progress labels, even though all three current implementations bind both.
+- False and no-op filtering processors are removed rather than wrapped as capability evidence.
+- Preview and Immersive preserve real provider implementations while source, preference, media-resolution, and runtime
+  conditions remain contextual.
+- Every production type plugin now declares providers only through bindings; the transitional registry is no longer
+  called directly by a type module.
 
 ## Exact Next Action After Review
 
-Milestone 4.2.3 and decision `0015` are approved. Commit the milestone, then begin Milestone 4.2.4 with the remaining
-interaction contracts in `T13` and `T16`–`T21`. Stop before Milestone 4.3.
+Milestone 4.2.4 and decision `0016` are approved. Commit the milestone, then begin Milestone 4.3 with the type-owned
+runtime artifacts and parallel composition paths in `T22`–`T27`. Stop before Milestone 4.4.

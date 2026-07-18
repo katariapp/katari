@@ -5,7 +5,6 @@ import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import mihon.feature.graph.CapabilityId
 import mihon.feature.graph.CapabilityProvider
 import mihon.feature.graph.ContentTypeContribution
@@ -262,10 +261,6 @@ val EntryBookmarkCapability = entryInteractionCapability<EntryBookmarkProcessor>
     installer = EntryInteractionRegistry::registerBookmarkProcessor,
 )
 
-interface EntryUpdateEligibilityProcessor : EntryInteractionProvider {
-    fun evaluate(request: EntryUpdateEligibilityRequest): EntryUpdateEligibility
-}
-
 interface EntryProgressProcessor : EntryInteractionProvider {
     suspend fun snapshot(entry: Entry): EntryProgressSnapshot
     suspend fun restore(entry: Entry, snapshot: EntryProgressSnapshot)
@@ -296,19 +291,32 @@ interface EntryImmersiveProcessor : EntryImmersiveInteraction, EntryInteractionP
     override fun preloadRadius(entryType: EntryType): Int
 }
 
+val EntryImmersiveCapability = entryInteractionCapability<EntryImmersiveProcessor>(
+    id = CapabilityId("entry.immersive"),
+    installer = EntryInteractionRegistry::registerImmersiveProcessor,
+)
+
 interface EntryChildListProcessor : EntryInteractionProvider {
     fun sortedForReading(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
     fun sortedForDisplay(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
     fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow>
-    fun progressLabels(
-        request: EntryChildProgressRequest,
-    ): Flow<Map<Long, EntryChildProgressLabel>> = flowOf(emptyMap())
 }
 
-interface EntryChildGroupFilterProcessor : EntryInteractionProvider {
+val EntryChildListCapability = entryInteractionCapability<EntryChildListProcessor>(
+    id = CapabilityId("entry.child-list"),
+    installer = EntryInteractionRegistry::registerChildListProcessor,
+)
 
-    fun supports(entry: Entry): Boolean
-    fun shouldApplyFilter(entry: Entry): Boolean
+interface EntryChildProgressProcessor : EntryInteractionProvider {
+    fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>>
+}
+
+val EntryChildProgressCapability = entryInteractionCapability<EntryChildProgressProcessor>(
+    id = CapabilityId("entry.child-progress-labels"),
+    installer = EntryInteractionRegistry::registerChildProgressProcessor,
+)
+
+interface EntryChildGroupFilterProcessor : EntryInteractionProvider {
     fun availableGroupsChanged(entryId: Long): Flow<Unit>
     suspend fun availableGroups(entry: Entry, memberIds: Collection<Long>): Set<String>
     fun excludedGroupsChanged(entryId: Long): Flow<Unit>
@@ -316,11 +324,24 @@ interface EntryChildGroupFilterProcessor : EntryInteractionProvider {
     suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>)
 }
 
-interface EntryLibraryFilterProcessor : EntryInteractionProvider {
-    fun supportsOutsideReleasePeriodFilter(entry: Entry): Boolean
-}
+val EntryChildGroupFilterCapability = entryInteractionCapability<EntryChildGroupFilterProcessor>(
+    id = CapabilityId("entry.child-group-filter"),
+    installer = EntryInteractionRegistry::registerChildGroupFilterProcessor,
+)
+
+interface EntryOutsideReleasePeriodFilterProvider : EntryInteractionProvider
+
+val EntryOutsideReleasePeriodFilterCapability = entryInteractionCapability<EntryOutsideReleasePeriodFilterProvider>(
+    id = CapabilityId("entry.outside-release-period-filter"),
+    installer = EntryInteractionRegistry::registerOutsideReleasePeriodFilterProvider,
+)
 
 interface EntryPreviewProcessor : EntryPreviewInteraction, EntryInteractionProvider
+
+val EntryPreviewCapability = entryInteractionCapability<EntryPreviewProcessor>(
+    id = CapabilityId("entry.preview"),
+    installer = EntryInteractionRegistry::registerPreviewProcessor,
+)
 
 interface EntryInteractionPlugin : FeatureGraphContributor {
     val type: EntryType
@@ -381,12 +402,12 @@ interface EntryInteractionRegistry {
     fun registerMergeProvider(provider: EntryMergeProvider)
     fun registerConsumptionProcessor(processor: EntryConsumptionProcessor)
     fun registerBookmarkProcessor(processor: EntryBookmarkProcessor)
-    fun registerUpdateEligibilityProcessor(processor: EntryUpdateEligibilityProcessor)
     fun registerProgressProcessor(processor: EntryProgressProcessor)
     fun registerPlaybackPreferencesProcessor(processor: EntryPlaybackPreferencesProcessor)
     fun registerChildListProcessor(processor: EntryChildListProcessor)
+    fun registerChildProgressProcessor(processor: EntryChildProgressProcessor)
     fun registerChildGroupFilterProcessor(processor: EntryChildGroupFilterProcessor)
-    fun registerLibraryFilterProcessor(processor: EntryLibraryFilterProcessor)
+    fun registerOutsideReleasePeriodFilterProvider(provider: EntryOutsideReleasePeriodFilterProvider)
     fun registerPreviewProcessor(processor: EntryPreviewProcessor)
     fun registerImmersiveProcessor(processor: EntryImmersiveProcessor)
 }

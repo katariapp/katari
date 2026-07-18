@@ -5,7 +5,10 @@ import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBookmarkCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
+import mihon.entry.interactions.EntryChildGroupFilterCapability
 import mihon.entry.interactions.EntryChildGroupFilterDataSource
+import mihon.entry.interactions.EntryChildListCapability
+import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadArchivePackagingCapability
@@ -14,11 +17,13 @@ import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadParallelItemTransfersCapability
 import mihon.entry.interactions.EntryDownloadParallelSourceTransfersCapability
 import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
+import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
-import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
+import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
+import mihon.entry.interactions.EntryPreviewCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
@@ -77,6 +82,17 @@ internal fun mangaEntryInteractionPlugin(
     )
     val downloadProcessor = MangaDownloadProcessor(dependencies)
     val migrationMergeProvider = MangaMigrationMergeProvider()
+    val childListProcessor = MangaChildListProcessor(dependencies.entryProgressRepository)
+    val childGroupFilterProcessor = MangaChildGroupFilterProcessor(dependencies.childGroupFilterDataSource)
+    val outsideReleasePeriodFilterProvider = MangaOutsideReleasePeriodFilterProvider()
+    val previewProcessor = MangaPreviewInteraction(dependencies.entryInteractionPreferences)
+    val immersiveProcessor = MangaImmersiveProcessor(
+        entryChapterRepository = dependencies.entryChapterRepository,
+        entryProgressRepository = dependencies.entryProgressRepository,
+        historyRepository = runCatching { Injekt.get<HistoryRepository>() }.getOrNull(),
+        readerIncognitoState = runCatching { Injekt.get<EntryReaderIncognitoState>() }.getOrNull(),
+        readerTracking = runCatching { Injekt.get<EntryReaderTracking>() }.getOrNull(),
+    )
     return object : EntryInteractionPlugin {
         override val type = EntryType.MANGA
         override val owner = ContributionOwner("entry-interactions.manga")
@@ -95,32 +111,13 @@ internal fun mangaEntryInteractionPlugin(
             EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
             EntryMigrationCapability.bind(migrationMergeProvider),
             EntryMergeCapability.bind(migrationMergeProvider),
+            EntryChildListCapability.bind(childListProcessor),
+            EntryChildProgressCapability.bind(childListProcessor),
+            EntryChildGroupFilterCapability.bind(childGroupFilterProcessor),
+            EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider),
+            EntryPreviewCapability.bind(previewProcessor),
+            EntryImmersiveCapability.bind(immersiveProcessor),
         )
-
-        override fun register(registry: EntryInteractionRegistry) {
-            super<EntryInteractionPlugin>.register(registry)
-            registry.registerChildListProcessor(MangaChildListProcessor(dependencies.entryProgressRepository))
-            registry.registerUpdateEligibilityProcessor(MangaUpdateEligibilityProcessor())
-            registry.registerChildGroupFilterProcessor(
-                MangaChildGroupFilterProcessor(
-                    dataSource = dependencies.childGroupFilterDataSource,
-                ),
-            )
-            registry.registerLibraryFilterProcessor(MangaLibraryFilterProcessor())
-            val previewInteraction = MangaPreviewInteraction(
-                entryInteractionPreferences = dependencies.entryInteractionPreferences,
-            )
-            registry.registerPreviewProcessor(previewInteraction)
-            registry.registerImmersiveProcessor(
-                MangaImmersiveProcessor(
-                    entryChapterRepository = dependencies.entryChapterRepository,
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    historyRepository = runCatching { Injekt.get<HistoryRepository>() }.getOrNull(),
-                    readerIncognitoState = runCatching { Injekt.get<EntryReaderIncognitoState>() }.getOrNull(),
-                    readerTracking = runCatching { Injekt.get<EntryReaderTracking>() }.getOrNull(),
-                ),
-            )
-        }
     }
 }
 

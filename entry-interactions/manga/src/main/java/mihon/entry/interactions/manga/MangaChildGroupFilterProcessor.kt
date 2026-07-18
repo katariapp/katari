@@ -11,15 +11,6 @@ internal class MangaChildGroupFilterProcessor(
 ) : EntryChildGroupFilterProcessor {
     override val type: EntryType = EntryType.MANGA
 
-    override fun supports(entry: Entry): Boolean {
-        return entry.type == EntryType.MANGA
-    }
-
-    override fun shouldApplyFilter(entry: Entry): Boolean {
-        entry.requireManga()
-        return true
-    }
-
     override fun availableGroupsChanged(entryId: Long): Flow<Unit> {
         return dataSource.availableGroupsChanged(entryId)
     }

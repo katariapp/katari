@@ -4,17 +4,20 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
+import mihon.entry.interactions.EntryChildListCapability
+import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryDownloadOptionsCapability
+import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
-import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryMergeCapability
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryPlaybackPreferencesCapability
+import mihon.entry.interactions.EntryPreviewCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
@@ -77,6 +80,16 @@ internal fun animeEntryInteractionPlugin(
     )
     val downloadProcessor = AnimeDownloadProcessor(dependencies)
     val migrationMergeProvider = AnimeMigrationMergeProvider()
+    val childListProcessor = AnimeChildListProcessor(dependencies.entryProgressRepository)
+    val previewProcessor = AnimePreviewInteraction(
+        entryInteractionPreferences = dependencies.entryInteractionPreferences,
+        sourceManager = dependencies.sourceManager,
+    )
+    val immersiveProcessor = AnimeImmersiveProcessor(
+        entryProgressRepository = dependencies.entryProgressRepository,
+        historyRepository = dependencies.historyRepository,
+        resolveVideoStream = { Injekt.get() },
+    )
     return object : EntryInteractionPlugin {
         override val type = EntryType.ANIME
         override val owner = ContributionOwner("entry-interactions.anime")
@@ -92,32 +105,11 @@ internal fun animeEntryInteractionPlugin(
             EntryAutomaticDownloadFilterCapability.bind(downloadProcessor),
             EntryMigrationCapability.bind(migrationMergeProvider),
             EntryMergeCapability.bind(migrationMergeProvider),
+            EntryChildListCapability.bind(childListProcessor),
+            EntryChildProgressCapability.bind(childListProcessor),
+            EntryPreviewCapability.bind(previewProcessor),
+            EntryImmersiveCapability.bind(immersiveProcessor),
         )
-
-        override fun register(registry: EntryInteractionRegistry) {
-            super<EntryInteractionPlugin>.register(registry)
-            registry.registerChildListProcessor(
-                AnimeChildListProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                ),
-            )
-            registry.registerUpdateEligibilityProcessor(AnimeUpdateEligibilityProcessor())
-            registry.registerChildGroupFilterProcessor(AnimeChildGroupFilterProcessor())
-            registry.registerLibraryFilterProcessor(AnimeLibraryFilterProcessor())
-            registry.registerPreviewProcessor(
-                AnimePreviewInteraction(
-                    entryInteractionPreferences = dependencies.entryInteractionPreferences,
-                    sourceManager = dependencies.sourceManager,
-                ),
-            )
-            registry.registerImmersiveProcessor(
-                AnimeImmersiveProcessor(
-                    entryProgressRepository = dependencies.entryProgressRepository,
-                    historyRepository = dependencies.historyRepository,
-                    resolveVideoStream = { Injekt.get() },
-                ),
-            )
-        }
     }
 }
 

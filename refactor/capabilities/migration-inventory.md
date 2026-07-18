@@ -80,8 +80,9 @@ Migration progress:
   contracts their concrete implementations supply.
 - Milestone 4.2.3 implements `T09` and `T10` in the working tree. Migration and Merge are independent compatibility
   providers for their shared workflows; Manga and Anime bind both, while Book binds neither.
-- `T13` and `T16`–`T21` remain unported until their provider contracts are decomposed without flattening
-  optional behavior or registered no-ops into false capability claims.
+- Milestone 4.2.4 implements `T13` and `T16`–`T21` in the working tree. Universal Update Eligibility is shared policy;
+  Child List and progress labels are independent; false/no-op filter processors are removed; and real Preview and
+  Immersive implementations are contributed without flattening their contextual conditions.
 - `T22`–`T27` remain unported type-owned artifact and runtime-composition work.
 
 | ID | Provider or composition fact | Current evidence | Required migration outcome |

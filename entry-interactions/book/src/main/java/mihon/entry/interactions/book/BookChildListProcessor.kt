@@ -8,6 +8,7 @@ import mihon.entry.interactions.EntryChildListProcessor
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressLabel
+import mihon.entry.interactions.EntryChildProgressProcessor
 import mihon.entry.interactions.EntryChildProgressRequest
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -18,7 +19,7 @@ import tachiyomi.i18n.MR
 
 internal class BookChildListProcessor(
     private val entryProgressRepository: EntryProgressRepository,
-) : EntryChildListProcessor {
+) : EntryChildListProcessor, EntryChildProgressProcessor {
     override val type = EntryType.BOOK
 
     override fun sortedForReading(

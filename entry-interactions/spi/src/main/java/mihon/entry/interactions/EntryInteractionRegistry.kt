@@ -23,6 +23,7 @@ import mihon.feature.graph.evaluateFeatureGraph
 import mihon.feature.graph.selectFeatureArtifacts
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
+import tachiyomi.domain.entry.model.EntryStatus
 import tachiyomi.domain.entry.service.sortedForReading
 
 fun createEntryInteractions(
@@ -74,12 +75,12 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
     private val mergeProviders = mutableMapOf<EntryType, EntryMergeProvider>()
     private val consumptionProcessors = mutableMapOf<EntryType, EntryConsumptionProcessor>()
     private val bookmarkProcessors = mutableMapOf<EntryType, EntryBookmarkProcessor>()
-    private val updateEligibilityProcessors = mutableMapOf<EntryType, EntryUpdateEligibilityProcessor>()
     private val progressProcessors = mutableMapOf<EntryType, EntryProgressProcessor>()
     private val playbackPreferencesProcessors = mutableMapOf<EntryType, EntryPlaybackPreferencesProcessor>()
     private val childListProcessors = mutableMapOf<EntryType, EntryChildListProcessor>()
+    private val childProgressProcessors = mutableMapOf<EntryType, EntryChildProgressProcessor>()
     private val childGroupFilterProcessors = mutableMapOf<EntryType, EntryChildGroupFilterProcessor>()
-    private val libraryFilterProcessors = mutableMapOf<EntryType, EntryLibraryFilterProcessor>()
+    private val outsideReleasePeriodFilterProviders = mutableMapOf<EntryType, EntryOutsideReleasePeriodFilterProvider>()
     private val previewProcessors = mutableMapOf<EntryType, EntryPreviewInteraction>()
     private val immersiveProcessors = mutableMapOf<EntryType, EntryImmersiveProcessor>()
     override fun registerOpenProcessor(processor: EntryOpenProcessor) {
@@ -132,10 +133,6 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
         registerProcessor("bookmark", processor.type, processor, bookmarkProcessors)
     }
 
-    override fun registerUpdateEligibilityProcessor(processor: EntryUpdateEligibilityProcessor) {
-        registerProcessor("update eligibility", processor.type, processor, updateEligibilityProcessors)
-    }
-
     override fun registerProgressProcessor(processor: EntryProgressProcessor) {
         registerProcessor("progress", processor.type, processor, progressProcessors)
     }
@@ -148,12 +145,21 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
         registerProcessor("child list", processor.type, processor, childListProcessors)
     }
 
+    override fun registerChildProgressProcessor(processor: EntryChildProgressProcessor) {
+        registerProcessor("child progress", processor.type, processor, childProgressProcessors)
+    }
+
     override fun registerChildGroupFilterProcessor(processor: EntryChildGroupFilterProcessor) {
         registerProcessor("child group filter", processor.type, processor, childGroupFilterProcessors)
     }
 
-    override fun registerLibraryFilterProcessor(processor: EntryLibraryFilterProcessor) {
-        registerProcessor("library filter", processor.type, processor, libraryFilterProcessors)
+    override fun registerOutsideReleasePeriodFilterProvider(provider: EntryOutsideReleasePeriodFilterProvider) {
+        registerProcessor(
+            "outside release period filter",
+            provider.type,
+            provider,
+            outsideReleasePeriodFilterProviders,
+        )
     }
 
     override fun registerPreviewProcessor(processor: EntryPreviewProcessor) {
@@ -184,12 +190,12 @@ private class DefaultEntryInteractionRegistry : EntryInteractionRegistry {
                 mergeProviders = mergeProviders.toMap(),
                 consumptionProcessors = consumptionProcessors.toMap(),
                 bookmarkProcessors = bookmarkProcessors.toMap(),
-                updateEligibilityProcessors = updateEligibilityProcessors.toMap(),
                 progressProcessors = progressProcessors.toMap(),
                 playbackPreferencesProcessors = playbackPreferencesProcessors.toMap(),
                 childListProcessors = childListProcessors.toMap(),
+                childProgressProcessors = childProgressProcessors.toMap(),
                 childGroupFilterProcessors = childGroupFilterProcessors.toMap(),
-                libraryFilterProcessors = libraryFilterProcessors.toMap(),
+                outsideReleasePeriodFilterProviders = outsideReleasePeriodFilterProviders.toMap(),
                 previewProcessors = previewProcessors.toMap(),
                 immersiveProcessors = immersiveProcessors.toMap(),
             ),
@@ -225,12 +231,12 @@ private class DefaultEntryInteractions(
     mergeProviders: Map<EntryType, EntryMergeProvider>,
     consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
     bookmarkProcessors: Map<EntryType, EntryBookmarkProcessor>,
-    updateEligibilityProcessors: Map<EntryType, EntryUpdateEligibilityProcessor>,
     progressProcessors: Map<EntryType, EntryProgressProcessor>,
     playbackPreferencesProcessors: Map<EntryType, EntryPlaybackPreferencesProcessor>,
     childListProcessors: Map<EntryType, EntryChildListProcessor>,
+    childProgressProcessors: Map<EntryType, EntryChildProgressProcessor>,
     childGroupFilterProcessors: Map<EntryType, EntryChildGroupFilterProcessor>,
-    libraryFilterProcessors: Map<EntryType, EntryLibraryFilterProcessor>,
+    outsideReleasePeriodFilterProviders: Map<EntryType, EntryOutsideReleasePeriodFilterProvider>,
     previewProcessors: Map<EntryType, EntryPreviewInteraction>,
     immersiveProcessors: Map<EntryType, EntryImmersiveProcessor>,
 ) : EntryInteractions {
@@ -250,16 +256,16 @@ private class DefaultEntryInteractions(
     override val consumption: EntryConsumptionInteraction =
         RegistryEntryConsumptionInteraction(consumptionProcessors)
     override val bookmark: EntryBookmarkInteraction = RegistryEntryBookmarkInteraction(bookmarkProcessors)
-    override val updateEligibility: EntryUpdateEligibilityInteraction =
-        RegistryEntryUpdateEligibilityInteraction(updateEligibilityProcessors)
+    override val updateEligibility: EntryUpdateEligibilityInteraction = RegistryEntryUpdateEligibilityInteraction()
     override val progress: EntryProgressInteraction = RegistryEntryProgressInteraction(progressProcessors)
     override val playbackPreferences: EntryPlaybackPreferencesInteraction =
         RegistryEntryPlaybackPreferencesInteraction(playbackPreferencesProcessors)
-    override val childList: EntryChildListInteraction = RegistryEntryChildListInteraction(childListProcessors)
+    override val childList: EntryChildListInteraction =
+        RegistryEntryChildListInteraction(childListProcessors, childProgressProcessors)
     override val childGroupFilter: EntryChildGroupFilterInteraction =
         RegistryEntryChildGroupFilterInteraction(childGroupFilterProcessors)
     override val libraryFilter: EntryLibraryFilterInteraction =
-        RegistryEntryLibraryFilterInteraction(libraryFilterProcessors)
+        RegistryEntryLibraryFilterInteraction(outsideReleasePeriodFilterProviders)
     override val preview: EntryPreviewInteraction = RegistryEntryPreviewInteraction(previewProcessors)
     override val immersive: EntryImmersiveInteraction =
         RegistryEntryImmersiveInteraction(immersiveProcessors)
@@ -690,13 +696,29 @@ private class RegistryEntryBookmarkInteraction(
     }
 }
 
-private class RegistryEntryUpdateEligibilityInteraction(
-    private val processors: Map<EntryType, EntryUpdateEligibilityProcessor>,
-) : EntryUpdateEligibilityInteraction {
+private class RegistryEntryUpdateEligibilityInteraction : EntryUpdateEligibilityInteraction {
     override fun evaluate(request: EntryUpdateEligibilityRequest): EntryUpdateEligibility {
-        val processor = processors.requireProcessor("update eligibility", request.entry.type)
-        processor.requireMatchingEntryType("update eligibility", request.entry, processors.keys)
-        return processor.evaluate(request)
+        val fetchWindowUpperBound = request.fetchWindowUpperBound
+        return when {
+            EntryUpdateRestriction.NON_COMPLETED in request.restrictions &&
+                request.entry.status == EntryStatus.COMPLETED -> {
+                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.COMPLETED)
+            }
+            EntryUpdateRestriction.HAS_UNCONSUMED in request.restrictions && request.unconsumedCount != 0L -> {
+                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_CAUGHT_UP)
+            }
+            EntryUpdateRestriction.NON_STARTED in request.restrictions &&
+                request.totalCount > 0L &&
+                !request.hasStarted -> {
+                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.NOT_STARTED)
+            }
+            EntryUpdateRestriction.OUTSIDE_RELEASE_PERIOD in request.restrictions &&
+                fetchWindowUpperBound != null &&
+                request.entry.nextUpdate > fetchWindowUpperBound -> {
+                EntryUpdateEligibility.Skipped(EntryUpdateSkipReason.OUTSIDE_RELEASE_PERIOD)
+            }
+            else -> EntryUpdateEligibility.Eligible
+        }
     }
 }
 
@@ -754,6 +776,7 @@ private class RegistryEntryPlaybackPreferencesInteraction(
 
 private class RegistryEntryChildListInteraction(
     private val processors: Map<EntryType, EntryChildListProcessor>,
+    private val progressProcessors: Map<EntryType, EntryChildProgressProcessor>,
 ) : EntryChildListInteraction {
     override fun sortedForReading(
         entry: Entry,
@@ -782,8 +805,8 @@ private class RegistryEntryChildListInteraction(
     }
 
     override fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>> {
-        val processor = processors.requireProcessor("child list", request.entry.type)
-        processor.requireMatchingEntryType("child list", request.entry, processors.keys)
+        val processor = progressProcessors[request.entry.type] ?: return flowOf(emptyMap())
+        processor.requireMatchingEntryType("child progress", request.entry, progressProcessors.keys)
         return processor.progressLabels(request)
     }
 }
@@ -794,13 +817,13 @@ private class RegistryEntryChildGroupFilterInteraction(
     override fun supports(entry: Entry): Boolean {
         val processor = processors[entry.type] ?: return false
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        return processor.supports(entry)
+        return true
     }
 
     override fun shouldApplyFilter(entry: Entry): Boolean {
         val processor = processors[entry.type] ?: return false
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        return processor.shouldApplyFilter(entry)
+        return true
     }
 
     override fun availableGroupsChanged(entryId: Long): Flow<Unit> {
@@ -810,7 +833,6 @@ private class RegistryEntryChildGroupFilterInteraction(
     override suspend fun availableGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
         val processor = processors[entry.type] ?: return emptySet()
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        if (!processor.supports(entry)) return emptySet()
         return processor.availableGroups(entry, memberIds)
     }
 
@@ -821,25 +843,23 @@ private class RegistryEntryChildGroupFilterInteraction(
     override suspend fun excludedGroups(entry: Entry, memberIds: Collection<Long>): Set<String> {
         val processor = processors[entry.type] ?: return emptySet()
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        if (!processor.supports(entry)) return emptySet()
         return processor.excludedGroups(entry, memberIds)
     }
 
     override suspend fun setExcludedGroups(entry: Entry, memberIds: Collection<Long>, excluded: Set<String>) {
         val processor = processors[entry.type] ?: return
         processor.requireMatchingEntryType("child group filter", entry, processors.keys)
-        if (!processor.supports(entry)) return
         processor.setExcludedGroups(entry, memberIds, excluded)
     }
 }
 
 private class RegistryEntryLibraryFilterInteraction(
-    private val processors: Map<EntryType, EntryLibraryFilterProcessor>,
+    private val providers: Map<EntryType, EntryOutsideReleasePeriodFilterProvider>,
 ) : EntryLibraryFilterInteraction {
     override fun supportsOutsideReleasePeriodFilter(entry: Entry): Boolean {
-        val processor = processors[entry.type] ?: return false
-        processor.requireMatchingEntryType("library filter", entry, processors.keys)
-        return processor.supportsOutsideReleasePeriodFilter(entry)
+        val provider = providers[entry.type] ?: return false
+        provider.requireMatchingEntryType("outside release period filter", entry, providers.keys)
+        return true
     }
 }
 
@@ -909,16 +929,6 @@ private fun EntryBookmarkProcessor.requireMatchingEntryType(
     }
 }
 
-private fun EntryUpdateEligibilityProcessor.requireMatchingEntryType(
-    category: String,
-    entry: Entry,
-    registeredTypes: Set<EntryType>,
-) {
-    require(type == entry.type) {
-        processorMismatchMessage(category, entry.type, type, registeredTypes)
-    }
-}
-
 private fun EntryPlaybackPreferencesProcessor.requireMatchingEntryType(
     category: String,
     entry: Entry,
@@ -960,16 +970,6 @@ private fun EntryChildListProcessor.requireMatchingEntryType(
 }
 
 private fun EntryChildGroupFilterProcessor.requireMatchingEntryType(
-    category: String,
-    entry: Entry,
-    registeredTypes: Set<EntryType>,
-) {
-    require(type == entry.type) {
-        processorMismatchMessage(category, entry.type, type, registeredTypes)
-    }
-}
-
-private fun EntryLibraryFilterProcessor.requireMatchingEntryType(
     category: String,
     entry: Entry,
     registeredTypes: Set<EntryType>,

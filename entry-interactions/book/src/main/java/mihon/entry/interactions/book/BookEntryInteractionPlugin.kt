@@ -4,14 +4,16 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.domain.chapter.interactor.FilterEntryChaptersForDownload
 import mihon.entry.interactions.EntryAutomaticDownloadFilterCapability
 import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
+import mihon.entry.interactions.EntryChildListCapability
+import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadCapability
 import mihon.entry.interactions.EntryDownloadLifecycleInteraction
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionProviderBinding
-import mihon.entry.interactions.EntryInteractionRegistry
 import mihon.entry.interactions.EntryOpenCapability
+import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryProgressCapability
 import mihon.entry.interactions.book.download.BookDownloadManager
 import mihon.feature.graph.ContributionOwner
@@ -56,6 +58,8 @@ fun bookEntryInteractionPlugin(
     } else {
         null
     }
+    val childListProcessor = BookChildListProcessor(dependencies.entryProgressRepository)
+    val outsideReleasePeriodFilterProvider = BookOutsideReleasePeriodFilterProvider()
     return object : EntryInteractionPlugin {
         override val type = EntryType.BOOK
         override val owner = ContributionOwner("entry-interactions.book")
@@ -64,18 +68,14 @@ fun bookEntryInteractionPlugin(
             add(EntryContinueCapability.bind(continueProcessor))
             add(EntryConsumptionCapability.bind(consumptionProcessor))
             add(EntryProgressCapability.bind(progressProcessor))
+            add(EntryChildListCapability.bind(childListProcessor))
+            add(EntryChildProgressCapability.bind(childListProcessor))
+            add(EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider))
             if (downloadProcessor != null) {
                 add(EntryDownloadCapability.bind(downloadProcessor))
                 add(EntryBulkDownloadCandidateCapability.bind(downloadProcessor))
                 add(EntryAutomaticDownloadFilterCapability.bind(downloadProcessor))
             }
-        }
-
-        override fun register(registry: EntryInteractionRegistry) {
-            super<EntryInteractionPlugin>.register(registry)
-            registry.registerChildListProcessor(BookChildListProcessor(dependencies.entryProgressRepository))
-            registry.registerUpdateEligibilityProcessor(BookUpdateEligibilityProcessor())
-            registry.registerLibraryFilterProcessor(BookLibraryFilterProcessor())
         }
     }
 }
