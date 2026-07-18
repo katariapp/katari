@@ -74,9 +74,12 @@ import mihon.entry.interactions.EntryConsumptionInteraction
 import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
+import mihon.entry.interactions.EntryDownloadMaintenanceInspection
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
+import mihon.entry.interactions.EntryDownloadOptionsFeature
+import mihon.entry.interactions.EntryDownloadOptionsResolution
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
@@ -139,10 +142,11 @@ class EntryScreenModel(
     readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
     private val trackerManager: TrackerManager = Injekt.get(),
     private val trackChapter: TrackChapter = Injekt.get(),
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
+    private val entryDownloadOptionsFeature: EntryDownloadOptionsFeature = Injekt.get(),
     private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get(),
+    private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
     private val entryConsumptionInteraction: EntryConsumptionInteraction = Injekt.get(),
     private val entryBookmarkInteraction: EntryBookmarkInteraction = Injekt.get(),
@@ -824,7 +828,7 @@ class EntryScreenModel(
      */
     private fun hasDownloads(): Boolean {
         val entry = successState?.entry ?: return false
-        return entryDownloadInteraction.hasDownloads(entry)
+        return downloadMaintenance.inspectEntry(entry) == EntryDownloadMaintenanceInspection.HasDownloads
     }
 
     /**
@@ -833,7 +837,7 @@ class EntryScreenModel(
     private fun deleteDownloads() {
         val state = successState ?: return
         screenModelScope.launchNonCancellable {
-            entryDownloadInteraction.deleteEntryDownloads(state.entry)
+            downloadMaintenance.removeEntryDownloads(state.entry)
         }
     }
 
@@ -1033,7 +1037,7 @@ class EntryScreenModel(
         val successState = successState ?: return
         if (items.isEmpty()) return
 
-        if (entryDownloadInteraction.supportsDownloadOptions(successState.entry)) {
+        if (entryDownloadOptionsFeature.isApplicable(successState.entry.type)) {
             updateSuccessState {
                 it.copy(
                     dialog = Dialog.DownloadSettings(
@@ -1044,15 +1048,30 @@ class EntryScreenModel(
                 )
             }
             screenModelScope.launchIO {
-                val options = entryDownloadInteraction.resolveDownloadOptions(
-                    context,
-                    successState.entry,
-                    items.first().chapter,
-                ) ?: return@launchIO
-                updateSuccessState { state ->
-                    val dialog = state.dialog as? Dialog.DownloadSettings ?: return@updateSuccessState state
-                    if (dialog.items.map { it.id } != items.map { it.id }) return@updateSuccessState state
-                    state.copy(dialog = dialog.copy(options = options))
+                when (
+                    val resolution = entryDownloadOptionsFeature.resolve(
+                        context,
+                        successState.entry,
+                        items.first().chapter,
+                    )
+                ) {
+                    is EntryDownloadOptionsResolution.Resolved -> updateSuccessState { state ->
+                        val dialog = state.dialog as? Dialog.DownloadSettings ?: return@updateSuccessState state
+                        if (dialog.items.map { it.id } != items.map { it.id }) return@updateSuccessState state
+                        state.copy(dialog = dialog.copy(options = resolution.options))
+                    }
+                    EntryDownloadOptionsResolution.ContextuallyUnavailable,
+                    EntryDownloadOptionsResolution.Inapplicable,
+                    -> {
+                        var stillCurrent = false
+                        updateSuccessState { state ->
+                            val dialog = state.dialog as? Dialog.DownloadSettings ?: return@updateSuccessState state
+                            if (dialog.items.map { it.id } != items.map { it.id }) return@updateSuccessState state
+                            stillCurrent = true
+                            state.copy(dialog = null)
+                        }
+                        if (stillCurrent) queueDownload(items, startNow)
+                    }
                 }
             }
             return
@@ -1080,7 +1099,7 @@ class EntryScreenModel(
             val entry = successState.entry
             val chapters = items.map { it.chapter }
             if (selection != null) {
-                entryDownloadInteraction.downloadWithOptions(entry, chapters, selection, startNow)
+                entryDownloadOptionsFeature.download(entry, chapters, selection, startNow)
             } else {
                 entryDownloadActionFeature.download(downloadActionTarget(entry), entry, chapters, startNow)
             }
@@ -1974,7 +1993,7 @@ class EntryScreenModel(
                     updateEntry.awaitUpdateCoverLastModified(entry.id)
                 }
             }
-            entryDownloadInteraction.deleteEntryDownloads(entry)
+            downloadMaintenance.removeEntryDownloads(entry)
         }
     }
 
@@ -1992,7 +2011,7 @@ class EntryScreenModel(
 
             if (deleteChapters) {
                 entries.forEach { entry ->
-                    entryDownloadInteraction.deleteEntryDownloads(entry)
+                    downloadMaintenance.removeEntryDownloads(entry)
                 }
             }
 

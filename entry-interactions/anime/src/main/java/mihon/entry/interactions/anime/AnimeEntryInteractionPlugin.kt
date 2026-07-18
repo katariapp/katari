@@ -7,7 +7,7 @@ import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadCapability
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadOptionsCapability
 import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
@@ -118,7 +118,7 @@ data class AnimeEntryInteractionDependencies(
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
-    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    val downloadLifecycle: EntryDownloadLifecycleEventSink,
     val entryInteractionPreferences: EntryInteractionPreferences,
     val historyRepository: HistoryRepository? = null,
 )
@@ -134,7 +134,7 @@ internal data class AnimeEntryInteractionRuntimeDependencies(
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
-    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    val downloadLifecycle: EntryDownloadLifecycleEventSink,
     val entryInteractionPreferences: EntryInteractionPreferences,
     val historyRepository: HistoryRepository? = null,
 )

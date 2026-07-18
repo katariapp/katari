@@ -330,6 +330,7 @@
     <string name="action_previous_section">Previous section</string>
     <string name="action_next_section">Next section</string>
     <string name="pref_category_downloads">Downloads</string>
+    <string name="pref_category_download_behavior">Download behavior</string>
     <string name="pref_category_tracking">Tracking</string>
     <string name="pref_category_advanced">Advanced</string>
     <string name="pref_category_about">About</string>
@@ -647,7 +648,6 @@
     <string name="pref_webtoon_disable_zoom_out">Disable zoom out</string>
 
       <!-- Downloads section -->
-    <string name="pref_category_manga_downloads">Manga downloads</string>
     <string name="pref_category_delete_chapters">Delete items</string>
     <string name="pref_remove_after_marked_as_read">After manually marked as seen</string>
     <string name="pref_remove_after_read">After seeing automatically delete</string>

@@ -1,0 +1,147 @@
+package mihon.entry.interactions
+
+import eu.kanade.tachiyomi.source.entry.EntryType
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
+import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureGraphContributionSink
+import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.FeatureGraphEvaluation
+import mihon.feature.graph.FeatureId
+import mihon.feature.graph.FeatureIntegration
+import mihon.feature.graph.FeatureIntegrationId
+import mihon.feature.graph.SharedFeatureConsequence
+import tachiyomi.domain.entry.model.Entry
+
+private val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID = FeatureId("entry.download.maintenance")
+private val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER = ContributionOwner("entry-download-maintenance")
+private val ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID =
+    FeatureIntegrationId("entry.download.maintenance.provider")
+
+private val ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID =
+    FeatureArtifactId("entry.download.maintenance.cache")
+private val ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_CONSEQUENCE_ID =
+    FeatureArtifactId("entry.download.maintenance.source")
+private val ENTRY_DOWNLOAD_TITLE_MAINTENANCE_CONSEQUENCE_ID =
+    FeatureArtifactId("entry.download.maintenance.title")
+private val ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_CONSEQUENCE_ID =
+    FeatureArtifactId("entry.download.maintenance.removal")
+
+private object EntryDownloadCacheMaintenanceConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID
+}
+
+private object EntryDownloadSourceMaintenanceConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_CONSEQUENCE_ID
+}
+
+private object EntryDownloadTitleMaintenanceConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_DOWNLOAD_TITLE_MAINTENANCE_CONSEQUENCE_ID
+}
+
+private object EntryDownloadRemovalMaintenanceConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_CONSEQUENCE_ID
+}
+
+internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContributor {
+    override val owner = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(
+            FeatureContribution(
+                feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
+                owner = owner,
+                integrations = listOf(
+                    FeatureIntegration(
+                        id = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
+                        sharedConsequences = listOf(
+                            EntryDownloadCacheMaintenanceConsequence,
+                            EntryDownloadSourceMaintenanceConsequence,
+                            EntryDownloadTitleMaintenanceConsequence,
+                            EntryDownloadRemovalMaintenanceConsequence,
+                        ),
+                    ),
+                ),
+            ),
+        )
+    }
+}
+
+internal class DefaultEntryDownloadMaintenanceFeature(
+    evaluation: FeatureGraphEvaluation,
+    private val interaction: EntryDownloadInteraction,
+) : EntryDownloadMaintenanceFeature {
+    private val cacheTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
+        feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
+        integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
+        consequence = ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID,
+    )
+    private val sourceTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
+        feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
+        integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
+        consequence = ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_CONSEQUENCE_ID,
+    )
+    private val titleTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
+        feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
+        integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
+        consequence = ENTRY_DOWNLOAD_TITLE_MAINTENANCE_CONSEQUENCE_ID,
+    )
+    private val removalTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
+        feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
+        integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
+        consequence = ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_CONSEQUENCE_ID,
+    )
+
+    init {
+        check(setOf(cacheTypes, sourceTypes, titleTypes, removalTypes).size == 1) {
+            "Download maintenance consequences selected different provider sets"
+        }
+    }
+
+    override fun invalidateCaches(): EntryDownloadMaintenanceResult {
+        if (cacheTypes.isEmpty()) return EntryDownloadMaintenanceResult.NoParticipants
+        interaction.invalidateCaches()
+        return EntryDownloadMaintenanceResult.Performed
+    }
+
+    override fun renameSource(
+        oldSource: UnifiedSource,
+        newSource: UnifiedSource,
+    ): EntryDownloadMaintenanceResult {
+        if (sourceTypes.isEmpty()) return EntryDownloadMaintenanceResult.NoParticipants
+        interaction.renameSource(oldSource, newSource)
+        return EntryDownloadMaintenanceResult.Performed
+    }
+
+    override suspend fun renameEntry(entry: Entry, newTitle: String): EntryDownloadMaintenanceResult {
+        if (entry.type !in titleTypes) return inapplicable(entry.type)
+        interaction.renameEntry(entry, newTitle)
+        return EntryDownloadMaintenanceResult.Performed
+    }
+
+    override fun inspectEntry(entry: Entry): EntryDownloadMaintenanceInspection {
+        if (entry.type !in removalTypes) {
+            return EntryDownloadMaintenanceInspection.Inapplicable(entry.type)
+        }
+        return if (interaction.hasDownloads(entry)) {
+            EntryDownloadMaintenanceInspection.HasDownloads
+        } else {
+            EntryDownloadMaintenanceInspection.NoDownloads
+        }
+    }
+
+    override suspend fun removeEntryDownloads(entry: Entry): EntryDownloadMaintenanceResult {
+        if (entry.type !in removalTypes) return inapplicable(entry.type)
+        interaction.deleteEntryDownloads(entry)
+        return EntryDownloadMaintenanceResult.Performed
+    }
+
+    private fun inapplicable(type: EntryType): EntryDownloadMaintenanceResult {
+        return inapplicable(setOf(type))
+    }
+
+    private fun inapplicable(types: Set<EntryType>) = EntryDownloadMaintenanceResult.Inapplicable(types)
+}

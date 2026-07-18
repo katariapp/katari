@@ -34,7 +34,8 @@ import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
@@ -574,6 +575,7 @@ class AnimeEntryInteractionPluginTest {
         val downloadProcessor = AnimeDownloadProcessor(dependencies)
         val consumptionProcessor = AnimeConsumptionProcessor(
             entryProgressRepository = dependencies.entryProgressRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
         )
         val mangaEntry = entry(EntryType.MANGA)
 
@@ -731,6 +733,7 @@ class AnimeEntryInteractionPluginTest {
         )
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
         )
 
         processor.setConsumed(
@@ -759,6 +762,7 @@ class AnimeEntryInteractionPluginTest {
         )
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
         )
 
         processor.setConsumed(
@@ -789,7 +793,7 @@ class AnimeEntryInteractionPluginTest {
                 playbackState(chapterId = 2L, positionMs = 10_000L, completed = false),
             ),
         )
-        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val downloadLifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val processor = AnimeConsumptionProcessor(
             entryProgressRepository = playbackRepository,
             downloadLifecycle = downloadLifecycle,
@@ -816,7 +820,7 @@ class AnimeEntryInteractionPluginTest {
     fun `anime consumption uses legacy progress key for blank chapter url`() = runTest {
         val target = chapter(id = 7L, url = "")
         val progressRepository = FakeEntryProgressRepository(emptyList())
-        val processor = AnimeConsumptionProcessor(progressRepository)
+        val processor = AnimeConsumptionProcessor(progressRepository, noOpDownloadLifecycle())
 
         processor.setConsumed(entry(EntryType.ANIME), listOf(target), consumed = true)
 
@@ -923,8 +927,13 @@ class AnimeEntryInteractionPluginTest {
             downloadPreferencesRepository = downloadPreferencesRepository,
             sourceManager = sourceManager,
             entryRepository = entryRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
             entryInteractionPreferences = entryInteractionPreferences,
         )
+    }
+
+    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
+        EntryDownloadLifecycleResult.Handled
     }
 
     private fun mockAnimeDownloadManager(episodeDownloaded: Boolean): AnimeDownloadManager {

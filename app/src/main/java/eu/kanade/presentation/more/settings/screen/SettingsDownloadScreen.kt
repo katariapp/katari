@@ -12,9 +12,8 @@ import androidx.compose.ui.util.fastMap
 import eu.kanade.presentation.category.visualName
 import eu.kanade.presentation.more.settings.Preference
 import eu.kanade.presentation.more.settings.widget.TriStateListDialog
-import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryDownloadInteraction
-import mihon.entry.interactions.EntryDownloadSettingCapability
+import mihon.entry.interactions.EntryDownloadSetting
+import mihon.entry.interactions.EntryDownloadSettingsFeature
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.download.service.DownloadPreferences
@@ -37,10 +36,8 @@ object SettingsDownloadScreen : SearchableSettings {
         val allCategories by getCategories.subscribe().collectAsState(initial = emptyList())
 
         val downloadPreferences = remember { Injekt.get<DownloadPreferences>() }
-        val downloadInteraction = remember { Injekt.get<EntryDownloadInteraction>() }
-        val mangaCapabilities = remember(downloadInteraction) {
-            downloadInteraction.settingCapabilities()[EntryType.MANGA].orEmpty()
-        }
+        val downloadSettingsFeature = remember { Injekt.get<EntryDownloadSettingsFeature>() }
+        val specializedSettings = downloadSettingsFeature.availableSettings
         val parallelSourceLimit by downloadPreferences.parallelSourceLimit.collectAsState()
         val parallelPageLimit by downloadPreferences.parallelPageLimit.collectAsState()
         return listOfNotNull(
@@ -48,12 +45,12 @@ object SettingsDownloadScreen : SearchableSettings {
                 preference = downloadPreferences.downloadOnlyOverWifi,
                 title = stringResource(MR.strings.connected_to_wifi),
             ),
-            getMangaDownloadGroup(
+            getSpecializedDownloadGroup(
                 downloadPreferences = downloadPreferences,
-                capabilities = mangaCapabilities,
+                settings = specializedSettings,
                 parallelSourceLimit = parallelSourceLimit,
                 parallelPageLimit = parallelPageLimit,
-            ).takeIf { mangaCapabilities.isNotEmpty() },
+            ).takeIf { specializedSettings.isNotEmpty() },
             getDeleteChaptersGroup(
                 downloadPreferences = downloadPreferences,
                 categories = allCategories,
@@ -67,37 +64,37 @@ object SettingsDownloadScreen : SearchableSettings {
     }
 
     @Composable
-    private fun getMangaDownloadGroup(
+    private fun getSpecializedDownloadGroup(
         downloadPreferences: DownloadPreferences,
-        capabilities: Set<EntryDownloadSettingCapability>,
+        settings: Set<EntryDownloadSetting>,
         parallelSourceLimit: Int,
         parallelPageLimit: Int,
     ): Preference.PreferenceGroup {
         return Preference.PreferenceGroup(
-            title = stringResource(MR.strings.pref_category_manga_downloads),
+            title = stringResource(MR.strings.pref_category_download_behavior),
             preferenceItems = listOfNotNull(
                 Preference.PreferenceItem.SwitchPreference(
                     preference = downloadPreferences.saveChaptersAsCBZ,
                     title = stringResource(MR.strings.save_chapter_as_cbz),
-                ).takeIf { EntryDownloadSettingCapability.ARCHIVE_PACKAGING in capabilities },
+                ).takeIf { EntryDownloadSetting.ARCHIVE_PACKAGING in settings },
                 Preference.PreferenceItem.SwitchPreference(
                     preference = downloadPreferences.splitTallImages,
                     title = stringResource(MR.strings.split_tall_images),
                     subtitle = stringResource(MR.strings.split_tall_images_summary),
-                ).takeIf { EntryDownloadSettingCapability.TALL_IMAGE_SPLITTING in capabilities },
+                ).takeIf { EntryDownloadSetting.TALL_IMAGE_SPLITTING in settings },
                 Preference.PreferenceItem.SliderPreference(
                     value = parallelSourceLimit,
                     valueRange = 1..10,
                     title = stringResource(MR.strings.pref_download_concurrent_sources),
                     onValueChanged = { downloadPreferences.parallelSourceLimit.set(it) },
-                ).takeIf { EntryDownloadSettingCapability.PARALLEL_SOURCE_TRANSFERS in capabilities },
+                ).takeIf { EntryDownloadSetting.PARALLEL_SOURCE_TRANSFERS in settings },
                 Preference.PreferenceItem.SliderPreference(
                     value = parallelPageLimit,
                     valueRange = 1..15,
                     title = stringResource(MR.strings.pref_download_concurrent_pages),
                     subtitle = stringResource(MR.strings.pref_download_concurrent_pages_summary),
                     onValueChanged = { downloadPreferences.parallelPageLimit.set(it) },
-                ).takeIf { EntryDownloadSettingCapability.PARALLEL_ITEM_TRANSFERS in capabilities },
+                ).takeIf { EntryDownloadSetting.PARALLEL_ITEM_TRANSFERS in settings },
             ),
         )
     }

@@ -53,7 +53,7 @@ import kotlinx.coroutines.launch
 import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.entry.interactions.EntryPreviewInteraction
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
@@ -115,7 +115,7 @@ class CatalogScreenModel(
     private val networkToLocalEntry: NetworkToLocalEntry = Injekt.get(),
     private val updateMergedEntry: UpdateMergedEntry = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val entryPreviewInteraction: EntryPreviewInteraction = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
@@ -749,7 +749,7 @@ class CatalogScreenModel(
             val withRemovedCovers = entry.removeCovers()
             val updated = withRemovedCovers.copy(favorite = false, dateAdded = 0L)
             entryRepository.update(updated)
-            entryDownloadInteraction.deleteEntryDownloads(entry)
+            downloadMaintenance.removeEntryDownloads(entry)
         }
     }
 

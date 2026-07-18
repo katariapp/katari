@@ -9,7 +9,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.coroutines.CancellationException
 import mihon.domain.migration.models.MigrationFlag
 import mihon.entry.interactions.EntryCapabilityInteraction
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
 import mihon.entry.interactions.EntryProgressInteraction
 import mihon.entry.interactions.EntryProgressResourceMapping
@@ -40,7 +40,7 @@ class MigrateEntryUseCase(
     private val capabilityInteraction: EntryCapabilityInteraction,
     private val progressInteraction: EntryProgressInteraction,
     private val playbackPreferencesInteraction: EntryPlaybackPreferencesInteraction,
-    private val downloadInteraction: EntryDownloadInteraction,
+    private val downloadMaintenance: EntryDownloadMaintenanceFeature,
     private val categoryRepository: CategoryRepository,
     private val getTracks: GetTracks,
     private val insertTrack: InsertTrack,
@@ -101,7 +101,7 @@ class MigrateEntryUseCase(
                 ?.let { insertTrack.awaitAll(it) }
 
             if (MigrationFlag.REMOVE_DOWNLOAD in flags) {
-                downloadInteraction.deleteEntryDownloads(current)
+                downloadMaintenance.removeEntryDownloads(current)
             }
 
             if (MigrationFlag.CUSTOM_COVER in flags && coverCache.getCustomCoverFile(current.id).exists()) {

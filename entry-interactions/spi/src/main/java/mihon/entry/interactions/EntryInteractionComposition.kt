@@ -37,7 +37,6 @@ fun createEntryInteractionComposition(
             continueProcessors = providers[EntryContinueCapability],
             downloadProcessors = providers[EntryDownloadCapability],
             downloadOptionsProcessors = providers[EntryDownloadOptionsCapability],
-            downloadSettingCapabilities = providers.downloadSettingCapabilities(),
             bulkDownloadCandidateProcessors = providers[EntryBulkDownloadCandidateCapability],
             migrationProviders = providers[EntryMigrationCapability],
             mergeProviders = providers[EntryMergeCapability],
@@ -91,15 +90,6 @@ private class EntryInteractionProviderIndex(
                 }
         }
     }
-
-    fun downloadSettingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>> {
-        return buildMap<EntryType, MutableSet<EntryDownloadSettingCapability>> {
-            bindings.forEach { binding ->
-                val capability = binding.capability as? EntryDownloadSettingInteractionCapability ?: return@forEach
-                getOrPut(binding.implementation.type, ::mutableSetOf).add(capability.setting)
-            }
-        }
-    }
 }
 
 private class DefaultEntryInteractions(
@@ -107,7 +97,6 @@ private class DefaultEntryInteractions(
     continueProcessors: Map<EntryType, EntryContinueProcessor>,
     downloadProcessors: Map<EntryType, EntryDownloadProcessor>,
     downloadOptionsProcessors: Map<EntryType, EntryDownloadOptionsProcessor>,
-    downloadSettingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
     bulkDownloadCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
     migrationProviders: Map<EntryType, EntryMigrationProvider>,
     mergeProviders: Map<EntryType, EntryMergeProvider>,
@@ -128,7 +117,6 @@ private class DefaultEntryInteractions(
         EntryDownloadInteractionDispatch(
             processors = downloadProcessors,
             optionsProcessors = downloadOptionsProcessors,
-            settingCapabilities = downloadSettingCapabilities,
             bulkCandidateProcessors = bulkDownloadCandidateProcessors,
         )
     override val capability: EntryCapabilityInteraction =

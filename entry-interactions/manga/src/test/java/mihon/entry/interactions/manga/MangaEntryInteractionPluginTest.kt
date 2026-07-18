@@ -26,7 +26,8 @@ import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
@@ -226,6 +227,7 @@ class MangaEntryInteractionPluginTest {
         val consumptionProcessor = MangaConsumptionProcessor(
             entryChapterRepository = dependencies.entryChapterRepository,
             entryProgressRepository = dependencies.entryProgressRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
         )
         val animeEntry = entry(EntryType.ANIME)
 
@@ -436,7 +438,7 @@ class MangaEntryInteractionPluginTest {
     @Test
     fun `manga consumption reports newly consumed children to shared lifecycle policy`() = runTest {
         val repository = FakeEntryChapterRepository(emptyList())
-        val lifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val lifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val processor = mangaConsumptionProcessor(
             repository = repository,
             downloadLifecycle = lifecycle,
@@ -455,7 +457,7 @@ class MangaEntryInteractionPluginTest {
     @Test
     fun `manga consumption does not report lifecycle cleanup when marking unread`() = runTest {
         val repository = FakeEntryChapterRepository(emptyList())
-        val lifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val lifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val processor = mangaConsumptionProcessor(
             repository = repository,
             downloadLifecycle = lifecycle,
@@ -634,6 +636,7 @@ class MangaEntryInteractionPluginTest {
                     entries.firstOrNull { it.id == firstArg<Long>() }
                 }
             },
+            downloadLifecycle = noOpDownloadLifecycle(),
             entryInteractionPreferences = entryInteractionPreferences,
         )
     }
@@ -641,13 +644,17 @@ class MangaEntryInteractionPluginTest {
     private fun mangaConsumptionProcessor(
         repository: EntryChapterRepository,
         progressRepository: EntryProgressRepository = FakeEntryProgressRepository(emptyList()),
-        downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+        downloadLifecycle: EntryDownloadLifecycleEventSink = noOpDownloadLifecycle(),
     ): MangaConsumptionProcessor {
         return MangaConsumptionProcessor(
             entryChapterRepository = repository,
             entryProgressRepository = progressRepository,
             downloadLifecycle = downloadLifecycle,
         )
+    }
+
+    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
+        EntryDownloadLifecycleResult.Handled
     }
 
     private fun mockDownloadPreferences(removeAfterMarkedAsRead: Boolean = false): DownloadPreferences {

@@ -56,7 +56,7 @@ import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.core.common.GlobalCustomPreferences
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import okhttp3.Headers
@@ -195,7 +195,8 @@ object SettingsAdvancedScreen : SearchableSettings {
                     title = stringResource(MR.strings.pref_invalidate_download_cache),
                     subtitle = stringResource(MR.strings.pref_invalidate_download_cache_summary),
                     onClick = {
-                        Injekt.get<EntryDownloadInteraction>().invalidateCaches()
+                        Injekt.get<EntryDownloadMaintenanceFeature>()
+                            .invalidateCaches()
                         context.toast(MR.strings.download_cache_invalidated)
                     },
                 ),

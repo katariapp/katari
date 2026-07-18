@@ -49,6 +49,11 @@ interface EntryRepository {
 
     suspend fun getReadEntriesNotInLibraryByProfile(profileId: Long): List<Entry>
 
+    suspend fun getNonLibraryEntriesBySources(
+        sourceIds: List<Long>,
+        keepReadEntries: Boolean,
+    ): List<Entry>
+
     suspend fun getLibraryEntries(): List<Entry>
 
     fun getLibraryEntriesAsFlow(): Flow<List<Entry>>

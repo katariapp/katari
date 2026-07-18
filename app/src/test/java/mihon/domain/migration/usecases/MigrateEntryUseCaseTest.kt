@@ -11,7 +11,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import mihon.domain.migration.models.MigrationFlag
 import mihon.entry.interactions.EntryCapabilityInteraction
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesInteraction
 import mihon.entry.interactions.EntryProgressInteraction
 import mihon.entry.interactions.EntryProgressResourceMapping
@@ -60,8 +60,8 @@ class MigrateEntryUseCaseTest {
 
         fixture.useCase(current, target, replace)
 
-        coVerify(exactly = 1) { fixture.downloadInteraction.deleteEntryDownloads(current) }
-        coVerify(exactly = 0) { fixture.downloadInteraction.deleteEntryDownloads(target) }
+        coVerify(exactly = 1) { fixture.downloadMaintenance.removeEntryDownloads(current) }
+        coVerify(exactly = 0) { fixture.downloadMaintenance.removeEntryDownloads(target) }
     }
 
     @ParameterizedTest(name = "unselected remove-download flag preserves {0} downloads when replace={1}")
@@ -76,7 +76,7 @@ class MigrateEntryUseCaseTest {
 
         fixture.useCase(current, target, replace)
 
-        coVerify(exactly = 0) { fixture.downloadInteraction.deleteEntryDownloads(any()) }
+        coVerify(exactly = 0) { fixture.downloadMaintenance.removeEntryDownloads(any()) }
     }
 
     @ParameterizedTest(name = "copies viewer settings for {0} when replace={1}")
@@ -155,7 +155,7 @@ class MigrateEntryUseCaseTest {
         val progressInteraction = mockk<EntryProgressInteraction>(relaxed = true)
         private val playbackPreferencesInteraction = mockk<EntryPlaybackPreferencesInteraction>(relaxed = true)
         val viewerSettingOverrideRepository = mockk<ViewerSettingOverrideRepository>(relaxed = true)
-        val downloadInteraction = mockk<EntryDownloadInteraction>(relaxed = true)
+        val downloadMaintenance = mockk<EntryDownloadMaintenanceFeature>(relaxed = true)
         private val categoryRepository = mockk<CategoryRepository>(relaxed = true)
         private val getTracks = mockk<GetTracks>()
         private val insertTrack = mockk<InsertTrack>(relaxed = true)
@@ -173,7 +173,7 @@ class MigrateEntryUseCaseTest {
             capabilityInteraction = capabilityInteraction,
             progressInteraction = progressInteraction,
             playbackPreferencesInteraction = playbackPreferencesInteraction,
-            downloadInteraction = downloadInteraction,
+            downloadMaintenance = downloadMaintenance,
             categoryRepository = categoryRepository,
             getTracks = getTracks,
             insertTrack = insertTrack,

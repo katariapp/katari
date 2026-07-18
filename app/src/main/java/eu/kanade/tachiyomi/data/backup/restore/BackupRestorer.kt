@@ -22,7 +22,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.feature.profiles.core.ProfileConstants
 import mihon.feature.profiles.core.ProfileDatabase
 import mihon.feature.profiles.core.ProfileManager
@@ -59,7 +59,7 @@ class BackupRestorer(
     private val profileManager: ProfileManager = Injekt.get(),
     private val profileStore: ProfileStore = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
 ) {
 
     private var restoreAmount = 0
@@ -79,7 +79,7 @@ class BackupRestorer(
         // Invalidate download cache to ensure UI reflects any restored downloads
         if (options.libraryEntries) {
             try {
-                entryDownloadInteraction.invalidateCaches()
+                downloadMaintenance.invalidateCaches()
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e) { "Failed to invalidate download cache after restore" }
             }

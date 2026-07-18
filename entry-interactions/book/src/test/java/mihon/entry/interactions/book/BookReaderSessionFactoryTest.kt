@@ -20,7 +20,8 @@ import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookLocator
 import mihon.book.api.BookPublication
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.book.download.BookDownloadCache
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Test
@@ -77,7 +78,7 @@ class BookReaderSessionFactoryTest {
         )
         val publicationSession = TestPublicationSession()
         val processor = SessionFactoryTestProcessor(publicationSession)
-        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val downloadLifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val context = mockk<Context> {
             every { applicationContext } returns this@mockk
             every { contentResolver } returns mockk<ContentResolver>()
@@ -164,6 +165,7 @@ class BookReaderSessionFactoryTest {
             incognitoState = mockk {
                 every { isIncognito(entry().source) } returns false
             },
+            downloadLifecycle = noOpDownloadLifecycle(),
             now = { 100L },
         )
 
@@ -227,6 +229,7 @@ class BookReaderSessionFactoryTest {
             incognitoState = incognitoState,
             materializationStore = mockk(relaxed = true),
             downloadCache = emptyDownloadCache(),
+            downloadLifecycle = noOpDownloadLifecycle(),
         )
 
         val session = assertIs<BookReaderOpenResult.Success>(
@@ -240,6 +243,10 @@ class BookReaderSessionFactoryTest {
         coVerify(exactly = 0) { progressRepository.mergeAndSyncChild(any()) }
         coVerify(exactly = 0) { historyRepository.upsertHistory(any()) }
         session.close()
+    }
+
+    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
+        EntryDownloadLifecycleResult.Handled
     }
 
     private fun entry(): Entry = Entry.create().copy(

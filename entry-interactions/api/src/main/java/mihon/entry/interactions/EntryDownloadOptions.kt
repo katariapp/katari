@@ -1,8 +1,5 @@
 package mihon.entry.interactions
 
-import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.entry.model.EntryChapter
-
 data class EntryDownloadOption(
     val key: String,
     val label: String,
@@ -24,30 +21,3 @@ data class EntryDownloadOptions(
 data class EntryDownloadOptionSelection(
     val values: Map<String, String?>,
 )
-
-sealed interface EntryDownloadLifecycleEvent {
-    data class MarkedConsumed(
-        val visibleEntry: Entry,
-        val children: List<EntryChapter>,
-    ) : EntryDownloadLifecycleEvent
-
-    data class Progressed(
-        val visibleEntry: Entry,
-        val child: EntryChapter,
-        val fraction: Double,
-        val deduplicateByNumber: Boolean = false,
-    ) : EntryDownloadLifecycleEvent
-
-    data class Completed(
-        val visibleEntry: Entry,
-        val child: EntryChapter,
-        val deduplicateByNumber: Boolean = false,
-    ) : EntryDownloadLifecycleEvent
-}
-
-enum class EntryDownloadSettingCapability {
-    ARCHIVE_PACKAGING,
-    TALL_IMAGE_SPLITTING,
-    PARALLEL_SOURCE_TRANSFERS,
-    PARALLEL_ITEM_TRANSFERS,
-}

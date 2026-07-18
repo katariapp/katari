@@ -97,12 +97,11 @@ class EntryInteractionCompositionTest {
 
     @Test
     fun `plugin rejects a provider owned by another type`() {
-        val plugin = plugin(
-            EntryType.MANGA,
-            EntryOpenCapability.bind(RecordingOpenProcessor(EntryType.ANIME, mutableListOf())),
-        )
-
         val exception = assertThrows<IllegalArgumentException> {
+            val plugin = plugin(
+                EntryType.MANGA,
+                EntryOpenCapability.bind(RecordingOpenProcessor(EntryType.ANIME, mutableListOf())),
+            )
             createEntryInteractions(
                 plugins = listOf(plugin),
                 featureContributors = listOf(featureUsing(EntryOpenCapability.definition)),

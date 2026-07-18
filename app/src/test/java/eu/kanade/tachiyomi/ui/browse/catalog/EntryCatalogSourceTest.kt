@@ -210,6 +210,10 @@ private class InMemoryEntryRepository(
     override suspend fun getAllEntriesByProfile(profileId: Long): List<Entry> = emptyList()
     override suspend fun getReadEntriesNotInLibrary(): List<Entry> = emptyList()
     override suspend fun getReadEntriesNotInLibraryByProfile(profileId: Long): List<Entry> = emptyList()
+    override suspend fun getNonLibraryEntriesBySources(
+        sourceIds: List<Long>,
+        keepReadEntries: Boolean,
+    ): List<Entry> = emptyList()
     override suspend fun getLibraryEntries(): List<Entry> = emptyList()
     override fun getLibraryEntriesAsFlow(): Flow<List<Entry>> = flowOf(emptyList())
     override fun getFavoritesBySourceId(sourceId: Long): Flow<List<Entry>> = flowOf(emptyList())

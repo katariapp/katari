@@ -15,7 +15,6 @@ import tachiyomi.domain.entry.model.EntryChapter
 internal class EntryDownloadInteractionDispatch(
     private val processors: Map<EntryType, EntryDownloadProcessor>,
     private val optionsProcessors: Map<EntryType, EntryDownloadOptionsProcessor>,
-    private val settingCapabilities: Map<EntryType, Set<EntryDownloadSettingCapability>>,
     private val bulkCandidateProcessors: Map<EntryType, EntryBulkDownloadCandidateProcessor>,
 ) : EntryDownloadInteraction {
     private val paused = MutableStateFlow(false)
@@ -98,10 +97,6 @@ internal class EntryDownloadInteractionDispatch(
             }
     }
 
-    override fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>> {
-        return settingCapabilities
-    }
-
     override suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean) {
         val processor = processors.requireProcessor("download", entry.type)
         processor.requireMatchingEntryType("download", entry, processors.keys)
@@ -126,12 +121,6 @@ internal class EntryDownloadInteractionDispatch(
         processor.requireMatchingEntryType("download options", entry, optionsProcessors.keys)
         processor.downloadWithOptions(entry, chapters, selection, startNow)
         paused.value = false
-    }
-
-    override fun supportsDownloadOptions(entry: Entry): Boolean {
-        val processor = optionsProcessors[entry.type] ?: return false
-        processor.requireMatchingEntryType("download options", entry, optionsProcessors.keys)
-        return true
     }
 
     override suspend fun resolveDownloadOptions(

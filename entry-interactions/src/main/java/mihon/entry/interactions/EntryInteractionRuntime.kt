@@ -53,15 +53,10 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryChildGroupFilterDataSource> { dependencies.mangaChildGroupFilterDataSource }
     addSingletonFactory<EntryDownloadWorkController> { DefaultEntryDownloadWorkController(app) }
     addSingletonFactory { EntryAutomaticDownloadPolicy(get(), get(), get()) }
-    addSingletonFactory<EntryDownloadLifecycleInteraction> {
-        EntryDownloadLifecycleManager(
-            downloadPreferences = get(),
-            getCategories = get(),
-            getEntryWithChapters = get(),
-            entryRepository = get(),
-            downloadInteraction = { Injekt.get<EntryInteractionComposition>().interactions.download },
-            capabilityReport = { Injekt.get() },
-        )
+    addSingletonFactory<EntryDownloadLifecycleEventSink> {
+        EntryDownloadLifecycleEventSink { event ->
+            Injekt.get<EntryDownloadLifecycleFeature>().onEvent(event)
+        }
     }
 
     addSingletonFactory { ReaderBasePreferences(dependencies.basePreferenceStore) }
@@ -114,6 +109,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryDownloadRuntimeFeatureContributor,
                 EntryDownloadActionFeatureContributor,
                 EntryAutomaticDownloadFeatureContributor,
+                EntryDownloadLifecycleFeatureContributor,
+                EntryDownloadConfigurationFeatureContributor,
+                EntryDownloadMaintenanceFeatureContributor,
             ),
         )
     }
@@ -152,6 +150,35 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.download,
             sharedPolicy = get(),
+        )
+    }
+    addSingletonFactory<EntryDownloadLifecycleFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryDownloadLifecycleFeature(
+            evaluation = composition.featureGraphEvaluation,
+            downloadPreferences = get(),
+            getCategories = get(),
+            getEntryWithChapters = get(),
+            entryRepository = get(),
+            downloads = composition.interactions.download,
+        )
+    }
+    addSingletonFactory<EntryDownloadOptionsFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryDownloadOptionsFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.download,
+        )
+    }
+    addSingletonFactory<EntryDownloadSettingsFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryDownloadSettingsFeature(composition.featureGraphEvaluation)
+    }
+    addSingletonFactory<EntryDownloadMaintenanceFeature> {
+        val composition = get<EntryInteractionComposition>()
+        DefaultEntryDownloadMaintenanceFeature(
+            evaluation = composition.featureGraphEvaluation,
+            interaction = composition.interactions.download,
         )
     }
     addSingletonFactory {

@@ -20,7 +20,8 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.anime.animeProgressState
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -121,7 +122,7 @@ class VideoPlayerViewModelTest {
 
     @Test
     fun `persist playback reports completion to shared download lifecycle`() = runTest(dispatcher) {
-        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val downloadLifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val viewModel = createViewModel(
             entryChapterRepository = FakeEntryChapterRepository(emptyList()),
             playbackRepository = FakeEntryProgressRepository(existingState = null),
@@ -268,7 +269,9 @@ class VideoPlayerViewModelTest {
         historyRepository: HistoryRepository,
         resolver: VideoStreamResolver,
         getEntryWithChapters: GetEntryWithChapters? = null,
-        downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+        downloadLifecycle: EntryDownloadLifecycleEventSink = EntryDownloadLifecycleEventSink {
+            EntryDownloadLifecycleResult.Handled
+        },
     ): VideoPlayerViewModel {
         return VideoPlayerViewModel(
             savedState = SavedStateHandle(),

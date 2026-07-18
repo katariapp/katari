@@ -27,7 +27,8 @@ import eu.kanade.tachiyomi.data.cache.CoverCache
 import kotlinx.coroutines.flow.update
 import mihon.domain.migration.models.MigrationFlag
 import mihon.domain.migration.usecases.MigrateEntryUseCase
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
+import mihon.entry.interactions.EntryDownloadMaintenanceInspection
 import mihon.feature.common.utils.getLabel
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.lang.withUIContext
@@ -126,7 +127,7 @@ internal fun Screen.MigrateEntryDialog(
 private class MigrateEntryDialogScreenModel(
     private val sourcePreference: SourcePreferences = Injekt.get(),
     private val coverCache: CoverCache = Injekt.get(),
-    private val entryDownloadInteraction: EntryDownloadInteraction = Injekt.get(),
+    private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val migrateEntry: MigrateEntryUseCase = Injekt.get(),
 ) : StateScreenModel<MigrateEntryDialogScreenModel.State>(State()) {
 
@@ -138,7 +139,9 @@ private class MigrateEntryDialogScreenModel(
                     MigrationFlag.CATEGORY -> true
                     MigrationFlag.CUSTOM_COVER -> current.hasCustomCover(coverCache)
                     MigrationFlag.NOTES -> current.notes.isNotBlank()
-                    MigrationFlag.REMOVE_DOWNLOAD -> entryDownloadInteraction.hasDownloads(current)
+                    MigrationFlag.REMOVE_DOWNLOAD -> {
+                        downloadMaintenance.inspectEntry(current) == EntryDownloadMaintenanceInspection.HasDownloads
+                    }
                 }
                 if (applicable) add(it)
             }

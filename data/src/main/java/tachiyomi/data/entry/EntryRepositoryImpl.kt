@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import logcat.LogPriority
+import tachiyomi.core.common.util.lang.toLong
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
@@ -142,6 +143,21 @@ class EntryRepositoryImpl(
     override suspend fun getReadEntriesNotInLibraryByProfile(profileId: Long): List<Entry> {
         return handler.awaitList {
             entriesQueries.getReadEntriesNotInLibrary(profileId, EntryMapper::mapEntry)
+        }
+    }
+
+    override suspend fun getNonLibraryEntriesBySources(
+        sourceIds: List<Long>,
+        keepReadEntries: Boolean,
+    ): List<Entry> {
+        if (sourceIds.isEmpty()) return emptyList()
+        return handler.awaitList {
+            entriesQueries.getNonLibraryEntriesBySources(
+                profileId = profileProvider.activeProfileId,
+                sourceIds = sourceIds,
+                keepReadEntries = keepReadEntries.toLong(),
+                mapper = EntryMapper::mapEntry,
+            )
         }
     }
 

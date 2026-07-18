@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import mihon.entry.interactions.EntryDownloadInteraction
+import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import tachiyomi.domain.source.model.SourceDisplayInfo
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.domain.source.model.UnifiedStubSource
@@ -37,7 +37,7 @@ class AndroidSourceManager(
     private val _isInitialized = MutableStateFlow(false)
     override val isInitialized: StateFlow<Boolean> = _isInitialized.asStateFlow()
 
-    private val entryDownloadInteraction: EntryDownloadInteraction by injectLazy()
+    private val downloadMaintenance: EntryDownloadMaintenanceFeature by injectLazy()
 
     private val scope = CoroutineScope(Job() + Dispatchers.IO)
 
@@ -153,7 +153,7 @@ class AndroidSourceManager(
             if (dbSource == stub) return@launch
             sourceRepository.upsertStubSource(stub.id, stub.lang, stub.name)
             if (dbSource != null) {
-                entryDownloadInteraction.renameSource(UnifiedStubSource(dbSource), UnifiedStubSource(stub))
+                downloadMaintenance.renameSource(UnifiedStubSource(dbSource), UnifiedStubSource(stub))
             }
         }
     }

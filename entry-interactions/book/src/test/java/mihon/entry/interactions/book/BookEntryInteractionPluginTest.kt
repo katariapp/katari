@@ -13,7 +13,8 @@ import mihon.book.api.BookFailureReason
 import mihon.entry.interactions.EntryBookmarkStatus
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.createEntryInteractions
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
@@ -65,6 +66,7 @@ class BookEntryInteractionPluginTest {
                         getEntryWithChapters = getEntryWithChapters,
                         entryChapterRepository = mockk(),
                         entryProgressRepository = progressRepository,
+                        downloadLifecycle = noOpDownloadLifecycle(),
                     ),
                 ),
             ),
@@ -112,6 +114,7 @@ class BookEntryInteractionPluginTest {
         val processor = BookConsumptionProcessor(
             entryProgressRepository = progressRepository,
             entryChapterRepository = chapterRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
             now = { 100L },
         )
 
@@ -131,7 +134,7 @@ class BookEntryInteractionPluginTest {
         val chapterRepository = mockk<EntryChapterRepository> {
             coEvery { updateAll(any()) } returns true
         }
-        val downloadLifecycle = mockk<EntryDownloadLifecycleInteraction>(relaxed = true)
+        val downloadLifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val processor = BookConsumptionProcessor(
             entryProgressRepository = progressRepository,
             entryChapterRepository = chapterRepository,
@@ -174,6 +177,7 @@ class BookEntryInteractionPluginTest {
         val processor = BookConsumptionProcessor(
             entryProgressRepository = progressRepository,
             entryChapterRepository = chapterRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
             now = { 100L },
         )
 
@@ -213,6 +217,7 @@ class BookEntryInteractionPluginTest {
         val processor = BookConsumptionProcessor(
             entryProgressRepository = progressRepository,
             entryChapterRepository = chapterRepository,
+            downloadLifecycle = noOpDownloadLifecycle(),
             now = { 100L },
         )
 
@@ -291,6 +296,10 @@ class BookEntryInteractionPluginTest {
         title = "Book",
         type = EntryType.BOOK,
     )
+
+    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
+        EntryDownloadLifecycleResult.Handled
+    }
 
     private fun chapter(
         id: Long = 10L,

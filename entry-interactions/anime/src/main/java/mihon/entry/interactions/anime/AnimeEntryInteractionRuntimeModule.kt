@@ -2,7 +2,7 @@ package mihon.entry.interactions.anime
 
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryMediaCacheBucket
 import mihon.entry.interactions.EntryMediaCacheBucketKeys
 import mihon.entry.interactions.EntryPlayerCache
@@ -37,7 +37,7 @@ fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryT
                     downloadPreferencesRepository = get(),
                     sourceManager = get(),
                     entryRepository = get(),
-                    downloadLifecycle = get<EntryDownloadLifecycleInteraction>(),
+                    downloadLifecycle = get<EntryDownloadLifecycleEventSink>(),
                     entryInteractionPreferences = get<EntryInteractionPreferences>(),
                     historyRepository = get(),
                 ),

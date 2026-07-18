@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
+import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.coroutines.sync.Mutex
+import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.download.service.DownloadPreferences
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
@@ -9,20 +11,45 @@ import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.sortedForReading
 
-/** Interprets media-neutral consumption events as shared cleanup and download-ahead policy. */
-internal class EntryDownloadLifecycleManager(
+/** Interprets media-neutral lifecycle events as shared cleanup and download-ahead policy. */
+internal class DefaultEntryDownloadLifecycleFeature(
+    evaluation: FeatureGraphEvaluation,
     private val downloadPreferences: DownloadPreferences,
     private val getCategories: GetCategories,
     private val getEntryWithChapters: GetEntryWithChapters,
     entryRepository: EntryRepository,
-    private val downloadInteraction: () -> EntryDownloadInteraction,
-    private val capabilityReport: () -> EntryCapabilityReport,
-) : EntryDownloadLifecycleInteraction {
+    private val downloads: EntryDownloadInteraction,
+) : EntryDownloadLifecycleFeature {
+    private val downloadTypes = EntryDownloadLifecycleBaseConsequence.entries
+        .map { consequence ->
+            evaluation.applicableProviderTypes<EntryDownloadProcessor>(
+                feature = ENTRY_DOWNLOAD_LIFECYCLE_FEATURE_ID,
+                integration = ENTRY_DOWNLOAD_LIFECYCLE_BASE_INTEGRATION_ID,
+                consequence = consequence.id,
+            )
+        }
+        .also { selectedTypes ->
+            check(selectedTypes.distinct().size <= 1) {
+                "Download lifecycle consequences selected different provider sets: $selectedTypes"
+            }
+        }
+        .firstOrNull()
+        .orEmpty()
+    private val bookmarkProtectedTypes = evaluation.applicableProviderTypes<EntryBookmarkProcessor>(
+        feature = ENTRY_DOWNLOAD_LIFECYCLE_FEATURE_ID,
+        integration = ENTRY_DOWNLOAD_LIFECYCLE_BOOKMARK_PROTECTION_INTEGRATION_ID,
+        consequence = ENTRY_DOWNLOAD_LIFECYCLE_BOOKMARK_PROTECTION_CONSEQUENCE_ID,
+    )
     private val ownerResolver = EntryDownloadOwnerResolver(entryRepository)
     private val eventMutex = Mutex()
     private val downloadAheadTriggered = mutableSetOf<EntryDownloadIdentity>()
 
-    override suspend fun onEvent(event: EntryDownloadLifecycleEvent) {
+    override fun isApplicable(type: EntryType): Boolean = type in downloadTypes
+
+    override suspend fun onEvent(event: EntryDownloadLifecycleEvent): EntryDownloadLifecycleResult {
+        if (!isApplicable(event.visibleEntry.type)) {
+            return EntryDownloadLifecycleResult.Inapplicable(event.visibleEntry.type)
+        }
         eventMutex.lock()
         try {
             when (event) {
@@ -33,6 +60,7 @@ internal class EntryDownloadLifecycleManager(
         } finally {
             eventMutex.unlock()
         }
+        return EntryDownloadLifecycleResult.Handled
     }
 
     private suspend fun afterMarkedConsumed(event: EntryDownloadLifecycleEvent.MarkedConsumed) {
@@ -46,6 +74,7 @@ internal class EntryDownloadLifecycleManager(
         if (amount <= 0) return
 
         val currentOwner = ownerResolver.resolve(event.visibleEntry, listOf(event.child)).singleOrNull() ?: return
+        if (!isApplicable(currentOwner.entry.type)) return
         val identity = EntryDownloadIdentity.from(currentOwner.entry, event.child)
         if (identity in downloadAheadTriggered) return
 
@@ -54,7 +83,7 @@ internal class EntryDownloadLifecycleManager(
         if (currentIndex < 0) return
         val next = readingOrder.getOrNull(currentIndex + 1) ?: return
         val nextOwner = ownerResolver.resolve(event.visibleEntry, listOf(next)).singleOrNull() ?: return
-        val downloads = downloadInteraction()
+        if (!isApplicable(nextOwner.entry.type)) return
         if (
             !downloads.isDownloaded(currentOwner.entry, event.child) ||
             !downloads.isDownloaded(nextOwner.entry, next)
@@ -65,6 +94,7 @@ internal class EntryDownloadLifecycleManager(
         val candidates = mutableListOf<EntryDownloadOwner>()
         for (child in readingOrder.drop(currentIndex + 1).filterNot(EntryChapter::read)) {
             val owner = ownerResolver.resolve(event.visibleEntry, listOf(child)).singleOrNull() ?: continue
+            if (!isApplicable(owner.entry.type)) continue
             if (!downloads.isDownloaded(owner.entry, child)) candidates += owner
             if (candidates.size == amount) break
         }
@@ -108,15 +138,12 @@ internal class EntryDownloadLifecycleManager(
         children: List<EntryChapter>,
         deferUntilViewerCloses: Boolean,
     ) {
-        val owners = ownerResolver.resolve(visibleEntry, children)
-        val downloads = downloadInteraction()
-        owners.forEach { owner ->
-            if (isExcluded(owner.entry)) return@forEach
-            val protectsBookmarks = EntryDownloadCapabilityPolicy.protectsBookmarkedDownloads(
-                capabilityReport(),
-                owner.entry.type,
-            )
-            val eligible = if (!protectsBookmarks || downloadPreferences.removeBookmarkedChapters.get()) {
+        ownerResolver.resolve(visibleEntry, children).forEach { owner ->
+            if (!isApplicable(owner.entry.type) || isExcluded(owner.entry)) return@forEach
+            val eligible = if (
+                owner.entry.type !in bookmarkProtectedTypes ||
+                downloadPreferences.removeBookmarkedChapters.get()
+            ) {
                 owner.children
             } else {
                 owner.children.filterNot(EntryChapter::bookmark)

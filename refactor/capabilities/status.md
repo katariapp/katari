@@ -24,7 +24,8 @@ Updated: 2026-07-18
 - F01 Open completion: `106fec52e` (`(refactor): migrate open feature integration`)
 - Architecture Gate 5.0: `83b2f93e7` (`(refactor): enforce feature-facing entry boundary`)
 - F02 Continue completion: `0480ffeff` (`(refactor): migrate continue feature integration`)
-- F03–F05 are integrated in the working tree as one review batch and are not committed on the main branch yet.
+- F03–F05 completion: `846c6029f` (`(refactor): migrate core download features`)
+- F06–F08 are integrated and validated as the current review batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -32,8 +33,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F03`–`F05` — Download Runtime, Download Actions, and Automatic Downloads
-- State: complete in the working tree; awaiting review and explicit commit instruction before `F06`
+- Milestone: `F06`–`F08` — Download Lifecycle, Download Configuration, and Download Maintenance
+- State: complete and validated; next implementation batch is `F09`, `F10`, and `F13`
 
 ## Why the Plan Was Reset
 
@@ -166,6 +167,12 @@ authority or weakening the architecture.
 - [x] F05 automatic-download policy and orchestration made shared for every core Download provider
 - [x] Redundant per-type automatic-filter capability, dispatch, bindings, and generic domain policy exposure removed
 - [x] F03–F05 application consumers reconciled together; no migrated operation retains raw provider access
+- [x] F06 lifecycle events, cleanup, download-ahead, category policy, and derived Bookmark protection migrated behind one
+  graph-selected feature
+- [x] F07 download options and specialized setting visibility split into feature-owned contracts without a type map
+- [x] F08 download maintenance routes source/title rename, cache invalidation, whole-Entry removal, and source purge through
+  one feature-owned boundary
+- [x] F06–F08 application consumers reconciled together; no application production source imports the raw Download facade
 
 Focused F01 validation:
 
@@ -194,18 +201,29 @@ Focused F02 validation:
 - No application production source imports `EntryContinueInteraction`.
 - Root compilation reaches only the previously recorded Download Lifecycle report/policy errors; it reports no Continue
   migration error.
-- Full application compilation and a clean boundary check remain intentionally deferred while F03–F27 raw consumers are
+- Full application compilation and a clean boundary check remain intentionally deferred while F09–F27 raw consumers are
   inaccessible.
 
 Focused F03–F05 validation:
 
 - `spotlessApply`, Feature Graph tests, Entry-interactions API/SPI compilation, and Manga, Anime, and Book interaction
   compilation pass after combining the three isolated implementations.
-- The combined boundary census reports 34 remaining raw application references, all assigned to F06–F27. F03-only
+- At that milestone, the combined boundary census reported 34 remaining raw application references, all assigned to
+  F06–F27. F03-only
   screens and the shared Library, Updates, and Notification Receiver download paths no longer import raw download SPI.
 - Root Entry-interactions compilation reaches only the known F06 lifecycle failures: deleted `EntryCapabilityReport`,
   deleted `EntryDownloadCapabilityPolicy`, and the resulting runtime factory inference error.
 - Focused root feature tests are present but cannot execute until the independent F06 main source set compiles.
+
+Focused F06–F08 validation:
+
+- `spotlessApply`, Feature Graph tests, build-logic tests, SQLDelight migration verification, API/SPI and all production
+  type/root interaction compilation pass after combining the three implementations.
+- All 46 root Entry-interactions unit tests pass, including the graph-selected F06, F07, and F08 behavior contracts.
+- The combined boundary census has 25 remaining raw application references, all assigned to F09–F27; application
+  production code has no raw `EntryDownloadInteraction` reference.
+- FOSS application compilation advances to the recorded F09–F27 migration queue and reports no F06–F08 symbol or
+  dispatch error.
 
 ## New Phase Sequence
 
@@ -260,7 +278,7 @@ beside the graph.
 - `T01`–`T22` and `T24`–`T27` now use one owned contribution/runtime boundary or deliberate shared policy. `T23` is an
   explicit Phase 5 presentation-projection obligation.
 - No dummy feature contribution or compatibility reachability path has been added. Production graph assembly contains
-  only the real F01–F05 owners migrated so far; F06–F27 remain deliberately absent until their owning milestones.
+  only the real F01–F08 owners migrated so far; F09–F27 remain deliberately absent until their owning milestones.
 
 ## Pre-Phase 4 Census Findings
 
@@ -393,7 +411,7 @@ Approved on 2026-07-18:
   `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
-- Remaining application failures are the expected migration queue for F06–F27. Re-exporting SPI, restoring raw DI, or
+- Remaining application failures are the expected migration queue for F09–F27. Re-exporting SPI, restoring raw DI, or
   moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
@@ -440,8 +458,12 @@ Approved on 2026-07-18:
 - F05 removes the artificial automatic-filter opt-in after proving every current implementation was the same shared
   policy. A future Download provider receives automatic-download policy without type-specific delegation.
 - Application consumers use feature contracts for every F03–F05 operation. Remaining raw download access is explicitly
-  owned by F07/F08, while the independent F06 lifecycle compile failure remains visible.
+  eliminated by F06–F08; provider dispatch remains internal to the root feature coordinators.
+- F06 derives bookmark protection from Download plus Bookmarking and keeps event delivery non-optional. F07 derives
+  options and each specialized setting independently from provider presence. F08 covers every inventoried maintenance
+  event, including cleanup before source/database purge.
 
 ## Exact Next Action After Review
 
-Do not begin `F06` until the F03–F05 batch is reviewed, explicitly committed, and the user instructs continuation.
+Commit the validated F06–F08 batch, remove both its agent worktrees and branches, then start the dependency-ordered
+`F09` Consumption, `F10` Bookmarking, and `F13` Update Eligibility batch.

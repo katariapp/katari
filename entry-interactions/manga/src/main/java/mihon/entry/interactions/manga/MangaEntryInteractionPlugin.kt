@@ -11,7 +11,7 @@ import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadArchivePackagingCapability
 import mihon.entry.interactions.EntryDownloadCapability
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadParallelItemTransfersCapability
 import mihon.entry.interactions.EntryDownloadParallelSourceTransfersCapability
 import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
@@ -124,7 +124,7 @@ data class MangaEntryInteractionDependencies(
     val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val downloadPreferences: DownloadPreferences,
     val sourceManager: SourceManager,
-    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    val downloadLifecycle: EntryDownloadLifecycleEventSink,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )
 
@@ -138,6 +138,6 @@ internal data class MangaEntryInteractionRuntimeDependencies(
     val downloadCache: DownloadCache,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
-    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    val downloadLifecycle: EntryDownloadLifecycleEventSink,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )

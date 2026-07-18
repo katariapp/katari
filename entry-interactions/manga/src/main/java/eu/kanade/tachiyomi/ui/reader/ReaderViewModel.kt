@@ -40,7 +40,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
 import mihon.entry.interactions.manga.download.DownloadManager
@@ -108,8 +108,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
     private val globalLibraryPreferences: GlobalLibraryPreferences = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val localCoverManager: LocalCoverManager = Injekt.get(),
-    private val downloadLifecycle: EntryDownloadLifecycleInteraction? =
-        runCatching { Injekt.get<EntryDownloadLifecycleInteraction>() }.getOrNull(),
+    private val downloadLifecycle: EntryDownloadLifecycleEventSink = Injekt.get(),
 ) : ViewModel() {
     private val downloadManager: DownloadManager = Injekt.get()
     private val downloadProvider: DownloadProvider = Injekt.get()
@@ -505,7 +504,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
         val chapter = currentChapter.chapter.toDomainChapter()?.toEntryChapter() ?: return
         viewModelScope.launchIO {
             val visibleEntry = getEntry.await(manga.id) ?: return@launchIO
-            downloadLifecycle?.onEvent(
+            downloadLifecycle.onEvent(
                 EntryDownloadLifecycleEvent.Progressed(
                     visibleEntry = visibleEntry,
                     child = chapter,
@@ -571,7 +570,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
         val visibleEntry = manga?.let { getEntry.await(it.id) }
         val completedChapter = readerChapter.chapter.toDomainChapter()?.toEntryChapter()
         if (visibleEntry != null && completedChapter != null) {
-            downloadLifecycle?.onEvent(
+            downloadLifecycle.onEvent(
                 EntryDownloadLifecycleEvent.Completed(
                     visibleEntry,
                     completedChapter,

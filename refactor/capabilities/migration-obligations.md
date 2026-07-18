@@ -53,8 +53,19 @@ SPI boundary is not an exit gate for Phase 3.5.
   genuinely media-specific bulk candidate pool.
 - F05 owns one automatic-download selection and scheduling policy for every core Download provider. The redundant
   automatic-filter capability, dispatch, type bindings, and public domain policy were removed.
-- No F03–F05 application operation calls `EntryDownloadInteraction`; the 34 remaining raw application references are
-  assigned to F06–F27.
+- No F03–F05 application operation calls `EntryDownloadInteraction`; at that milestone the 34 remaining raw application
+  references were assigned to F06–F27.
+
+### Resolved in F06–F08: remaining Download lifecycle, configuration, and maintenance boundaries
+
+- F06 owns structured lifecycle events, cleanup policy, download-ahead, category exclusions, physical cleanup dispatch,
+  and Bookmark protection derived from Download plus Bookmarking.
+- F07 owns contextual options and global specialized-setting visibility through independent provider relationships; it
+  contains no per-type settings map or Manga presentation gate.
+- F08 owns cache invalidation, source/title rename, whole-Entry inspection/removal, migration cleanup, and cleanup before
+  source/database purge.
+- Application production code has no raw `EntryDownloadInteraction` reference. The boundary census now reports 25
+  references assigned to F09–F27.
 
 ### Resolved in Milestone 4.4: `P4-PLUGIN-TEST-HARNESS`
 
@@ -83,20 +94,19 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
 - Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01 now installs the Open contributor; providers belonging to
-  F06–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
+  content-type plugins that contribute themselves. F01–F08 now install their contributors; providers belonging to
+  F09–F27 remain deliberately unreachable rather than receiving empty placeholder contributions.
 - Required outcome: each migrated feature installs its owned contributor through application composition. Feature
   contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
 
-### `P5-DOWNLOAD-LIFECYCLE` — Cleanup bookmark protection still consumes the deleted report
+### Resolved in F06: `P5-DOWNLOAD-LIFECYCLE`
 
 - Responsible owner: Downloads lifecycle feature
 - Owning phase: Phase 5
-- Affected production paths:
-  - `entry-interactions/src/main/**/EntryDownloadLifecycleManager.kt`
-  - `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
-- Required outcome: bookmark-aware cleanup is installed from the download feature's evaluated relationship and receives
-  operational events; it does not query a type report or become a type branch.
+- Former affected production paths: the removed `EntryDownloadLifecycleManager.kt` and
+  `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
+- Resolution: bookmark-aware cleanup is installed from the Download-plus-Bookmarking relationship and receives
+  non-optional structured events. The coordinator does not query a type report or contain a concrete type branch.
 
 ### `P5-ENTRY-UI` — Entry actions still reconstruct capability support
 
@@ -106,8 +116,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F01 resolution: Open child and preview-page controls consume selected Open applicability.
 - F04 resolution: download and bookmarked-bulk controls consume selected action applicability with contextual source and
   selection blockers.
-- Remaining outcome: Bookmark-owned controls consume F10 applicability and presentation metadata; F07 owns the options
-  branch still retained in the screen model.
+- F07 resolution: the contextual options branch resolves and executes through the graph-selected options feature.
+- Remaining outcome: Bookmark-owned controls consume F10 applicability and presentation metadata.
 
 ### Resolved in F03–F05: `P5-LIBRARY-INTEGRATIONS`
 
@@ -137,13 +147,14 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 7, after their Phase 5 production migrations
 - Affected test paths:
   - the cleanup portion formerly covered by `entry-interactions/src/test/**/BookmarkDownloadVerticalContractTest.kt`;
-    its provider-backed bookmark/bulk behavior remains covered, while cleanup selection awaits the Phase 5 consumer
-  - `entry-interactions/src/test/**/EntryDownloadLifecycleManagerTest.kt`
+    F06 now covers graph-selected protection, while later contract reporting remains Phase 7 work
   - `app/src/test/**/UpdatesSelectionActionsTest.kt`
 - F04 resolution: `DownloadDropdownMenuTest` now tests only presentation of the feature-selected bookmarked consequence;
   it no longer constructs a support report.
-- Required outcome: preserve remaining cleanup and Bookmark selection assertions as graph-selected contracts. Remove
-  synthetic report construction and do not replace it with hardcoded production type expectations.
+- F06 resolution: cleanup assertions now use anonymous graph-selected Download and Bookmark providers; the old lifecycle
+  manager/report fixture was removed.
+- Required outcome: preserve remaining Bookmark selection assertions as graph-selected contracts. Remove synthetic
+  report construction and do not replace it with hardcoded production type expectations.
 
 ### `P5-PRESENTATION-PROJECTION` — Type vocabulary remains an app-owned concrete-type map
 

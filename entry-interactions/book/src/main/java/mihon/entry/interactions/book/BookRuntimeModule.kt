@@ -2,7 +2,7 @@ package mihon.entry.interactions.book
 
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryMediaCacheBucket
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryTypeRuntimeContribution
@@ -35,7 +35,7 @@ fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTy
                     getEntryWithChapters = get(),
                     entryChapterRepository = get(),
                     entryProgressRepository = progressRepository,
-                    downloadLifecycle = get<EntryDownloadLifecycleInteraction>(),
+                    downloadLifecycle = get<EntryDownloadLifecycleEventSink>(),
                     downloadsEnabled = true,
                 ),
             ),

@@ -477,6 +477,10 @@ class GetDuplicateLibraryEntriesTest {
         override suspend fun getAllEntriesByProfile(profileId: Long): List<Entry> = libraryEntries.value
         override suspend fun getReadEntriesNotInLibrary(): List<Entry> = emptyList()
         override suspend fun getReadEntriesNotInLibraryByProfile(profileId: Long): List<Entry> = emptyList()
+        override suspend fun getNonLibraryEntriesBySources(
+            sourceIds: List<Long>,
+            keepReadEntries: Boolean,
+        ): List<Entry> = emptyList()
         override suspend fun getLibraryEntries(): List<Entry> = libraryEntries.value
         override fun getLibraryEntriesAsFlow(): Flow<List<Entry>> = libraryEntries.asStateFlow()
         override fun getFavoritesBySourceId(sourceId: Long): Flow<List<Entry>> {

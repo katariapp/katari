@@ -3,7 +3,7 @@ package mihon.entry.interactions.book
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryConsumptionProcessor
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.consumptionStatus
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -14,7 +14,7 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 internal class BookConsumptionProcessor(
     private val entryProgressRepository: EntryProgressRepository,
     private val entryChapterRepository: EntryChapterRepository,
-    private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
     private val now: () -> Long = System::currentTimeMillis,
 ) : EntryConsumptionProcessor {
     override val type = EntryType.BOOK
@@ -62,7 +62,7 @@ internal class BookConsumptionProcessor(
         }
 
         if (consumed) {
-            downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
+            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, chaptersToUpdate))
         }
     }
 }

@@ -17,7 +17,7 @@ class NotificationReceiverInteractionBoundaryTest {
 
         assertTrue(source.contains("import mihon.entry.interactions.EntryOpenFeature"))
         assertTrue(source.contains("import mihon.entry.interactions.EntryConsumptionInteraction"))
-        assertTrue(source.contains("import mihon.entry.interactions.EntryDownloadInteraction"))
+        assertTrue(source.contains("import mihon.entry.interactions.EntryDownloadActionFeature"))
 
         assertActionRoutesTo(
             source,
@@ -60,7 +60,7 @@ class NotificationReceiverInteractionBoundaryTest {
         assertActionRoutesTo(source, "ACTION_DOWNLOAD_CHILDREN", """downloadChildren\(intent\.childIdsPayload\(\)\)""")
         assertTrue(source.contains("entryActionHandler.downloadChildren(entryId, childIds)"))
         assertTrue(source.contains("entryActionHandler.downloadChildren(entryId, childUrls)"))
-        assertTrue(source.contains("entryDownloadInteraction.download(entry, chapters)"))
+        assertTrue(source.contains("entryDownloadActionFeature.download("))
 
         assertFalse(source.contains("import eu.kanade.tachiyomi.source.entry.EntryType"))
         assertFalse(source.contains("EXTRA_ENTRY_TYPE"))

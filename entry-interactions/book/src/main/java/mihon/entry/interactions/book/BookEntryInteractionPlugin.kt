@@ -7,7 +7,7 @@ import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadCapability
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionProviderBinding
 import mihon.entry.interactions.EntryOpenCapability
@@ -78,6 +78,6 @@ data class BookEntryInteractionDependencies(
     val getEntryWithChapters: GetEntryWithChapters,
     val entryChapterRepository: EntryChapterRepository,
     val entryProgressRepository: EntryProgressRepository,
-    val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    val downloadLifecycle: EntryDownloadLifecycleEventSink,
     val downloadsEnabled: Boolean = false,
 )

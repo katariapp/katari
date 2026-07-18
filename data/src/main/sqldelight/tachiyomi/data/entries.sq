@@ -175,6 +175,22 @@ WHERE profile_id = :profileId
 AND favorite = 0
 GROUP BY source;
 
+getNonLibraryEntriesBySources:
+SELECT entries.*
+FROM entries
+WHERE profile_id = :profileId
+AND favorite = 0
+AND source IN :sourceIds
+AND (
+    :keepReadEntries = 0
+    OR _id NOT IN (
+        SELECT DISTINCT C.entry_id
+        FROM chapters C
+        LEFT JOIN entry_progress_state EPS ON EPS.chapter_id = C._id AND EPS.entry_id = C.entry_id
+        WHERE C.read = 1 OR EPS.completed != 0 OR coalesce(EPS.position, 0) > 0
+    )
+);
+
 deleteNonLibraryEntries:
 DELETE FROM entries
 WHERE profile_id = :profileId

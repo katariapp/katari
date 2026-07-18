@@ -16,6 +16,8 @@ import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookLocator
 import mihon.book.api.BookPublication
 import mihon.book.api.BookResource
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadManifest
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
@@ -73,6 +75,7 @@ class BookReaderDownloadedResolutionTest {
             incognitoState = mockk(relaxed = true),
             materializationStore = mockk(relaxed = true),
             downloadCache = downloadCache,
+            downloadLifecycle = noOpDownloadLifecycle(),
         )
 
         val prepared = assertIs<BookReaderPrepareResult.Success>(
@@ -88,6 +91,10 @@ class BookReaderDownloadedResolutionTest {
         verify(exactly = 0) { sourceManager.get(any()) }
         coVerify(exactly = 1) { progressRepository.get(owner.id, "volume-1", "chapter") }
         opened.close()
+    }
+
+    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
+        EntryDownloadLifecycleResult.Handled
     }
 
     private fun entry(id: Long, source: Long, url: String): Entry = Entry.create().copy(

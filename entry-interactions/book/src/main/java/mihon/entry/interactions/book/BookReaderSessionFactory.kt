@@ -12,7 +12,7 @@ import mihon.book.api.BookFailure
 import mihon.book.api.BookFailureReason
 import mihon.book.api.BookLocator
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleInteraction
+import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
 import mihon.entry.interactions.book.download.DownloadedBookContentSession
@@ -40,7 +40,7 @@ internal class BookReaderSessionFactory(
     private val incognitoState: mihon.entry.interactions.EntryReaderIncognitoState,
     private val materializationStore: BookMaterializationStore,
     private val downloadCache: BookDownloadCache,
-    private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
     private val now: () -> Long = System::currentTimeMillis,
 ) {
     suspend fun open(
@@ -297,7 +297,7 @@ internal class OpenedBookReaderSession(
     private val entryProgressRepository: EntryProgressRepository,
     private val historyRepository: HistoryRepository,
     private val incognitoState: mihon.entry.interactions.EntryReaderIncognitoState,
-    private val downloadLifecycle: EntryDownloadLifecycleInteraction? = null,
+    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
     private val now: () -> Long,
 ) : AutoCloseable {
     private val closeStack = BookSessionCloseStack().apply {
@@ -337,10 +337,10 @@ internal class OpenedBookReaderSession(
         )
         val fraction = locator.totalProgression ?: locator.progression
         if (fraction != null) {
-            downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.Progressed(entry, chapter, fraction))
+            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.Progressed(entry, chapter, fraction))
         }
         if (completed && current?.completed != true) {
-            downloadLifecycle?.onEvent(EntryDownloadLifecycleEvent.Completed(entry, chapter))
+            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.Completed(entry, chapter))
         }
     }
 

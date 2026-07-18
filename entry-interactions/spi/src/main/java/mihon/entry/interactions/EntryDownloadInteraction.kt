@@ -32,8 +32,6 @@ interface EntryDownloadInteraction {
     fun reorderSeries(entryType: EntryType, entryId: Long, moveToTop: Boolean)
     fun cancelQueuedDownloads(items: List<EntryDownloadQueueItem>)
 
-    fun settingCapabilities(): Map<EntryType, Set<EntryDownloadSettingCapability>>
-
     suspend fun queue(entry: Entry, chapters: List<EntryChapter>, autoStart: Boolean = true)
     suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean = false)
     suspend fun downloadWithOptions(
@@ -42,7 +40,6 @@ interface EntryDownloadInteraction {
         selection: EntryDownloadOptionSelection,
         startNow: Boolean = false,
     )
-    fun supportsDownloadOptions(entry: Entry): Boolean
     suspend fun resolveDownloadOptions(context: Context, entry: Entry, chapter: EntryChapter): EntryDownloadOptions?
     suspend fun resolveBulkDownloadCandidatePool(
         entry: Entry,
@@ -66,8 +63,4 @@ interface EntryDownloadInteraction {
         sourceId: Long,
     ): EntryDownloadStatus
     fun cancelQueuedDownload(entryType: EntryType, chapterId: Long): EntryDownloadStatus?
-}
-
-fun interface EntryDownloadLifecycleInteraction {
-    suspend fun onEvent(event: EntryDownloadLifecycleEvent)
 }
