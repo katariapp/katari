@@ -9,7 +9,6 @@ android {
 }
 
 dependencies {
-    api(projects.featureGraph)
     api(projects.core.common)
     api(projects.domain)
     api(projects.entryViewerSettingsApi)

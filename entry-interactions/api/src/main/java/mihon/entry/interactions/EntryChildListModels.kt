@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import dev.icerock.moko.resources.StringResource
-import kotlinx.coroutines.flow.Flow
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
@@ -39,11 +38,4 @@ sealed interface EntryChildListRow {
     data class Child(
         val chapter: EntryChapter,
     ) : EntryChildListRow
-}
-
-interface EntryChildListInteraction {
-    fun sortedForReading(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
-    fun sortedForDisplay(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
-    fun buildDisplayList(request: EntryChildListRequest): List<EntryChildListRow>
-    fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>>
 }

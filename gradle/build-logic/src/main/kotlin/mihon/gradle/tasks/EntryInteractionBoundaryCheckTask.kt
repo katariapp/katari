@@ -75,21 +75,21 @@ private class EntryInteractionBoundaryRules(
     private val typeModules: List<TypeModule>,
 ) {
     private val processorInterfaceNames = sourceIndex.files
-        .firstOrNull {
-            it.relativePath == "entry-interactions/spi/src/main/java/mihon/entry/interactions/EntryInteractionPlugin.kt"
-        }
-        ?.topLevelDeclarations
-        ?.filter { it.kind == KotlinDeclarationKind.INTERFACE }
-        ?.map { it.name }
-        ?.filter { it.startsWith("Entry") && it.endsWith("Processor") }
-        ?.toSet()
-        .orEmpty()
+        .asSequence()
+        .filter { it.relativePath.startsWith("entry-interactions/spi/src/main/") }
+        .flatMap { it.topLevelDeclarations.asSequence() }
+        .filter { it.kind == KotlinDeclarationKind.INTERFACE }
+        .map { it.name }
+        .filter { it.startsWith("Entry") && it.endsWith("Processor") }
+        .toSet()
 
-    private val internalApiNames = processorInterfaceNames + setOf(
-        "EntryInteractionPlugin",
-        "EntryInteractionRegistry",
-        "createEntryInteractions",
-    )
+    private val internalApiNames = sourceIndex.files
+        .asSequence()
+        .filter { it.relativePath.startsWith("entry-interactions/spi/src/main/") }
+        .flatMap { it.topLevelDeclarations.asSequence() }
+        .filter { it.isPublic && it.kind != KotlinDeclarationKind.FUNCTION }
+        .map(KotlinDeclaration::name)
+        .toSet()
     private val processorImplementations = sourceIndex.files
         .asSequence()
         .filter { it.owningTypeModule() != null }
@@ -200,6 +200,8 @@ private class EntryInteractionBoundaryRules(
         val findings = mutableListOf<Finding>()
 
         checkAppGradleDependencies(findings)
+        checkPublicApiGradleDependencies(findings)
+        checkRootGradleDependencies(findings)
         checkTypeModuleGradleDependencies(findings)
 
         sourceIndex.files.forEach { file ->
@@ -219,8 +221,30 @@ private class EntryInteractionBoundaryRules(
         }
 
         checkTypeModulePublicApis(findings)
+        checkApplicationApiDispatchContracts(findings)
 
         return findings
+    }
+
+    private fun checkApplicationApiDispatchContracts(findings: MutableList<Finding>) {
+        sourceIndex.files
+            .filter { it.relativePath.startsWith("entry-interactions/api/src/main/") }
+            .forEach { file ->
+                file.topLevelDeclarations
+                    .filter { declaration ->
+                        declaration.isPublic &&
+                            declaration.kind == KotlinDeclarationKind.INTERFACE &&
+                            (declaration.name == "EntryInteractions" || declaration.name.endsWith("Interaction"))
+                    }
+                    .forEach { declaration ->
+                        findings += Finding(
+                            relativePath = file.relativePath,
+                            lineNumber = declaration.lineNumber,
+                            reason = "raw Entry interaction dispatch must live in provider SPI, not " +
+                                "application-facing API: ${declaration.name}",
+                        )
+                    }
+            }
     }
 
     private fun checkAppGradleDependencies(findings: MutableList<Finding>) {
@@ -231,6 +255,7 @@ private class EntryInteractionBoundaryRules(
             .map { "projects.entryInteractions.${it.gradleAccessor}" }
             .plus("projects.entryInteractions.api")
             .plus("projects.entryInteractions.spi")
+            .plus("projects.featureGraph")
 
         file.readLines().forEachIndexed { index, line ->
             forbiddenDependencies.forEach { dependency ->
@@ -238,10 +263,25 @@ private class EntryInteractionBoundaryRules(
                     findings += Finding(
                         relativePath = "app/build.gradle.kts",
                         lineNumber = index + 1,
-                        reason = "app must depend only on projects.entryInteractions for Entry interactions: " +
+                        reason = "app must consume Entry features through projects.entryInteractions, not: " +
                             dependency,
                     )
                 }
+            }
+        }
+    }
+
+    private fun checkPublicApiGradleDependencies(findings: MutableList<Finding>) {
+        val file = root.resolve("entry-interactions/api/build.gradle.kts")
+        if (!file.isFile) return
+
+        file.readLines().forEachIndexed { index, line ->
+            if (line.contains("api(projects.featureGraph)")) {
+                findings += Finding(
+                    relativePath = "entry-interactions/api/build.gradle.kts",
+                    lineNumber = index + 1,
+                    reason = "application-facing Entry feature API must not export the internal feature graph",
+                )
             }
         }
     }
@@ -260,6 +300,21 @@ private class EntryInteractionBoundaryRules(
                         reason = "type interaction modules must depend on projects.entryInteractions.spi, not root",
                     )
                 }
+            }
+        }
+    }
+
+    private fun checkRootGradleDependencies(findings: MutableList<Finding>) {
+        val file = root.resolve("entry-interactions/build.gradle.kts")
+        if (!file.isFile) return
+
+        file.readLines().forEachIndexed { index, line ->
+            if (line.contains("api(projects.entryInteractions.spi)")) {
+                findings += Finding(
+                    relativePath = "entry-interactions/build.gradle.kts",
+                    lineNumber = index + 1,
+                    reason = "root Entry interactions must not export the provider SPI to application consumers",
+                )
             }
         }
     }

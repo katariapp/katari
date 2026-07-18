@@ -13,8 +13,23 @@ approved split makes it smaller.
 
 Current progress:
 
-- [ ] `F01` — Open is implemented and awaiting review. See [`../features/F01-open.md`](../features/F01-open.md).
+- [x] `F01` — Open committed in `106fec52e`. See [`../features/F01-open.md`](../features/F01-open.md).
+- [x] `5.0` — Application feature-access boundary completed.
 - [ ] `F02`–`F27` — Not started.
+
+## Architecture Gate 5.0 — Application Feature Access
+
+- [x] Keep app-facing feature contracts, shared operation models, and host-implemented runtime ports in
+  `entry-interactions:api`.
+- [x] Move provider-backed operational facades and their aggregate into `entry-interactions:spi`.
+- [x] Keep SPI and Feature Graph dependencies off the application's Entry-interactions compile classpath.
+- [x] Remove raw facade and graph-evaluation dependency-injection exposure from root composition.
+- [x] Derive forbidden application symbols from public SPI declarations instead of maintaining an interaction allowlist.
+- [x] Reject raw interaction dispatch contracts declared in the application-facing API.
+- [x] Make remaining raw application consumers explicit boundary failures for later `F02`–`F27` migration.
+
+No product feature is migrated as part of this gate. Compilation failures created by the access cut are its intended
+output and must be resolved through feature-owned contracts rather than by exporting SPI again.
 
 - [ ] Identify the feature owner and its current consumers from the atlas.
 - [ ] Reconcile the feature with its inventory row, including consumers whose code is already generic.
@@ -35,6 +50,8 @@ Current progress:
 
 ## Exit Gate
 
+- Application code cannot compile against provider SPI, graph evaluation, or raw operational facades through the root
+  Entry-interactions dependency.
 - Migrated features receive applicable subjects from graph evaluation.
 - Compatible new providers activate shared consequences without type or feature edits.
 - Specialized gaps are explicit obligations.

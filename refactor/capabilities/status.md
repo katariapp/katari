@@ -20,6 +20,8 @@ Updated: 2026-07-18
 - Milestone 4.2.4 commit: `c2ca736e4` (`(refactor): migrate remaining entry providers`)
 - Milestone 4.3 commit: `c88ff5fe9` (`(refactor): unify entry type runtime composition`)
 - Phase 4 completion: `17726de20` (`(refactor): replace interaction registry`)
+- Runtime-bridge boundary correction: `4b517ed53` (`(fix): discover entry runtime module bridges`)
+- F01 Open completion: `106fec52e` (`(refactor): migrate open feature integration`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -27,8 +29,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F01` — Open
-- State: implementation and manifesto review complete; awaiting milestone review
+- Milestone: `F02` — Continue
+- State: Architecture Gate 5.0 approved; F02 not started
 
 ## Why the Plan Was Reset
 
@@ -145,6 +147,13 @@ authority or weakening the architecture.
 - [x] `F01` Open owner, prerequisite, consequence, and complete consumer disposition recorded
 - [x] Open UI/notification/deep-link dispatch migrated behind one graph-derived coordinator
 - [x] Synthetic single-provider and valid-absence Open feature proofs added
+- [x] F01 committed in `106fec52e`
+- [x] Raw operational facades and their aggregate moved from exported API to provider SPI
+- [x] Root composition stopped injecting raw facades and graph-evaluation objects
+- [x] Application Entry-interactions compile classpath reduced to root plus app-facing API; SPI and Feature Graph absent
+- [x] Boundary validation derives every public SPI type instead of naming current interaction facades
+- [x] Application-facing API validation rejects raw `Entry*Interaction` contracts generically
+- [x] Decision `0019-feature-facing-application-boundary.md` reviewed and accepted
 
 Focused F01 validation:
 
@@ -154,6 +163,16 @@ Focused F01 validation:
   Book interaction compilation pass.
 - Root Entry interactions compilation reaches only the previously recorded Download Lifecycle report/policy errors; it
   reports no Open migration error.
+
+Focused Architecture Gate 5.0 validation:
+
+- Build-logic tests pass, including rejection of direct Feature Graph/SPI dependencies, SPI export, and raw interaction
+  source references.
+- Entry-interactions API, SPI, Manga, Anime, and Book debug Kotlin compilation passes after the boundary move.
+- The application's `fossCompileClasspath` contains the root Entry-interactions module and its API only; it contains
+  neither SPI nor Feature Graph.
+- Boundary validation intentionally fails on 24 application production files using 13 raw facade types. Open is absent
+  from that list because F01 already consumes its feature contract.
 
 ## New Phase Sequence
 
@@ -329,6 +348,13 @@ Approved on 2026-07-18:
   empty contribution remains valid and produces no action or obligation.
 - Every current Open consumer in the migration census has an explicit disposition. Entry-detail navigation and Continue
   are retained outside F01 because they are different behavior, not silently omitted Open consequences.
+- Architecture Gate 5.0 makes feature ownership an enforceable dependency direction rather than a naming preference.
+- Application consumers can see feature contracts and shared models but cannot see raw provider dispatch, the
+  `EntryInteractions` aggregate, Feature Graph evaluation, or selected artifacts.
+- SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
+  adding its name to an enforcement list.
+- Remaining application failures are the expected migration queue for F02–F27. Re-exporting SPI, restoring raw DI, or
+  moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
   reachability or old tests.
@@ -370,5 +396,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Review the `F01` Open contribution, coordinator boundary, and consumer dispositions. If approved, commit `F01`; do not
-begin `F02` until the next explicit continuation.
+Inventory and migrate `F02` Continue behind a feature-owned application contract. Stop after the complete F02 consumer
+disposition and manifesto review; do not begin `F03`.

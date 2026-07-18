@@ -24,6 +24,14 @@ SPI boundary is not an exit gate for Phase 3.5.
 
 ## Active Obligations
 
+### Resolved in Architecture Gate 5.0: application access to raw interactions
+
+- Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.
+- The root module no longer exposes raw facades or graph evaluation through dependency injection.
+- The application compile classpath receives `entry-interactions:api`, but not SPI or Feature Graph.
+- Generic boundary discovery now reports 24 application production files using 13 raw facade types. These are owned
+  `F02`–`F27` migration failures, not permission to re-export SPI.
+
 ### Resolved in F01: Open feature ownership
 
 - The Open provider is consumed by the `entry-open` contribution.

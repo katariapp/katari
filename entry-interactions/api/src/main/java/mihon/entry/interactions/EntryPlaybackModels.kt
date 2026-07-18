@@ -1,13 +1,5 @@
 package mihon.entry.interactions
 
-import tachiyomi.domain.entry.model.Entry
-
-interface EntryPlaybackPreferencesInteraction {
-    suspend fun snapshot(entry: Entry): EntryPlaybackPreferencesSnapshot?
-    suspend fun restore(entry: Entry, snapshot: EntryPlaybackPreferencesSnapshot)
-    suspend fun copy(sourceEntry: Entry, targetEntry: Entry)
-}
-
 data class EntryPlaybackPreferencesSnapshot(
     val dubKey: String? = null,
     val streamKey: String? = null,

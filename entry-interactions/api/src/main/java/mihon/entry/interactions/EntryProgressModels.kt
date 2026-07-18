@@ -1,19 +1,6 @@
 package mihon.entry.interactions
 
-import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryProgressLocator
-
-interface EntryProgressInteraction {
-    suspend fun snapshot(entry: Entry): EntryProgressSnapshot
-
-    suspend fun restore(entry: Entry, snapshot: EntryProgressSnapshot)
-
-    suspend fun copy(
-        sourceEntry: Entry,
-        targetEntry: Entry,
-        resourceMappings: List<EntryProgressResourceMapping>,
-    )
-}
 
 data class EntryProgressSnapshot(
     val states: List<EntryProgressStateSnapshot> = emptyList(),

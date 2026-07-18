@@ -31,6 +31,7 @@ class EntryInteractionBoundaryCheckTaskTest {
                     implementation(projects.entryInteractions.manga)
                     implementation(projects.entryInteractions.api)
                     implementation(projects.entryInteractions.spi)
+                    implementation(projects.featureGraph)
                 }
             """.trimIndent(),
         )
@@ -40,6 +41,63 @@ class EntryInteractionBoundaryCheckTaskTest {
         error.message shouldContain "projects.entryInteractions.manga"
         error.message shouldContain "projects.entryInteractions.api"
         error.message shouldContain "projects.entryInteractions.spi"
+        error.message shouldContain "projects.featureGraph"
+    }
+
+    @Test
+    fun `application-facing api cannot export the feature graph`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/api/build.gradle.kts" to
+                    """
+                        dependencies {
+                            api(projects.featureGraph)
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "must not export the internal feature graph"
+    }
+
+    @Test
+    fun `application-facing api cannot declare raw interaction dispatch`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/EntryOpenInteraction.kt" to
+                    """
+                        package mihon.entry.interactions
+
+                        interface EntryOpenInteraction
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "raw Entry interaction dispatch must live in provider SPI"
+        error.message shouldContain "EntryOpenInteraction"
+    }
+
+    @Test
+    fun `root module cannot export the provider spi`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/build.gradle.kts" to
+                    """
+                        dependencies {
+                            api(projects.entryInteractions.api)
+                            api(projects.entryInteractions.spi)
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "must not export the provider SPI"
     }
 
     @Test
@@ -86,7 +144,7 @@ class EntryInteractionBoundaryCheckTaskTest {
 
                 class AppFeature {
                     private val pluginName = EntryInteractionPlugin::class.simpleName
-                    private val factoryName = ::createEntryInteractions.name
+                    private val openName = EntryOpenInteraction::class.simpleName
                 }
             """.trimIndent(),
         )
@@ -94,7 +152,7 @@ class EntryInteractionBoundaryCheckTaskTest {
         val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
 
         error.message shouldContain "EntryInteractionPlugin is root/type-module Entry interaction internals"
-        error.message shouldContain "createEntryInteractions is root/type-module Entry interaction internals"
+        error.message shouldContain "EntryOpenInteraction is root/type-module Entry interaction internals"
     }
 
     @Test
@@ -580,7 +638,13 @@ class EntryInteractionBoundaryCheckTaskTest {
 
                 interface EntryOpenProcessor
 
+                interface EntryOpenInteraction
+
+                interface EntryInteractionPlugin
+
                 interface EntryInteractionRegistry
+
+                fun createEntryInteractions() = Unit
             """.trimIndent(),
         )
         write(

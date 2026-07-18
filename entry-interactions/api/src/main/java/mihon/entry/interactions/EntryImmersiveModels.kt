@@ -1,34 +1,11 @@
 package mihon.entry.interactions
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.VideoStream
 import eu.kanade.tachiyomi.source.entry.VideoSubtitle
-import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.entry.model.EntryChapter
-
-interface EntryImmersiveInteraction {
-    fun isSupported(entry: Entry): Boolean
-
-    fun preloadRadius(entryType: EntryType): Int
-
-    suspend fun load(
-        context: Context,
-        entry: Entry,
-        chapter: EntryChapter,
-        source: UnifiedSource,
-    ): EntryImmersiveHandle
-
-    fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRenderer
-
-    suspend fun persistProgress(handle: EntryImmersiveHandle, progress: EntryImmersiveProgress)
-
-    fun release(handle: EntryImmersiveHandle)
-}
 
 fun interface EntryImmersiveRenderer {
     @Composable

@@ -104,6 +104,17 @@ The feature that understands a relationship between capabilities must own that r
 
 A content type should not need to know every future feature that could make use of bookmarking, consumption progress, playback, or downloads. When a new feature can operate from an existing capability, it should integrate all supporting content types through shared policy.
 
+### Feature boundaries are enforceable
+
+Application consumers must depend on feature-owned contracts, not on provider collections, raw type dispatch, or graph
+evaluation details. Provider contracts and their operational dispatch exist so type modules and feature coordinators can
+compose; they are not an alternative application API.
+
+This dependency direction must be enforced by module visibility and build validation. Merely preferring a `Feature`
+name over an `Interaction` name leaves the old path available and makes correctness depend on developer convention.
+A provider may supply several different features, but only those features may expose product behavior to screens,
+workers, notifications, settings, and other application consumers.
+
 ### Composition is preferred over opt-in multiplication
 
 Support for a combination of features should be derived whenever possible. Adding another opt-in for every intersection recreates the same memory problem under a larger collection of flags.
@@ -173,6 +184,7 @@ The following are not acceptable intermediate architectures:
 - A feature-specific policy presented as the general capability mechanism.
 - Migrating consumers before the architecture can discover consumers and obligations generally.
 - Preserving compilation by keeping parallel authorities, silent fallbacks, or temporary flags with no removal path.
+- Leaving raw provider dispatch callable from application code beside feature-owned contracts.
 - Treating the successful completion of one vertical slice as proof that future features participate automatically.
 - Deferring the relationship graph, obligation model, or contract-selection mechanism until after most features have
   already been migrated by hand.

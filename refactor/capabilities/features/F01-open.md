@@ -1,6 +1,6 @@
 # F01 — Open
 
-Status: implemented; awaiting milestone review
+Status: complete; committed in `106fec52e`
 
 ## Owner and Relationship
 

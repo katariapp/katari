@@ -216,6 +216,9 @@ Move UI, policies, workers, settings, notifications, and cross-feature behavior 
 
 Primary work:
 
+- Establish the application feature-access boundary before continuing after the first Open slice: application code sees
+  feature contracts, shared models, and host-implemented runtime ports, while provider SPI, graph evaluation, and raw
+  operational dispatch remain behind the root composition module.
 - Execute the complete `F01`–`F27` register in `migration-inventory.md`; an already-generic consumer still requires an
   explicit selected or compatibility disposition.
 - Use the atlas and inventory to identify feature ownership, not to create a runtime allowlist.
