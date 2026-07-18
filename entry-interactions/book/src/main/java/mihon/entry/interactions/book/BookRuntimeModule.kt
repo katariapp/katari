@@ -3,6 +3,7 @@ package mihon.entry.interactions.book
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
+import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryTypeRuntimeContribution
 import mihon.entry.interactions.EntryTypeRuntimeModule
@@ -17,16 +18,18 @@ import mihon.entry.interactions.book.prose.HtmlProseChapterProcessor
 import mihon.entry.interactions.settings.HtmlProseSettingsProvider
 import mihon.entry.interactions.settings.ReadiumEpubSettingsProvider
 import mihon.entry.viewer.settings.ViewerSettingsProvider
-import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerGroupId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.storage.service.StorageManager
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
 
-fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTypeRuntimeModule {
+fun bookEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerInstaller): EntryTypeRuntimeModule {
     return EntryTypeRuntimeModule(EntryType.BOOK) { app ->
-        val runtime = addBookEntryInteractionRuntime(app, profilePreferenceStore)
+        val runtime = addBookEntryInteractionRuntime(app, profilePreferenceOwners)
         val progressRepository = get<EntryProgressRepository>()
         EntryTypeRuntimeContribution(
             plugin = bookEntryInteractionPlugin(
@@ -48,11 +51,30 @@ fun bookEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTy
 /** Installs generic BOOK host services. Built-in format processors are registered here when ready. */
 private fun InjektRegistrar.addBookEntryInteractionRuntime(
     app: Application,
-    profilePreferenceStore: PreferenceStore,
+    profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
 ): BookRuntimeArtifacts {
     val materializationCache = BookMaterializationCache(app)
-    val readiumSettingsProvider = ReadiumEpubSettingsProvider(profilePreferenceStore)
-    val proseSettingsProvider = HtmlProseSettingsProvider(profilePreferenceStore)
+    val readiumSettingsOwner = profilePreferenceOwners.register(
+        id = ProfilePreferenceOwnerId("entry-interactions.book.readium-settings"),
+        groups = setOf(
+            ProfilePreferenceOwnerGroupId(ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID),
+        ),
+        factory = ::ReadiumEpubSettingsProvider,
+    )
+    val proseSettingsOwner = profilePreferenceOwners.register(
+        id = ProfilePreferenceOwnerId("entry-interactions.book.prose-settings"),
+        groups = setOf(
+            ProfilePreferenceOwnerGroupId(ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID),
+        ),
+        factory = ::HtmlProseSettingsProvider,
+    )
+    val processorPreferencesOwner = profilePreferenceOwners.register(
+        id = ProfilePreferenceOwnerId("entry-interactions.book.processor-selection"),
+        keyPatterns = BookProcessorPreferences.profileKeyPatterns,
+        factory = ::BookProcessorPreferences,
+    )
+    val readiumSettingsProvider = readiumSettingsOwner.create()
+    val proseSettingsProvider = proseSettingsOwner.create()
     addSingletonFactory { materializationCache }
     addSingletonFactory<BookMaterializationStore> { get<BookMaterializationCache>() }
     addSingletonFactory { BookDownloadProvider(get<StorageManager>()) }
@@ -98,7 +120,7 @@ private fun InjektRegistrar.addBookEntryInteractionRuntime(
             store = get(),
         )
     }
-    addSingletonFactory { BookProcessorPreferences(profilePreferenceStore) }
+    addSingletonFactory { processorPreferencesOwner.create() }
     addSingletonFactory {
         BookProcessorSelectionCoordinator(
             registry = get(),

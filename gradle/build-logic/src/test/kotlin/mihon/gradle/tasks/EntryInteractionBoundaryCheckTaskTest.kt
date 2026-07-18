@@ -611,6 +611,28 @@ class EntryInteractionBoundaryCheckTaskTest {
         error.message shouldContain "generic EntryType MANGA/ANIME mapping must use EntryTypePresentationFeature"
     }
 
+    @Test
+    fun `runtime preference owner cannot bypass installed ownership handle`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/app/PreferenceModule.kt" to
+                    """
+                        package app
+
+                        class PreferenceModule {
+                            fun install() {
+                                addSingletonFactory { NewPreferences(get<ProfileStore>().profileStore()) }
+                            }
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "runtime preference owners must be created from an installed handle"
+    }
+
     private fun createBaseFixture(
         appBuildGradle: String = """
             dependencies {

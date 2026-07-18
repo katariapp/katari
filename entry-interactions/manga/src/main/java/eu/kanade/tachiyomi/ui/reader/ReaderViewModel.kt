@@ -50,7 +50,6 @@ import mihon.entry.interactions.manga.mangaProgressState
 import mihon.entry.interactions.manga.pageIndex
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import mihon.entry.interactions.reader.settings.ReaderOrientation
-import mihon.entry.interactions.reader.settings.ReaderTrackPreferences
 import mihon.entry.interactions.reader.settings.ReadingMode
 import mihon.entry.viewer.settings.ResolvedViewerSetting
 import mihon.entry.viewer.settings.ViewerSettingBinder
@@ -95,7 +94,6 @@ internal class ReaderViewModel @JvmOverloads constructor(
     private val sourceManager: SourceManager = Injekt.get(),
     private val imageSaver: ReaderImageSaver = ReaderImageSaver(Injekt.get<Application>()),
     val readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
-    private val trackPreferences: ReaderTrackPreferences = Injekt.get(),
     private val readerTracking: EntryReaderTracking = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getMergedEntry: GetMergedEntry = Injekt.get(),
@@ -1027,8 +1025,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
      */
     private fun updateTrackChapterRead(readerChapter: ReaderChapter) {
         if (incognitoMode) return
-        if (!trackPreferences.autoUpdateTrack.get()) return
-
+        if (!readerTracking.isAutomaticTrackingEnabled()) return
         val manga = manga ?: return
         val context = Injekt.get<Application>()
 

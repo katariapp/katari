@@ -19,7 +19,6 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
-import tachiyomi.core.common.preference.Preference
 import tachiyomi.domain.entry.model.Entry
 
 private val ENTRY_VIEWER_SETTINGS_FEATURE_ID = FeatureId("entry.viewer-settings")
@@ -115,7 +114,6 @@ internal class DefaultEntryViewerSettingsFeature(
         .associateBy(EntryViewerSettingsScreenProjection::surfaceId)
 
     override val destinations: List<EntryViewerSettingsDestination>
-    override val preferenceOwnership: EntryViewerSettingsPreferenceOwnership
 
     init {
         val missingProjections = surfacesById.keys - projectionsById.keys
@@ -130,7 +128,6 @@ internal class DefaultEntryViewerSettingsFeature(
         destinations = surfacesById.values
             .map { (type, surface) -> surface.toDestination(type, projectionsById.getValue(surface.id)) }
             .sortedWith(compareBy({ it.category.name }, { it.type.name }, { it.displayName }, { it.surfaceId }))
-        preferenceOwnership = derivePreferenceOwnership(surfacesById.values.map { it.second })
     }
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes
@@ -229,20 +226,3 @@ private fun ViewerSettingsProvider.toDestination(
     origin = origin,
     projection = projection,
 )
-
-private fun derivePreferenceOwnership(
-    surfaces: Collection<ViewerSettingsProvider>,
-): EntryViewerSettingsPreferenceOwnership {
-    val profileKeys = linkedSetOf<String>()
-    val appStateKeys = linkedSetOf<String>()
-    val privateKeys = linkedSetOf<String>()
-    surfaces.flatMap(ViewerSettingsProvider::settings).forEach { setting ->
-        val key = setting.profilePreference.key()
-        when {
-            Preference.isPrivate(key) -> privateKeys += Preference.stripPrivateKey(key)
-            Preference.isAppState(key) -> appStateKeys += Preference.stripAppStateKey(key)
-            else -> profileKeys += key
-        }
-    }
-    return EntryViewerSettingsPreferenceOwnership(profileKeys, appStateKeys, privateKeys)
-}

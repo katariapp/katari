@@ -3,6 +3,7 @@ package mihon.entry.interactions.manga
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
+import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryImageComponentInstaller
 import mihon.entry.interactions.EntryTypeRuntimeContribution
@@ -13,16 +14,25 @@ import mihon.entry.interactions.manga.download.DownloadProvider
 import mihon.entry.interactions.manga.reader.addMangaReaderImageComponents
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import mihon.entry.interactions.settings.EntryInteractionPreferences
-import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerGroupId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
 
-fun mangaEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTypeRuntimeModule {
+fun mangaEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerInstaller): EntryTypeRuntimeModule {
     return EntryTypeRuntimeModule(EntryType.MANGA) { app ->
         val warmup = addMangaEntryInteractionRuntime(app)
-        val viewerSettingsProvider = MangaReaderSettingsProvider(profilePreferenceStore)
+        val viewerSettingsOwner = profilePreferenceOwners.register(
+            id = ProfilePreferenceOwnerId("entry-interactions.manga.viewer-settings"),
+            groups = setOf(
+                ProfilePreferenceOwnerGroupId(ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID),
+            ),
+            factory = ::MangaReaderSettingsProvider,
+        )
+        val viewerSettingsProvider = viewerSettingsOwner.create()
         val typeViewerSettingsProvider = DefaultEntryViewerSettingsProvider(
             type = EntryType.MANGA,
             surfaces = listOf(viewerSettingsProvider),

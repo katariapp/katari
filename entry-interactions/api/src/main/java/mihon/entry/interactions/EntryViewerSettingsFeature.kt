@@ -21,12 +21,6 @@ data class EntryViewerSettingsDestination(
     val projection: EntryViewerSettingsScreenProjection,
 )
 
-data class EntryViewerSettingsPreferenceOwnership(
-    val profileKeys: Set<String>,
-    val appStateKeys: Set<String>,
-    val privateKeys: Set<String>,
-)
-
 sealed interface EntryViewerSettingsSnapshotResult {
     data class Available(val overrides: List<ViewerSettingOverride>) : EntryViewerSettingsSnapshotResult
     data class Inapplicable(val type: EntryType) : EntryViewerSettingsSnapshotResult
@@ -49,7 +43,6 @@ sealed interface EntryViewerSettingsCopyResult {
 /** Feature-owned boundary for discovery, UI projection, preferences, overrides, backup, and migration. */
 interface EntryViewerSettingsFeature {
     val destinations: List<EntryViewerSettingsDestination>
-    val preferenceOwnership: EntryViewerSettingsPreferenceOwnership
 
     fun isApplicable(type: EntryType): Boolean
 

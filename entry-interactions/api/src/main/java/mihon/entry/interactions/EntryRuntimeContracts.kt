@@ -28,6 +28,8 @@ interface EntryReaderIncognitoState {
 }
 
 interface EntryReaderTracking {
+    fun isAutomaticTrackingEnabled(): Boolean
+
     suspend fun updateChapterRead(context: Context, entryId: Long, chapterNumber: Double)
 }
 

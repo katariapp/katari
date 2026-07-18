@@ -29,8 +29,8 @@ Updated: 2026-07-18
 - F09, F10, and F13 completion: `e175cbc3f` (`(refactor): migrate entry state features`)
 - F14, F18, and F19 completion: `a03ff2a71` (`(refactor): migrate entry filtering and preview features`)
 - F20, F21, and F22 completion: `dd8fc5106` (`(refactor): migrate immersive, related, and progress features`)
-- F23 Type Presentation, F24 Library-update Notifications, F25 Viewer Settings, and F26 Media-cache Maintenance are
-  implemented and validated in the current integration batch.
+- F23 Type Presentation, F24 Library-update Notifications, F25 Viewer Settings, F26 Media-cache Maintenance, and F27
+  Profile Preference Ownership are implemented and validated in the current integration batch.
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -38,8 +38,8 @@ Updated: 2026-07-18
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F23`–`F26` — Presentation, Notifications, Viewer Settings, and Media-cache Maintenance
-- State: complete and validated; F11/F12 are active and F27 remains pending
+- Milestone: `F27` — Profile Preference Ownership
+- State: complete and validated; F11/F12 remain active
 
 ## Why the Plan Was Reset
 
@@ -505,7 +505,7 @@ Approved on 2026-07-18:
 - SPI declarations are discovered by the boundary checker, so a future provider/dispatch type is protected without
   adding its name to an enforcement list.
 - Remaining raw application boundary failures are exactly the three F11/F12 `EntryCapabilityInteraction` consumers.
-  F27 remains a tracked feature migration without raw interaction-facade failures. Re-exporting SPI, restoring
+  F27 is complete without introducing a raw interaction-facade path. Re-exporting SPI, restoring
   raw DI, or moving provider facades back into the API would contradict the manifesto rather than fix compilation.
 - Unported processor families remain visible obligations instead of being mislabeled through broad processor wrappers.
 - Compilation remains subordinate to the architecture: no dummy feature or legacy plugin fallback was added to satisfy
@@ -595,14 +595,18 @@ Approved on 2026-07-18:
 - F24 removes the Manga fallback for Book. A frozen compatibility adapter preserves shipped Manga/Anime Android
   identities; Book and future routes derive from content identity and are collision-validated.
 - F25 moves Viewer Settings into the ordinary optional plugin/provider graph, validates exact app-owned screen
-  projections, and derives hub/search, preference ownership, overrides, reset, backup, and migration consequences from
-  the same provider definitions.
+  projections, and derives hub/search, overrides, reset, backup, and migration consequences from the same provider
+  definitions; F27 owns profile preference participation.
 - F26 makes optional Media Cache provider presence sufficient for discovery, settings, preferences, manual clearing,
   launch clearing, size refresh, and structured error consequences.
 - F26 removes the root cache-bucket list, central cache-key map, hardcoded settings/startup policy, and dedicated
   current-type preference holder. Type modules retain only genuine cache access and owned descriptors.
+- F27 replaces the manually instantiated preference-owner checklist and tracker-ID loop with owner factories registered
+  at their real DI/runtime installation boundary.
+- F27 binds Entry runtime preference construction to a registered installer, discovers static and dynamic keys,
+  rejects ambiguous ownership and late registration, and keeps named legacy corrections separate from support truth.
 
 ## Exact Next Action After Review
 
-Complete the validated F26 integration, remove completed agent worktrees and branches, then continue F11/F12 and the
-pending F27 migration.
+Integrate the validated F27 branch with F11/F12, run combined application validation, then clean each integrated agent
+worktree and branch together.

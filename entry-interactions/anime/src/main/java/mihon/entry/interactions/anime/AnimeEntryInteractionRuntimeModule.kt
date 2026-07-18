@@ -3,6 +3,7 @@ package mihon.entry.interactions.anime
 import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
+import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryTypeRuntimeContribution
 import mihon.entry.interactions.EntryTypeRuntimeModule
@@ -12,16 +13,25 @@ import mihon.entry.interactions.anime.download.AnimeDownloadProvider
 import mihon.entry.interactions.anime.download.AnimeDownloader
 import mihon.entry.interactions.settings.AnimePlayerPreferences
 import mihon.entry.interactions.settings.EntryInteractionPreferences
-import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerGroupId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
 
-fun animeEntryTypeRuntimeModule(profilePreferenceStore: PreferenceStore): EntryTypeRuntimeModule {
+fun animeEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerInstaller): EntryTypeRuntimeModule {
     return EntryTypeRuntimeModule(EntryType.ANIME) { app ->
         val warmup = addAnimeEntryInteractionRuntime(app)
-        val viewerSettingsProvider = AnimePlayerPreferences(profilePreferenceStore)
+        val viewerSettingsOwner = profilePreferenceOwners.register(
+            id = ProfilePreferenceOwnerId("entry-interactions.anime.viewer-settings"),
+            groups = setOf(
+                ProfilePreferenceOwnerGroupId(ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID),
+            ),
+            factory = ::AnimePlayerPreferences,
+        )
+        val viewerSettingsProvider = viewerSettingsOwner.create()
         val typeViewerSettingsProvider = DefaultEntryViewerSettingsProvider(
             type = EntryType.ANIME,
             surfaces = listOf(viewerSettingsProvider),

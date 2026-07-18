@@ -23,9 +23,10 @@ import mihon.core.common.CustomPreferences
 import mihon.core.common.HomeScreenTabs
 import mihon.core.common.defaultHomeScreenTabs
 import mihon.core.common.toHomeScreenTabPreferenceValue
-import mihon.entry.interactions.EntryViewerSettingsPreferenceOwnership
+import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.core.common.preference.Preference
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerGroupId
 import tachiyomi.domain.library.service.DuplicatePreferences
 import tachiyomi.domain.library.service.DuplicateTitleExclusions
 import uy.kohesive.injekt.Injekt
@@ -41,7 +42,7 @@ class ProfileManager(
     private val profileStore: ProfileStoreImpl = Injekt.get(),
     private val profilesPreferences: ProfilesPreferences = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
-    private val viewerSettingsPreferenceOwnership: () -> EntryViewerSettingsPreferenceOwnership,
+    private val preferenceOwnership: ProfilePreferenceOwnership,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val switchRequests = MutableStateFlow(profilesPreferences.activeProfileId.get())
@@ -173,11 +174,9 @@ class ProfileManager(
         if (currentVersion >= LEGACY_PROFILE_MIGRATION_VERSION) return
 
         correctProfileOwnershipMismatches(currentVersion)
-        val ownership = ProfilePreferenceOwnership.derive(viewerSettingsPreferenceOwnership())
-
-        val migration = ProfilePreferenceMigration(
-            PreferenceManager.getDefaultSharedPreferences(application),
-        )
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(application)
+        val ownership = preferenceOwnership.derive(sharedPreferences.all.keys)
+        val migration = ProfilePreferenceMigration(sharedPreferences)
         migration.migrateLegacyPreferenceKeys(
             profileId = ProfileConstants.DEFAULT_PROFILE_ID,
             profileKeys = ownership.profile,
@@ -304,7 +303,10 @@ class ProfileManager(
         val profileIds = profileDatabase.getProfiles(includeArchived = true)
             .map(Profile::id)
             .ifEmpty { listOf(ProfileConstants.DEFAULT_PROFILE_ID) }
-        val profileKeys = viewerSettingsPreferenceOwnership().profileKeys
+        val profileKeys = preferenceOwnership.derive(
+            existingKeys = sharedPreferences.all.keys,
+            group = ProfilePreferenceOwnerGroupId(ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID),
+        ).profile
         profileIds.forEach { profileId ->
             profileKeys.forEach { key -> migrateProfileAppStateKeyToProfileKey(sharedPreferences, profileId, key) }
         }

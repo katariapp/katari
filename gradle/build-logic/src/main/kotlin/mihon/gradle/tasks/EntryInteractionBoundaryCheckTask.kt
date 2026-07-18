@@ -216,6 +216,7 @@ private class EntryInteractionBoundaryRules(
             checkDownloadRuntimeReferences(file, findings)
             checkSourceMediaResolutionReferences(file, findings)
             checkMediaCacheMaintenanceReferences(file, findings)
+            checkProfilePreferenceOwnerBypass(file, findings)
             checkExhaustiveEntryTypeMappings(file, findings)
             checkSuspiciousTypeBranches(file, findings)
         }
@@ -245,6 +246,32 @@ private class EntryInteractionBoundaryRules(
                         )
                     }
             }
+    }
+
+    private fun checkProfilePreferenceOwnerBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val lines = file.content.lines()
+        lines.forEachIndexed { index, line ->
+            if (!ACTIVE_PROFILE_STORE_ACCESS.containsMatchIn(line)) return@forEachIndexed
+
+            val currentCodeLine = line.substringBefore("//").trim()
+            val previousCodeLine = lines.take(index)
+                .map { it.substringBefore("//").trim() }
+                .lastOrNull { it.isNotBlank() }
+            val bindsOwnerInstaller = currentCodeLine.contains("ProfilePreferenceOwnerInstaller(") ||
+                (
+                    previousCodeLine?.contains("ProfilePreferenceOwnerInstaller(") == true &&
+                        previousCodeLine.endsWith("{")
+                    )
+            if (bindsOwnerInstaller) return@forEachIndexed
+
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = index + 1,
+                reason = "active profile/private preference stores may only bind ProfilePreferenceOwnerInstaller; " +
+                    "runtime preference owners must be created from an installed handle",
+            )
+        }
     }
 
     private fun checkAppGradleDependencies(findings: MutableList<Finding>) {
@@ -764,6 +791,10 @@ private class EntryInteractionBoundaryRules(
             Regex("""\bEntryType\.[A-Z_]+\b"""),
             Regex("""\bentry\.type\b"""),
             Regex("""\bentryType\b"""),
+        )
+
+        private val ACTIVE_PROFILE_STORE_ACCESS = Regex(
+            """\.(?:profileStore|privateStore|appStateStore)\(\s*\)""",
         )
 
         private val PUBLIC_TYPE_MODULE_ANDROID_COMPONENT_FILES = setOf(

@@ -36,7 +36,6 @@ import kotlinx.serialization.protobuf.ProtoBuf
 import mihon.entry.interactions.EntryInteractionActivityTheme
 import mihon.entry.interactions.EntryInteractionRuntimeDependencies
 import mihon.entry.interactions.EntryInteractionRuntimeWarmup
-import mihon.entry.interactions.EntryViewerSettingsFeature
 import mihon.entry.interactions.addEntryInteractionRuntime
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
@@ -48,6 +47,7 @@ import nl.adaptivity.xmlutil.core.XmlVersion
 import nl.adaptivity.xmlutil.serialization.DefaultXmlSerializationPolicy
 import nl.adaptivity.xmlutil.serialization.XML
 import nl.adaptivity.xmlutil.serialization.XmlConfig
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
 import tachiyomi.core.common.storage.AndroidStorageFolderProvider
 import tachiyomi.data.AndroidDatabaseHandler
 import tachiyomi.data.Chapters
@@ -115,6 +115,7 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory<DatabaseHandler> { AndroidDatabaseHandler(get(), get()) }
         addSingletonFactory { ProfileDatabase(get()) }
         addSingletonFactory { EntryProfileMoveService(get(), get()) }
+        addSingletonFactory { mihon.feature.profiles.core.ProfilePreferenceOwnership(get()) }
         addSingletonFactory {
             ProfileManager(
                 application = app,
@@ -122,7 +123,7 @@ class AppModule(val app: Application) : InjektModule {
                 profileStore = get(),
                 profilesPreferences = get(),
                 extensionManager = get(),
-                viewerSettingsPreferenceOwnership = { get<EntryViewerSettingsFeature>().preferenceOwnership },
+                preferenceOwnership = get(),
             )
         }
         addSingletonFactory<EntryPreferenceProvider> { ProfileSourcePreferenceProvider(app, get()) }
@@ -170,9 +171,10 @@ class AppModule(val app: Application) : InjektModule {
                 childGroupFilterDataSource = AppEntryChildGroupFilterDataSource(get(), get(), get()),
                 readerIncognitoState = AppReaderIncognitoState(get()),
                 readerTracking = AppReaderTracking(get(), get()),
-                profilePreferenceStore = get<ProfileStore>().profileStore(),
                 basePreferenceStore = get<ProfileStore>().basePreferenceStore(),
-                privatePreferenceStore = get<ProfileStore>().privateStore(),
+                profilePreferenceOwners = ProfilePreferenceOwnerInstaller(get()) {
+                    get<ProfileStore>().profileStore()
+                },
                 viewerSettingsScreenProjections = listOf(
                     SettingsMangaReaderScreen,
                     SettingsAnimePlayerScreen,

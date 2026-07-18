@@ -33,12 +33,11 @@ class EntryViewerSettingsFeatureTest {
 
         feature.isApplicable(EntryType.BOOK) shouldBe false
         feature.destinations shouldBe emptyList()
-        feature.preferenceOwnership shouldBe EntryViewerSettingsPreferenceOwnership(emptySet(), emptySet(), emptySet())
         feature.snapshot(entry) shouldBe EntryViewerSettingsSnapshotResult.Inapplicable(EntryType.BOOK)
     }
 
     @Test
-    fun `provider surfaces automatically reach projection ownership backup migration and reset`() = runTest {
+    fun `provider surfaces automatically reach projections backup migration and reset`() = runTest {
         val repository = mockk<ViewerSettingOverrideRepository>(relaxed = true)
         val first = surface("book.epub", ViewerSettingsCategory.READER)
         val second = surface("book.prose", ViewerSettingsCategory.READER)
@@ -57,11 +56,6 @@ class EntryViewerSettingsFeatureTest {
 
         feature.isApplicable(EntryType.BOOK) shouldBe true
         feature.destinations.map { it.surfaceId } shouldContainExactly listOf("book.epub", "book.prose")
-        feature.preferenceOwnership shouldBe EntryViewerSettingsPreferenceOwnership(
-            profileKeys = setOf("book.epub.layout", "book.prose.layout"),
-            appStateKeys = setOf("book.epub.session", "book.prose.session"),
-            privateKeys = setOf("book.epub.secret", "book.prose.secret"),
-        )
         feature.snapshot(entry) shouldBe EntryViewerSettingsSnapshotResult.Available(listOf(stored))
         feature.restore(target, listOf(stored)) shouldBe EntryViewerSettingsRestoreResult.Restored(1, emptySet())
         feature.copy(entry, target) shouldBe EntryViewerSettingsCopyResult.Copied(1)

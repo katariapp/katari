@@ -19,8 +19,10 @@ class AppReaderTracking(
     private val trackPreferences: TrackPreferences,
     private val trackChapter: TrackChapter,
 ) : EntryReaderTracking {
+    override fun isAutomaticTrackingEnabled(): Boolean = trackPreferences.autoUpdateTrack.get()
+
     override suspend fun updateChapterRead(context: Context, entryId: Long, chapterNumber: Double) {
-        if (!trackPreferences.autoUpdateTrack.get()) return
+        if (!isAutomaticTrackingEnabled()) return
 
         trackChapter.await(context, entryId, chapterNumber)
     }

@@ -9,12 +9,13 @@ import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
 import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
 import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
-import mihon.entry.interactions.reader.settings.ReaderTrackPreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import mihon.entry.viewer.settings.ViewerSettingBinder
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import tachiyomi.core.common.preference.PreferenceStore
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerId
+import tachiyomi.core.common.preference.ProfilePreferenceOwnerInstaller
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.service.LibraryPreferences
@@ -30,9 +31,8 @@ data class EntryInteractionRuntimeDependencies(
     val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
     val readerIncognitoState: EntryReaderIncognitoState,
     val readerTracking: EntryReaderTracking,
-    val profilePreferenceStore: PreferenceStore,
     val basePreferenceStore: PreferenceStore,
-    val privatePreferenceStore: PreferenceStore,
+    val profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
     val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
 )
 
@@ -59,8 +59,11 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     }
 
     addSingletonFactory { ReaderBasePreferences(dependencies.basePreferenceStore) }
-    addSingletonFactory { ReaderTrackPreferences(dependencies.privatePreferenceStore) }
-    addSingletonFactory { EntryInteractionPreferences(dependencies.profilePreferenceStore) }
+    val entryInteractionPreferencesOwner = dependencies.profilePreferenceOwners.register(
+        ProfilePreferenceOwnerId("entry-interactions.preview"),
+        factory = ::EntryInteractionPreferences,
+    )
+    addSingletonFactory { entryInteractionPreferencesOwner.create() }
     addSingletonFactory<ViewerSettingBinder> {
         DefaultViewerSettingBinder(
             overrideRepository = get<ViewerSettingOverrideRepository>(),
@@ -68,9 +71,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         )
     }
     val typeRuntimeContributions = listOf(
-        mangaEntryTypeRuntimeModule(dependencies.profilePreferenceStore),
-        animeEntryTypeRuntimeModule(dependencies.profilePreferenceStore),
-        bookEntryTypeRuntimeModule(dependencies.profilePreferenceStore),
+        mangaEntryTypeRuntimeModule(dependencies.profilePreferenceOwners),
+        animeEntryTypeRuntimeModule(dependencies.profilePreferenceOwners),
+        bookEntryTypeRuntimeModule(dependencies.profilePreferenceOwners),
     ).map { module ->
         module.install(this, app).also { it.validate(module.type) }
     }
