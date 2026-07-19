@@ -137,6 +137,22 @@ SPI boundary is not an exit gate for Phase 3.5.
 - App-version, Mihon import, profile-preference, SQLDelight, and extension-development migrations were reviewed and remain
   outside F11.
 
+### Exposed by F11.1: final Migration contract and dependency direction
+
+- Application consumers now have one contract for availability, selection, pair preparation, and execution. The
+  contract captures user choices but does not expose provider lookup, transfer ordering, persistence operations, or a
+  caller-owned consequence checklist.
+- The initial host boundary is preparation-only and profile-explicit. Mutation and external-effect access remains
+  unavailable until F11.2 decides atomicity, ordering, failure, and retry semantics.
+- Provider-backed base Migration consequences and optional intersections with Consumption, Bookmarking, Progress,
+  Playback Preferences, Viewer Settings, and Downloads are discoverable graph relationships. An unknown future type
+  participates through its owned provider without a central type list.
+- Boundary validation now reports 20 findings across seven production files. Fifteen F11-specific findings augment the
+  five previously visible generic/F12 findings and expose the entire legacy authority path: use-case consumers, ambient
+  flags, support/selection gates, and the concrete Manga branch.
+- No finding is allowlisted and no compatibility Feature implementation exists. F11.2-F11.5 must make the existing code
+  conform to the accepted contract rather than weakening the boundary to regain compilation.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.

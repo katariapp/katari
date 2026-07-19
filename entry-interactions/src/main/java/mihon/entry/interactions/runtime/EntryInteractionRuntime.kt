@@ -121,6 +121,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryViewerSettingsFeatureContributor,
                 EntryMediaCacheFeatureContributor,
                 EntryMergeFeatureContributor,
+                EntryMigrationFeatureContributor,
             ),
         )
     }

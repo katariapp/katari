@@ -231,6 +231,15 @@ private class EntryInteractionBoundaryRules(
                     reason = finding.reason,
                 )
             }
+        findings +=
+            checkEntryMigrationBoundaries(sourceIndex.files.map(KotlinSourceFile::toEntryMigrationBoundarySource))
+                .map { finding ->
+                    Finding(
+                        relativePath = finding.relativePath,
+                        lineNumber = finding.lineNumber,
+                        reason = finding.reason,
+                    )
+                }
 
         return findings
     }
@@ -882,6 +891,28 @@ private fun KotlinSourceFile.toEntryMergeBoundarySource(): EntryMergeBoundarySou
         content = content,
         declarations = topLevelDeclarations.map { declaration ->
             EntryMergeBoundaryDeclaration(
+                name = declaration.name,
+                isPublic = declaration.isPublic,
+                lineNumber = declaration.lineNumber,
+            )
+        },
+        references = referenceLines,
+    )
+}
+
+private fun KotlinSourceFile.toEntryMigrationBoundarySource(): EntryMigrationBoundarySource {
+    val referenceLines = buildMap {
+        imports.forEach { import ->
+            val name = import.importedFqName?.substringAfterLast(".") ?: return@forEach
+            putIfAbsent(name, import.lineNumber)
+        }
+        references.forEach { reference -> putIfAbsent(reference.name, reference.lineNumber) }
+    }
+    return EntryMigrationBoundarySource(
+        relativePath = relativePath,
+        content = content,
+        declarations = topLevelDeclarations.map { declaration ->
+            EntryMigrationBoundaryDeclaration(
                 name = declaration.name,
                 isPublic = declaration.isPublic,
                 lineNumber = declaration.lineNumber,

@@ -36,6 +36,7 @@ Updated: 2026-07-19
 - F12.5 Download ownership migration commit: `32043dabf` (`(refactor): migrate merge download ownership`)
 - F12.6 Lifecycle ownership migration commit: `01fde94fc` (`(refactor): migrate merge lifecycle ownership`)
 - F12 completion commit: `5e67ce793` (`(refactor): complete merge feature migration`)
+- F11.0 Migration planning commit: `da19e7df3` (`(docs): plan entry source migration`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -43,8 +44,8 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F11.0` — Entry Source Migration census, classification, and phase split
-- State: F12 is complete. F11.0 is implemented and awaiting architecture/semantics review.
+- Milestone: `F11.1` — Entry Source Migration feature contract and dependency boundary
+- State: F11.0 is committed. F11.1 is implemented and awaiting contract/boundary review.
 
 Focused F11.0 findings:
 
@@ -55,6 +56,24 @@ Focused F11.0 findings:
   Anime Migration behavior unavailable. Both are assigned to F11.
 - The monolithic use case's ambient options, Manga branch, raw Merge access, swallowed failures, and caller-owned transfer
   pipeline are architecture obligations, not a compilation repair list.
+
+Focused F11.1 findings:
+
+- The application contract now covers availability, selection, mutation-free pair preparation, captured execution
+  intent, explicit rejection/failure/conflict, and aggregate follow-up status without exposing an internal checklist.
+- The only host port is an explicit-profile preparation inspection. Mutation, synchronization, transaction, and
+  external-effect ports remain deliberately undefined until F11.2.
+- Base Migration behavior is derived from provider presence. Consumption, Bookmarking, Progress, Playback Preferences,
+  Viewer Settings, and Downloads are independently derived pairwise relationships; none becomes a mandatory provider
+  for type validity.
+- A synthetic provider proves that an unknown type receives all base consequences and that adding Progress activates
+  only the applicable relationship without a production matrix.
+- The boundary queue is 20 findings across seven production files: five previously visible generic/F12 findings plus 15
+  F11-specific findings covering the legacy use case, consumers, ambient flags, duplicated support/selection gates, and
+  concrete Manga authorization.
+- Formatting, build-logic tests, API/SPI and all production type/root interaction checks pass. The boundary task fails on
+  the intentional 20-item queue; FOSS compilation continues to report the already-exposed F11/F12 consumers plus
+  unrelated current-branch application errors.
 
 ## Why the Plan Was Reset
 
@@ -624,6 +643,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Review and approve the F11.0 participation classification, availability/selection semantics, phase split, and proposed
-failure-semantics direction. After approval, commit F11.0 and begin F11.1 with one agent; do not migrate consumers or
-preserve compilation before the Feature contract and dependency boundary are accepted.
+Review and approve the F11.1 application contract, preparation-host scope, and base/optional graph relationships. After
+approval, commit F11.1 and begin F11.2 as a semantics-only audit; do not add mutation host ports or migrate consumers
+before transaction, partial-failure, ordering, and retry behavior are accepted.

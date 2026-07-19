@@ -1,6 +1,6 @@
 # F11 — Entry Source Migration
 
-Status: F11.0 inventory and phase split implemented; architecture decisions awaiting review
+Status: F11.0 committed; F11.1 contract and dependency boundary implemented and awaiting review
 
 ## Architectural Classification
 
@@ -17,6 +17,10 @@ additional type support flags.
 
 Existing consequences remain independently owned:
 
+- F09 owns consumption applicability and media mutation; F11 owns Migration-specific consumed-state transfer only when
+  that capability composes with Migration.
+- F10 owns bookmarking applicability and media mutation; F11 owns Migration-specific bookmark-state transfer only when
+  that capability composes with Migration.
 - F15 owns progress copy and resource mappings.
 - F16 owns playback-preference copy.
 - F25 owns viewer-setting copy and legacy viewer-state normalization.
@@ -40,7 +44,7 @@ absorbed because they share the word "migration."
 - Provider absence is a structured unavailable result. It is not an exception, invalid content type, false provider, or
   reason to suppress unrelated interactions.
 - Cross-feature work uses the owning Feature contract. F11 cannot dispatch raw providers or duplicate applicability
-  rules for Progress, Playback Preferences, Viewer Settings, Downloads, or Merge.
+  rules for Consumption, Bookmarking, Progress, Playback Preferences, Viewer Settings, Downloads, or Merge.
 - Host ports expose only source synchronization, F11-owned persistence transitions, and external effects needed by the
   workflow. Screens and other features cannot borrow them as general repositories.
 - Cancellation propagates. Operational failures become structured outcomes and cannot be swallowed while callers report
@@ -64,7 +68,7 @@ also includes code that still compiles because it never consulted the former cap
 | Configuration and dialog options | Chapter state, categories, notes, custom cover, and Download cleanup are explicit intent options. Contextual availability comes from current Entry state and owning Features, not a type table. |
 | Execution owner | `MigrateEntryUseCase` currently owns the complete workflow, reads ambient preferences, returns `Unit`, and swallows every non-cancellation failure. Its authority moves behind `EntryMigrationFeature`; it is removed rather than retained as a parallel coordinator. |
 | Target synchronization | Source synchronization is a required precondition through a purpose-specific host operation. A sync failure cannot be reported as a successful migration. |
-| Child state transfer | F11 owns matching source/target children and transferring consumed/bookmarked/fetch state when requested. Matching and resource mappings are shared policy, not Manga logic. |
+| Child state transfer | F11 owns source/target matching and the captured child-state option. Consumed and bookmarked transfer are independent Migration + F09/F10 relationships; provider absence must omit only that portion. Fetch-state policy remains F11-owned contextual state. Matching and resource mappings are shared policy, not Manga logic. |
 | Progress | F11 supplies resource mappings to F15. Provider absence is a valid skipped result; incompatible types are rejected before execution. |
 | Playback preferences | F11 invokes F16 without an Anime gate. The owning Feature decides applicability. |
 | Viewer settings | F11 invokes F25. The Manga legacy bitfield normalization still present in `MigrateEntryUseCase` must move behind F25 rather than becoming an F11 type branch. |
@@ -145,6 +149,41 @@ Review request: approve participation, availability/selection semantics, and the
 Exit gate: the final dependency direction is enforceable even if all current consumers no longer compile.
 
 Review request: approve the public intent/results and host ownership before orchestration is implemented.
+
+Implementation record:
+
+- `EntryMigrationFeature` is now the application boundary for availability, Library-selection preparation, pair
+  preparation, and execution. Pair preparation issues an opaque reference; execution receives that reference, explicit
+  copy/replace mode, and a captured set of user-selectable options.
+- Results distinguish rejection, preparation failure, stale preparation, primary-transition failure, and applied work.
+  Applied work exposes only an aggregate complete/incomplete follow-up state, so callers cannot reconstruct or drive the
+  internal consequence pipeline.
+- The first host contract is deliberately preparation-only: an explicit profile host can inspect the authoritative
+  source/target pair and custom-cover context. Mutation, synchronization, transaction, and external-effect ports remain
+  absent until F11.2 establishes their semantics.
+- The feature contribution derives the complete base Migration workflow from Migration provider presence. Consumption,
+  Bookmarking, Progress, Playback Preferences, Viewer Settings, and Downloads are independent pairwise relationships
+  selected only when both Migration and the owning capability are present.
+- A synthetic unknown content type with a Migration provider receives every base consequence and the shared behavior
+  contract. Adding its Progress provider activates Progress copy without changing its base Migration relationship or a
+  production-type list.
+- Build enforcement prevents application consumers from retaining the transitional capability facade, support methods,
+  or legacy use case; prevents F11-owned code from reading ambient preferences or authorizing concrete `EntryType.*`
+  values; and reserves F11 host ports for the root coordinator and segregated app adapters.
+- The complete boundary queue is now 20 findings across seven files. Five were the earlier generic/F12 findings; the 15
+  newly exposed F11 findings identify the legacy use case and its DI/UI consumers, ambient option reads, duplicated
+  support/selection gates, and the Manga-specific branch. These are migration input, not allowlisted exceptions.
+- F11.1 does not provide a compatibility implementation, bind a coordinator, define mutation semantics, or migrate a
+  consumer. Those remain F11.2-F11.5 work.
+
+Validation record:
+
+- Formatting, build-logic tests, API/SPI compilation, root interaction tests, and Manga/Anime/Book interaction
+  compilation pass.
+- The full boundary task intentionally fails with the recorded 20-item F11 queue. Running formatting checks with that
+  migration gate excluded passes.
+- FOSS application compilation still reaches the already-exposed raw F11/F12 migration consumers and unrelated
+  branch-level application errors. F11.1 changes no application source and adds no compatibility path to conceal them.
 
 ### F11.2 — Primary transaction and external-effect semantics
 
