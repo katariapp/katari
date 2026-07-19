@@ -173,6 +173,19 @@ SPI boundary is not an exit gate for Phase 3.5.
 - These findings are recorded in accepted decision
   `0021-migration-transaction-and-consequence-semantics.md`; no production mutation boundary was introduced in F11.2.
 
+### Resolved and exposed by F11.3: primary Migration ownership
+
+- The shared provider-selected coordinator, explicit-profile strict synchronization, optimistic primary transition,
+  stable operation replay, F12 transaction participation, and operation/consequence persistence are implemented.
+- `MigrateEntryUseCase` and its DI binding are removed rather than wrapped. Primary Entry/Library/category/child/tracking
+  work no longer has a second orchestration authority or a blanket failure catch.
+- SQLDelight migration 38 introduces the durable F11 operation/consequence boundary. Cross-feature payload creation and
+  delivery deliberately remain absent until F11.4.
+- Boundary validation now reports exactly 10 findings across five application files. They are the intentional F11.5
+  Entry, Library, dialog, and list consumers; none is allowlisted or hidden behind a compatibility implementation.
+- F11.4 still owns immutable Progress, Playback Preferences, Viewer Settings, Download, and staged-cover consequences,
+  including verified Download completion. F11.5 still owns every UI, Browse, source/search, and configuration consumer.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.

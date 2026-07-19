@@ -9,7 +9,7 @@ import java.util.UUID
 internal class EntryMergeMigrationCoordinator(
     private val host: EntryMergeHost,
 ) : EntryMergeMigrationFeature {
-    override suspend fun applyReplacement(
+    override suspend fun participateInReplacementTransaction(
         intent: EntryMergeMigrationReplacementIntent,
     ): EntryMergeMigrationReplacementResult {
         require(intent.current.profileId == intent.replacement.profileId) {

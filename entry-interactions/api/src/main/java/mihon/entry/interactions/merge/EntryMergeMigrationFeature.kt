@@ -4,7 +4,10 @@ import tachiyomi.domain.entry.model.Entry
 
 /** Narrow cooperation boundary used by Entry Migration; it does not expose Merge membership. */
 interface EntryMergeMigrationFeature {
-    suspend fun applyReplacement(intent: EntryMergeMigrationReplacementIntent): EntryMergeMigrationReplacementResult
+    /** Applies Merge-owned membership changes while participating in the caller's database transaction. */
+    suspend fun participateInReplacementTransaction(
+        intent: EntryMergeMigrationReplacementIntent,
+    ): EntryMergeMigrationReplacementResult
 }
 
 data class EntryMergeMigrationReplacementIntent(

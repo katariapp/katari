@@ -72,6 +72,7 @@ class GetUpcomingEntriesTest {
         override suspend fun insert(entry: Entry): Long = entry.id
         override suspend fun insertOrUpdate(entry: Entry): Entry = entry
         override suspend fun update(entry: Entry): Boolean = true
+        override suspend fun update(entry: Entry, profileId: Long): Boolean = true
         override suspend fun updateFromSource(entry: Entry): Boolean = true
         override suspend fun setViewerFlags(id: Long, viewerFlags: Long): Boolean = true
         override suspend fun setChapterFlags(id: Long, flags: Long): Boolean = true

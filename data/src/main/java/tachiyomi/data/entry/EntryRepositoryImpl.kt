@@ -310,9 +310,12 @@ class EntryRepositoryImpl(
     }
 
     override suspend fun update(entry: Entry): Boolean {
+        return update(entry, profileProvider.activeProfileId)
+    }
+
+    override suspend fun update(entry: Entry, profileId: Long): Boolean {
         return try {
-            partialUpdate(entry)
-            true
+            partialUpdate(entry, profileId)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             false
@@ -344,16 +347,15 @@ class EntryRepositoryImpl(
     private suspend fun updateField(id: Long, transform: Entry.() -> Entry): Boolean {
         val entry = getEntryById(id) ?: return false
         return try {
-            partialUpdate(transform(entry))
-            true
+            partialUpdate(transform(entry), profileProvider.activeProfileId)
         } catch (e: Exception) {
             logcat(LogPriority.ERROR, e)
             false
         }
     }
 
-    private suspend fun partialUpdate(entry: Entry) {
-        handler.await {
+    private suspend fun partialUpdate(entry: Entry, profileId: Long): Boolean {
+        return handler.await {
             entriesQueries.update(
                 source = entry.source,
                 url = entry.url,
@@ -381,8 +383,8 @@ class EntryRepositoryImpl(
                 memo = MemoColumnAdapter.encode(entry.memo),
                 type = entry.type.name.lowercase(),
                 entryId = entry.id,
-                profileId = profileProvider.activeProfileId,
-            )
+                profileId = profileId,
+            ) > 0L
         }
     }
 

@@ -29,7 +29,6 @@ import mihon.domain.extension.interactor.GetExtensionStores
 import mihon.domain.extension.interactor.RemoveExtensionStore
 import mihon.domain.extension.interactor.UpdateExtensionStores
 import mihon.domain.extension.repository.ExtensionStoreRepository
-import mihon.domain.migration.usecases.MigrateEntryUseCase
 import mihon.domain.upcoming.interactor.GetUpcomingEntries
 import mihon.entry.viewer.settings.ViewerSettingOverrideRepository
 import tachiyomi.data.category.CategoryRepositoryImpl
@@ -145,13 +144,6 @@ class DomainModule : InjektModule {
         addFactory { FetchInterval(get()) }
         addFactory { SetEntryViewerFlags(get()) }
         addFactory { UpdateEntry(get(), get()) }
-        addFactory {
-            MigrateEntryUseCase(
-                get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),
-                get(), get(),
-            )
-        }
-
         addSingletonFactory<ReleaseService> { ReleaseServiceImpl(get(), get()) }
         addFactory { GetApplicationRelease(get(), get()) }
 

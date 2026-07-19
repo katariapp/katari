@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.source.entry.SEntryChapter
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -354,6 +355,68 @@ class SyncEntryWithSourceTest {
         )
 
         updatedEntries.last().dateAdded shouldBe 900L
+    }
+
+    @Test
+    fun `strict synchronization pins entry updates to the requested profile`() = runTest {
+        val repository = mockEntryRepository()
+        coEvery { repository.update(any(), 8L) } returns true
+        val stored = entry().copy(profileId = 8L, title = "Stored")
+
+        sync(
+            source = TestSource(details = sourceEntry(title = "Remote")),
+            entryRepository = repository,
+        ).syncStrictly(
+            entry = stored,
+            profileId = 8L,
+            updateLibraryTitles = true,
+            fetchChapters = false,
+        )
+
+        coVerify(exactly = 1) { repository.update(match { it.title == "Remote" }, 8L) }
+        coVerify(exactly = 0) { repository.update(any()) }
+    }
+
+    @Test
+    fun `strict synchronization rejects swallowed chapter insertion failure`() = runTest {
+        val chapters = chapterRepository(emptyList())
+        coEvery { chapters.insertOrUpdate(any()) } returns emptyList()
+
+        val error = runCatching {
+            sync(
+                source = TestSource(chapters = listOf(sourceChapter())),
+                repository = chapters,
+            ).syncStrictly(
+                entry = entry().copy(profileId = 8L),
+                profileId = 8L,
+                updateLibraryTitles = false,
+                fetchDetails = false,
+            )
+        }.exceptionOrNull()
+
+        error.shouldBeInstanceOf<IllegalStateException>()
+    }
+
+    @Test
+    fun `strict synchronization verifies requested chapter removals`() = runTest {
+        val retained = chapter(id = 1L, url = "/old", sourceOrder = 0L, read = true)
+        val removed = chapter(id = 2L, url = "/current", sourceOrder = 0L)
+        val chapters = chapterRepository(listOf(retained, removed))
+        coEvery { chapters.getChapterById(removed.id) } returns removed
+
+        val error = runCatching {
+            sync(
+                source = TestSource(chapters = listOf(sourceChapter(url = "/current"))),
+                repository = chapters,
+            ).syncStrictly(
+                entry = entry().copy(profileId = 8L),
+                profileId = 8L,
+                updateLibraryTitles = false,
+                fetchDetails = false,
+            )
+        }.exceptionOrNull()
+
+        error.shouldBeInstanceOf<IllegalStateException>()
     }
 
     private fun sync(

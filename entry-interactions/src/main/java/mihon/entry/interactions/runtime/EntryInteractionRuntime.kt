@@ -9,6 +9,8 @@ import kotlinx.coroutines.launch
 import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
 import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
 import mihon.entry.interactions.host.EntryMergeHost
+import mihon.entry.interactions.host.EntryMigrationExecutionHost
+import mihon.entry.interactions.host.EntryMigrationPreparationHost
 import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
@@ -42,6 +44,8 @@ data class EntryInteractionRuntimeDependencies(
     val mergeHost: EntryMergeHost,
     val mergeLibraryEntryInitializer: suspend (Entry) -> Unit,
     val mergeCoverCleanup: suspend (Entry) -> Unit,
+    val migrationPreparationHost: EntryMigrationPreparationHost,
+    val migrationExecutionHost: EntryMigrationExecutionHost,
 )
 
 fun interface EntryInteractionRuntimeWarmup {
@@ -157,6 +161,14 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         EntryMergeConsequenceStatusCoordinator(dependencies.mergeHost, get())
     }
     addSingletonFactory<EntryMergeMigrationFeature> { EntryMergeMigrationCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMigrationFeature> {
+        DefaultEntryMigrationFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            preparationHost = dependencies.migrationPreparationHost,
+            executionHost = dependencies.migrationExecutionHost,
+            mergeMigration = get(),
+        )
+    }
     addSingletonFactory<EntryMergeChildOwnershipProjection> {
         EntryMergeChildOwnershipCoordinator(dependencies.mergeHost)
     }

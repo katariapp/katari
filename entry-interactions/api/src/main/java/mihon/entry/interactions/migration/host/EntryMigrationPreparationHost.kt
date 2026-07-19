@@ -18,6 +18,7 @@ sealed interface EntryMigrationHostInspectionResult {
     data class Ready(
         val source: Entry,
         val target: Entry,
+        val sourceCategoryIds: List<Long>,
         val sourceHasCustomCover: Boolean,
     ) : EntryMigrationHostInspectionResult
 
@@ -28,8 +29,3 @@ sealed interface EntryMigrationHostInspectionResult {
         val retryable: Boolean,
     ) : EntryMigrationHostInspectionResult
 }
-
-/*
- * Mutation, synchronization, transaction, and external-effect host operations are intentionally absent until F11.2
- * defines their authoritative ordering and failure semantics.
- */

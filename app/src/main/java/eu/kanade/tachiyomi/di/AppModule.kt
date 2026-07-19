@@ -18,6 +18,7 @@ import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
 import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
 import eu.kanade.tachiyomi.data.saver.ImageSaver
+import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
@@ -41,6 +42,7 @@ import mihon.entry.interactions.EntryInteractionRuntimeWarmup
 import mihon.entry.interactions.addEntryInteractionRuntime
 import mihon.entry.interactions.host.AppEntryMergeDuplicateCandidateHost
 import mihon.entry.interactions.host.AppEntryMergeHost
+import mihon.entry.interactions.host.AppEntryMigrationHost
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
 import mihon.feature.profiles.core.ProfileManager
@@ -63,6 +65,7 @@ import tachiyomi.data.History
 import tachiyomi.data.MemoColumnAdapter
 import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
+import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.service.EntryMetadataUpdateHooks
@@ -180,6 +183,42 @@ class AppModule(val app: Application) : InjektModule {
                     preferences.sortChapterByAscendingOrDescending.get()
             },
         )
+        val migrationHost = AppEntryMigrationHost(
+            handler = get(),
+            synchronize = { entry, profileId ->
+                val updateLibraryTitles = LibraryPreferences(
+                    get<ProfileStore>().profileStore(profileId),
+                ).updateMangaTitles.get()
+                get<SyncEntryWithSource>().syncStrictly(
+                    entry = entry,
+                    profileId = profileId,
+                    updateLibraryTitles = updateLibraryTitles,
+                )
+            },
+            prepareTracks = { source, target, tracks ->
+                val sourceManager = get<SourceManager>()
+                val trackerManager = get<TrackerManager>()
+                val sourceTracking = sourceManager.get(source.source)?.let {
+                    EntryTrackingSource.from(it, sourceManager.getDisplayInfo(source.source))
+                }
+                val targetTracking = sourceManager.get(target.source)?.let {
+                    EntryTrackingSource.from(it, sourceManager.getDisplayInfo(target.source))
+                }
+                val enhancedServices = trackerManager.trackers.filterIsInstance<EnhancedTracker>()
+                tracks.mapNotNull { track ->
+                    val targetTrack = track.copy(entryId = target.id)
+                    val service = enhancedServices.firstOrNull {
+                        it.isTrackFrom(targetTrack, source, sourceTracking)
+                    }
+                    if (service != null && targetTracking != null) {
+                        service.migrateTrack(targetTrack, target, targetTracking)
+                    } else {
+                        targetTrack
+                    }
+                }
+            },
+            hasCustomCover = { entryId -> get<CoverCache>().getCustomCoverFile(entryId).exists() },
+        )
         addEntryInteractionRuntime(
             app = app,
             dependencies = EntryInteractionRuntimeDependencies(
@@ -211,6 +250,8 @@ class AppModule(val app: Application) : InjektModule {
                 mergeCoverCleanup = { entry ->
                     get<EntryRemovalCleanupInteraction>().cleanupAfterLibraryRemoval(entry)
                 },
+                migrationPreparationHost = migrationHost,
+                migrationExecutionHost = migrationHost,
             ),
         )
 

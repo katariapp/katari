@@ -31,7 +31,7 @@ enum class EntryMigrationMode {
 /**
  * Executes choices made against a Feature-issued preparation.
  *
- * The selected options are user intent, not a downstream consequence checklist. F11 owns the ordered pipeline and
+ * The selected options are user intent, not a downstream consequence checklist. Entry Migration owns the pipeline and
  * automatically composes every applicable non-optional Feature consequence.
  */
 data class EntryMigrationExecuteIntent(

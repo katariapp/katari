@@ -81,6 +81,8 @@ interface EntryRepository {
 
     suspend fun update(entry: Entry): Boolean
 
+    suspend fun update(entry: Entry, profileId: Long): Boolean
+
     suspend fun updateFromSource(entry: Entry): Boolean
 
     suspend fun setViewerFlags(id: Long, viewerFlags: Long): Boolean

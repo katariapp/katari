@@ -15,6 +15,8 @@ import mihon.feature.graph.allOf
 
 internal val ENTRY_MIGRATION_FEATURE_ID = FeatureId("entry.migration")
 internal val ENTRY_MIGRATION_BASE_INTEGRATION_ID = FeatureIntegrationId("entry.migration.provider")
+internal val ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID = FeatureIntegrationId("entry.migration.consumption")
+internal val ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID = FeatureIntegrationId("entry.migration.bookmarking")
 
 private val ENTRY_MIGRATION_FEATURE_OWNER = ContributionOwner("entry-migration")
 
@@ -95,7 +97,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         behavioralContracts = listOf(EntryMigrationBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = FeatureIntegrationId("entry.migration.consumption"),
+                        id = ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID,
                         prerequisites = allOf(
                             migration,
                             CapabilityExpression.Provided(EntryConsumptionCapability.definition),
@@ -103,7 +105,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         sharedConsequences = EntryMigrationConsumptionConsequence.entries,
                     ),
                     FeatureIntegration(
-                        id = FeatureIntegrationId("entry.migration.bookmarking"),
+                        id = ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID,
                         prerequisites = allOf(
                             migration,
                             CapabilityExpression.Provided(EntryBookmarkCapability.definition),

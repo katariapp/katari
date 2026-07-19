@@ -38,6 +38,7 @@ Updated: 2026-07-19
 - F12 completion commit: `5e67ce793` (`(refactor): complete merge feature migration`)
 - F11.0 Migration planning commit: `da19e7df3` (`(docs): plan entry source migration`)
 - F11.1 Migration boundary commit: `4804a8b41` (`(refactor): define migration feature boundary`)
+- F11.2 transaction semantics commit: `de55ae95f` (`(docs): define migration transaction semantics`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -45,8 +46,8 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F11.2` — Entry Source Migration transaction and consequence semantics
-- State: F11.0-F11.1 are committed. F11.2 decision `0021` was accepted on 2026-07-19 and awaits commit.
+- Milestone: `F11.3` — Entry Source Migration shared coordinator and primary transfer
+- State: F11.0-F11.2 are committed. F11.3 is implemented, validated within its intentional boundary, and awaits review.
 
 Focused F11.0 findings:
 
@@ -90,6 +91,20 @@ Focused F11.2 findings:
   committed result after process death and rejects reuse of the same preparation with different intent.
 - The accepted semantics and authoritative failure table are in decision `0021`; F11.2 changes documentation only and
   introduces no write host, compatibility implementation, consumer migration, or behavior change.
+
+Focused F11.3 findings:
+
+- The provider-selected shared coordinator now owns preparation, optimistic validation, strict synchronization, child
+  matching, primary copy/replace state, stable replay, and structured results without a production type matrix.
+- Strict synchronization pins Entry writes to the captured profile and verifies persistence that the ordinary chapter
+  repositories may report best-effort. Partial synchronization never becomes an applied Migration.
+- App-owned Entry/Library/category/child/tracking updates, operation identity, and prepared consequence rows commit in
+  one transaction. Replace invokes F12 through its narrow Feature inside the same database transaction; rollback tests
+  prove nested participant work cannot outlive an aborted outer transition.
+- Migration operation/consequence tables are introduced by SQLDelight migration 38. F11.3 installs no external delivery
+  handler and therefore does not pre-empt F11.4's owner-produced immutable payload work.
+- The legacy orchestration use case and DI binding are gone. The boundary queue is now 10 findings across five files,
+  all intentionally assigned to the F11.5 application-consumer migration.
 
 ## Why the Plan Was Reset
 
@@ -659,6 +674,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit the accepted F11.2 decision and begin F11.3. Implement the strict explicit-profile synchronization boundary,
-stable operation replay, primary transition, and F12 transaction participation before adding any optional
-post-commit consequence handler or migrating UI consumers.
+Review and commit F11.3, then begin F11.4. Prepare immutable owner-produced payloads and durable delivery for Progress,
+Playback Preferences, Viewer Settings, selected Download cleanup, and staged custom-cover promotion without migrating
+application UI consumers early.

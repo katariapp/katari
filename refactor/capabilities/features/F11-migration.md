@@ -1,6 +1,6 @@
 # F11 — Entry Source Migration
 
-Status: F11.0-F11.1 committed; F11.2 transaction and consequence semantics accepted
+Status: F11.0-F11.2 committed; F11.3 implemented and awaiting review
 
 ## Architectural Classification
 
@@ -66,20 +66,20 @@ also includes code that still compiles because it never consulted the former cap
 | Source-entry selection | `MigrateEntriesScreenModel`, selection, and configuration receive only F11-ready Entries and retain explicit identities through navigation. |
 | Automatic and manual target search | Search keeps source-owned catalogue behavior, but target filtering and acceptance use an F11 preparation result. Same-type filtering may optimize presentation but cannot be the authority. |
 | Configuration and dialog options | Chapter state, categories, notes, custom cover, and Download cleanup are explicit intent options. Contextual availability comes from current Entry state and owning Features, not a type table. |
-| Execution owner | `MigrateEntryUseCase` currently owns the complete workflow, reads ambient preferences, returns `Unit`, and swallows every non-cancellation failure. Its authority moves behind `EntryMigrationFeature`; it is removed rather than retained as a parallel coordinator. |
+| Execution owner | The legacy `MigrateEntryUseCase` owned the complete workflow, read ambient preferences, returned `Unit`, and swallowed every non-cancellation failure. F11.3 removed it rather than retaining a parallel coordinator; `EntryMigrationFeature` now owns primary execution. |
 | Target synchronization | Source synchronization is a required precondition through a purpose-specific host operation. A sync failure cannot be reported as a successful migration. |
 | Child state transfer | F11 owns source/target matching and the captured child-state option. Consumed and bookmarked transfer are independent Migration + F09/F10 relationships; provider absence must omit only that portion. Fetch-state policy remains F11-owned contextual state. Matching and resource mappings are shared policy, not Manga logic. |
 | Progress | F11 supplies resource mappings to F15. Provider absence is a valid skipped result; incompatible types are rejected before execution. |
 | Playback preferences | F11 invokes F16 without an Anime gate. The owning Feature decides applicability. |
-| Viewer settings | F11 invokes F25. The Manga legacy bitfield normalization still present in `MigrateEntryUseCase` must move behind F25 rather than becoming an F11 type branch. |
+| Viewer settings | F11 invokes F25. Deleting the legacy use case removed its Manga bitfield branch; F11.4 must restore the required normalization behind F25 rather than recreating that type branch. |
 | Categories, notes, and Entry state | Selected categories/notes plus favorite, added-date, child flags, and replacement/copy state are part of the owned primary transition. Callers do not update these independently. |
 | Tracking | Enhanced and ordinary track transfer remains tracker-owned external behavior invoked through an F11 host consequence with explicit source and target identity. |
 | Downloads | The selected cleanup option invokes F08 only after F11 applicability. Unsupported Download behavior is a structured skipped relationship, not a Migration failure. |
 | Custom cover | Contextual cover availability is inspected by the app host; selected copy is an explicit external consequence with a reported outcome. |
-| Merge cooperation | Replace mode invokes `EntryMergeMigrationFeature`; F11 never reads or rewrites membership. The two raw Merge calls are removed. |
+| Merge cooperation | Replace mode invokes `EntryMergeMigrationFeature`; F11 never reads or rewrites membership. F11.3 removed the two legacy raw Merge calls and made the narrow Feature participate in the primary transaction. |
 | Error, cancellation, and partial work | Replace the blanket catch with explicit preparation rejection, operational failure, consequence outcomes, and cancellation propagation. F11.2 fixes the exact primary transaction and external-effect ordering before implementation. |
 | Preferences | Stored migration flags and source/search preferences remain UI defaults. Execution uses the captured intent snapshot and never rereads ambient preferences midway through a workflow. |
-| Tests | Replace the Manga/Anime/Book support matrix in `MigrateEntryUseCaseTest` with a synthetic-provider shared behavior contract. Retain genuine matching, state transfer, optional-consequence, failure, and cancellation behavior tests. |
+| Tests | F11.3 replaced `MigrateEntryUseCaseTest` with a synthetic-provider shared behavior contract plus matching, state-transfer, strict persistence, replay, failure, cancellation, and transaction tests. F11.4/F11.6 extend consequence coverage. |
 | Documentation | Correct Anime Migration to supported and keep Book unavailable in the content-type reference. Document observable failure/result changes if F11.2 changes them. |
 
 ## Decisions Required Before Implementation
@@ -238,12 +238,59 @@ without optional post-commit consequences or UI fallbacks.
 
 Review request: verify shared copy/replace behavior and primary failure outcomes.
 
+Implementation record:
+
+- `DefaultEntryMigrationFeature` now derives Migration, Consumption-transfer, and Bookmark-transfer applicability from
+  the evaluated provider graph. It owns selection, mutation-free preparation, optimistic references, strict target
+  synchronization, shared child matching, copy/replace state preparation, structured failures, and cancellation.
+- Execution is profile-pinned from the Feature-issued reference. The strict synchronization path uses an explicit
+  profile for Entry writes and verifies Entry update counts, chapter removals, updates, and insertions instead of
+  accepting the existing repositories' best-effort failure suppression.
+- One purpose-specific application host prepares tracking rows and commits Entry/Library/category/child/tracking state,
+  the stable operation record, and any prepared consequence records in one optimistic database transaction. It does not
+  expose general Entry or child mutation APIs.
+- Replace mode calls the narrow F12 Migration cooperation Feature inside that transaction. The production composition
+  gives F11 and F12 the same `DatabaseHandler`; nested participant work uses SQLDelight savepoint semantics and rolls
+  back with the outer transaction. F11 never reads or writes Merge membership.
+- The Feature-issued operation identity and persisted intent fingerprint are checked before synchronization. A replay of
+  an already committed operation returns its applied complete/incomplete aggregate even after Replace changed the source
+  Library state; reuse with different intent conflicts.
+- SQLDelight migration 38 adds F11 operation and durable-consequence storage. No consequence delivery handler is
+  installed in F11.3, so the storage boundary exists without prematurely implementing F11.4.
+- `MigrateEntryUseCase` and its dependency-injection binding are removed as parallel orchestration authority. Existing
+  dialogs and screen models remain deliberately unmigrated and non-compiling until F11.5; no compatibility shim or UI
+  fallback was added.
+- Shared behavior tests cover provider absence, graph-derived child relationships, copy/replace primary preparation,
+  Merge delegation, replay, and strict-sync failure. Domain tests prove profile-pinned Entry writes and verify swallowed
+  child insertion/removal failures. Data tests prove operation/consequence persistence and outer rollback of nested
+  participant work.
+
+Validation record:
+
+- Formatting, build-logic tests, API/root/domain/data compilation, the shared Migration tests, strict synchronization
+  tests, persistence transaction tests, and SQLDelight migration verification pass.
+- The boundary queue is reduced from 20 findings across seven files to 10 findings across five application consumer
+  files. All remaining findings are the intentional F11.5 Entry, Library, dialog, and list migrations; no F11.3 host,
+  coordinator, raw provider, ambient preference, or concrete type authorization is allowlisted.
+- FOSS application compilation reports only those intentionally unmigrated F11 consumers plus the already-recorded
+  unrelated debug-launcher and profile-shortcut errors. It reports no F11.3 host, schema, runtime-wiring, or strict-sync
+  compilation error.
+
+Manifesto comparison:
+
+- Participation comes only from provider presence; absence remains valid and there is no production type matrix.
+- The shared Feature owns the workflow and its ordered primary transition; type modules contribute no Migration-specific
+  checklist or follow-up registration.
+- Cross-feature Merge work stays behind F12, profile identity is explicit, failures are structured, replay is stable,
+  and build breakage remains visible until consumers conform to the architecture.
+- Optional post-commit relationships remain assigned to F11.4 rather than being approximated inside the primary path.
+
 ### F11.4 — Cross-feature and external consequences
 
 - Integrate immutable F15 Progress, F16 Playback Preferences, F25 Viewer Settings, selected F08 Download maintenance,
   and staged custom-cover payloads according to F11.2.
 - Add at-least-once delivery, aggregate consequence status/retry, and the required F08/F15/F25 cooperation contracts.
-- Remove the Manga viewer-flags branch and both raw Merge cooperation calls.
+- Restore legacy viewer-state normalization behind F25 and prove no raw Merge cooperation call is reintroduced.
 - Prove that provider absence skips only the owning optional relationship.
 
 Exit gate: the coordinator owns the complete consequence pipeline without raw dispatch or a caller-supplied checklist.

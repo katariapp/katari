@@ -227,6 +227,7 @@ private class InMemoryEntryRepository(
     override suspend fun updateDisplayName(entryId: Long, displayName: String?): Boolean = false
     override suspend fun insert(entry: Entry): Long = nextId++
     override suspend fun update(entry: Entry): Boolean = false
+    override suspend fun update(entry: Entry, profileId: Long): Boolean = false
     override suspend fun updateFromSource(entry: Entry): Boolean = false
     override suspend fun setViewerFlags(id: Long, viewerFlags: Long): Boolean = false
     override suspend fun setChapterFlags(id: Long, flags: Long): Boolean = false

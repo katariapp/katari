@@ -78,4 +78,5 @@ enum class EntryMigrationRejection {
     SAME_ENTRY,
     UNRECOGNIZED_REFERENCE,
     INVALID_OPTIONS,
+    ENTRY_IDENTITY_CHANGED,
 }

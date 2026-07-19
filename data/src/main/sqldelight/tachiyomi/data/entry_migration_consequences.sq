@@ -1,0 +1,40 @@
+CREATE TABLE entry_migration_consequences(
+    consequence_id TEXT NOT NULL PRIMARY KEY,
+    operation_id TEXT NOT NULL,
+    profile_id INTEGER NOT NULL,
+    artifact_id TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    next_attempt_at INTEGER NOT NULL DEFAULT 0,
+    last_error TEXT,
+    created_at INTEGER NOT NULL,
+    UNIQUE(operation_id, artifact_id),
+    FOREIGN KEY(operation_id) REFERENCES entry_migration_operations(operation_id) ON DELETE CASCADE,
+    FOREIGN KEY(profile_id) REFERENCES profiles(_id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_entry_migration_consequences_pending
+ON entry_migration_consequences(next_attempt_at, created_at);
+
+countByOperation:
+SELECT count(*)
+FROM entry_migration_consequences
+WHERE operation_id = :operationId;
+
+insert:
+INSERT INTO entry_migration_consequences(
+    consequence_id,
+    operation_id,
+    profile_id,
+    artifact_id,
+    payload,
+    created_at
+)
+VALUES (
+    :consequenceId,
+    :operationId,
+    :profileId,
+    :artifactId,
+    :payload,
+    :createdAt
+);
