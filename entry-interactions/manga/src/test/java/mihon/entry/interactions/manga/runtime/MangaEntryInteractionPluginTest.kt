@@ -32,7 +32,6 @@ import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.entry.interactions.EntryProgressResourceMapping
-import mihon.entry.interactions.createEntryInteractions
 import mihon.entry.interactions.manga.download.DownloadCache
 import mihon.entry.interactions.manga.download.DownloadManager
 import mihon.entry.interactions.manga.download.model.DownloadState

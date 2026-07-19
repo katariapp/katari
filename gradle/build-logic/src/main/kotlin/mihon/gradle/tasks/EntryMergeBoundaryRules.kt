@@ -19,10 +19,38 @@ internal fun checkEntryMergeBoundaries(
             checkTransitionalSupportReferences(source, findings)
             checkApplicationApiSurface(source, findings)
             checkProfileMovePortReferences(source, findings)
+            checkOwnedMergeImplementation(source, findings)
         }
     }
 
     return findings
+}
+
+private fun checkOwnedMergeImplementation(
+    source: EntryMergeBoundarySource,
+    findings: MutableList<EntryMergeBoundaryFinding>,
+) {
+    if (!source.isMergeImplementationPath()) return
+
+    AMBIENT_PROFILE_AUTHORITY_NAMES.forEach { name ->
+        source.references[name]?.let { lineNumber ->
+            findings += EntryMergeBoundaryFinding(
+                relativePath = source.relativePath,
+                lineNumber = lineNumber,
+                reason =
+                "Merge implementation must use captured profile identity, not ambient profile authority: $name",
+            )
+        }
+    }
+
+    source.content.lines().forEachIndexed { index, line ->
+        val type = CONCRETE_ENTRY_TYPE_REFERENCE.find(line)?.groupValues?.get(1) ?: return@forEachIndexed
+        findings += EntryMergeBoundaryFinding(
+            relativePath = source.relativePath,
+            lineNumber = index + 1,
+            reason = "Merge implementation cannot gate behavior on a concrete current EntryType: $type",
+        )
+    }
 }
 
 private fun checkProfileMovePortReferences(
@@ -132,15 +160,22 @@ private fun checkApplicationApiSurface(
 private fun EntryMergeBoundarySource.isAllowedHostReference(name: String): Boolean {
     if (!name.startsWith("EntryMerge")) return false
     val fileName = relativePath.substringAfterLast("/")
-    if (
-        relativePath.startsWith("entry-interactions/src/main/") &&
-        (fileName.startsWith("EntryMerge") || fileName == "EntryInteractionRuntime.kt")
-    ) {
+    if (relativePath.startsWith(ENTRY_INTERACTIONS_MERGE_IMPLEMENTATION_ROOT)) {
         return true
     }
+    if (relativePath == ENTRY_INTERACTION_RUNTIME_PATH && fileName == "EntryInteractionRuntime.kt") return true
     return relativePath.startsWith(APPLICATION_ENTRY_INTERACTION_HOST_ROOT) &&
         fileName.contains("EntryMerge") &&
         fileName.endsWith("Host.kt")
+}
+
+private fun EntryMergeBoundarySource.isMergeImplementationPath(): Boolean {
+    return relativePath.startsWith(ENTRY_INTERACTIONS_MERGE_IMPLEMENTATION_ROOT) ||
+        relativePath.startsWith(ENTRY_INTERACTIONS_MERGE_API_ROOT) ||
+        (
+            relativePath.startsWith(APPLICATION_ENTRY_INTERACTION_HOST_ROOT) &&
+                relativePath.substringAfterLast("/").contains("EntryMerge")
+            )
 }
 
 private fun EntryMergeBoundarySource.isRawAuthorityGuardedPath(): Boolean {
@@ -175,6 +210,15 @@ internal data class EntryMergeBoundaryFinding(
 private const val ENTRY_INTERACTIONS_HOST_API_ROOT =
     "entry-interactions/api/src/main/java/mihon/entry/interactions/merge/host/"
 
+private const val ENTRY_INTERACTIONS_MERGE_API_ROOT =
+    "entry-interactions/api/src/main/java/mihon/entry/interactions/merge/"
+
+private const val ENTRY_INTERACTIONS_MERGE_IMPLEMENTATION_ROOT =
+    "entry-interactions/src/main/java/mihon/entry/interactions/merge/"
+
+private const val ENTRY_INTERACTION_RUNTIME_PATH =
+    "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt"
+
 private const val APPLICATION_ENTRY_INTERACTION_HOST_ROOT =
     "app/src/main/java/mihon/entry/interactions/host/"
 
@@ -200,6 +244,17 @@ private val TRANSITIONAL_MERGE_SUPPORT_NAMES = setOf(
     "supportsMerge",
     "canMergeSelection",
 )
+
+private val AMBIENT_PROFILE_AUTHORITY_NAMES = setOf(
+    "ActiveProfileProvider",
+    "ProfileAwareStore",
+    "ProfileManager",
+    "ProfileStore",
+    "activeProfileId",
+    "currentProfileId",
+)
+
+private val CONCRETE_ENTRY_TYPE_REFERENCE = Regex("""\bEntryType\.([A-Z][A-Z0-9_]*)\b""")
 
 private val RAW_MERGE_APPLICATION_TYPES = setOf(
     "EntryMergeGroup",

@@ -54,9 +54,9 @@ Current progress:
   [`../features/F26-media-cache-maintenance.md`](../features/F26-media-cache-maintenance.md).
 - [x] `F27` — Profile Preference Ownership complete. See
   [`../features/F27-profile-preference-ownership.md`](../features/F27-profile-preference-ownership.md).
-- [ ] `F12` — `F12.1` committed; `F12.2` semantic decision accepted; `F12.3`–`F12.7` pending. See
+- [ ] `F12` — `F12.1`–`F12.6` committed; `F12.7` implemented and awaiting completion review. See
   [`../features/F12-merge.md`](../features/F12-merge.md).
-- [ ] `F11` — Pending until the F12 boundary is accepted.
+- [ ] `F11` — Pending until the F12 completion review is accepted.
 
 ## Architecture Gate 5.0 — Application Feature Access
 

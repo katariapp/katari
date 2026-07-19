@@ -34,6 +34,7 @@ Updated: 2026-07-19
 - F12.3 Shared Merge coordinator commit: `5812f0e47` (`(refactor): implement shared merge coordinator`)
 - F12.4 Entry ownership migration commit: `e8cd191b5` (`(refactor): migrate merge ownership consumers`)
 - F12.5 Download ownership migration commit: `32043dabf` (`(refactor): migrate merge download ownership`)
+- F12.6 Lifecycle ownership migration commit: `01fde94fc` (`(refactor): migrate merge lifecycle ownership`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -41,19 +42,22 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12.6` — Library state, metadata, backup, and profile lifecycle
-- State: F12.1–F12.6 are committed. F12.7 and F11 remain pending.
+- Milestone: `F12.7` — Integrated enforcement and completion review
+- State: F12.1–F12.6 are committed. F12.7 is implemented and awaiting review; F11 remains pending.
 
-Focused F12.6 validation:
+Focused F12.7 validation:
 
-- Library removal, Entry/manual metadata refresh, and Library update consume purpose-specific concrete-owner or
-  lifecycle Features rather than editor/Library projections or raw membership.
-- Backup creation/restore is portable and explicit-profile; Profile Move uses opaque optimistic source/destination
-  snapshots and its reserved transaction participant; profile clearing is cascade-owned.
-- Durable follow-up diagnostics are aggregate and retry through the owned delivery gate. Root coordinator behavior,
-  persistence cascade/status behavior, SQLDelight migration verification, formatting, and build-logic enforcement pass.
-- The boundary census intentionally fails on exactly five findings, all assigned to F11. Application compilation stops
-  only at those deliberately unfinished consumers plus previously recorded independent migration failures.
+- The complete production census is reconciled in the F12 consequence ledger; no discovered consumer is left without an
+  owned disposition.
+- Every base consequence participates through the provider-free Merge integration. Download ownership/removal remains
+  independently derived from Download provider presence.
+- Enforcement rejects any concrete `EntryType.*` branch, ambient profile authority, raw persistence access, and host
+  borrowing outside the root Merge subtree and segregated app adapter.
+- The boundary census intentionally fails on exactly five findings, all assigned to F11. F12 has no allowlisted raw
+  consumer or compatibility authority.
+- Formatting, all interaction suites, Merge persistence behavior, SQLDelight migration verification, and build-logic
+  tests pass. FOSS compilation reaches the unfinished F11 surface and previously recorded unrelated application errors
+  without an F12-owned consumer or symbol error.
 
 ## Why the Plan Was Reset
 
@@ -623,6 +627,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Begin F12.7 integrated enforcement: rerun the complete inventory, reconcile every F12 consequence, execute affected
-behavior contracts, and compare the finished feature against every manifesto rejection rule. Continue with one agent
-and stop before declaring F12 complete.
+If the F12.7 consequence ledger, enforcement, and manifesto comparison are accepted, commit the completion milestone and
+begin F11 Migration consumer conformance. Continue with one agent; do not weaken the F12 boundary to restore compilation.

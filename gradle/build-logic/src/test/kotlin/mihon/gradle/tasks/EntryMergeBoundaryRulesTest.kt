@@ -109,6 +109,52 @@ class EntryMergeBoundaryRulesTest {
     }
 
     @Test
+    fun `unrelated root feature cannot borrow Merge host ports`() {
+        createFixture(
+            additionalFiles = hostApiFixture() + mapOf(
+                "entry-interactions/src/main/java/mihon/entry/interactions/download/EntryDownloadFeature.kt" to
+                    """
+                        package mihon.entry.interactions
+
+                        import mihon.entry.interactions.host.EntryMergeHost
+
+                        internal class EntryDownloadFeature(private val host: EntryMergeHost)
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain
+            "EntryMergeHost is an application host port reserved for the root Merge coordinator"
+    }
+
+    @Test
+    fun `Merge implementation cannot use ambient profile authority or concrete type gates`() {
+        createFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/src/main/java/mihon/entry/interactions/merge/EntryMergeCoordinator.kt" to
+                    """
+                        package mihon.entry.interactions
+
+                        class EntryMergeCoordinator(
+                            private val profiles: ActiveProfileProvider,
+                        ) {
+                            val supported = EntryType.AUDIO
+                            val profileId = profiles.activeProfileId
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "not ambient profile authority: ActiveProfileProvider"
+        error.message shouldContain "not ambient profile authority: activeProfileId"
+        error.message shouldContain "cannot gate behavior on a concrete current EntryType: AUDIO"
+    }
+
+    @Test
     fun `placing a consumer in the host package does not grant host access`() {
         createFixture(
             additionalFiles = hostApiFixture() + mapOf(
@@ -138,6 +184,7 @@ class EntryMergeBoundaryRulesTest {
                     private val repository: MergedEntryRepository,
                 ) {
                     private val rawModel = EntryMerge::class.simpleName
+                    private val rawQueries = database.merged_entriesQueries
                 }
             """.trimIndent(),
         )
@@ -148,6 +195,7 @@ class EntryMergeBoundaryRulesTest {
         error.message shouldContain "GetMergedEntry"
         error.message shouldContain "MergedEntryRepository"
         error.message shouldContain "EntryMerge"
+        error.message shouldContain "merged_entriesQueries"
     }
 
     @Test

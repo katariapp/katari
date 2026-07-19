@@ -48,7 +48,6 @@ import mihon.entry.interactions.EntryProgressStateSnapshot
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
 import mihon.entry.interactions.anime.download.AnimeDownloadManager
 import mihon.entry.interactions.anime.download.model.AnimeDownload
-import mihon.entry.interactions.createEntryInteractions
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore

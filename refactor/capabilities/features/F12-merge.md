@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1–F12.6 committed; F12.7 pending
+Status: F12.1–F12.6 committed; F12.7 implemented and awaiting completion review
 
 ## Architectural Classification
 
@@ -297,6 +297,44 @@ implemented.
 - Reconcile the complete F12 inventory row and document every consequence.
 - Compare the result with every manifesto rejection rule before marking F12 complete.
 
+Implemented result awaiting review:
+
+- The production census was rerun from all `EntryMerge*` references and every raw authority name. Every discovered
+  consumer has an owned disposition; the only remaining raw references outside the segregated host are the two F11
+  Migration cooperation calls.
+- The executable F12 contribution now records every base consequence under one provider-free integration. Download
+  ownership and removal remain a separate relationship derived from the real Download provider; absence of Download
+  does not affect the validity or availability of base Merge.
+- The reconciled consequence ledger is:
+
+  | Product consequence | Owned boundary and disposition |
+  | --- | --- |
+  | Workflow, editor, and persistence | `EntryMergeFeature` owns preparation, optimistic execution, validation, and atomic host transitions for every composed type. |
+  | Duplicate and target candidates | `EntryMergeCandidateFeature` owns catalogue and existing-Library candidate projection. |
+  | Visible navigation | `EntryMergeNavigationFeature` owns Entry, History, Updates, notification, deep-link, and legacy installed-payload destinations with explicit profile identity. |
+  | Child ownership and ordering | The internal child-ownership projection supplies ordered concrete owners to Child List, Open, Continue, Preview, Immersive, reader/player, and Domain aggregation. |
+  | Library grouping and initialization | `EntryMergeLibraryGroupingFeature` and its narrow Domain port collapse groups; durable consequences initialize newly created visible Library targets. |
+  | Library removal | `EntryMergeLibraryLifecycleFeature` owns membership changes caused by external Library removal. |
+  | Metadata refresh | `EntryMergeMetadataRefreshFeature` supplies concrete source owners to Entry refresh, metadata update, and Library update paths. |
+  | Download ownership and removal | The independent Download relationship supplies concrete owners only for types with a Download provider; F03-F08 own queue, actions, lifecycle, and maintenance behavior. |
+  | Progress and Library state | Ordered child ownership and Library grouping feed F02, F09, F17, and F22 without exposing membership. |
+  | Backup and restore | `EntryMergeBackupFeature` owns portable snapshots and explicit-destination restore with structured skipped results. |
+  | Profile move and deletion | `EntryMergeProfileMoveFeature` owns opaque optimistic snapshots and transaction participation; database cascades own profile deletion cleanup. |
+  | Migration replacement | `EntryMergeMigrationFeature` provides the narrow F11 cooperation operation; migrating its remaining callers belongs to F11. |
+  | Durable follow-up, cover cleanup, and diagnostics | The consequence journal owns Library initialization, cover cleanup, optional Download maintenance, retry, and aggregate status. |
+
+- Build enforcement rejects raw Merge authorities, direct SQL query access, host-port borrowing by unrelated features,
+  ambient profile authorities in Merge-owned code, transitional support gates, and any concrete current or future
+  `EntryType.*` branch. The rule does not contain a current-type allowlist.
+- Shared graph proof uses the feature-owned consequence declaration itself rather than a duplicated content-type or
+  capability matrix. Existing Manga and Anime tests continue to exercise provider behavior with test-only consumers
+  derived from their actual bindings; the obsolete preference-key declaration assertion was removed.
+- Formatting, the API/SPI/root/Manga/Anime/Book interaction suites, Merge persistence behavior, SQLDelight migration
+  verification, and build-logic tests pass. FOSS compilation reports the unfinished F11 Migration surface and previously
+  recorded unrelated application errors, but no F12-owned consumer or symbol error.
+- The user-facing Merge and content-type documentation was already reconciled in F12.6. F12.7 changes enforcement and
+  completion evidence only, so it introduces no additional user-facing documentation delta.
+
 Exit gate: no raw Merge authority, ambient-profile dependency, caller-owned consequence list, or known follow-up remains.
 F12 may still leave the application blocked by the independently unfinished F11 boundary.
 
@@ -325,4 +363,7 @@ matrix, mandatory provider, caller-owned completion checklist, ambient profile, 
 implementation. F12.6 replaces the remaining persistence and lifecycle checklists with purpose-owned projections,
 opaque snapshots, explicit-profile restore, transaction participation, cascade cleanup, and aggregate durable follow-up
 status. It also migrates refresh paths that compiled by borrowing another Feature's projection, so the review is not
-limited to failures found by the boundary checker.
+limited to failures found by the boundary checker. F12.7 reconciles the complete consequence ledger with the executable
+contribution, proves participation without a type-specific Merge provider, and strengthens the boundary
+against future concrete type branches, ambient profile authority, direct persistence access, and unrelated host
+borrowing. The remaining five boundary findings are owned by F11; none is an F12 exception or compatibility path.

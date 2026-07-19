@@ -21,11 +21,26 @@ import mihon.entry.interactions.host.EntryMergeProfileMoveHostTransition
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.discoverAndAssembleFeatureGraph
 import mihon.feature.graph.evaluateFeatureGraph
+import mihon.feature.graph.selectFeatureArtifacts
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
 
 class EntryMergeFeatureTest {
+    @Test
+    fun `provider-free type automatically receives every declared base consequence and behavior contract`() {
+        val plugin = plugin()
+        val graph = discoverAndAssembleFeatureGraph(listOf(plugin, EntryMergeFeatureContributor))
+        val evaluation = evaluateFeatureGraph(graph)
+        val artifacts = selectFeatureArtifacts(graph, evaluation)
+
+        EntryMergeBaseConsequence.entries.forEach { consequence ->
+            evaluation.mergeTypes(ENTRY_MERGE_BASE_INTEGRATION_ID, consequence.id) shouldBe setOf(EntryType.BOOK)
+        }
+        artifacts.behavioralContracts.single().subject.contentType shouldBe EntryType.BOOK.toContentTypeId()
+        artifacts.obligations shouldBe emptyList()
+    }
+
     @Test
     fun `download ownership projection returns ordered concrete owners for the explicit profile`() = runTest {
         val entries = listOf(entry(1L, "one"), entry(2L, "two"))
@@ -183,13 +198,8 @@ class EntryMergeFeatureTest {
     }
 
     private fun feature(host: FakeEntryMergeHost): EntryMergeFeature {
-        val plugin = object : EntryInteractionPlugin {
-            override val type = EntryType.BOOK
-            override val owner = ContributionOwner("test.book")
-            override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
-        }
         val evaluation = evaluateFeatureGraph(
-            discoverAndAssembleFeatureGraph(listOf(plugin, EntryMergeFeatureContributor)),
+            discoverAndAssembleFeatureGraph(listOf(plugin(), EntryMergeFeatureContributor)),
         )
         val delivery = EntryMergeConsequenceDelivery(
             host = host,
@@ -198,6 +208,14 @@ class EntryMergeFeatureTest {
             downloadMaintenance = { mockk(relaxed = true) },
         )
         return EntryMergeWorkflowCoordinator(evaluation, host, delivery)
+    }
+
+    private fun plugin(): EntryInteractionPlugin {
+        return object : EntryInteractionPlugin {
+            override val type = EntryType.BOOK
+            override val owner = ContributionOwner("test.book")
+            override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
+        }
     }
 
     private fun entry(id: Long, suffix: String): Entry {

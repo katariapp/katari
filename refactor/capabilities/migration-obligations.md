@@ -112,6 +112,18 @@ SPI boundary is not an exit gate for Phase 3.5.
   through feature-owned delivery rather than exposing journal rows or a caller-owned consequence list.
 - The active boundary queue is exactly five findings, all assigned to F11 Migration. No F12.6 raw consumer remains.
 
+### Verified in F12.7: integrated Merge completeness
+
+- The production census and executable contribution agree on every F12 consequence: workflow/editor/persistence,
+  candidates, navigation, child and Library ownership, lifecycle, metadata, backup, Profile Move, cascade cleanup,
+  Migration cooperation, durable delivery/status, Library initialization, cover cleanup, and the independent
+  provider-derived Download relationship.
+- Generic enforcement rejects raw authorities and SQL access outside the host, host-port borrowing by unrelated
+  features, ambient profile authority, transitional support gates, and any concrete `EntryType.*` branch in Merge-owned
+  code. No current-type list is embedded in the rule.
+- The only remaining boundary queue is exactly five F11 findings. F12 supplies the narrow Migration cooperation Feature;
+  F11 still owns replacing its two raw callers and the three remaining capability-facade consumers.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.
