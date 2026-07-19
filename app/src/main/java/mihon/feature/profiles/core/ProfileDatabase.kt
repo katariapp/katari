@@ -84,7 +84,6 @@ class ProfileDatabase(
             playback_preferencesQueries.deleteByProfile(profileId)
             entry_progress_stateQueries.deleteByProfile(profileId)
             entries_categoriesQueries.deleteByProfile(profileId)
-            merged_entriesQueries.deleteByProfile(profileId)
             historyQueries.deleteByProfile(profileId)
             excluded_scanlatorsQueries.deleteByProfile(profileId)
             entry_syncQueries.deleteByProfile(profileId)

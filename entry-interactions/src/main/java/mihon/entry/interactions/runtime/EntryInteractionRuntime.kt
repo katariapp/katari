@@ -145,6 +145,16 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryMergeLibraryGroupingFeature> { get<EntryMergeLibraryGroupingCoordinator>() }
     addSingletonFactory<EntryLibraryGroupingResolutionPort> { get<EntryMergeLibraryGroupingCoordinator>() }
     addSingletonFactory<EntryMergeBackupFeature> { EntryMergeBackupCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeLibraryLifecycleFeature> {
+        EntryMergeLibraryLifecycleCoordinator(dependencies.mergeHost)
+    }
+    addSingletonFactory<EntryMergeMetadataRefreshFeature> {
+        EntryMergeMetadataRefreshCoordinator(dependencies.mergeHost)
+    }
+    addSingletonFactory<EntryMergeProfileMoveFeature> { EntryMergeProfileMoveCoordinator(dependencies.mergeHost) }
+    addSingletonFactory<EntryMergeConsequenceStatusFeature> {
+        EntryMergeConsequenceStatusCoordinator(dependencies.mergeHost, get())
+    }
     addSingletonFactory<EntryMergeMigrationFeature> { EntryMergeMigrationCoordinator(dependencies.mergeHost) }
     addSingletonFactory<EntryMergeChildOwnershipProjection> {
         EntryMergeChildOwnershipCoordinator(dependencies.mergeHost)

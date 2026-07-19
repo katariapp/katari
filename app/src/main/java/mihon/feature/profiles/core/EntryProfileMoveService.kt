@@ -1,8 +1,13 @@
 package mihon.feature.profiles.core
 
-import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import eu.kanade.domain.source.service.SourcePreferences
+import mihon.entry.interactions.EntryMergeProfileMoveDestinationResult
+import mihon.entry.interactions.EntryMergeProfileMoveExecutionResult
+import mihon.entry.interactions.EntryMergeProfileMoveFeature
+import mihon.entry.interactions.EntryMergeProfileMoveIntent
+import mihon.entry.interactions.EntryMergeProfileMovePreparationResult
+import mihon.entry.interactions.EntryMergeProfileMoveReference
 import tachiyomi.data.Database
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.data.entry.EntryMapper
@@ -16,19 +21,18 @@ data class EntryProfileMoveRequest(
 )
 
 data class EntryProfileMoveGroup(
-    val targetEntryId: Long?,
     val entries: List<Entry>,
 )
 
 data class EntryProfileMoveConflict(
     val sourceEntry: Entry,
     val destinationEntry: Entry,
-    val groupTargetEntryId: Long?,
     val destinationMergeAffected: Boolean,
 )
 
 data class EntryProfileMovePreview(
     val request: EntryProfileMoveRequest,
+    val mergeReference: EntryMergeProfileMoveReference,
     val groups: List<EntryProfileMoveGroup>,
     val conflicts: List<EntryProfileMoveConflict>,
 )
@@ -64,35 +68,50 @@ data class EntryProfileMoveResult(
 class EntryProfileMoveService(
     private val handler: DatabaseHandler,
     private val profileStore: ProfileStore,
+    private val mergeProfileMoveFeature: EntryMergeProfileMoveFeature,
 ) {
 
     suspend fun preview(request: EntryProfileMoveRequest): EntryProfileMovePreview {
         require(request.sourceProfileId != request.destinationProfileId)
         require(request.selectedVisibleEntryIds.isNotEmpty())
 
-        return handler.await {
-            validateDestination(request)
-            val groups = resolveGroups(request)
-            require(groups.isNotEmpty()) { "No selected entries still belong to the source profile" }
-
-            val conflicts = groups.flatMap { group ->
+        handler.await { validateDestination(request) }
+        val preparation = mergeProfileMoveFeature.prepare(
+            sourceProfileId = request.sourceProfileId,
+            selectedVisibleEntryIds = request.selectedVisibleEntryIds,
+        )
+        val ready = preparation as? EntryMergeProfileMovePreparationResult.Ready
+            ?: error("No selected entries still belong to the source profile")
+        val groups = ready.units.map { EntryProfileMoveGroup(it.entries) }
+        val conflicts = handler.await {
+            groups.flatMap { group ->
                 group.entries.mapNotNull { sourceEntry ->
                     val destinationEntry = findDestinationEntry(request.destinationProfileId, sourceEntry)
                         ?: return@mapNotNull null
                     EntryProfileMoveConflict(
                         sourceEntry = sourceEntry,
                         destinationEntry = destinationEntry,
-                        groupTargetEntryId = group.targetEntryId,
-                        destinationMergeAffected = merged_entriesQueries
-                            .getEntriesByEntryId(request.destinationProfileId, destinationEntry.id)
-                            .awaitAsList()
-                            .isNotEmpty(),
+                        destinationMergeAffected = false,
                     )
                 }
             }
-
-            EntryProfileMovePreview(request, groups, conflicts)
         }
+        val destination = mergeProfileMoveFeature.inspectDestination(
+            reference = ready.reference,
+            destinationProfileId = request.destinationProfileId,
+            destinationEntryIds = conflicts.map { it.destinationEntry.id },
+        ) as? EntryMergeProfileMoveDestinationResult.Ready
+            ?: error("Merge Profile Move snapshot could not be prepared")
+        return EntryProfileMovePreview(
+            request = request,
+            mergeReference = destination.reference,
+            groups = groups,
+            conflicts = conflicts.map { conflict ->
+                conflict.copy(
+                    destinationMergeAffected = conflict.destinationEntry.id in destination.mergeAffectedEntryIds,
+                )
+            },
+        )
     }
 
     suspend fun execute(
@@ -113,68 +132,80 @@ class EntryProfileMoveService(
             var removedSource = 0
             val movedSourceIds = mutableSetOf<Long>()
 
-            preview.groups.forEach { group ->
+            val destinationIdsBySourceId = mutableMapOf<Long, Long>()
+            val destinationEntryIdsToDetach = mutableSetOf<Long>()
+            val groupsToMove = preview.groups.filter { group ->
                 val groupConflicts = preview.conflicts.filter { conflict ->
                     conflict.sourceEntry.id in group.entries.map(Entry::id)
                 }
                 if (group.shouldSkip(groupConflicts, resolutions)) {
                     skippedItems++
-                    return@forEach
-                }
-
-                group.targetEntryId?.let { targetId ->
-                    merged_entriesQueries.deleteGroupsContainingEntry(request.sourceProfileId, targetId)
-                }
-
-                val destinationIdsBySourceId = mutableMapOf<Long, Long>()
-                group.entries.forEach { sourceEntry ->
-                    val conflict = groupConflicts.firstOrNull { it.sourceEntry.id == sourceEntry.id }
-                    when (conflict?.let { resolutions[it.sourceEntry.id] }) {
-                        EntryProfileMoveConflictResolution.OVERWRITE_DESTINATION -> {
-                            merged_entriesQueries.deleteGroupsContainingEntry(
-                                request.destinationProfileId,
-                                conflict.destinationEntry.id,
+                    false
+                } else {
+                    group.entries.forEach { sourceEntry ->
+                        val conflict = groupConflicts.firstOrNull { it.sourceEntry.id == sourceEntry.id }
+                        when (conflict?.let { resolutions[it.sourceEntry.id] }) {
+                            EntryProfileMoveConflictResolution.OVERWRITE_DESTINATION -> {
+                                destinationIdsBySourceId[sourceEntry.id] = sourceEntry.id
+                                destinationEntryIdsToDetach += conflict.destinationEntry.id
+                                overwritten++
+                            }
+                            EntryProfileMoveConflictResolution.KEEP_DESTINATION_REMOVE_SOURCE -> {
+                                destinationIdsBySourceId[sourceEntry.id] = conflict.destinationEntry.id
+                                destinationEntryIdsToDetach += conflict.destinationEntry.id
+                                removedSource++
+                            }
+                            EntryProfileMoveConflictResolution.KEEP_SOURCE -> error(
+                                "Skipped groups are handled before mutation",
                             )
-                            entriesQueries.deleteById(request.destinationProfileId, conflict.destinationEntry.id)
-                            moveEntry(request, sourceEntry.id)
-                            destinationIdsBySourceId[sourceEntry.id] = sourceEntry.id
-                            overwritten++
+                            null -> destinationIdsBySourceId[sourceEntry.id] = sourceEntry.id
                         }
-                        EntryProfileMoveConflictResolution.KEEP_DESTINATION_REMOVE_SOURCE -> {
-                            val destinationId = conflict.destinationEntry.id
-                            merged_entriesQueries.deleteGroupsContainingEntry(
-                                request.destinationProfileId,
-                                destinationId,
+                    }
+                    movedSourceIds += group.entries.map(Entry::source)
+                    movedItems++
+                    true
+                }
+            }
+
+            val mergeResult = mergeProfileMoveFeature.execute(
+                intent = EntryMergeProfileMoveIntent(
+                    reference = preview.mergeReference,
+                    destinationProfileId = request.destinationProfileId,
+                    destinationEntryIdsBySourceEntryId = destinationIdsBySourceId,
+                    destinationEntryIdsToDetach = destinationEntryIdsToDetach,
+                ),
+            ) {
+                groupsToMove.forEach { group ->
+                    val groupConflicts = preview.conflicts.filter { conflict ->
+                        conflict.sourceEntry.id in group.entries.map(Entry::id)
+                    }
+                    group.entries.forEach { sourceEntry ->
+                        val conflict = groupConflicts.firstOrNull { it.sourceEntry.id == sourceEntry.id }
+                        when (conflict?.let { resolutions[it.sourceEntry.id] }) {
+                            EntryProfileMoveConflictResolution.OVERWRITE_DESTINATION -> {
+                                entriesQueries.deleteById(request.destinationProfileId, conflict.destinationEntry.id)
+                                moveEntry(request, sourceEntry.id)
+                            }
+                            EntryProfileMoveConflictResolution.KEEP_DESTINATION_REMOVE_SOURCE -> {
+                                val destinationId = conflict.destinationEntry.id
+                                entriesQueries.deleteById(request.sourceProfileId, sourceEntry.id)
+                                assignDestinationCategory(request, destinationId)
+                                entriesQueries.setFavoriteForProfile(true, request.destinationProfileId, destinationId)
+                            }
+                            EntryProfileMoveConflictResolution.KEEP_SOURCE -> error(
+                                "Skipped groups are handled before mutation",
                             )
-                            entriesQueries.deleteById(request.sourceProfileId, sourceEntry.id)
-                            assignDestinationCategory(request, destinationId)
-                            entriesQueries.setFavoriteForProfile(true, request.destinationProfileId, destinationId)
-                            destinationIdsBySourceId[sourceEntry.id] = destinationId
-                            removedSource++
-                        }
-                        EntryProfileMoveConflictResolution.KEEP_SOURCE -> error(
-                            "Skipped groups are handled before mutation",
-                        )
-                        null -> {
-                            moveEntry(request, sourceEntry.id)
-                            destinationIdsBySourceId[sourceEntry.id] = sourceEntry.id
+                            null -> moveEntry(request, sourceEntry.id)
                         }
                     }
                 }
-
-                if (group.targetEntryId != null && group.entries.size > 1) {
-                    val destinationTargetId = destinationIdsBySourceId.getValue(group.targetEntryId)
-                    group.entries.forEachIndexed { index, entry ->
-                        merged_entriesQueries.insert(
-                            request.destinationProfileId,
-                            destinationTargetId,
-                            destinationIdsBySourceId.getValue(entry.id),
-                            index.toLong(),
-                        )
-                    }
-                }
-                movedSourceIds += group.entries.map(Entry::source)
-                movedItems++
+            }
+            when (mergeResult) {
+                EntryMergeProfileMoveExecutionResult.Applied -> Unit
+                EntryMergeProfileMoveExecutionResult.Conflict -> error("Merge membership changed before the move")
+                is EntryMergeProfileMoveExecutionResult.OperationalFailure -> error(
+                    "Merge Profile Move failed before it could commit",
+                )
             }
 
             EntryProfileMoveResult(
@@ -200,31 +231,6 @@ class EntryProfileMoveService(
         }
     }
 
-    private suspend fun Database.resolveGroups(request: EntryProfileMoveRequest): List<EntryProfileMoveGroup> {
-        val groups = linkedMapOf<String, EntryProfileMoveGroup>()
-        request.selectedVisibleEntryIds.distinct().forEach { selectedId ->
-            val selectedEntry = entriesQueries
-                .getEntryById(selectedId, request.sourceProfileId, EntryMapper::mapEntry)
-                .awaitAsOneOrNull()
-                ?: return@forEach
-            val mergeRows = merged_entriesQueries
-                .getEntriesByEntryId(request.sourceProfileId, selectedEntry.id)
-                .awaitAsList()
-            if (mergeRows.isNotEmpty()) {
-                val targetId = mergeRows.first().target_entry_id
-                val entries = mergeRows.map { row ->
-                    entriesQueries.getEntryById(row.entry_id, request.sourceProfileId, EntryMapper::mapEntry)
-                        .awaitAsOneOrNull()
-                        ?: error("Merged entry ${row.entry_id} no longer exists")
-                }
-                groups.putIfAbsent("merge:$targetId", EntryProfileMoveGroup(targetId, entries))
-            } else {
-                groups.putIfAbsent("entry:${selectedEntry.id}", EntryProfileMoveGroup(null, listOf(selectedEntry)))
-            }
-        }
-        return groups.values.toList()
-    }
-
     private suspend fun Database.revalidatePreview(preview: EntryProfileMovePreview) {
         val destinationConflicts = preview.conflicts.associateBy { it.sourceEntry.id }
         preview.groups.flatMap(EntryProfileMoveGroup::entries).forEach { previewEntry ->
@@ -238,21 +244,6 @@ class EntryProfileMoveService(
             val currentDestination = findDestinationEntry(preview.request.destinationProfileId, sourceEntry)
             require(currentDestination?.id == destinationConflicts[sourceEntry.id]?.destinationEntry?.id) {
                 "Destination entries changed before the move"
-            }
-        }
-        preview.groups.forEach { group ->
-            val currentRows = merged_entriesQueries
-                .getEntriesByEntryId(preview.request.sourceProfileId, group.entries.first().id)
-                .awaitAsList()
-            if (group.targetEntryId == null) {
-                require(currentRows.isEmpty()) { "Selected merge group changed before the move" }
-            } else {
-                require(currentRows.map { it.target_entry_id }.distinct() == listOf(group.targetEntryId)) {
-                    "Selected merge target changed before the move"
-                }
-                require(currentRows.map { it.entry_id } == group.entries.map(Entry::id)) {
-                    "Selected merge members changed before the move"
-                }
             }
         }
     }

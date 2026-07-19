@@ -66,7 +66,7 @@ class EntryInteractionBoundaryCheckTaskTest {
     fun `application-facing api cannot declare raw interaction dispatch`() {
         createBaseFixture(
             additionalFiles = mapOf(
-                "entry-interactions/api/src/main/java/mihon/entry/interactions/EntryOpenInteraction.kt" to
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/navigation/EntryOpenInteraction.kt" to
                     """
                         package mihon.entry.interactions
 
@@ -324,7 +324,7 @@ class EntryInteractionBoundaryCheckTaskTest {
 
                         class DownloadManager
                     """.trimIndent(),
-                "entry-interactions/src/main/java/mihon/entry/interactions/EntryInteractionRuntime.kt" to
+                "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt" to
                     """
                         package mihon.entry.interactions
 
@@ -358,7 +358,7 @@ class EntryInteractionBoundaryCheckTaskTest {
 
                         fun mangaEntryTypeRuntimeModule(): EntryTypeRuntimeModule = EntryTypeRuntimeModule()
                     """.trimIndent(),
-                "entry-interactions/src/main/java/mihon/entry/interactions/EntryInteractionRuntime.kt" to
+                "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt" to
                     """
                         package mihon.entry.interactions
 
@@ -659,7 +659,7 @@ class EntryInteractionBoundaryCheckTaskTest {
         additionalFiles: Map<String, String> = emptyMap(),
     ) {
         write(
-            "entry-interactions/spi/src/main/java/mihon/entry/interactions/EntryInteractionPlugin.kt",
+            "entry-interactions/spi/src/main/java/mihon/entry/interactions/runtime/EntryInteractionPlugin.kt",
             """
                 package mihon.entry.interactions
 

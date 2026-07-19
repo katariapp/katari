@@ -18,10 +18,26 @@ internal fun checkEntryMergeBoundaries(
             checkRawAuthorityReferences(source, findings)
             checkTransitionalSupportReferences(source, findings)
             checkApplicationApiSurface(source, findings)
+            checkProfileMovePortReferences(source, findings)
         }
     }
 
     return findings
+}
+
+private fun checkProfileMovePortReferences(
+    source: EntryMergeBoundarySource,
+    findings: MutableList<EntryMergeBoundaryFinding>,
+) {
+    if (!source.relativePath.startsWith("app/src/main/")) return
+    if (source.relativePath == PROFILE_MOVE_COORDINATOR_PATH) return
+    source.references["EntryMergeProfileMoveFeature"]?.let { lineNumber ->
+        findings += EntryMergeBoundaryFinding(
+            relativePath = source.relativePath,
+            lineNumber = lineNumber,
+            reason = "EntryMergeProfileMoveFeature is reserved for the Profile Move coordinator",
+        )
+    }
 }
 
 private fun checkTransitionalSupportReferences(
@@ -157,10 +173,13 @@ internal data class EntryMergeBoundaryFinding(
 )
 
 private const val ENTRY_INTERACTIONS_HOST_API_ROOT =
-    "entry-interactions/api/src/main/java/mihon/entry/interactions/host/"
+    "entry-interactions/api/src/main/java/mihon/entry/interactions/merge/host/"
 
 private const val APPLICATION_ENTRY_INTERACTION_HOST_ROOT =
     "app/src/main/java/mihon/entry/interactions/host/"
+
+private const val PROFILE_MOVE_COORDINATOR_PATH =
+    "app/src/main/java/mihon/feature/profiles/core/EntryProfileMoveService.kt"
 
 private val ENTRY_TYPE_MODULE_ROOT = Regex(
     """entry-interactions/(?!api/|spi/|download-notification/|src/)[^/]+/src/main/.*""",

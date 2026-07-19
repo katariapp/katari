@@ -39,6 +39,14 @@ sealed interface EntryMergeHostTransition {
         val replacementEntryId: Long,
         val replacementGroups: List<EntryMergeMembershipSnapshot>,
     ) : EntryMergeHostTransition
+
+    data class RestoreBackupGroup(
+        override val operationId: String,
+        override val profileId: Long,
+        val expectedGroups: List<EntryMergeMembershipSnapshot>,
+        val targetEntryId: Long,
+        val orderedEntryIds: List<Long>,
+    ) : EntryMergeHostTransition
 }
 
 data class EntryMergeHostExpectation(

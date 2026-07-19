@@ -19,7 +19,7 @@ class EntryMergeBoundaryRulesTest {
     fun `application-facing Merge api cannot expose raw membership service`() {
         createFixture(
             additionalFiles = mapOf(
-                "entry-interactions/api/src/main/java/mihon/entry/interactions/EntryMergeFeature.kt" to
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/merge/EntryMergeFeature.kt" to
                     """
                         package mihon.entry.interactions
 
@@ -46,7 +46,7 @@ class EntryMergeBoundaryRulesTest {
     fun `application-facing Merge api cannot expose an existing raw authority`() {
         createFixture(
             additionalFiles = mapOf(
-                "entry-interactions/api/src/main/java/mihon/entry/interactions/EntryMergeFeature.kt" to
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/merge/EntryMergeFeature.kt" to
                     """
                         package mihon.entry.interactions
 
@@ -94,7 +94,7 @@ class EntryMergeBoundaryRulesTest {
 
                         class AppEntryMergeHost : EntryMergeHost
                     """.trimIndent(),
-                "entry-interactions/src/main/java/mihon/entry/interactions/EntryMergeCoordinator.kt" to
+                "entry-interactions/src/main/java/mihon/entry/interactions/merge/EntryMergeCoordinator.kt" to
                     """
                         package mihon.entry.interactions
 
@@ -151,6 +151,23 @@ class EntryMergeBoundaryRulesTest {
     }
 
     @Test
+    fun `only Profile Move coordinator can access Merge transaction participation`() {
+        createFixture(
+            appSource = """
+                package app
+
+                import mihon.entry.interactions.EntryMergeProfileMoveFeature
+
+                class AppFeature(private val merge: EntryMergeProfileMoveFeature)
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "EntryMergeProfileMoveFeature is reserved for the Profile Move coordinator"
+    }
+
+    @Test
     fun `domain consumers cannot retain raw Merge authorities`() {
         createFixture(
             additionalFiles = mapOf(
@@ -198,7 +215,7 @@ class EntryMergeBoundaryRulesTest {
     }
 
     private fun hostApiFixture(): Map<String, String> = mapOf(
-        "entry-interactions/api/src/main/java/mihon/entry/interactions/host/EntryMergeHost.kt" to
+        "entry-interactions/api/src/main/java/mihon/entry/interactions/merge/host/EntryMergeHost.kt" to
             """
                 package mihon.entry.interactions.host
 

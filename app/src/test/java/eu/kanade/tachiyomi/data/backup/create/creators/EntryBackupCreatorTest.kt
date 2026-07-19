@@ -11,6 +11,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.protobuf.ProtoBuf
 import mihon.entry.interactions.EntryChildGroupFilterFeature
 import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
+import mihon.entry.interactions.EntryMergeBackupFeature
+import mihon.entry.interactions.EntryMergeBackupIdentity
+import mihon.entry.interactions.EntryMergeBackupMember
+import mihon.entry.interactions.EntryMergeSubject
 import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
@@ -23,6 +27,7 @@ import mihon.entry.interactions.EntryViewerSettingsFeature
 import mihon.entry.interactions.EntryViewerSettingsSnapshotResult
 import mihon.entry.viewer.settings.ViewerSettingId
 import mihon.entry.viewer.settings.ViewerSettingOverride
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -36,10 +41,36 @@ import tachiyomi.domain.entry.model.EntryProgressLocator
 import tachiyomi.domain.entry.model.VideoDownloadQualityMode
 import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
-import tachiyomi.domain.entry.repository.EntryRepository
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EntryBackupCreatorTest {
+
+    @Test
+    fun `merge backup fields come from the purpose-specific projection`() = runTest {
+        val entry = Entry.create().copy(id = 1L, type = EntryType.BOOK, source = 10L, url = "/entry")
+        val fixture = Fixture(entry, EntryChapter.create().copy(id = 2L, entryId = entry.id, url = "/chapter"))
+        coEvery { fixture.mergeBackupFeature.snapshotForBackup(EntryMergeSubject(1L, entry.id)) } returns
+            EntryMergeBackupMember(
+                target = EntryMergeBackupIdentity(20L, "/target", EntryType.BOOK),
+                position = 3,
+            )
+
+        val created = fixture.creator.invoke(
+            profileId = 1L,
+            entries = listOf(entry),
+            options = BackupOptions(
+                categories = false,
+                chapters = false,
+                tracking = false,
+                history = false,
+            ),
+        ).single()
+
+        created.mergeTargetSource shouldBe 20L
+        created.mergeTargetUrl shouldBe "/target"
+        created.mergeTargetType shouldBe EntryType.BOOK
+        created.mergePosition shouldBe 3
+    }
 
     @ParameterizedTest(name = "serializes {0} backup with chapters={1}")
     @MethodSource("backupCases")
@@ -118,7 +149,7 @@ class EntryBackupCreatorTest {
     private class Fixture(entry: Entry, chapter: EntryChapter) {
         private val handler = mockk<DatabaseHandler>()
         private val profileProvider = mockk<ActiveProfileProvider>()
-        private val entryRepository = mockk<EntryRepository>()
+        val mergeBackupFeature = mockk<EntryMergeBackupFeature>()
         val entryChapterRepository = mockk<EntryChapterRepository>()
         val downloadPreferencesRepository = mockk<DownloadPreferencesRepository>()
         val progressFeature = mockk<EntryProgressFeature>()
@@ -129,7 +160,7 @@ class EntryBackupCreatorTest {
         val creator = EntryBackupCreator(
             handler = handler,
             profileProvider = profileProvider,
-            entryRepository = entryRepository,
+            mergeBackupFeature = mergeBackupFeature,
             entryChapterRepository = entryChapterRepository,
             downloadPreferencesRepository = downloadPreferencesRepository,
             progressFeature = progressFeature,
@@ -139,7 +170,7 @@ class EntryBackupCreatorTest {
         )
 
         init {
-            coEvery { entryRepository.getAllEntriesByProfile(1L) } returns listOf(entry)
+            coEvery { mergeBackupFeature.snapshotForBackup(EntryMergeSubject(1L, entry.id)) } returns null
             coEvery {
                 entryChapterRepository.getChaptersByEntryIdAwait(entry.id, applyScanlatorFilter = false)
             } returns listOf(chapter)

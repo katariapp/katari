@@ -31,9 +31,9 @@ class EntryProfileMoveServiceTest {
         val first = entry(1L, EntryType.MANGA)
         val second = entry(2L, EntryType.MANGA)
         val destination = entry(10L, EntryType.MANGA)
-        val group = EntryProfileMoveGroup(targetEntryId = first.id, entries = listOf(first, second))
+        val group = EntryProfileMoveGroup(entries = listOf(first, second))
         val conflicts = listOf(
-            EntryProfileMoveConflict(first, destination, first.id, destinationMergeAffected = false),
+            EntryProfileMoveConflict(first, destination, destinationMergeAffected = false),
         )
 
         group.shouldSkip(
@@ -51,9 +51,9 @@ class EntryProfileMoveServiceTest {
         val first = entry(1L, EntryType.MANGA)
         val second = entry(2L, EntryType.MANGA)
         val destination = entry(10L, EntryType.MANGA)
-        val conflict = EntryProfileMoveConflict(first, destination, null, destinationMergeAffected = false)
+        val conflict = EntryProfileMoveConflict(first, destination, destinationMergeAffected = false)
 
-        EntryProfileMoveGroup(null, listOf(second)).shouldSkip(
+        EntryProfileMoveGroup(listOf(second)).shouldSkip(
             listOf(conflict),
             mapOf(first.id to EntryProfileMoveConflictResolution.KEEP_SOURCE),
         ) shouldBe false

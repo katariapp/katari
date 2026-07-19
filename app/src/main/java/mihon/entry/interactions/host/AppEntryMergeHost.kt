@@ -69,6 +69,18 @@ internal class AppEntryMergeHost(
         return handler.awaitOne { merge_consequencesQueries.countByOperation(operationId) }
     }
 
+    override fun observeConsequenceStatus(): Flow<EntryMergeConsequenceStatusSnapshot> {
+        return handler.subscribeToOne {
+            merge_consequencesQueries.consequenceStatus { pendingCount, failedCount, lastFailure ->
+                EntryMergeConsequenceStatusSnapshot(pendingCount, failedCount, lastFailure)
+            }
+        }
+    }
+
+    override suspend fun makeConsequencesRetryable() {
+        handler.await { merge_consequencesQueries.makeRetryable() }
+    }
+
     private inner class ProfileHost(
         override val profileId: Long,
     ) : EntryMergeProfileHost {
@@ -134,7 +146,26 @@ internal class AppEntryMergeHost(
                         is EntryMergeHostTransition.CommitEditor -> commitEditor(transition)
                         is EntryMergeHostTransition.ChangeExistingGroup -> changeExistingGroup(transition)
                         is EntryMergeHostTransition.ReplaceForMigration -> replaceForMigration(transition)
+                        is EntryMergeHostTransition.RestoreBackupGroup -> restoreBackupGroup(transition)
                     }
+                }
+            } catch (_: MergeTransitionConflict) {
+                EntryMergeHostTransitionResult.Conflict
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                EntryMergeHostTransitionResult.OperationalFailure(retryable = error !is IllegalArgumentException)
+            }
+        }
+
+        override suspend fun applyProfileMove(
+            transition: EntryMergeProfileMoveHostTransition,
+            moveEntries: suspend () -> Unit,
+        ): EntryMergeHostTransitionResult {
+            require(transition.sourceProfileId == profileId) { "Merge Profile Move source belongs to another profile" }
+            return try {
+                handler.await {
+                    applyProfileMove(transition, moveEntries)
                 }
             } catch (_: MergeTransitionConflict) {
                 EntryMergeHostTransitionResult.Conflict
@@ -367,6 +398,101 @@ internal class AppEntryMergeHost(
             return EntryMergeHostTransitionResult.Applied(visible)
         }
 
+        private suspend fun Database.restoreBackupGroup(
+            transition: EntryMergeHostTransition.RestoreBackupGroup,
+        ): EntryMergeHostTransitionResult.Applied {
+            if (transition.expectedGroups.map { it.targetEntryId }.distinct().size != transition.expectedGroups.size) {
+                conflict()
+            }
+            transition.expectedGroups.forEach { expected ->
+                if (loadMembership(profileId, expected.targetEntryId) != expected) conflict()
+            }
+            if (transition.orderedEntryIds.size < 2) conflict()
+            if (transition.orderedEntryIds.distinct().size != transition.orderedEntryIds.size) conflict()
+            if (transition.targetEntryId !in transition.orderedEntryIds) conflict()
+            val expectedTargets = transition.expectedGroups.mapTo(mutableSetOf()) { it.targetEntryId }
+            transition.orderedEntryIds.forEach { entryId ->
+                val membership = loadMembership(profileId, entryId)
+                if (membership != null && membership.targetEntryId !in expectedTargets) conflict()
+            }
+            validatePersistedGroup(transition.orderedEntryIds)
+
+            transition.expectedGroups.forEach { expected ->
+                merged_entriesQueries.deleteByTargetId(profileId, expected.targetEntryId)
+            }
+            transition.orderedEntryIds.forEachIndexed { index, entryId ->
+                merged_entriesQueries.insert(profileId, transition.targetEntryId, entryId, index.toLong())
+            }
+            return EntryMergeHostTransitionResult.Applied(transition.targetEntryId)
+        }
+
+        private suspend fun Database.applyProfileMove(
+            transition: EntryMergeProfileMoveHostTransition,
+            moveEntries: suspend () -> Unit,
+        ): EntryMergeHostTransitionResult.Applied {
+            if (transition.sourceProfileId == transition.destinationProfileId) conflict()
+            val expectedSourceIds = transition.expectedSourceGroups.flatMapTo(mutableSetOf()) { it.orderedEntryIds } +
+                transition.expectedStandaloneEntryIds
+            if (transition.destinationEntryIdsBySourceEntryId.keys != expectedSourceIds) conflict()
+            val sourceEntries = expectedSourceIds.associateWith { entryId ->
+                loadEntry(transition.sourceProfileId, entryId) ?: conflict()
+            }
+            if (transition.expectedSourceEntries.map(Entry::id).toSet() != expectedSourceIds) conflict()
+            transition.expectedSourceEntries.forEach { expected ->
+                if (!sourceEntries.getValue(expected.id).sameMergeIdentity(expected)) conflict()
+            }
+
+            transition.expectedSourceGroups.forEach { expected ->
+                if (loadMembership(transition.sourceProfileId, expected.targetEntryId) != expected) conflict()
+            }
+            transition.expectedStandaloneEntryIds.forEach { entryId ->
+                if (loadMembership(transition.sourceProfileId, entryId) != null) conflict()
+            }
+            transition.expectedDestinationGroups.forEach { expected ->
+                if (expected.profileId != transition.destinationProfileId) conflict()
+                if (loadMembership(transition.destinationProfileId, expected.targetEntryId) != expected) conflict()
+            }
+            transition.expectedStandaloneDestinationEntryIds.forEach { entryId ->
+                if (loadMembership(transition.destinationProfileId, entryId) != null) conflict()
+            }
+            val expectedDetachedIds = transition.expectedDestinationGroups
+                .flatMapTo(mutableSetOf()) { it.orderedEntryIds } + transition.expectedStandaloneDestinationEntryIds
+            if (transition.destinationEntryIdsToDetach.any { it !in expectedDetachedIds }) conflict()
+
+            transition.expectedSourceGroups.forEach { expected ->
+                merged_entriesQueries.deleteByTargetId(transition.sourceProfileId, expected.targetEntryId)
+            }
+            transition.expectedDestinationGroups.forEach { expected ->
+                merged_entriesQueries.deleteByTargetId(transition.destinationProfileId, expected.targetEntryId)
+            }
+
+            moveEntries()
+
+            val destinationIds = transition.destinationEntryIdsBySourceEntryId.values.toList()
+            if (destinationIds.distinct().size != destinationIds.size) conflict()
+            transition.destinationEntryIdsBySourceEntryId.forEach { (sourceEntryId, destinationEntryId) ->
+                val destinationEntry = loadEntry(transition.destinationProfileId, destinationEntryId) ?: conflict()
+                if (destinationEntry.type != sourceEntries.getValue(sourceEntryId).type) conflict()
+            }
+            transition.expectedSourceGroups.forEach { sourceGroup ->
+                val orderedDestinationIds = sourceGroup.orderedEntryIds.map {
+                    transition.destinationEntryIdsBySourceEntryId.getValue(it)
+                }
+                val destinationTargetId = transition.destinationEntryIdsBySourceEntryId
+                    .getValue(sourceGroup.targetEntryId)
+                validatePersistedGroup(transition.destinationProfileId, orderedDestinationIds)
+                orderedDestinationIds.forEachIndexed { index, entryId ->
+                    merged_entriesQueries.insert(
+                        transition.destinationProfileId,
+                        destinationTargetId,
+                        entryId,
+                        index.toLong(),
+                    )
+                }
+            }
+            return EntryMergeHostTransitionResult.Applied(null)
+        }
+
         private suspend fun Database.validatePersistedGroup(entryIds: List<Long>) {
             if (entryIds.isEmpty()) return
             val entries = entryIds.map { entryId -> loadEntry(profileId, entryId) ?: conflict() }
@@ -380,7 +506,9 @@ internal class AppEntryMergeHost(
             val requests = when (transition) {
                 is EntryMergeHostTransition.CommitEditor -> transition.consequenceRequests
                 is EntryMergeHostTransition.ChangeExistingGroup -> transition.consequenceRequests
-                is EntryMergeHostTransition.ReplaceForMigration -> emptyList()
+                is EntryMergeHostTransition.ReplaceForMigration,
+                is EntryMergeHostTransition.RestoreBackupGroup,
+                -> emptyList()
             }
             requests.distinctBy { request ->
                 val entryId = request.entryId ?: resolvedIds.getValue(checkNotNull(request.memberKey))
@@ -398,6 +526,12 @@ internal class AppEntryMergeHost(
                     createdAt = clockMillis(),
                 )
             }
+        }
+
+        private suspend fun Database.validatePersistedGroup(profileId: Long, entryIds: List<Long>) {
+            if (entryIds.isEmpty()) return
+            val entries = entryIds.map { entryId -> loadEntry(profileId, entryId) ?: conflict() }
+            if (entries.map(Entry::type).distinct().size != 1) conflict()
         }
     }
 

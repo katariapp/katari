@@ -99,6 +99,19 @@ SPI boundary is not an exit gate for Phase 3.5.
 - The active boundary queue is exactly 12 findings: seven F12.6 Library/backup/profile lifecycle consumers and five F11
   Migration consumers, including its two narrow Merge cooperation calls. No F12.5 raw consumer remains.
 
+### Resolved in F12.6: persistence and lifecycle ownership
+
+- Library removal and source refresh paths use purpose-specific Merge Features. The source refresh migration includes
+  paths that previously compiled by borrowing editor or Library grouping data, not only the seven raw boundary findings.
+- Backup creation receives stable target identity plus member position. Restore is pinned to an explicit destination
+  profile, is atomic per normalized group, and reports malformed, missing, conflicting, and failed groups without
+  switching active-profile state for Merge.
+- Profile Move uses opaque source/destination snapshots and one reserved transaction participant. The Profile Move
+  coordinator supplies conflict outcomes and factual ID mappings but cannot query or persist membership itself.
+- Profile clearing relies on foreign-key cascades. Durable follow-up state is exposed as an aggregate status and retried
+  through feature-owned delivery rather than exposing journal rows or a caller-owned consequence list.
+- The active boundary queue is exactly five findings, all assigned to F11 Migration. No F12.6 raw consumer remains.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.

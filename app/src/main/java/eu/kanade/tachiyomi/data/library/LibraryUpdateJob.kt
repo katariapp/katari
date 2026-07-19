@@ -36,6 +36,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
 import mihon.entry.interactions.EntryAutomaticDownloadFeature
+import mihon.entry.interactions.EntryMergeMetadataRefreshFeature
 import mihon.entry.interactions.EntryUpdateEligibility
 import mihon.entry.interactions.EntryUpdateEligibilityFeature
 import mihon.entry.interactions.EntryUpdateEligibilityRequest
@@ -82,6 +83,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val entryRepository: EntryRepository = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
     private val syncEntryWithSource: SyncEntryWithSource = Injekt.get()
+    private val mergeMetadataRefreshFeature: EntryMergeMetadataRefreshFeature = Injekt.get()
 
     private val notifier = LibraryUpdateNotifier(context)
 
@@ -230,13 +232,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
     private suspend fun List<LibraryItem>.expandToMemberEntries(): List<Entry> {
         return flatMap { libraryItem ->
-            libraryItem.memberEntryIds.mapNotNull { memberKey ->
-                if (memberKey.id == libraryItem.entry.id) {
-                    libraryItem.entry
-                } else {
-                    entryRepository.getEntryById(memberKey.id)
-                }
-            }
+            mergeMetadataRefreshFeature.resolveOwners(libraryItem.entry).orderedOwners
         }
             .distinctBy(Entry::id)
     }

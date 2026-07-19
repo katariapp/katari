@@ -12,6 +12,11 @@ import eu.kanade.tachiyomi.data.backup.models.BackupTracking
 import eu.kanade.tachiyomi.data.backup.models.toEntryProgressStateSnapshot
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryChildGroupFilterFeature
+import mihon.entry.interactions.EntryMergeBackupFeature
+import mihon.entry.interactions.EntryMergeBackupGroup
+import mihon.entry.interactions.EntryMergeBackupGroupMember
+import mihon.entry.interactions.EntryMergeBackupIdentity
+import mihon.entry.interactions.EntryMergeBackupRestoreResult
 import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
@@ -28,13 +33,11 @@ import mihon.entry.viewer.settings.ViewerSettingOverride
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.entry.interactor.UpdateMergedEntry
 import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryIdentity
 import tachiyomi.domain.entry.model.EntryProgressLocator
 import tachiyomi.domain.entry.model.VideoDownloadQualityMode
-import tachiyomi.domain.entry.model.identity
 import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
@@ -102,14 +105,14 @@ class EntryRestorer(
     private val historyRepository: HistoryRepository = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val insertTrack: InsertTrack = Injekt.get(),
-    private val updateMergedEntry: UpdateMergedEntry = Injekt.get(),
+    private val mergeBackupFeature: EntryMergeBackupFeature = Injekt.get(),
     private val viewerSettingsFeature: EntryViewerSettingsFeature = Injekt.get(),
     fetchInterval: FetchInterval = Injekt.get(),
 ) {
 
     private var now = ZonedDateTime.now()
     private var currentFetchWindow = fetchInterval.getWindow(now)
-    private val pendingMerges = linkedMapOf<EntryIdentity, PendingMergeGroup>()
+    private val pendingMerges = linkedMapOf<EntryMergeBackupIdentity, PendingMergeGroup>()
 
     init {
         now = ZonedDateTime.now()
@@ -165,43 +168,20 @@ class EntryRestorer(
         }
     }
 
-    suspend fun restorePendingMerges() {
-        pendingMerges.values.forEach { merge ->
-            val targetEntry = entryRepository.getEntryByUrlAndSourceId(
-                merge.targetIdentity.url,
-                merge.targetIdentity.source,
-                merge.targetIdentity.type,
-                profileProvider.activeProfileId,
-            ) ?: return@forEach
-            val orderedIds = merge.members
-                .let { members ->
-                    if (members.any { it.identity == merge.targetIdentity }) {
-                        members
-                    } else {
-                        members +
-                            PendingMergeMember(
-                                identity = merge.targetIdentity,
-                                position = Int.MIN_VALUE,
-                            )
-                    }
-                }
-                .filter { it.identity.type == merge.targetIdentity.type }
-                .sortedBy { it.position }
-                .mapNotNull { member ->
-                    entryRepository.getEntryByUrlAndSourceId(
-                        member.identity.url,
-                        member.identity.source,
-                        member.identity.type,
-                        profileProvider.activeProfileId,
-                    )?.id
-                }
-                .distinct()
-
-            if (targetEntry.id in orderedIds && orderedIds.size > 1) {
-                updateMergedEntry.awaitMerge(targetEntry.id, orderedIds)
-            }
-        }
+    suspend fun restorePendingMerges(destinationProfileId: Long): EntryMergeBackupRestoreResult {
+        val result = mergeBackupFeature.restore(
+            destinationProfileId = destinationProfileId,
+            groups = pendingMerges.values.map { pending ->
+                EntryMergeBackupGroup(
+                    target = pending.targetIdentity,
+                    members = pending.members.map { member ->
+                        EntryMergeBackupGroupMember(member.identity, member.position)
+                    },
+                )
+            },
+        )
         pendingMerges.clear()
+        return result
     }
 
     private suspend fun findExistingEntry(backupEntry: BackupEntry): Entry? {
@@ -524,8 +504,8 @@ class EntryRestorer(
         val targetUrl = backupEntry.mergeTargetUrl ?: return
         val position = backupEntry.mergePosition ?: return
         val targetType = backupEntry.mergeTargetType ?: backupEntry.type
-        val targetIdentity = EntryIdentity(entry.profileId, targetSource, targetUrl, targetType)
-        val memberIdentity = entry.identity()
+        val targetIdentity = EntryMergeBackupIdentity(targetSource, targetUrl, targetType)
+        val memberIdentity = EntryMergeBackupIdentity(entry.source, entry.url, entry.type)
 
         val group = pendingMerges.getOrPut(targetIdentity) {
             PendingMergeGroup(
@@ -542,12 +522,12 @@ class EntryRestorer(
     }
 
     private data class PendingMergeGroup(
-        val targetIdentity: EntryIdentity,
+        val targetIdentity: EntryMergeBackupIdentity,
         val members: MutableList<PendingMergeMember>,
     )
 
     private data class PendingMergeMember(
-        val identity: EntryIdentity,
+        val identity: EntryMergeBackupIdentity,
         val position: Int,
     )
 }

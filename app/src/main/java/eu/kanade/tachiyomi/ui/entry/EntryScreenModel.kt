@@ -102,6 +102,7 @@ import mihon.entry.interactions.EntryMergeEditorProjection
 import mihon.entry.interactions.EntryMergeExecutionResult
 import mihon.entry.interactions.EntryMergeFeature
 import mihon.entry.interactions.EntryMergeMemberPreparationIntent
+import mihon.entry.interactions.EntryMergeMetadataRefreshFeature
 import mihon.entry.interactions.EntryMergeNavigationFeature
 import mihon.entry.interactions.EntryMergePreparationResult
 import mihon.entry.interactions.EntryMergePrepareIntent
@@ -182,6 +183,7 @@ class EntryScreenModel(
     private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
     private val entryMergeCandidateFeature: EntryMergeCandidateFeature = Injekt.get(),
     private val entryMergeNavigationFeature: EntryMergeNavigationFeature = Injekt.get(),
+    private val entryMergeMetadataRefreshFeature: EntryMergeMetadataRefreshFeature = Injekt.get(),
     private val coverCache: CoverCache = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getEntryWithChapters: GetEntryWithChapters = Injekt.get(),
@@ -2151,8 +2153,11 @@ class EntryScreenModel(
 
     private suspend fun getMergeMembers(): List<Entry> {
         val entry = successState?.entry ?: getEntryOrNull(entryId) ?: return emptyList()
-        val members = getExistingMergeEditor(entry)?.entries?.map { it.entry }.orEmpty().ifEmpty { listOf(entry) }
-        return if (bypassMerge) listOf(entry) else members
+        return if (bypassMerge) {
+            listOf(entry)
+        } else {
+            entryMergeMetadataRefreshFeature.resolveOwners(entry).orderedOwners
+        }
     }
 
     private suspend fun getExistingMergeEditor(entry: Entry): EntryMergeEditorProjection? {

@@ -36,6 +36,10 @@ Private settings can include stored passwords, tokens, or other source credentia
 
 When a Katari backup contains profiles, restore creates or updates them by stable profile identity, restores each profile's data in its own scope, then returns to the recorded active profile when possible. Existing data is merged according to the restore rules rather than replacing the entire database blindly.
 
+Merged-entry groups are restored independently in their destination profile. A malformed group, a missing target, or a
+group with too few restored members is skipped and recorded in the restore error log without preventing unrelated
+groups from being restored.
+
 A legacy Mihon or fork backup without Katari profiles is restored into the currently active profile. Supported legacy records are converted into typed Entry records.
 
 Saved BOOK progress includes the processor-neutral reading location needed to resume a publication. Restoring that location requires a compatible reader plus either the corresponding source or an intact BOOK download that has been reindexed.

@@ -16,7 +16,7 @@ Status meanings:
 | Mark individual child items consumed or unconsumed |   ✓   |   ✓   |  ✓   |
 | Show partial progress for individual child items   |   ✓   |   ✓   |  ✓   |
 | Apply smart library-update restrictions            |   ✓   |   ✓   |  ✓   |
-| Merge versions from different sources              |   ✓   |   ✓   |  —   |
+| Merge versions from different sources              |   ✓   |   ✓   |  ✓   |
 | Bookmark individual child items                    |   ✓   |   —   |  —   |
 | Show gaps between missing child items              |   ✓   |   —   |  —   |
 | Filter child items by release group                |   ✓   |   —   |  —   |

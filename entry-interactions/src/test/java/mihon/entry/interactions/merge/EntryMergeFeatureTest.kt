@@ -10,12 +10,14 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.host.EntryMergeConsequenceStatusSnapshot
 import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.host.EntryMergeHostTransition
 import mihon.entry.interactions.host.EntryMergeHostTransitionResult
 import mihon.entry.interactions.host.EntryMergeMembershipSnapshot
 import mihon.entry.interactions.host.EntryMergePendingConsequence
 import mihon.entry.interactions.host.EntryMergeProfileHost
+import mihon.entry.interactions.host.EntryMergeProfileMoveHostTransition
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.discoverAndAssembleFeatureGraph
 import mihon.feature.graph.evaluateFeatureGraph
@@ -258,6 +260,14 @@ class EntryMergeFeatureTest {
                     val targetId = transition.expected.entries.single { it.key == target }.persistedEntryId ?: 99L
                     return EntryMergeHostTransitionResult.Applied(targetId)
                 }
+
+                override suspend fun applyProfileMove(
+                    transition: EntryMergeProfileMoveHostTransition,
+                    moveEntries: suspend () -> Unit,
+                ): EntryMergeHostTransitionResult {
+                    moveEntries()
+                    return EntryMergeHostTransitionResult.Applied(null)
+                }
             }
         }
 
@@ -272,5 +282,11 @@ class EntryMergeFeatureTest {
         ) = Unit
 
         override suspend fun pendingConsequenceCount(operationId: String): Long = 0L
+
+        override fun observeConsequenceStatus(): Flow<EntryMergeConsequenceStatusSnapshot> {
+            return flowOf(EntryMergeConsequenceStatusSnapshot(0, 0, null))
+        }
+
+        override suspend fun makeConsequencesRetryable() = Unit
     }
 }

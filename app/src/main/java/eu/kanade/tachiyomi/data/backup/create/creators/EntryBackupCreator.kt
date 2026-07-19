@@ -13,6 +13,8 @@ import eu.kanade.tachiyomi.data.backup.models.toBackupViewerSettingOverride
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryChildGroupFilterFeature
 import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
+import mihon.entry.interactions.EntryMergeBackupFeature
+import mihon.entry.interactions.EntryMergeSubject
 import mihon.entry.interactions.EntryPlaybackPreferencesFeature
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
 import mihon.entry.interactions.EntryPlaybackQualityMode
@@ -24,10 +26,8 @@ import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.entry.model.EntryMerge
 import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
-import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.history.model.History
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -35,7 +35,7 @@ import uy.kohesive.injekt.api.get
 class EntryBackupCreator(
     private val handler: DatabaseHandler = Injekt.get(),
     private val profileProvider: ActiveProfileProvider = Injekt.get(),
-    private val entryRepository: EntryRepository = Injekt.get(),
+    private val mergeBackupFeature: EntryMergeBackupFeature = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val downloadPreferencesRepository: DownloadPreferencesRepository = Injekt.get(),
     private val progressFeature: EntryProgressFeature = Injekt.get(),
@@ -53,15 +53,13 @@ class EntryBackupCreator(
         entries: List<Entry>,
         options: BackupOptions,
     ): List<BackupEntry> {
-        val allEntriesById = entryRepository.getAllEntriesByProfile(profileId).associateBy { it.id }
-        return entries.map { backupEntry(profileId, it, options, allEntriesById) }
+        return entries.map { backupEntry(profileId, it, options) }
     }
 
     private suspend fun backupEntry(
         profileId: Long,
         entry: Entry,
         options: BackupOptions,
-        allEntriesById: Map<Long, Entry>,
     ): BackupEntry {
         val entryObject = entry.toBackupEntry()
         entryObject.viewerSettingOverrides = when (val result = viewerSettingsFeature.snapshot(entry)) {
@@ -180,28 +178,14 @@ class EntryBackupCreator(
             }
         }
 
-        val mergeGroup = getMergeGroupForBackup(profileId, entry.id)
-        if (mergeGroup.isNotEmpty()) {
-            val targetId = mergeGroup.first().targetId
-            val targetEntry = allEntriesById[targetId]
-            val position = mergeGroup.firstOrNull { it.entryId == entry.id }?.position?.toInt()
-            if (targetEntry != null && position != null) {
-                entryObject.mergeTargetSource = targetEntry.source
-                entryObject.mergeTargetUrl = targetEntry.url
-                entryObject.mergeTargetType = targetEntry.type
-                entryObject.mergePosition = position
-            }
+        mergeBackupFeature.snapshotForBackup(EntryMergeSubject(profileId, entry.id))?.let { merge ->
+            entryObject.mergeTargetSource = merge.target.sourceId
+            entryObject.mergeTargetUrl = merge.target.url
+            entryObject.mergeTargetType = merge.target.type
+            entryObject.mergePosition = merge.position
         }
 
         return entryObject
-    }
-
-    private suspend fun getMergeGroupForBackup(profileId: Long, entryId: Long): List<EntryMerge> {
-        return handler.awaitList {
-            merged_entriesQueries.getEntriesByEntryId(profileId, entryId) { targetEntryId, memberEntryId, position ->
-                EntryMerge(targetId = targetEntryId, entryId = memberEntryId, position = position)
-            }
-        }
     }
 }
 

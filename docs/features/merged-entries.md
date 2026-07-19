@@ -2,7 +2,8 @@
 
 Merged entries group versions of the same title from multiple sources under one library entry. This keeps alternatives close while avoiding duplicate top-level items in the library, updates, and history.
 
-All members must belong to the active profile and use the same entry type. Entries of different types cannot be merged.
+Manga, Anime, and Book entries can be merged. All members must belong to the same profile and use the same entry type.
+Entries of different types cannot be merged.
 
 ## Create a group
 
@@ -38,3 +39,7 @@ Each underlying child retains its source identity. Progress, history, and downlo
 ## Migration and profiles
 
 Merged groups are profile-specific. Selecting any member for **Move to profile** moves and recreates the complete ordered group in the destination. Destination conflicts can detach or remove entries already present there. Source migrations or extension changes that alter entry URLs can also prevent a stored member from resolving correctly.
+
+Membership changes can schedule follow-up cache or download maintenance. Katari retries that work automatically. If it
+remains pending, **More → Settings → Advanced → Merge maintenance** shows the pending and failed counts and allows an
+immediate retry.

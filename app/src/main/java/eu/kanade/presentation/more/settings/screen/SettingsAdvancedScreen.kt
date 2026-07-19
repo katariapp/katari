@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +58,8 @@ import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.core.common.GlobalCustomPreferences
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
+import mihon.entry.interactions.EntryMergeConsequenceStatus
+import mihon.entry.interactions.EntryMergeConsequenceStatusFeature
 import mihon.entry.interactions.EntryViewerSettingsFeature
 import mihon.entry.interactions.EntryViewerSettingsResetResult
 import okhttp3.Headers
@@ -186,6 +189,12 @@ object SettingsAdvancedScreen : SearchableSettings {
     private fun getDataGroup(): Preference.PreferenceGroup {
         val context = LocalContext.current
         val navigator = LocalNavigator.currentOrThrow
+        val scope = rememberCoroutineScope()
+        val mergeStatusFeature = remember { Injekt.get<EntryMergeConsequenceStatusFeature>() }
+        val mergeStatusFlow = remember(mergeStatusFeature) { mergeStatusFeature.observeStatus() }
+        val mergeStatus by mergeStatusFlow.collectAsState(
+            initial = EntryMergeConsequenceStatus(0, 0, null),
+        )
 
         return Preference.PreferenceGroup(
             title = stringResource(MR.strings.label_data),
@@ -203,6 +212,29 @@ object SettingsAdvancedScreen : SearchableSettings {
                     title = stringResource(MR.strings.pref_clear_database),
                     subtitle = stringResource(MR.strings.pref_clear_database_summary),
                     onClick = { navigator.push(ClearDatabaseScreen()) },
+                ),
+                Preference.PreferenceItem.TextPreference(
+                    title = stringResource(MR.strings.pref_retry_merge_maintenance),
+                    subtitle = if (mergeStatus.pendingCount == 0L) {
+                        stringResource(MR.strings.pref_retry_merge_maintenance_idle)
+                    } else {
+                        buildString {
+                            append(
+                                stringResource(
+                                    MR.strings.pref_retry_merge_maintenance_summary,
+                                    mergeStatus.pendingCount,
+                                    mergeStatus.failedCount,
+                                ),
+                            )
+                            mergeStatus.lastFailure?.let { append("\n$it") }
+                        }
+                    },
+                    enabled = mergeStatus.pendingCount > 0,
+                    onClick = {
+                        scope.launch {
+                            mergeStatusFeature.retryPending()
+                        }
+                    },
                 ),
             ),
         )

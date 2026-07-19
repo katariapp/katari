@@ -26,6 +26,10 @@ interface EntryMergeHost {
     )
 
     suspend fun pendingConsequenceCount(operationId: String): Long
+
+    fun observeConsequenceStatus(): Flow<EntryMergeConsequenceStatusSnapshot>
+
+    suspend fun makeConsequencesRetryable()
 }
 
 interface EntryMergeProfileHost {
@@ -48,4 +52,9 @@ interface EntryMergeProfileHost {
     fun observeDuplicateCandidates(entry: Flow<Entry>): Flow<List<DuplicateEntryCandidate>>
 
     suspend fun applyTransition(transition: EntryMergeHostTransition): EntryMergeHostTransitionResult
+
+    suspend fun applyProfileMove(
+        transition: EntryMergeProfileMoveHostTransition,
+        moveEntries: suspend () -> Unit,
+    ): EntryMergeHostTransitionResult
 }

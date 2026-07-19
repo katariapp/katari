@@ -21,6 +21,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
+import mihon.entry.interactions.EntryMergeMetadataRefreshFeature
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
@@ -42,6 +43,7 @@ class MetadataUpdateJob(private val context: Context, workerParams: WorkerParame
     private val getLibraryEntries: GetLibraryEntries = Injekt.get()
     private val entryRepository: EntryRepository = Injekt.get()
     private val syncEntryWithSource: SyncEntryWithSource = Injekt.get()
+    private val mergeMetadataRefreshFeature: EntryMergeMetadataRefreshFeature = Injekt.get()
 
     private val notifier = LibraryUpdateNotifier(context)
 
@@ -94,13 +96,7 @@ class MetadataUpdateJob(private val context: Context, workerParams: WorkerParame
 
     private suspend fun List<LibraryItem>.expandToMemberEntries(): List<Entry> {
         return flatMap { libraryItem ->
-            libraryItem.memberEntryIds.mapNotNull { memberKey ->
-                if (memberKey.id == libraryItem.entry.id) {
-                    libraryItem.entry
-                } else {
-                    entryRepository.getEntryById(memberKey.id)
-                }
-            }
+            mergeMetadataRefreshFeature.resolveOwners(libraryItem.entry).orderedOwners
         }
             .distinctBy(Entry::id)
     }

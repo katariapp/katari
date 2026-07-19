@@ -121,7 +121,7 @@ class AppModule(val app: Application) : InjektModule {
         }
         addSingletonFactory<DatabaseHandler> { AndroidDatabaseHandler(get(), get()) }
         addSingletonFactory { ProfileDatabase(get()) }
-        addSingletonFactory { EntryProfileMoveService(get(), get()) }
+        addSingletonFactory { EntryProfileMoveService(get(), get(), get()) }
         addSingletonFactory { mihon.feature.profiles.core.ProfilePreferenceOwnership(get()) }
         addSingletonFactory {
             ProfileManager(

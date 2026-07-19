@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1–F12.4 committed; F12.5 implemented and awaiting review
+Status: F12.1–F12.6 committed; F12.7 pending
 
 ## Architectural Classification
 
@@ -261,6 +261,30 @@ Observable review points:
 - Use feature-issued projections or snapshots for every cross-boundary operation.
 - Do not fold F11 Migration into this milestone; any F11 cooperation remains an explicit narrow boundary until F11.
 
+Implemented result:
+
+- External Library removal sends concrete removed Entries to one Merge lifecycle Feature. The Feature groups and changes
+  affected memberships internally; the Library caller neither finds targets nor supplies replacement membership. A
+  conflict stops the caller before its independent favorite, cleanup, and Download work continues.
+- Entry-screen refresh, manual metadata refresh, and Library update workers receive ordered concrete source owners from
+  one purpose-specific projection. They no longer borrow the editor or expand Library member IDs as a membership API.
+- Backup creation receives only the stable target identity and position required by the existing wire fields. Restore
+  submits portable identity groups to an explicit destination profile; Merge normalizes, resolves, validates, and
+  applies each group atomically while returning structured skipped reasons for malformed or incomplete groups.
+- Profile Move receives feature-issued source and destination snapshots. The dedicated Profile Move coordinator remains
+  responsible for conflict choices and its outer transaction, while Merge revalidates, detaches, and reconstructs its
+  own relationships around the non-Merge move callback. Boundary validation reserves this transaction participant for
+  that coordinator.
+- Profile clearing no longer contains explicit Merge deletion. Entry/profile foreign-key cascades remove membership and
+  pending consequences in the same data transaction, with persistence coverage proving the behavior.
+- An aggregate feature-owned status reports pending and failed durable follow-up work without exposing journal records.
+  Advanced settings renders that status and retries through the same delivery gate used by automatic recovery.
+- The shared implementation, API, SPI, and media-specific interaction modules group production and test files by feature
+  ownership instead of accumulating unrelated contracts and implementations at their source roots. The repository agent
+  rules now require the same ownership-first structure project-wide.
+- The raw-boundary census now reports only the five intentionally deferred F11 findings. No Library, refresh, backup,
+  restore, profile lifecycle, or diagnostics consumer retains raw Merge authority.
+
 Exit gate: persistence and lifecycle consumers cannot supply or rebuild F12's membership checklist.
 
 Review request: verify backup/profile behavior and decide any newly discovered compatibility requirement before it is
@@ -298,4 +322,7 @@ tests exercise shared ordering, ownership changes, and grouping rather than rest
 derives merged Download ownership only after provider applicability, removes Book's duplicate membership truth, and
 routes structured notification identity through the normal profile gate. No completed milestone uses a content-type
 matrix, mandatory provider, caller-owned completion checklist, ambient profile, or compiling compatibility
-implementation.
+implementation. F12.6 replaces the remaining persistence and lifecycle checklists with purpose-owned projections,
+opaque snapshots, explicit-profile restore, transaction participation, cascade cleanup, and aggregate durable follow-up
+status. It also migrates refresh paths that compiled by borrowing another Feature's projection, so the review is not
+limited to failures found by the boundary checker.

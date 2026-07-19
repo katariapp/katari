@@ -60,6 +60,7 @@ import mihon.entry.interactions.EntryMergeEditReference
 import mihon.entry.interactions.EntryMergeEditorEntryReference
 import mihon.entry.interactions.EntryMergeExecutionResult
 import mihon.entry.interactions.EntryMergeFeature
+import mihon.entry.interactions.EntryMergeLibraryLifecycleFeature
 import mihon.entry.interactions.EntryMergePreparationResult
 import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.feature.profiles.core.EntryProfileMoveConflictResolution
@@ -81,10 +82,8 @@ import tachiyomi.domain.category.interactor.GetCategories
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
-import tachiyomi.domain.entry.interactor.GetMergedEntry
 import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryFavorite
-import tachiyomi.domain.entry.interactor.UpdateMergedEntry
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryStatus
 import tachiyomi.domain.entry.repository.EntryChapterRepository
@@ -113,8 +112,6 @@ class LibraryScreenModel(
     private val getCategories: GetCategories = Injekt.get(),
     private val getTracksPerEntry: GetTracksPerEntry = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val getMergedEntry: GetMergedEntry = Injekt.get(),
-    private val updateMergedEntry: UpdateMergedEntry = Injekt.get(),
     private val setEntryFavorite: SetEntryFavorite = Injekt.get(),
     private val setEntryCategories: SetEntryCategories = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
@@ -124,6 +121,7 @@ class LibraryScreenModel(
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
     private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
+    private val entryMergeLibraryLifecycleFeature: EntryMergeLibraryLifecycleFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryLibraryFilterFeature: EntryLibraryFilterFeature = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
@@ -721,14 +719,10 @@ class LibraryScreenModel(
             val distinctEntries = entries.distinctBy { it.id }
 
             if (deleteFromLibrary) {
-                val removedMergesByTargetId = distinctEntries.mapNotNull { entry ->
-                    getMergedEntry.awaitTargetId(entry.id)?.let { targetId -> targetId to entry.id }
+                val mergeRemoval = entryMergeLibraryLifecycleFeature.entriesRemovedFromLibrary(distinctEntries)
+                check(mergeRemoval.unresolvedGroupCount == 0) {
+                    "Merge membership changed while removing Library entries"
                 }
-                    .groupBy(keySelector = { it.first }, valueTransform = { it.second })
-                removedMergesByTargetId.forEach { (targetId, entryIds) ->
-                    updateMergedEntry.awaitRemoveMembers(targetId, entryIds)
-                }
-
                 distinctEntries.forEach { entry ->
                     entryRemovalCleanupInteraction.cleanupAfterLibraryRemoval(entry)
                     setEntryFavorite.await(entry.id, false)

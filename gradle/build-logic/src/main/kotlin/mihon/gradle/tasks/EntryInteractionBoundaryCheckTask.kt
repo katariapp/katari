@@ -430,8 +430,8 @@ private class EntryInteractionBoundaryRules(
         val allowedPaths = setOf(
             "domain/src/main/java/tachiyomi/domain/entry/service/EntryLibraryProgressResolution.kt",
             "domain/src/main/java/tachiyomi/domain/entry/interactor/GetLibraryEntries.kt",
-            "entry-interactions/api/src/main/java/mihon/entry/interactions/EntryLibraryProgressFeature.kt",
-            "entry-interactions/src/main/java/mihon/entry/interactions/EntryInteractionRuntime.kt",
+            "entry-interactions/api/src/main/java/mihon/entry/interactions/library/EntryLibraryProgressFeature.kt",
+            "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt",
         )
         if (file.relativePath in allowedPaths) return
 
@@ -675,7 +675,8 @@ private class EntryInteractionBoundaryRules(
     }
 
     private fun KotlinSourceFile.isRootCompositionPath(): Boolean {
-        return relativePath == "entry-interactions/src/main/java/mihon/entry/interactions/EntryInteractionRuntime.kt"
+        return relativePath ==
+            "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt"
     }
 
     private fun KotlinSourceFile.isSourceMediaResolutionGuardedPath(): Boolean {
