@@ -1,6 +1,6 @@
 # F11 — Entry Source Migration
 
-Status: F11.0 committed; F11.1 contract and dependency boundary implemented and awaiting review
+Status: F11.0-F11.1 committed; F11.2 transaction and consequence semantics accepted
 
 ## Architectural Classification
 
@@ -197,21 +197,52 @@ Exit gate: every failure point has one documented outcome and no step relies on 
 
 Review request: approve transaction, partial-failure, and retry semantics.
 
+Decision: approved on 2026-07-19.
+
+Audit and proposal record:
+
+- Decision proposal
+  [`0021-migration-transaction-and-consequence-semantics.md`](../decisions/0021-migration-transaction-and-consequence-semantics.md)
+  records the complete operation order, primary database boundary, durable follow-up, retry, replay, cancellation, and
+  conflict outcomes. F11.2 changes no production behavior or host mutation API.
+- Preparation remains mutation-free. Execution revalidates the pair, strictly synchronizes the target against the
+  captured profile, prepares immutable consequence payloads, commits one primary transaction, and only then delivers
+  external or independently owned Feature consequences.
+- The primary transaction owns F11 Entry/Library/category/normalized child state and prepared tracking rows. Replace
+  mode requires narrow F12 transaction participation so Merge membership cannot diverge from Library ownership.
+- F15 Progress, F16 Playback Preferences, F25 Viewer Settings, selected F08 Download removal, and selected custom-cover
+  promotion use durable at-least-once delivery with owner-produced immutable payloads. Retries never reinterpret mutable
+  source state.
+- A stable Feature-issued operation identity makes a committed execution replayable after timeout or process death and
+  prevents the same preparation from committing a different second intent.
+- The audit found two required corrections outside the new F11 coordinator: the strict target-sync path cannot accept
+  active-profile writes or swallowed chapter persistence failures, and F08 cannot acknowledge Download removal until
+  type-owned deletion reports verified filesystem/cache completion.
+- Download owners are captured before Replace changes Merge membership. Custom-cover bytes are staged before commit and
+  promoted afterward, avoiding both pre-commit visible mutation and post-commit loss of the original input.
+- An applied operation with pending or failed durable consequences remains applied and reports `INCOMPLETE`; it is never
+  rolled back or mislabeled as complete. Aggregate status and retry remain Feature-owned rather than caller-driven.
+
 ### F11.3 — Shared coordinator and primary transfer
 
-- Implement graph-selected applicability, preparation, optimistic validation, target synchronization, shared child
-  matching, resource mappings, and the primary Entry/Library state transition.
+- Implement graph-selected applicability, preparation, optimistic validation, strict explicit-profile target
+  synchronization, shared child matching, and the primary Entry/Library/category/child/tracking state transition.
+- Add stable operation/replay records and the owned durable-consequence storage boundary without yet installing
+  cross-feature payload handlers.
+- Make F12 Merge replacement participate in the Replace transaction without exposing membership to F11.
 - Install the purpose-specific app host adapter and remove `MigrateEntryUseCase` as an orchestration authority.
 - Return structured results for rejected, failed, and applied operations.
 
-Exit gate: primary Migration behavior is feature-owned and profile-safe without optional consequences or UI fallbacks.
+Exit gate: primary Migration behavior is feature-owned, profile-safe, replayable, and atomic with Merge replacement,
+without optional post-commit consequences or UI fallbacks.
 
 Review request: verify shared copy/replace behavior and primary failure outcomes.
 
 ### F11.4 — Cross-feature and external consequences
 
-- Integrate F15 Progress, F16 Playback Preferences, F25 Viewer Settings, F08 Download maintenance, F12 Merge replacement,
-  categories, notes, tracking, and custom covers according to F11.2.
+- Integrate immutable F15 Progress, F16 Playback Preferences, F25 Viewer Settings, selected F08 Download maintenance,
+  and staged custom-cover payloads according to F11.2.
+- Add at-least-once delivery, aggregate consequence status/retry, and the required F08/F15/F25 cooperation contracts.
 - Remove the Manga viewer-flags branch and both raw Merge cooperation calls.
 - Prove that provider absence skips only the owning optional relationship.
 

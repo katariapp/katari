@@ -37,6 +37,7 @@ Updated: 2026-07-19
 - F12.6 Lifecycle ownership migration commit: `01fde94fc` (`(refactor): migrate merge lifecycle ownership`)
 - F12 completion commit: `5e67ce793` (`(refactor): complete merge feature migration`)
 - F11.0 Migration planning commit: `da19e7df3` (`(docs): plan entry source migration`)
+- F11.1 Migration boundary commit: `4804a8b41` (`(refactor): define migration feature boundary`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -44,8 +45,8 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F11.1` — Entry Source Migration feature contract and dependency boundary
-- State: F11.0 is committed. F11.1 is implemented and awaiting contract/boundary review.
+- Milestone: `F11.2` — Entry Source Migration transaction and consequence semantics
+- State: F11.0-F11.1 are committed. F11.2 decision `0021` was accepted on 2026-07-19 and awaits commit.
 
 Focused F11.0 findings:
 
@@ -74,6 +75,21 @@ Focused F11.1 findings:
 - Formatting, build-logic tests, API/SPI and all production type/root interaction checks pass. The boundary task fails on
   the intentional 20-item queue; FOSS compilation continues to report the already-exposed F11/F12 consumers plus
   unrelated current-branch application errors.
+
+Focused F11.2 findings:
+
+- Target synchronization is a non-atomic, active-profile operation whose chapter removal/insertion paths can suppress
+  persistence failures. F11 needs a strict explicit-profile result; a partial sync is never an applied Migration.
+- The primary transaction atomically owns F11 Entry/Library/category/normalized child state, prepared tracks, stable
+  operation identity, durable consequence records, and F12 Merge replacement in Replace mode.
+- Progress, playback preferences, viewer settings, Download removal, and custom-cover promotion occur after commit from
+  immutable owner-produced payloads with durable at-least-once retry.
+- Download owners must be captured before membership replacement. F08 must stop reporting `Performed` after unverified
+  Manga/Anime filesystem deletion before F11 can acknowledge Download cleanup.
+- Custom-cover bytes require pre-commit staging and idempotent post-commit promotion. A stable operation record replays a
+  committed result after process death and rejects reuse of the same preparation with different intent.
+- The accepted semantics and authoritative failure table are in decision `0021`; F11.2 changes documentation only and
+  introduces no write host, compatibility implementation, consumer migration, or behavior change.
 
 ## Why the Plan Was Reset
 
@@ -643,6 +659,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Review and approve the F11.1 application contract, preparation-host scope, and base/optional graph relationships. After
-approval, commit F11.1 and begin F11.2 as a semantics-only audit; do not add mutation host ports or migrate consumers
-before transaction, partial-failure, ordering, and retry behavior are accepted.
+Commit the accepted F11.2 decision and begin F11.3. Implement the strict explicit-profile synchronization boundary,
+stable operation replay, primary transition, and F12 transaction participation before adding any optional
+post-commit consequence handler or migrating UI consumers.

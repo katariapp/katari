@@ -153,6 +153,26 @@ SPI boundary is not an exit gate for Phase 3.5.
 - No finding is allowlisted and no compatibility Feature implementation exists. F11.2-F11.5 must make the existing code
   conform to the accepted contract rather than weakening the boundary to regain compilation.
 
+### Exposed by F11.2: transaction and consequence prerequisites
+
+- Target synchronization currently spans network work and multiple active-profile repository transactions. Chapter
+  removal/insertion failures can be swallowed and represented as apparent success. F11 requires a strict,
+  explicit-profile synchronization result before it can authorize its primary transition.
+- F11-owned Entry/Library/category/normalized child state and prepared tracking rows form one optimistic primary
+  database transition. Replace mode requires F12 transaction participation so Merge membership and Library ownership
+  cannot commit separately.
+- Progress, playback preferences, viewer settings, Download removal, and custom-cover promotion require immutable
+  prepared payloads plus durable at-least-once delivery. Retrying a source-reading `copy` operation would reinterpret the
+  original Migration and is rejected.
+- Current F08 Manga/Anime deletion may ignore filesystem failure while evicting cache state. Captured-owner deletion and
+  verified structured completion are required before a durable F11 consequence may be acknowledged.
+- Download ownership must be captured before Merge replacement. Cover content must be staged before commit because its
+  source file is not a durable post-commit payload.
+- A stable operation record makes committed execution replayable after process death and owns aggregate consequence
+  status/retry. Callers never receive journal rows or a completion checklist.
+- These findings are recorded in accepted decision
+  `0021-migration-transaction-and-consequence-semantics.md`; no production mutation boundary was introduced in F11.2.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.
