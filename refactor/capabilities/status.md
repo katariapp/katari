@@ -35,6 +35,7 @@ Updated: 2026-07-19
 - F12.4 Entry ownership migration commit: `e8cd191b5` (`(refactor): migrate merge ownership consumers`)
 - F12.5 Download ownership migration commit: `32043dabf` (`(refactor): migrate merge download ownership`)
 - F12.6 Lifecycle ownership migration commit: `01fde94fc` (`(refactor): migrate merge lifecycle ownership`)
+- F12 completion commit: `5e67ce793` (`(refactor): complete merge feature migration`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -42,22 +43,18 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F12.7` — Integrated enforcement and completion review
-- State: F12.1–F12.6 are committed. F12.7 is implemented and awaiting review; F11 remains pending.
+- Milestone: `F11.0` — Entry Source Migration census, classification, and phase split
+- State: F12 is complete. F11.0 is implemented and awaiting architecture/semantics review.
 
-Focused F12.7 validation:
+Focused F11.0 findings:
 
-- The complete production census is reconciled in the F12 consequence ledger; no discovered consumer is left without an
-  owned disposition.
-- Every base consequence participates through the provider-free Merge integration. Download ownership/removal remains
-  independently derived from Download provider presence.
-- Enforcement rejects any concrete `EntryType.*` branch, ambient profile authority, raw persistence access, and host
-  borrowing outside the root Merge subtree and segregated app adapter.
-- The boundary census intentionally fails on exactly five findings, all assigned to F11. F12 has no allowlisted raw
-  consumer or compatibility authority.
-- Formatting, all interaction suites, Merge persistence behavior, SQLDelight migration verification, and build-logic
-  tests pass. FOSS compilation reaches the unfinished F11 surface and previously recorded unrelated application errors
-  without an F12-owned consumer or symbol error.
+- Provider-backed Migration preserves accepted Manga/Anime participation and valid Book absence without a type matrix.
+- The five boundary findings are only the non-compiling subset; every already-compiling UI, search, execution,
+  consequence, preference, test, and documentation surface now has a disposition in `features/F11-migration.md`.
+- Browse currently admits unsupported Book Entries into a silent no-op, while public documentation still marks accepted
+  Anime Migration behavior unavailable. Both are assigned to F11.
+- The monolithic use case's ambient options, Manga branch, raw Merge access, swallowed failures, and caller-owned transfer
+  pipeline are architecture obligations, not a compilation repair list.
 
 ## Why the Plan Was Reset
 
@@ -627,5 +624,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-If the F12.7 consequence ledger, enforcement, and manifesto comparison are accepted, commit the completion milestone and
-begin F11 Migration consumer conformance. Continue with one agent; do not weaken the F12 boundary to restore compilation.
+Review and approve the F11.0 participation classification, availability/selection semantics, phase split, and proposed
+failure-semantics direction. After approval, commit F11.0 and begin F11.1 with one agent; do not migrate consumers or
+preserve compilation before the Feature contract and dependency boundary are accepted.

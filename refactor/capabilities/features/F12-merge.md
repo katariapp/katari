@@ -1,6 +1,6 @@
 # F12 — Merge
 
-Status: F12.1–F12.6 committed; F12.7 implemented and awaiting completion review
+Status: complete in `5e67ce793`
 
 ## Architectural Classification
 
@@ -297,7 +297,7 @@ implemented.
 - Reconcile the complete F12 inventory row and document every consequence.
 - Compare the result with every manifesto rejection rule before marking F12 complete.
 
-Implemented result awaiting review:
+Implemented result:
 
 - The production census was rerun from all `EntryMerge*` references and every raw authority name. Every discovered
   consumer has an owned disposition; the only remaining raw references outside the segregated host are the two F11

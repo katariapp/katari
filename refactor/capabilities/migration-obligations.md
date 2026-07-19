@@ -124,6 +124,19 @@ SPI boundary is not an exit gate for Phase 3.5.
 - The only remaining boundary queue is exactly five F11 findings. F12 supplies the narrow Migration cooperation Feature;
   F11 still owns replacing its two raw callers and the three remaining capability-facade consumers.
 
+### Exposed by F11.0: complete Entry Source Migration ownership
+
+- The five boundary findings are only the non-compiling subset. The complete F11 census also includes Entry, Library,
+  Browse source lists, source-entry selection, automatic/manual search, configuration, dialogs, shared execution,
+  transfer consequences, preferences, tests, and public documentation that still compile.
+- The current Browse source path admits unsupported Book Entries and reaches a silent no-op. The content-type reference
+  also still marks accepted Anime Migration behavior unavailable. Both are F11 obligations, not unrelated follow-ups.
+- `MigrateEntryUseCase` reads ambient options, owns a caller-visible consequence checklist, contains a Manga type branch,
+  reads raw Merge authority, returns no result, and swallows every non-cancellation failure. F11.1-F11.5 replace the
+  authority rather than wrapping it.
+- App-version, Mihon import, profile-preference, SQLDelight, and extension-development migrations were reviewed and remain
+  outside F11.
+
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
 - Provider-backed operational facades and `EntryInteractions` moved from the exported API into SPI.
