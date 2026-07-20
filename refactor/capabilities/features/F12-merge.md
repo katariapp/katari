@@ -36,6 +36,15 @@ resolves only when a trusted workflow request requires that effect; Download rem
 Download provider. Download ownership remains provider-derived and context-free, so Merge neither grants Download
 support nor withholds ordinary ownership merely because no removal is currently requested.
 
+The remaining F12 coordinators are shared membership semantics or return purpose-specific operation state. Candidate
+lists, absent membership, caller-supplied Library populations, backup resolution/skips, profile-move selections,
+lifecycle events, and consequence status do not activate another relationship and therefore do not become context
+inputs. Host conflicts remain authoritative operation outcomes.
+
+Migration replacement is the exception: it is cross-feature cooperation and now derives from the real Migration
+provider rather than base Merge participation. A future type receives it automatically when it contributes Migration;
+a type without Migration retains valid base Merge behavior without a false replacement consequence.
+
 ## Non-Negotiable Boundary
 
 - Application consumers submit user intent and consume feature-owned results or projections.

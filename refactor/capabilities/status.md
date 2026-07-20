@@ -61,6 +61,7 @@ Updated: 2026-07-20
 - Phase 6.4.12 Migration preparation context commit: `e2424a968` (`(refactor): resolve migration preparation context`)
 - Phase 6.4.13 Migration execution context commit: `7d729ef98` (`(refactor): resolve migration execution context`)
 - Phase 6.4.14 Merge preparation context commit: `02fd4c20f` (`(refactor): resolve merge preparation context`)
+- Phase 6.4.15 Merge execution context commit: `6418180b7` (`(refactor): resolve merge execution context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -68,9 +69,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.15 Merge execution membership and consequence context
-- State: Phase 6.4.15 is implemented and validating for review. The remaining F12 coordinator context audit has not
-  started.
+- Milestone: Phase 6.4.16 Remaining Merge coordinator context audit
+- State: Phase 6.4.16 is implemented and validating for review. Phase 6.4 closure reconciliation has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -300,6 +300,18 @@ Focused Phase 6.4.15 findings:
 - Opaque reference and editor-choice validation, missing-group idempotence, atomic transaction conflicts, operational
   failures, and consequence-delivery status remain operation outcomes. No speculative pre-transaction authority check
   weakens atomic host revalidation.
+
+Focused Phase 6.4.16 findings:
+
+- Migration replacement was the only remaining falsely unconditional F12 cross-feature consequence. It now derives
+  from the real Migration provider, matching the already F11-only runtime call path.
+- Candidate lookup, navigation, child ownership, Library grouping, metadata refresh, backup, profile move, lifecycle,
+  and consequence status are shared Merge coordination rather than optional type support.
+- Membership absence, empty candidates/status, partial caller Library populations, backup skips, profile-move selection,
+  lifecycle idempotence, and host failures remain purpose-specific inputs/results. Copying them into graph context would
+  not activate or block another relationship.
+- Download and Migration remain independent provider-derived edges. No content-type list, type-specific Merge opt-in,
+  generic runtime-state capability, or public API is added.
 
 Focused F11.0 findings:
 
@@ -960,5 +972,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.15 after review, then audit the remaining F12 projection and lifecycle coordinators for contextual
-relationships before Phase 6.5.
+Commit Phase 6.4.16 after review, then perform the Phase 6.4 closure reconciliation. Continue through Phase 6 afterward;
+explicitly notify the user when Phase 7 is reached.

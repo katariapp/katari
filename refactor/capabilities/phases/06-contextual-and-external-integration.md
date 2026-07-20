@@ -416,6 +416,25 @@ Atomic host revalidation remains the race-safe authority for optimistic edit and
 result is not guessed by a pre-transaction context check. Per-operation effects are nevertheless graph-discoverable and
 activate only when the trusted F12 workflow requests them.
 
+#### 6.4.16 — Remaining Merge Coordinator Disposition
+
+- [x] Derive F11 replacement cooperation from the real Migration provider instead of granting it unconditionally with
+  base Merge coordination.
+- [x] Keep candidate lookup, navigation, child ownership, Library grouping, metadata refresh, backup snapshot, profile
+  move, lifecycle handling, and consequence status as shared F12 coordination for every composed type.
+- [x] Keep absent membership, empty candidates/status, caller-supplied partial Library populations, missing backup
+  identities, malformed portable groups, empty profile-move selections, and idempotent lifecycle events as operation
+  inputs or structured results.
+- [x] Keep backup/profile-move/Library-lifecycle transaction conflicts and delivery failures as operation outcomes from
+  their authoritative host boundaries.
+- [x] Preserve Download and Migration as independently provider-derived relationships without introducing another
+  cross-feature opt-in.
+
+This completes the F12 context audit. The shared projections describe Merge membership semantics even when a type has no
+optional media provider; Download and Migration are the provider-dependent edges owned by F12 itself. Registering
+membership contents, candidate lists, backup rows, or status counts as context would duplicate method payloads and
+returned state without changing relationship applicability.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

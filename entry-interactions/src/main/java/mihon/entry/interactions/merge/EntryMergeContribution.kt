@@ -17,6 +17,7 @@ import mihon.feature.graph.SharedFeatureConsequence
 internal val ENTRY_MERGE_FEATURE_ID = FeatureId("entry.merge")
 internal val ENTRY_MERGE_BASE_INTEGRATION_ID = FeatureIntegrationId("entry.merge.shared-workflow")
 internal val ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.merge.download")
+private val ENTRY_MERGE_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.merge.migration")
 
 private val ENTRY_MERGE_FEATURE_OWNER = ContributionOwner("entry-merge")
 
@@ -32,7 +33,6 @@ internal enum class EntryMergeBaseConsequence(
     BACKUP(FeatureArtifactId("entry.merge.backup")),
     PROFILE_MOVE(FeatureArtifactId("entry.merge.profile-move")),
     PROFILE_CASCADE_CLEANUP(FeatureArtifactId("entry.merge.profile-cascade-cleanup")),
-    MIGRATION_REPLACEMENT(FeatureArtifactId("entry.merge.migration-replacement")),
     CHILD_OWNERSHIP(FeatureArtifactId("entry.merge.child-ownership")),
     PERSISTENCE(FeatureArtifactId("entry.merge.persistence")),
     CONSEQUENCE_DELIVERY(FeatureArtifactId("entry.merge.consequence-delivery")),
@@ -43,6 +43,10 @@ internal enum class EntryMergeDownloadConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence {
     OWNERSHIP(FeatureArtifactId("entry.merge.download-ownership")),
+}
+
+private object EntryMergeMigrationReplacementConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.merge.migration-replacement")
 }
 
 private object EntryMergeBehaviorContract : FeatureBehaviorContract {
@@ -68,6 +72,11 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                         id = ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
                         sharedConsequences = EntryMergeDownloadConsequence.entries,
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_MERGE_MIGRATION_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryMigrationCapability.definition),
+                        sharedConsequences = listOf(EntryMergeMigrationReplacementConsequence),
                     ),
                 ) + entryMergePreparationContextIntegrations(owner) + entryMergeExecutionContextIntegrations(owner),
             ),
