@@ -298,6 +298,19 @@ Entry-State, Preferences, or release-window capability is introduced.
 No Library-State, Filter-Preferences, Tracking, or matching-result capability is introduced. Tracker authentication and
 tracker-declared type applicability remain assigned to their Tracking owner in Phase 6.7.
 
+#### 6.4.8 — Child Group Filtering Request-State Disposition
+
+- [x] Audit F18 state, observation, filtering, persistence, backup, and shared-storage consequences for contextual
+  applicability or cross-feature activation.
+- [x] Keep member/profile IDs, group sets, child lists, and mutation values as purpose-specific Feature payload and
+  returned state because they do not decide whether a graph relationship applies.
+- [x] Preserve provider presence as the sole applicability fact; supported empty state, identity filtering, and
+  unchanged persistence remain successful operation results rather than contextual blockers.
+- [x] Keep live reevaluation inside the F18 observation contract instead of duplicating mutable state as graph evidence.
+
+F18 requires no contextual integration. This is an explicit owner-based disposition, not an omission: registering
+ordinary method arguments as context would violate the Phase 6 boundary and create a generic request-state registry.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

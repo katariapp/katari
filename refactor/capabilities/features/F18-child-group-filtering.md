@@ -23,6 +23,17 @@ from every member are observed, and a replacement exclusion set is written to ev
 single-member scope. Filtering occurs over the live child list before F17 orders and constructs display rows, preventing
 an unfiltered observation from replacing the filtered initial list.
 
+## Context disposition
+
+F18 requires no contextual graph relationship. Member IDs, profile IDs, available and excluded groups, child lists,
+and requested replacement values are operation payload or returned state. They change the data processed by an
+applicable provider, but they do not decide whether the F18 relationship applies, activate another consequence, or
+create a specialized obligation. Empty groups and identity filtering remain successful supported results.
+
+This disposition is deliberate: moving those values into graph evidence would turn context resolution into a registry
+of ordinary Feature method arguments. Provider presence therefore remains the complete applicability fact, while the
+Feature request/result boundary owns live state and reevaluation.
+
 ## Consequence disposition
 
 | Consequence | Disposition |
@@ -49,4 +60,5 @@ an unfiltered observation from replacing the filtered initial list.
 
 F18 adds no mandatory operation, current-type matrix, support report/catalog, no-op provider, compatibility shim, or app
 raw Interaction access. Adding a future provider activates every shared F18 consequence without an application gate or
-another per-type opt-in.
+another per-type opt-in. The Phase 6 context audit adds no generic context capability and does not duplicate live
+request state in graph evidence.
