@@ -27,6 +27,15 @@ payloads and missing caller preparation remain request validation rather than su
 Merge provider, type-specific opt-in, type matrix, or generic Selection/Membership capability, and preserve the existing
 public result vocabulary.
 
+Existing-group execution resolves complete ordered membership and homogeneous member type before mutation. Optimistic
+snapshot conflicts remain atomic host outcomes because a separate preflight check could race with the transaction.
+Opaque-reference and editor-choice errors remain request validation.
+
+Library initialization, cover cleanup, and Download removal are no longer unconditional relationship artifacts. Each
+resolves only when a trusted workflow request requires that effect; Download removal additionally requires the real
+Download provider. Download ownership remains provider-derived and context-free, so Merge neither grants Download
+support nor withholds ordinary ownership merely because no removal is currently requested.
+
 ## Non-Negotiable Boundary
 
 - Application consumers submit user intent and consume feature-owned results or projections.

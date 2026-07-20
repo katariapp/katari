@@ -171,6 +171,8 @@ class EntryMergeFeatureTest {
         val transition = host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
         transition.preparations.single().categoryIds shouldContainExactly listOf(4L, 5L)
         transition.expected.entries.single { it.persistedEntryId == null }.entry.url shouldBe remote.url
+        transition.consequenceRequests.map { it.artifactId } shouldContainExactly
+            listOf(EntryMergeLibraryInitializationConsequence.id.value)
     }
 
     @Test
@@ -226,6 +228,47 @@ class EntryMergeFeatureTest {
         val keysByEntryId = transition.expected.entries.associate { it.entry.id to it.key }
         transition.target shouldBe keysByEntryId.getValue(2L)
         transition.removedEntries shouldBe setOf(keysByEntryId.getValue(1L))
+    }
+
+    @Test
+    fun `library removal activates only its applicable shared cleanup consequence`() = runTest {
+        val entries = listOf(entry(1L, "one"), entry(2L, "two"))
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
+        val host = FakeEntryMergeHost(entries, listOf(membership))
+        val feature = feature(host)
+        val editor = feature.prepare(EntryMergePrepareIntent(listOf(entries.first())))
+            .shouldBeInstanceOf<EntryMergePreparationResult.Ready>()
+            .editor
+        val removed = editor.entries.single { it.entry.id == 2L }.reference
+
+        feature.execute(
+            EntryMergeCommitIntent(
+                editReference = editor.editReference,
+                target = editor.target,
+                orderedEntries = editor.entries.map(EntryMergeEditorEntry::reference),
+                libraryRemovalEntries = setOf(removed),
+            ),
+        ).shouldBeInstanceOf<EntryMergeExecutionResult.Applied>()
+
+        host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
+            .consequenceRequests.map { it.artifactId } shouldContainExactly
+            listOf(EntryMergeCoverCleanupConsequence.id.value)
+    }
+
+    @Test
+    fun `existing group execution rejects incomplete authoritative membership`() = runTest {
+        val existing = entry(1L, "one")
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, listOf(1L, 2L))
+        val feature = feature(FakeEntryMergeHost(listOf(existing), listOf(membership)))
+
+        feature.execute(
+            EntryMergeRemoveEntriesIntent(
+                subject = EntryMergeSubject(7L, 1L),
+                entryIds = setOf(2L),
+                removeFromLibrary = false,
+                removeDownloads = false,
+            ),
+        ) shouldBe EntryMergeExecutionResult.Conflict
     }
 
     private fun feature(host: FakeEntryMergeHost): EntryMergeFeature {
@@ -305,9 +348,14 @@ class EntryMergeFeatureTest {
                     transition: EntryMergeHostTransition,
                 ): EntryMergeHostTransitionResult {
                     transitions += transition
-                    val target = (transition as EntryMergeHostTransition.CommitEditor).target
-                    val targetId = transition.expected.entries.single { it.key == target }.persistedEntryId ?: 99L
-                    return EntryMergeHostTransitionResult.Applied(targetId)
+                    val visibleEntryId = when (transition) {
+                        is EntryMergeHostTransition.CommitEditor -> {
+                            transition.expected.entries.single { it.key == transition.target }.persistedEntryId ?: 99L
+                        }
+                        is EntryMergeHostTransition.ChangeExistingGroup -> transition.visibleEntryId
+                        else -> error("Unsupported transition in workflow test: $transition")
+                    }
+                    return EntryMergeHostTransitionResult.Applied(visibleEntryId)
                 }
 
                 override suspend fun applyProfileMove(

@@ -58,9 +58,9 @@ internal class EntryMergeConsequenceDelivery(
         val entry = host.profile(consequence.profileId).entries(listOf(consequence.entryId)).singleOrNull()
             ?: return
         when (consequence.artifactId) {
-            EntryMergeBaseConsequence.LIBRARY_INITIALIZATION.id.value -> libraryEntryInitializer(entry)
-            EntryMergeBaseConsequence.COVER_CLEANUP.id.value -> coverCleanup(entry)
-            EntryMergeDownloadConsequence.REMOVAL.id.value -> {
+            EntryMergeLibraryInitializationConsequence.id.value -> libraryEntryInitializer(entry)
+            EntryMergeCoverCleanupConsequence.id.value -> coverCleanup(entry)
+            EntryMergeDownloadRemovalConsequence.id.value -> {
                 check(
                     downloadMaintenance().removeEntryDownloads(entry) == EntryDownloadMaintenanceResult.Performed,
                 ) { "Merge download removal was not verified" }

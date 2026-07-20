@@ -400,6 +400,22 @@ The provider-free Merge relationship remains automatic for every composed type. 
 only the current preparation/editor consequences; they do not create Merge, Selection, Membership, or Entry-State
 capabilities and do not require a type-specific Merge contribution.
 
+#### 6.4.15 — Merge Execution Membership and Consequence Context
+
+- [x] Keep opaque edit-reference recognition, editor ordering/removal validation, missing-group idempotence, and atomic
+  transaction conflicts as structured operation outcomes.
+- [x] Declare complete ordered membership and homogeneous member type before an existing-group mutation is coordinated.
+- [x] Move Library initialization and cover cleanup out of unconditional base consequences and resolve each from the
+  trusted workflow request that actually requires it.
+- [x] Keep Download ownership provider-derived and context-free while resolving Download removal independently from
+  provider presence plus a concrete removal request.
+- [x] Preserve consequence journaling, delivery retries, and aggregate status as installed coordination and operation
+  outcomes rather than runtime support capabilities.
+
+Atomic host revalidation remains the race-safe authority for optimistic edit and membership snapshots. Its conflict
+result is not guessed by a pre-transaction context check. Per-operation effects are nevertheless graph-discoverable and
+activate only when the trusted F12 workflow requests them.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

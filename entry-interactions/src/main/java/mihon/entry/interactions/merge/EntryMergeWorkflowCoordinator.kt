@@ -24,9 +24,9 @@ internal class EntryMergeWorkflowCoordinator(
         ENTRY_MERGE_BASE_INTEGRATION_ID,
         EntryMergeBaseConsequence.WORKFLOW_COORDINATION.id,
     )
-    private val downloadRemovalTypes = evaluation.mergeTypes(
+    private val downloadTypes = evaluation.mergeTypes(
         ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
-        EntryMergeDownloadConsequence.REMOVAL.id,
+        EntryMergeDownloadConsequence.OWNERSHIP.id,
     )
 
     override suspend fun prepare(intent: EntryMergePrepareIntent): EntryMergePreparationResult {
@@ -235,14 +235,20 @@ internal class EntryMergeWorkflowCoordinator(
             return rejectedExecution(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
         }
 
+        evaluation.requireMergeExecutionConsequenceContext(
+            type = edit.type,
+            libraryInitializationRequired = edit.preparations.isNotEmpty(),
+            coverCleanupRequired = libraryRemoved.isNotEmpty(),
+            downloadRemovalRequired = libraryRemoved.isNotEmpty().takeIf { edit.type in downloadTypes },
+        )
         val operationId = UUID.randomUUID().toString()
         val consequenceRequests = edit.preparations.map { preparation ->
-            consequence(preparation.key, EntryMergeBaseConsequence.LIBRARY_INITIALIZATION.id.value)
+            consequence(preparation.key, EntryMergeLibraryInitializationConsequence.id.value)
         } + libraryRemoved.flatMap { key ->
             buildList {
-                add(consequence(key, EntryMergeBaseConsequence.COVER_CLEANUP.id.value))
-                if (edit.type in downloadRemovalTypes) {
-                    add(consequence(key, EntryMergeDownloadConsequence.REMOVAL.id.value))
+                add(consequence(key, EntryMergeCoverCleanupConsequence.id.value))
+                if (edit.type in downloadTypes) {
+                    add(consequence(key, EntryMergeDownloadRemovalConsequence.id.value))
                 }
             }
         }
@@ -305,23 +311,39 @@ internal class EntryMergeWorkflowCoordinator(
         removeDownloads: Boolean,
     ): EntryMergeExecutionResult {
         val entries = host.profile(subject.profileId).entries(expected.orderedEntryIds)
-        if (entries.map(Entry::id) != expected.orderedEntryIds) return EntryMergeExecutionResult.Conflict
-        val type = entries.map(Entry::type).distinct().singleOrNull() ?: return EntryMergeExecutionResult.Conflict
+        val completeOrderedMembership = entries.map(Entry::id) == expected.orderedEntryIds
+        val memberTypes = entries.mapTo(mutableSetOf(), Entry::type)
+        val homogeneousMembershipType = completeOrderedMembership && memberTypes.size == 1
+        evaluation.requireMergeExistingGroupContext(
+            memberTypes.filterTo(mutableSetOf()) { it in applicableTypes },
+            completeOrderedMembership,
+            homogeneousMembershipType,
+        )
+        if (!completeOrderedMembership || !homogeneousMembershipType) return EntryMergeExecutionResult.Conflict
+        val type = memberTypes.single()
         check(type in applicableTypes) { "Entry type $type was not composed into the Merge feature" }
+        val downloadRemovalRequired = removeDownloads &&
+            (expected.orderedEntryIds.toSet() - replacementIds).isNotEmpty()
+        evaluation.requireMergeExecutionConsequenceContext(
+            type = type,
+            libraryInitializationRequired = false,
+            coverCleanupRequired = libraryRemovalIds.isNotEmpty(),
+            downloadRemovalRequired = downloadRemovalRequired.takeIf { type in downloadTypes },
+        )
         val operationId = UUID.randomUUID().toString()
         val consequenceRequests = libraryRemovalIds.flatMap { entryId ->
             buildList {
-                add(consequence(entryId, EntryMergeBaseConsequence.COVER_CLEANUP.id.value))
-                if (removeDownloads && type in downloadRemovalTypes) {
-                    add(consequence(entryId, EntryMergeDownloadConsequence.REMOVAL.id.value))
+                add(consequence(entryId, EntryMergeCoverCleanupConsequence.id.value))
+                if (removeDownloads && type in downloadTypes) {
+                    add(consequence(entryId, EntryMergeDownloadRemovalConsequence.id.value))
                 }
             }
-        } + if (!removeDownloads || type !in downloadRemovalTypes) {
+        } + if (!removeDownloads || type !in downloadTypes) {
             emptyList()
         } else {
             (expected.orderedEntryIds.toSet() - libraryRemovalIds)
                 .filter { it !in replacementIds }
-                .map { consequence(it, EntryMergeDownloadConsequence.REMOVAL.id.value) }
+                .map { consequence(it, EntryMergeDownloadRemovalConsequence.id.value) }
         }
         val replacementTarget = when {
             replacementIds.size < 2 -> null

@@ -37,15 +37,12 @@ internal enum class EntryMergeBaseConsequence(
     PERSISTENCE(FeatureArtifactId("entry.merge.persistence")),
     CONSEQUENCE_DELIVERY(FeatureArtifactId("entry.merge.consequence-delivery")),
     CONSEQUENCE_STATUS(FeatureArtifactId("entry.merge.consequence-status")),
-    LIBRARY_INITIALIZATION(FeatureArtifactId("entry.merge.library-initialization")),
-    COVER_CLEANUP(FeatureArtifactId("entry.merge.cover-cleanup")),
 }
 
 internal enum class EntryMergeDownloadConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence {
     OWNERSHIP(FeatureArtifactId("entry.merge.download-ownership")),
-    REMOVAL(FeatureArtifactId("entry.merge.download-removal")),
 }
 
 private object EntryMergeBehaviorContract : FeatureBehaviorContract {
@@ -72,7 +69,7 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
                         sharedConsequences = EntryMergeDownloadConsequence.entries,
                     ),
-                ) + entryMergePreparationContextIntegrations(owner),
+                ) + entryMergePreparationContextIntegrations(owner) + entryMergeExecutionContextIntegrations(owner),
             ),
         )
     }

@@ -60,6 +60,7 @@ Updated: 2026-07-20
 - Phase 6.4.11 Migration availability context commit: `50f34a2fb` (`(refactor): resolve migration availability context`)
 - Phase 6.4.12 Migration preparation context commit: `e2424a968` (`(refactor): resolve migration preparation context`)
 - Phase 6.4.13 Migration execution context commit: `7d729ef98` (`(refactor): resolve migration execution context`)
+- Phase 6.4.14 Merge preparation context commit: `02fd4c20f` (`(refactor): resolve merge preparation context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -67,8 +68,9 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.14 Merge preparation selection and membership context
-- State: Phase 6.4.14 is implemented and validating for review. Later F12 execution context has not started.
+- Milestone: Phase 6.4.15 Merge execution membership and consequence context
+- State: Phase 6.4.15 is implemented and validating for review. The remaining F12 coordinator context audit has not
+  started.
 
 Focused Phase 6 preparation findings:
 
@@ -286,6 +288,18 @@ Focused Phase 6.4.14 findings:
   payloads and missing caller preparation remain request validation rather than support or applicability facts.
 - Existing public results and rejection precedence are preserved. No Merge provider, type opt-in, content-type matrix,
   generic Selection/Membership capability, or application API is added.
+
+Focused Phase 6.4.15 findings:
+
+- Existing-group mutation now declares complete ordered membership and homogeneous member type. Missing or mixed live
+  membership retains the existing `Conflict` outcome and blocks only that operation consequence.
+- Library initialization, cover cleanup, and Download removal move out of unconditional base consequences. Each is
+  activated only by the trusted workflow request that emits its durable consequence.
+- Download ownership remains selected solely by the Download provider. Removal additionally requires concrete cleanup
+  work, without creating a Merge opt-in or allowing Merge to authorize Download support.
+- Opaque reference and editor-choice validation, missing-group idempotence, atomic transaction conflicts, operational
+  failures, and consequence-delivery status remain operation outcomes. No speculative pre-transaction authority check
+  weakens atomic host revalidation.
 
 Focused F11.0 findings:
 
@@ -946,4 +960,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.14 after review, then continue F12 edit and existing-group execution context before Phase 6.5.
+Commit Phase 6.4.15 after review, then audit the remaining F12 projection and lifecycle coordinators for contextual
+relationships before Phase 6.5.
