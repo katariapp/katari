@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -90,6 +91,41 @@ class EntryMigrationFeatureTest {
             EntryMigrationOption.CATEGORIES,
             EntryMigrationOption.NOTES,
         )
+    }
+
+    @Test
+    fun `pair context preserves profile type and identity rejections`() = runTest {
+        val feature = feature(RecordingMigrationHost(source, target))
+
+        feature.prepare(EntryMigrationPrepareIntent(source, target.copy(profileId = 5L))) shouldBe
+            EntryMigrationPreparationResult.Rejected(EntryMigrationRejection.SOURCE_TARGET_PROFILE_MISMATCH)
+        feature.prepare(EntryMigrationPrepareIntent(source, target.copy(type = EntryType.ANIME))) shouldBe
+            EntryMigrationPreparationResult.Rejected(EntryMigrationRejection.SOURCE_TARGET_TYPE_MISMATCH)
+        feature.prepare(EntryMigrationPrepareIntent(source, source)) shouldBe
+            EntryMigrationPreparationResult.Rejected(EntryMigrationRejection.SAME_ENTRY)
+    }
+
+    @Test
+    fun `download option requires both provider participation and current downloads`() = runTest {
+        val downloadProvider = mockk<EntryDownloadProcessor>(relaxed = true) {
+            every { type } returns EntryType.BOOK
+        }
+        val downloadFeature = mockk<EntryDownloadMaintenanceFeature> {
+            coEvery { inspectEntry(any()) } returns EntryDownloadMaintenanceInspection.HasDownloads
+        }
+        val feature = feature(
+            host = RecordingMigrationHost(source, target),
+            bindings = listOf(
+                EntryMigrationCapability.bind(MigrationProvider()),
+                EntryDownloadCapability.bind(downloadProvider),
+            ),
+            downloads = downloadFeature,
+        )
+
+        val result = feature.prepare(EntryMigrationPrepareIntent(source, target))
+            .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
+
+        result.availableOptions.shouldContainExactly(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS)
     }
 
     @Test
@@ -231,6 +267,7 @@ class EntryMigrationFeatureTest {
             EntryMigrationCapability.bind(MigrationProvider()),
         ),
         progress: EntryProgressFeature? = null,
+        downloads: EntryDownloadMaintenanceFeature? = null,
         consequenceDelivery: EntryMigrationConsequenceDelivery? = null,
     ): EntryMigrationFeature {
         val composition = createEntryInteractionComposition(
@@ -253,10 +290,12 @@ class EntryMigrationFeatureTest {
         val viewerSettings = mockk<EntryViewerSettingsFeature>()
         coEvery { viewerSettings.prepareMigration(any(), any()) } returns
             EntryViewerSettingsMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
-        val downloads = mockk<EntryDownloadMaintenanceFeature>()
-        coEvery { downloads.inspectEntry(any()) } returns
-            EntryDownloadMaintenanceInspection.Inapplicable(EntryType.BOOK)
-        coEvery { downloads.prepareRemoval(any()) } returns EntryDownloadRemovalPreparation.Inapplicable(EntryType.BOOK)
+        val downloadFeature = downloads ?: mockk<EntryDownloadMaintenanceFeature>().also {
+            coEvery { it.inspectEntry(any()) } returns
+                EntryDownloadMaintenanceInspection.Inapplicable(EntryType.BOOK)
+            coEvery { it.prepareRemoval(any()) } returns
+                EntryDownloadRemovalPreparation.Inapplicable(EntryType.BOOK)
+        }
         val delivery = consequenceDelivery ?: mockk<EntryMigrationConsequenceDelivery>().also {
             coEvery { it.deliverOperation(any()) } returns EntryMigrationFollowUp.INCOMPLETE
         }
@@ -268,7 +307,7 @@ class EntryMigrationFeatureTest {
             progress = progressFeature,
             playbackPreferences = playback,
             viewerSettings = viewerSettings,
-            downloads = downloads,
+            downloads = downloadFeature,
             customCover = mockk(relaxed = true),
             consequences = delivery,
             clockMillis = { 999 },

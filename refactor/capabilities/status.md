@@ -57,6 +57,7 @@ Updated: 2026-07-20
 - Phase 6.4.9 Library Progress disposition commit: `6ee097b12` (`(refactor): classify library progress request state`)
 - Phase 6.4.10 Library Update Notification context commit: `a2beb6ed8` (`(refactor): resolve library update notification context`)
 - Release baseline merge: `54b839168` (merged `origin/upcoming` at `131163af6`, including v1.3.2)
+- Phase 6.4.11 Migration availability context commit: `50f34a2fb` (`(refactor): resolve migration availability context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -64,8 +65,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.11 Migration availability and selection context
-- State: Phase 6.4.11 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.12 Migration pair preparation and option context
+- State: Phase 6.4.12 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -250,6 +251,18 @@ Focused Phase 6.4.11 findings:
 - Empty selection remains a structured operation result because it has no content-type graph subject. Unsupported
   types have no contextual candidate and retain the existing structured unsupported result.
 - Pair compatibility, current option availability, and execution-reference state remain separate F11 context work.
+
+Focused Phase 6.4.12 findings:
+
+- F11 target acceptance now declares source/target persistence, source Library membership, same profile/type, and
+  distinct identity. Host inspection separately declares pair presence and optimistic identity stability.
+- Provider absence remains ordinary inapplicability. Pair blockers preserve existing structured rejection precedence
+  without changing type-wide Migration support.
+- Child State option participation derives from Migration plus Consumption or Bookmarking. Category, notes, custom
+  cover, and stored Downloads independently activate only their own options.
+- Download provider presence remains context-free participation; no stored downloads blocks only the removal option.
+- Host operational failures and opaque execution-reference/selected-option validation remain operation results or later
+  F11 execution-context work rather than being folded into pair support.
 
 Focused F11.0 findings:
 
@@ -910,5 +923,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.11 after review, then continue F11 pair/option context and F12 selection/membership context before
+Commit Phase 6.4.12 after review, then complete F11 execution context before F12 selection/membership context and
 Phase 6.5.

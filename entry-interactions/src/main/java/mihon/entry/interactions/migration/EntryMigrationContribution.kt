@@ -12,11 +12,15 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
+import mihon.feature.graph.anyOf
 
 internal val ENTRY_MIGRATION_FEATURE_ID = FeatureId("entry.migration")
 internal val ENTRY_MIGRATION_BASE_INTEGRATION_ID = FeatureIntegrationId("entry.migration.provider")
 internal val ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID = FeatureIntegrationId("entry.migration.consumption")
 internal val ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID = FeatureIntegrationId("entry.migration.bookmarking")
+internal val ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID =
+    FeatureIntegrationId("entry.migration.child-state-option")
+internal val ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.migration.downloads")
 
 private val ENTRY_MIGRATION_FEATURE_OWNER = ContributionOwner("entry-migration")
 
@@ -68,7 +72,7 @@ internal enum class EntryMigrationViewerSettingsConsequence(
 internal enum class EntryMigrationDownloadConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence {
-    OPTION_AVAILABILITY(FeatureArtifactId("entry.migration.download-option-availability")),
+    PARTICIPATION(FeatureArtifactId("entry.migration.download-participation")),
     CLEANUP(FeatureArtifactId("entry.migration.download-cleanup")),
 }
 
@@ -93,6 +97,10 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
 
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         val migration = CapabilityExpression.Provided(EntryMigrationCapability.definition)
+        val consumption = CapabilityExpression.Provided(EntryConsumptionCapability.definition)
+        val bookmark = CapabilityExpression.Provided(EntryBookmarkCapability.definition)
+        val download = CapabilityExpression.Provided(EntryDownloadCapability.definition)
+        val migrationDownload = allOf(migration, download)
         sink.add(
             FeatureContribution(
                 feature = ENTRY_MIGRATION_FEATURE_ID,
@@ -108,19 +116,18 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                     entryMigrationSelectionContextIntegration(owner, migration),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            migration,
-                            CapabilityExpression.Provided(EntryConsumptionCapability.definition),
-                        ),
+                        prerequisites = allOf(migration, consumption),
                         sharedConsequences = EntryMigrationConsumptionConsequence.entries,
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            migration,
-                            CapabilityExpression.Provided(EntryBookmarkCapability.definition),
-                        ),
+                        prerequisites = allOf(migration, bookmark),
                         sharedConsequences = EntryMigrationBookmarkConsequence.entries,
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID,
+                        prerequisites = allOf(migration, anyOf(consumption, bookmark)),
+                        sharedConsequences = listOf(EntryMigrationChildStateOptionConsequence),
                     ),
                     FeatureIntegration(
                         id = FeatureIntegrationId("entry.migration.progress"),
@@ -149,15 +156,14 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         behavioralContracts = listOf(EntryMigrationViewerSettingsCooperationContract),
                     ),
                     FeatureIntegration(
-                        id = FeatureIntegrationId("entry.migration.downloads"),
-                        prerequisites = allOf(
-                            migration,
-                            CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                        ),
+                        id = ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID,
+                        prerequisites = migrationDownload,
                         sharedConsequences = EntryMigrationDownloadConsequence.entries,
                         behavioralContracts = listOf(EntryMigrationDownloadCooperationContract),
                     ),
-                ),
+                ) +
+                    entryMigrationPreparationContextIntegrations(owner, migration) +
+                    entryMigrationOptionContextIntegrations(owner, migration, migrationDownload),
             ),
         )
     }

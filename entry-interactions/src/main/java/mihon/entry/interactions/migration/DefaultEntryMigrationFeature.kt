@@ -45,6 +45,16 @@ internal class DefaultEntryMigrationFeature(
         integration = ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID,
         consequence = EntryMigrationBookmarkConsequence.TRANSFER.id,
     )
+    private val childStateOptionTypes = evaluation.applicableProviderTypes<EntryMigrationProvider>(
+        feature = ENTRY_MIGRATION_FEATURE_ID,
+        integration = ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID,
+        consequence = EntryMigrationChildStateOptionConsequence.id,
+    )
+    private val downloadTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
+        feature = ENTRY_MIGRATION_FEATURE_ID,
+        integration = ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID,
+        consequence = EntryMigrationDownloadConsequence.PARTICIPATION.id,
+    )
 
     override fun availability(entry: Entry): EntryMigrationAvailability {
         val rejection = entry.sourceRejection()
@@ -91,6 +101,7 @@ internal class DefaultEntryMigrationFeature(
     }
 
     override suspend fun prepare(intent: EntryMigrationPrepareIntent): EntryMigrationPreparationResult {
+        requirePairContext(intent.source, intent.target)
         validatePair(intent.source, intent.target)?.let { return preparationRejected(it) }
         return try {
             when (
@@ -99,9 +110,19 @@ internal class DefaultEntryMigrationFeature(
             ) {
                 is EntryMigrationHostInspectionResult.Ready -> prepare(inspection, intent)
                 EntryMigrationHostInspectionResult.SourceMissing -> {
+                    evaluation.requireMigrationInspectionContext(
+                        sourceType = intent.source.type,
+                        pairPresent = false,
+                        identityStable = false,
+                    )
                     preparationRejected(EntryMigrationRejection.UNPERSISTED_ENTRY)
                 }
                 EntryMigrationHostInspectionResult.TargetMissing -> {
+                    evaluation.requireMigrationInspectionContext(
+                        sourceType = intent.source.type,
+                        pairPresent = false,
+                        identityStable = false,
+                    )
                     preparationRejected(EntryMigrationRejection.UNPERSISTED_ENTRY)
                 }
                 is EntryMigrationHostInspectionResult.OperationalFailure -> {
@@ -134,23 +155,53 @@ internal class DefaultEntryMigrationFeature(
         inspection: EntryMigrationHostInspectionResult.Ready,
         intent: EntryMigrationPrepareIntent,
     ): EntryMigrationPreparationResult {
-        if (!inspection.source.sameMigrationIdentity(intent.source)) {
+        val identityStable = inspection.source.sameMigrationIdentity(intent.source) &&
+            inspection.target.sameMigrationIdentity(intent.target)
+        evaluation.requireMigrationInspectionContext(
+            sourceType = intent.source.type,
+            pairPresent = true,
+            identityStable = identityStable,
+        )
+        if (!identityStable) {
             return preparationRejected(EntryMigrationRejection.ENTRY_IDENTITY_CHANGED)
         }
-        if (!inspection.target.sameMigrationIdentity(intent.target)) {
-            return preparationRejected(EntryMigrationRejection.ENTRY_IDENTITY_CHANGED)
-        }
+        requirePairContext(inspection.source, inspection.target)
         validatePair(inspection.source, inspection.target)?.let { return preparationRejected(it) }
+        val hasCategories = inspection.sourceCategoryIds.isNotEmpty()
+        val hasNotes = inspection.source.notes.isNotBlank()
+        val hasCustomCover = inspection.sourceHasCustomCover
+        val hasDownloads = inspection.source.type in downloadTypes &&
+            downloads.inspectEntry(inspection.source) == EntryDownloadMaintenanceInspection.HasDownloads
+        evaluation.requireMigrationOptionContext(
+            inspection.source.type,
+            EntryMigrationContextualOption.CATEGORIES,
+            hasCategories,
+        )
+        evaluation.requireMigrationOptionContext(
+            inspection.source.type,
+            EntryMigrationContextualOption.NOTES,
+            hasNotes,
+        )
+        evaluation.requireMigrationOptionContext(
+            inspection.source.type,
+            EntryMigrationContextualOption.CUSTOM_COVER,
+            hasCustomCover,
+        )
+        if (inspection.source.type in downloadTypes) {
+            evaluation.requireMigrationOptionContext(
+                inspection.source.type,
+                EntryMigrationContextualOption.DOWNLOADS,
+                hasDownloads,
+            )
+        }
         val options = buildSet {
-            if (inspection.source.type in consumptionTypes || inspection.source.type in bookmarkTypes) {
+            if (inspection.source.type in childStateOptionTypes) {
                 add(EntryMigrationOption.CHILD_STATE)
             }
-            if (inspection.sourceCategoryIds.isNotEmpty()) add(EntryMigrationOption.CATEGORIES)
-            if (inspection.source.notes.isNotBlank()) add(EntryMigrationOption.NOTES)
-            if (inspection.sourceHasCustomCover) add(EntryMigrationOption.CUSTOM_COVER)
-            if (downloads.inspectEntry(inspection.source) == EntryDownloadMaintenanceInspection.HasDownloads) {
-                add(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS)
-            }
+            if (hasCategories) add(EntryMigrationOption.CATEGORIES)
+            if (hasNotes) add(EntryMigrationOption.NOTES)
+            if (hasCustomCover) add(EntryMigrationOption.CUSTOM_COVER)
+            if (hasDownloads) add(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS)
         }
         val reference = FeatureEntryMigrationReference(
             sessionId = newEntryMigrationSessionId(),
@@ -407,6 +458,19 @@ internal class DefaultEntryMigrationFeature(
         if (target.type !in migrationTypes) return EntryMigrationRejection.UNSUPPORTED_TARGET_TYPE
         if (source.id == target.id) return EntryMigrationRejection.SAME_ENTRY
         return null
+    }
+
+    private fun requirePairContext(source: Entry, target: Entry) {
+        if (source.type !in migrationTypes) return
+        evaluation.requireMigrationPairContext(
+            sourceType = source.type,
+            sourcePersisted = source.isPersisted(),
+            sourceInLibrary = source.favorite,
+            targetPersisted = target.isPersisted(),
+            sameProfile = source.profileId == target.profileId,
+            sameType = source.type == target.type,
+            distinctEntry = source.id != target.id,
+        )
     }
 
     private fun Entry.sourceRejection(): EntryMigrationRejection? {

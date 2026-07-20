@@ -132,7 +132,18 @@ An empty selection remains a structured operation rejection because it has no En
 subject. Mixed participating types remain valid; every supported selected type resolves the same F11 selection rule.
 An unsupported type has no Migration candidate relationship and continues to produce the existing structured
 unsupported result. Pair identity/type/profile validation, current option availability, and execution reference state
-remain assigned to subsequent F11 contextual milestones rather than being flattened into this availability decision.
+remain separate from this availability decision.
+
+Pair preparation declares source persistence/Library membership, target persistence, same-profile and same-type state,
+and distinct identity before accepting a target. Host inspection separately declares whether the pair still exists and
+whether its optimistic identities remain stable. These rules preserve the existing structured rejections without
+turning a valid Migration provider into conditional type support.
+
+Child-state option participation derives context-free from Migration plus either Consumption or Bookmarking. Category,
+notes, custom-cover, and Download-removal options declare their current owner state independently. Download provider
+presence establishes only option participation; actual stored downloads activate the option through F11 context. Empty
+state blocks only that option and never blocks Migration preparation. Execution reference validity and selected-option
+validation remain assigned to the next F11 contextual slice.
 
 ## Sequential Milestones
 

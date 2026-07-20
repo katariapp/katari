@@ -353,6 +353,21 @@ notification projection and does not become an Entry-Selection capability.
 Migration provider presence remains the only type-wide support fact. Persisted, Library, profile, and selection state
 are operation evidence owned by F11 and do not become Migration or Entry-State capabilities.
 
+#### 6.4.12 — Migration Pair Preparation and Option Context
+
+- [x] Declare source/target persistence, source Library membership, same profile, same type, and distinct Entry identity
+  for F11 target acceptance.
+- [x] Declare authoritative pair presence and optimistic identity stability after host inspection while preserving
+  operational failures as operation results.
+- [x] Derive Child State option participation from Migration plus either Consumption or Bookmarking without another
+  type opt-in.
+- [x] Declare category, notes, custom-cover, and stored-Download state independently for their option consequences.
+- [x] Keep Download provider presence context-free and require actual stored downloads only for the removal option.
+- [x] Leave opaque-reference recognition and selected-option validation to a separate execution-context slice.
+
+Pair and option blockers suppress only their owned preparation/option consequences. They do not redefine Migration
+support, require another content-type contribution, or create generic Entry-State and Selection capabilities.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,
