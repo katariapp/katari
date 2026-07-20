@@ -63,6 +63,7 @@ Updated: 2026-07-20
 - Phase 6.4.14 Merge preparation context commit: `02fd4c20f` (`(refactor): resolve merge preparation context`)
 - Phase 6.4.15 Merge execution context commit: `6418180b7` (`(refactor): resolve merge execution context`)
 - Phase 6.4.16 Merge context audit commit: `0360453ab` (`(refactor): complete merge context audit`)
+- Phase 6.4.17 Entry Feature context closure commit: `f8653cdfd` (`(refactor): complete entry feature context migration`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -70,8 +71,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.17 Existing Entry Feature context closure
-- State: Phase 6.4.17 is implemented and validating for review. Phase 6.5 has not started.
+- Milestone: Phase 6.5.0 Media ownership census and architecture split
+- State: Phase 6.5.0 is implemented and validating for review. No Phase 6.5 production migration has started.
 
 Focused Phase 6 preparation findings:
 
@@ -983,7 +984,28 @@ Approved on 2026-07-18:
 - F27 binds Entry runtime preference construction to a registered installer, discovers static and dynamic keys,
   rejects ambiguous ownership and late registration, and keeps named legacy corrections separate from support truth.
 
+Focused Phase 6.5.0 findings:
+
+- Image pages, subtitles, live media, selected values, viewer/player state, and format/protection descriptors are not one
+  capability family. They remain operation data interpreted by the Feature or type-owned media mechanic that gives each
+  value product meaning.
+- Generic cover fetching is the remaining `EntryImageSource` application leak. It will receive a purpose-specific
+  source image-network Feature result; Manga reader/download/Immersive mechanics and the already explicit tracker
+  adapter keep their separate owners.
+- F07 already owns Anime download-option availability. Anime player and downloader subtitle resolution remain
+  type-owned because they have distinct execution and failure semantics; no global Playback or Subtitle capability is
+  added.
+- The existing WebView Feature will own canonical child resolution and reader action consequences. The public
+  `ChapterWebViewSource` contract and legacy adapter remain external authorities while the Manga reader stops casting it.
+- Manga auto-scroll and Anime picture-in-picture are live renderer/platform mechanics inside their type-owned runtimes;
+  their cross-application settings surfaces are already selected by F25 and their preference ownership by F27.
+- The Book processor registry is a legitimate nested media authority shared by Book reader and downloader. Processor
+  installation remains one list, optional settings remain independently provider-derived, and neither processor nor
+  format support becomes an Entry-wide capability.
+- The documented census globs now use `**/src/main/**`; the former single-segment form omitted nested modules and could
+  have allowed future media consumers to escape the closure audit.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.4.17 after review, then begin Phase 6.5 Media and Renderer Context. Continue through Phase 6 afterward and
-explicitly notify the user when Phase 7 is reached.
+Commit Phase 6.5.0 after review, then implement Phase 6.5.1 Cover network context. Continue through Phase 6 afterward
+and explicitly notify the user when Phase 7 is reached.

@@ -210,12 +210,12 @@ exception.
 | `C04` | `SourceMetadata.supportedEntryTypes` | Catalogue/description projection shared by source and extension filters/badges; F20 may prune source surfaces, but actual returned Entry type remains authoritative. | 6.2 |
 | `C05` | Concrete `EntryPreviewSource` presence | F19 already owns product consequences; declare source and preference evidence to runtime context resolution. Anime media loading remains owner-local. | 6.4 |
 | `C06` | Concrete `RelatedEntriesSource` presence | F21 already owns availability, fetch, persistence, orientation, and UI; declare source evidence to runtime context resolution. | 6.4 |
-| `C07` | Concrete `EntryImageSource` and returned image-page media | Split by consequence: F03/F04 download, F20 immersive, and reader media mechanics remain type-owned; cross-feature cover network access becomes a purpose-specific Feature result. | 6.5 |
-| `C08` | Concrete `SubtitleSource`, returned streams, and selection | Anime playback and F04 Download Options own their separate consequences; provider-internal resolution remains type-owned and user-visible absence/failure becomes structured context. | 6.5 |
+| `C07` | Concrete `EntryImageSource` and returned image-page media | Split by consequence: Manga reader, F03/F04 download, and F20 Immersive resolution remain type-owned mechanics; the tracker adapter is already explicit; generic cover network access becomes a purpose-specific Feature result. | 6.5 |
+| `C08` | Concrete `SubtitleSource`, returned streams, and selection | F07 owns option availability; Anime player and downloader retain separate type-owned resolution/failure semantics. No type-wide Playback flag or shared subtitle facade is introduced. | 6.5 |
 | `C09` | Concrete `ConfigurableSource` presence | Source-settings Feature migration for catalogue/extension/preferences/backup surfaces; Kavita/Suwayomi use becomes an explicit tracker adapter relationship. | 6.3 |
 | `C10` | Concrete `SourceHomePage` presence and returned URL | Source-home Feature migration for catalogue/feed/migration/extension navigation; tracker use remains an explicit adapter relationship. | 6.3 |
 | `C11` | Concrete `WebViewSource` presence and headers/navigation | Entry/source WebView Feature migration shared by Entry actions and the WebView runtime. | 6.3 |
-| `C12` | Concrete `ChapterWebViewSource` and child URL | Reader-owned contextual Feature migration; the public source contract and legacy adapter remain external authorities. | 6.5 |
+| `C12` | Concrete `ChapterWebViewSource` and child URL | Existing WebView Feature gains reader-owned child consequences and structured resolution; the public source contract and legacy adapter remain external authorities. | 6.5 |
 | `C13` | Concrete `ResolvableSource` presence and resolution result | Deep-link resolution Feature migration; returned Entry/child type is authoritative. | 6.3 |
 | `C14` | `EntryItemOrientationProvider` with source default | Catalogue/description projection owns Browse/feed/library orientation; F21 already carries orientation in its loaded result. | 6.2 |
 | `C15` | Three source-owned child-list contracts | `SyncEntryWithSource` remains the single owner-local mechanics coordinator; invoking Features declare refresh state/results as context rather than recasting the interfaces. | 6.6 |
@@ -226,7 +226,7 @@ exception.
 | `C20` | Concrete Entry/library/child/progress/media state | Distributed operation context for the Feature that owns each decision; never a global Entry-State capability. | 6.4–6.7 |
 | `C21` | Concrete action selection and membership shape | F04, F11, F12, Library, and other selection Features own separate eligibility results; never a generic Selection support flag. | 6.4 |
 | `C22` | Concrete preferences, profile, and authentication state | Distributed reactive context for F05/F06/F13/F14/F19/F20/F25/F27 and tracking; preference ownership remains F27, product meaning remains feature-owned. | 6.4–6.7 |
-| `C23` | Concrete platform, renderer, format, DRM, and resolution state | Distributed media Feature context; type-owned renderers/loaders retain mechanics while Feature results authorize controls and fallbacks. | 6.4, 6.5 |
+| `C23` | Concrete platform, renderer, format, protection, and resolution state | F25 owns cross-application settings surfaces; type-owned players/readers/loaders retain live mechanics. Book reader and downloader share one internal processor registry, and operation failures remain structured results. | 6.4, 6.5 |
 | `C24` | Legacy Manga adapter and bundled Local source contracts | Compatibility-only: translate to current source contracts, retain explicit scope, and verify no application support authority depends on legacy identities. | 6.8 |
 
 Rows with multiple milestones are closure ledgers, not shared implementation owners. Each assigned Feature records its
@@ -252,8 +252,8 @@ application-wide graph through its real owner; it does not mean moving all code 
 | Missing-child gaps are authorized in presentation code | `EntryScreen.missingChildCount` | **Include.** Move applicability to child-list/feature behavior; keep wording in presentation. |
 | Source content-type filters and badges depend on descriptive metadata | source/extension filter and indicator files | **Include as a projection of external metadata.** Do not treat metadata as proof of entry feature support. |
 | Boundary enforcement contains broad exclusions and a concrete root import allowlist | `EntryInteractionBoundaryCheckTask.kt` | **Include as enforcement work.** Replace lists that require edits for each type/bridge and add rules against new parallel authorities. |
-| Book format processors form a nested media-specific registry | `BookProcessorRegistry.kt`, `BookRuntimeModule.kt`, EPUB/prose processors | **Verify scope.** Proposed: keep internal media selection local unless a processor capability has cross-feature consequences; expose only selected adapters/artifacts that cross the type boundary. |
-| Child WebView support is composed inside the Manga reader | `ChapterWebViewSource`, `ReaderViewModel.kt`, `ReaderActivity.kt`, legacy adapters | **Include as contextual input.** Preserve the source contract; make the reader/WebView consequence graph-selected instead of hiding it inside one media implementation. |
+| Book format processors form a nested media-specific registry | `BookProcessorRegistry.kt`, `BookRuntimeModule.kt`, EPUB/prose processors, Book reader and downloader | **Verified for Phase 6.5.** Keep one internal processor registry as the format/protection authority shared by reader and downloader mechanics. Viewer Settings remains an independent optional F25 provider; a processor without settings is valid. Expose no processor registry or format-support flag across the type boundary. |
+| Child WebView support is composed inside the Manga reader | `ChapterWebViewSource`, `ReaderViewModel.kt`, `ReaderActivity.kt`, legacy adapters | **Assigned to 6.5.2.** Preserve the source contract and legacy adapter; add child resolution and reader consequences to the existing WebView Feature so the reader no longer casts or independently authorizes actions. |
 | Settings navigation/search contain curated screen lists | `SettingsMainScreen.kt`, `SettingsSearchScreen.kt`, former viewer settings screen map | **Partially resolved in F25.** Viewer Settings destinations are exact feature-owned projections shared by hubs and search. Global non-feature settings may remain application navigation. |
 
 ## Direct-Type Branch Disposition
@@ -335,13 +335,13 @@ These searches are review aids. They locate candidates; they do not decide archi
 
 ```shell
 rg -l --glob '!**/build/**' '\bEntryType\b'
-rg -n --glob '*/src/main/**' 'EntryType\.(MANGA|ANIME|BOOK)|EntryType\.entries'
-rg -n --glob '*/src/main/**' 'supports[A-Z]|supportedEntryTypes|isSupported\(|can[A-Z]'
-rg -n --glob '*/src/main/**' 'Map<EntryType|Set<EntryType|associateBy.*(type|entryType)'
-rg -n --glob '*/src/main/**' 'Entry(Open|Continue|Download|Capability|Consumption|Bookmark|UpdateEligibility|Progress|PlaybackPreferences|ChildList|ChildGroupFilter|LibraryFilter|Preview|Immersive)Interaction'
-rg -n --glob '*/src/main/**' 'EntryMediaCache(Provider|Artifact|Feature)|ViewerSettingsProvider|PROVIDER_ID'
-rg -n --glob '*/src/main/**' 'EntryCatalogueSource|RelatedEntriesSource|EntryPreviewSource|EntryImageSource|SubtitleSource|ConfigurableSource|ResolvableSource|SourceHomePage|WebViewSource|UnmeteredSource'
-rg -n --glob '*/src/main/**' 'EntryCapabilityReport|EntryCapabilityCatalog|supportsTypeWide|EntryDownloadCapabilityPolicy'
+rg -n --glob '**/src/main/**' 'EntryType\.(MANGA|ANIME|BOOK)|EntryType\.entries'
+rg -n --glob '**/src/main/**' 'supports[A-Z]|supportedEntryTypes|isSupported\(|can[A-Z]'
+rg -n --glob '**/src/main/**' 'Map<EntryType|Set<EntryType|associateBy.*(type|entryType)'
+rg -n --glob '**/src/main/**' 'Entry(Open|Continue|Download|Capability|Consumption|Bookmark|UpdateEligibility|Progress|PlaybackPreferences|ChildList|ChildGroupFilter|LibraryFilter|Preview|Immersive)Interaction'
+rg -n --glob '**/src/main/**' 'EntryMediaCache(Provider|Artifact|Feature)|ViewerSettingsProvider|PROVIDER_ID'
+rg -n --glob '**/src/main/**' 'EntryCatalogueSource|RelatedEntriesSource|EntryPreviewSource|EntryImageSource|SubtitleSource|ConfigurableSource|ResolvableSource|SourceHomePage|WebViewSource|UnmeteredSource'
+rg -n --glob '**/src/main/**' 'EntryCapabilityReport|EntryCapabilityCatalog|supportsTypeWide|EntryDownloadCapabilityPolicy'
 ```
 
 Before Phase 8 closes, rerun the probes and classify every remaining match. A clean compile is not a substitute for that

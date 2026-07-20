@@ -458,8 +458,49 @@ provider intersection without a content-type edit.
   picture-in-picture, auto-scroll, and renderer support in the media Feature that owns each consequence.
 - [ ] Keep Manga/Anime/Book loaders, downloaders, players, readers, and Book processor selection type-owned where the
   behavior is genuinely media-specific.
-- [ ] Move cross-feature authorization such as cover network access, reader WebView actions, playback/download option
-  availability, and platform controls behind the appropriate Feature result.
+- [ ] Move cross-feature authorization such as cover network access, reader WebView actions, and download-option
+  availability behind the appropriate Feature result; keep playback/platform controls owner-local only where their
+  entire decision and UI remain inside one type-owned runtime.
+
+#### 6.5.0 — Media Ownership Census and Architecture Split
+
+- [x] Classify every production `EntryImageSource`, `SubtitleSource`, and `ChapterWebViewSource` consumer as an external
+  contract, compatibility adapter, Feature-owned consequence, or genuine type-owned media mechanic.
+- [x] Reconcile format, protection, renderer, playback-selection, picture-in-picture, auto-scroll, and local-media
+  decisions without creating a global Media, Renderer, Platform, or Playback-State capability.
+- [x] Verify the Book processor registry as one nested type-local authority shared by Book reader and downloader
+  mechanics; keep optional Viewer Settings participation independently provider-derived.
+- [x] Split the production migration by consequence owner before changing runtime behavior.
+- [x] Correct the repeatable census probes to include nested modules; `*/src/main/**` omitted paths such as
+  `entry-interactions/anime/src/main`, while `**/src/main/**` covers the full production tree.
+
+The census found three ownership shapes, not one general media abstraction:
+
+| Context | Production consumers | Disposition |
+| --- | --- | --- |
+| Image pages and image requests (`C07`) | Manga online reader, Manga downloader, F20 Manga Immersive, generic cover fetching, and the tracker-source adapter | Reader/downloader/Immersive calls are type-owned mechanics behind F01/F03/F04/F20. The tracker adapter is already an explicit contextual Feature relationship. Generic cover fetching is the remaining application authorization leak and receives a purpose-specific cover-network Feature result. |
+| Playback media and external subtitles (`C08`) | Anime player resolution, F07 Download Options, and Anime downloader execution | F07 already owns option visibility and structured contextual absence. Player and downloader resolution are separate type-owned mechanics with different failure semantics; they remain behind their owning Open/Download paths rather than being forced through a shared subtitle helper or type-wide Playback flag. |
+| Canonical child WebView (`C12`) | Manga reader toolbar actions and the legacy source adapter | The public contract and legacy translation remain external authorities. The existing WebView Feature gains child resolution and reader consequences; the reader consumes its structured result instead of casting the source or independently deciding availability. |
+| Live entry/media/selection state (`C20`) | Downloaded/local/source media choice, selected stream/subtitle, current viewer/player state, and prepared Book sessions | These values remain request payloads or operation results. They do not become static graph capabilities merely because they influence one invocation. |
+| Viewer/player/processor preferences (`C22`) | F07 stored download choices, F25 reader/player settings, Manga auto-scroll, Anime picture-in-picture, and Book processor preference | F07, F25, and F27 retain product and ownership consequences. Type-owned runtimes consume the resolved live values; preference state does not become support truth. |
+| Platform, renderer, format, protection, and resolution (`C23`) | Anime platform/player controls, Manga viewers/local loaders, and Book processor selection | Renderer and platform predicates that are wholly inside a type-owned player/reader stay implementation mechanics. Cross-application surfaces continue to derive from F25. Book reader and downloader share one processor registry, so installing a processor changes both mechanics once; a processor is not required to contribute settings. |
+
+This classification deliberately rejects an `EntryMediaCapability` or generic media-context facade. Source media is
+heterogeneous operation data, and the product consequences already have different owners and failure semantics.
+Provider absence still means only that the corresponding Entry Feature is unsupported; runtime media absence or an
+unsupported format remains a structured result of an otherwise applicable operation.
+
+The implementation proceeds in these bounded slices:
+
+1. **6.5.1 — Cover network context:** add a purpose-specific Feature result for source image client/headers, migrate
+   both generic cover fetcher factories, and preserve the already separate tracker adapter consequence.
+2. **6.5.2 — Child WebView context:** extend the WebView Feature with canonical child resolution, source identity,
+   headers, and reader action consequences; migrate the Manga reader and harden the raw-contract boundary.
+3. **6.5.3 — Type-owned media closure:** verify F03/F07/F20 ownership of image/subtitle resolution, record player and
+   renderer operation failures as owner-local results, harden application boundaries, and retain the single Book
+   processor registry for reader/download mechanics.
+4. **6.5.4 — Media context reconciliation:** rerun the media/context census, update Feature documents and projections,
+   and close every `C07`, `C08`, `C12`, `C20`, `C22`, and `C23` row assigned to this milestone.
 
 ### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
 
