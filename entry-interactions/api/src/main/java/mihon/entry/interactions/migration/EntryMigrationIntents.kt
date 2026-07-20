@@ -14,6 +14,14 @@ data class EntryMigrationPrepareIntent(
     val target: Entry,
 )
 
+/** Requests source refresh as part of F11 target discovery or explicit target selection. */
+data class EntryMigrationTargetRefreshIntent(
+    val source: Entry,
+    val target: Entry,
+    val fetchDetails: Boolean,
+    val fetchChildren: Boolean,
+)
+
 /** User-selectable transfer options captured before execution. */
 enum class EntryMigrationOption {
     CHILD_STATE,

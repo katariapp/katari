@@ -744,6 +744,32 @@ The boundary has no migration exception list. Its expected remaining findings ar
 and the F13/Library Update worker. Those findings are executable obligations for 6.6.3 and 6.6.4; the rule becomes green
 by migrating those owners, not by weakening its dependency direction.
 
+#### 6.6.3 — Migration Refresh Relationship
+
+- [x] Add an F11-owned target-refresh operation with migration-specific structured results.
+- [x] Route automatic target search, details completion, and explicit target selection through F11 rather than raw sync
+  mechanics or direct Source Refresh consumption.
+- [x] Move pre-execution target refresh into `DefaultEntryMigrationFeature` after replay and live-authorization checks.
+- [x] Remove target synchronization from the application host so it owns only profile-scoped inspection, persistence,
+  transaction, and external adapter work.
+- [x] Preserve strict target-profile synchronization and cancellation while reducing the raw-sync boundary to the
+  deferred F13/Library Update worker only.
+
+F11 validates the source/target pair before candidate refresh and maps Source Refresh into refreshed, rejected,
+source-unavailable, no-children, or operation-failure outcomes. The migration screen retains its existing product
+behavior: automatic search may continue after a candidate refresh failure, optional details completion is best-effort,
+and explicit target selection requires a successful children refresh.
+
+Execution no longer asks an application database host to perform source synchronization. After replay protection and
+live authorization succeed, F11 refreshes the authoritative target Entry returned by its explicit-profile inspection.
+Source Refresh then uses that Entry's exact `profileId` and strict persistence path. Any non-successful refresh prevents
+the primary transition and is reported as retryable operational failure; cancellation continues propagating. Only then
+does F11 re-inspect execution state and prepare its atomic transition.
+
+The application migration host is now a profile-scoped persistence and transaction adapter rather than a mixed
+persistence/source-operation coordinator. No replacement synchronizer, F11-specific source implementation, content-type
+gate, or caller-owned Source Refresh interpretation was introduced.
+
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
 - [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,

@@ -18,6 +18,18 @@ sealed interface EntryMigrationSelectionResult {
     ) : EntryMigrationSelectionResult
 }
 
+sealed interface EntryMigrationTargetRefreshResult {
+    data object Refreshed : EntryMigrationTargetRefreshResult
+
+    data class Rejected(val reason: EntryMigrationRejection) : EntryMigrationTargetRefreshResult
+
+    data object SourceUnavailable : EntryMigrationTargetRefreshResult
+
+    data object NoChildren : EntryMigrationTargetRefreshResult
+
+    data class OperationalFailure(val error: Throwable) : EntryMigrationTargetRefreshResult
+}
+
 sealed interface EntryMigrationPreparationResult {
     data class Ready(
         val reference: EntryMigrationReference,

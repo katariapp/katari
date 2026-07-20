@@ -14,8 +14,6 @@ interface EntryMigrationExecutionHost {
 interface EntryMigrationExecutionProfileHost {
     suspend fun replay(operation: EntryMigrationHostOperation): EntryMigrationHostReplayResult
 
-    suspend fun synchronizeTarget(targetEntryId: Long): EntryMigrationTargetSynchronizationResult
-
     suspend fun inspectExecution(
         sourceEntryId: Long,
         targetEntryId: Long,
@@ -47,15 +45,6 @@ sealed interface EntryMigrationHostReplayResult {
     data class OperationalFailure(
         val retryable: Boolean,
     ) : EntryMigrationHostReplayResult
-}
-
-sealed interface EntryMigrationTargetSynchronizationResult {
-    data object Synchronized : EntryMigrationTargetSynchronizationResult
-    data object TargetMissing : EntryMigrationTargetSynchronizationResult
-
-    data class OperationalFailure(
-        val retryable: Boolean,
-    ) : EntryMigrationTargetSynchronizationResult
 }
 
 sealed interface EntryMigrationExecutionInspectionResult {

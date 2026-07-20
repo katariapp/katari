@@ -29,6 +29,8 @@ import mihon.entry.interactions.EntryMigrationPreparationResult
 import mihon.entry.interactions.EntryMigrationPrepareIntent
 import mihon.entry.interactions.EntryMigrationSelectionResult
 import mihon.entry.interactions.EntryMigrationSubject
+import mihon.entry.interactions.EntryMigrationTargetRefreshIntent
+import mihon.entry.interactions.EntryMigrationTargetRefreshResult
 import mihon.feature.migration.list.models.MigratingEntry
 import mihon.feature.migration.list.models.MigratingEntry.SearchResult
 import mihon.feature.migration.list.search.SmartSourceSearchEngine
@@ -36,7 +38,6 @@ import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
@@ -51,7 +52,6 @@ class MigrationListScreenModel(
     private val preferences: SourcePreferences = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val networkToLocalEntry: NetworkToLocalEntry = Injekt.get(),
-    private val syncEntryWithSource: SyncEntryWithSource = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
     private val migration: EntryMigrationFeature = Injekt.get(),
@@ -171,10 +171,13 @@ class MigrationListScreenModel(
 
             if (result != null && result.first.thumbnailUrl == null) {
                 try {
-                    syncEntryWithSource(
-                        entry = result.first,
-                        fetchDetails = true,
-                        fetchChapters = false,
+                    migration.refreshTarget(
+                        EntryMigrationTargetRefreshIntent(
+                            source = entry.entry,
+                            target = result.first,
+                            fetchDetails = true,
+                            fetchChildren = false,
+                        ),
                     )
                 } catch (e: CancellationException) {
                     throw e
@@ -216,16 +219,22 @@ class MigrationListScreenModel(
             if (searchResult == null || (searchResult.url == entry.url && source.id == entry.source)) return null
 
             val localEntry = networkToLocalEntry(searchResult)
-            try {
-                syncEntryWithSource(
-                    entry = localEntry,
-                    fetchDetails = false,
-                    fetchChapters = true,
+            when (
+                val refresh = migration.refreshTarget(
+                    EntryMigrationTargetRefreshIntent(
+                        source = entry,
+                        target = localEntry,
+                        fetchDetails = false,
+                        fetchChildren = true,
+                    ),
                 )
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                logcat(LogPriority.ERROR, e)
+            ) {
+                is EntryMigrationTargetRefreshResult.OperationalFailure -> logcat(LogPriority.ERROR, refresh.error)
+                EntryMigrationTargetRefreshResult.Refreshed,
+                is EntryMigrationTargetRefreshResult.Rejected,
+                EntryMigrationTargetRefreshResult.SourceUnavailable,
+                EntryMigrationTargetRefreshResult.NoChildren,
+                -> Unit
             }
             val preparation = migration.prepare(EntryMigrationPrepareIntent(entry, localEntry))
             if (preparation !is EntryMigrationPreparationResult.Ready) return null
@@ -259,11 +268,15 @@ class MigrationListScreenModel(
             val result = migratingEntry.migrationScope.async {
                 val entry = entryRepository.getEntryById(target, migratingEntry.entry.profileId) ?: return@async null
                 try {
-                    syncEntryWithSource(
-                        entry = entry,
-                        fetchDetails = false,
-                        fetchChapters = true,
+                    val refresh = migration.refreshTarget(
+                        EntryMigrationTargetRefreshIntent(
+                            source = migratingEntry.entry,
+                            target = entry,
+                            fetchDetails = false,
+                            fetchChildren = true,
+                        ),
                     )
+                    if (refresh != EntryMigrationTargetRefreshResult.Refreshed) return@async null
                     entryRepository.getEntryById(target, migratingEntry.entry.profileId) ?: entry
                 } catch (e: CancellationException) {
                     throw e

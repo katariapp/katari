@@ -13,6 +13,8 @@ interface EntryMigrationFeature {
 
     fun prepareSelection(entries: List<Entry>): EntryMigrationSelectionResult
 
+    suspend fun refreshTarget(intent: EntryMigrationTargetRefreshIntent): EntryMigrationTargetRefreshResult
+
     suspend fun prepare(intent: EntryMigrationPrepareIntent): EntryMigrationPreparationResult
 
     suspend fun execute(intent: EntryMigrationExecuteIntent): EntryMigrationExecutionResult

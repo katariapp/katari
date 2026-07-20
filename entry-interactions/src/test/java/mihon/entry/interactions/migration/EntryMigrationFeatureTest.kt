@@ -22,7 +22,6 @@ import mihon.entry.interactions.host.EntryMigrationHostTransition
 import mihon.entry.interactions.host.EntryMigrationHostTransitionResult
 import mihon.entry.interactions.host.EntryMigrationPreparationHost
 import mihon.entry.interactions.host.EntryMigrationPreparationProfileHost
-import mihon.entry.interactions.host.EntryMigrationTargetSynchronizationResult
 import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
@@ -137,6 +136,7 @@ class EntryMigrationFeatureTest {
             targetChildren = listOf(targetChild)
         }
         val merge = RecordingMergeMigrationFeature()
+        val sourceRefresh = refreshedSourceRefresh()
         val feature = feature(
             host,
             merge,
@@ -145,6 +145,7 @@ class EntryMigrationFeatureTest {
                 EntryConsumptionCapability.bind(ConsumptionProvider()),
                 EntryBookmarkCapability.bind(BookmarkProvider()),
             ),
+            sourceRefresh = sourceRefresh,
         )
         val preparation = feature.prepare(EntryMigrationPrepareIntent(preparedSource, target))
             .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
@@ -158,7 +159,7 @@ class EntryMigrationFeatureTest {
         ).shouldBeInstanceOf<EntryMigrationExecutionResult.Applied>()
 
         result.outcome.followUp shouldBe EntryMigrationFollowUp.COMPLETE
-        host.synchronizations shouldBe 1
+        coVerify(exactly = 1) { sourceRefresh.refresh(match { it.entry == target }) }
         val transition = host.transitions.single()
         transition.sourceUpdate shouldBe preparedSource.copy(favorite = false, dateAdded = 0)
         transition.targetUpdate shouldBe target.copy(
@@ -179,7 +180,8 @@ class EntryMigrationFeatureTest {
     @Test
     fun `committed operation replay bypasses changed source state and target synchronization`() = runTest {
         val host = RecordingMigrationHost(source, target)
-        val feature = feature(host)
+        val sourceRefresh = refreshedSourceRefresh()
+        val feature = feature(host, sourceRefresh = sourceRefresh)
         val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
             .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
         host.replayResult = EntryMigrationHostReplayResult.Applied(hasPendingConsequences = true)
@@ -190,14 +192,15 @@ class EntryMigrationFeatureTest {
         ).shouldBeInstanceOf<EntryMigrationExecutionResult.Applied>()
 
         result.outcome.followUp shouldBe EntryMigrationFollowUp.INCOMPLETE
-        host.synchronizations shouldBe 0
+        coVerify(exactly = 0) { sourceRefresh.refresh(any()) }
         host.transitions shouldBe emptyList()
     }
 
     @Test
     fun `changed live authorization blocks an uncommitted execution before synchronization`() = runTest {
         val host = RecordingMigrationHost(source, target)
-        val feature = feature(host)
+        val sourceRefresh = refreshedSourceRefresh()
+        val feature = feature(host, sourceRefresh = sourceRefresh)
         val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
             .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
         host.preparationSource = source.copy(favorite = false)
@@ -206,38 +209,73 @@ class EntryMigrationFeatureTest {
             EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.REPLACE, emptySet()),
         ) shouldBe EntryMigrationExecutionResult.Conflict
 
-        host.synchronizations shouldBe 0
+        coVerify(exactly = 0) { sourceRefresh.refresh(any()) }
         host.transitions shouldBe emptyList()
     }
 
     @Test
     fun `strict synchronization failure cannot be reported as applied`() = runTest {
-        val host = RecordingMigrationHost(source, target).apply {
-            synchronizationResult = EntryMigrationTargetSynchronizationResult.OperationalFailure(retryable = false)
+        val host = RecordingMigrationHost(source, target)
+        val failure = IllegalStateException("refresh failed")
+        val sourceRefresh = mockk<EntrySourceRefreshFeature> {
+            coEvery { refresh(any()) } returns
+                EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.Operation(failure))
         }
-        val feature = feature(host)
+        val feature = feature(host, sourceRefresh = sourceRefresh)
         val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
             .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
 
         feature.execute(
             EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.COPY, emptySet()),
-        ) shouldBe EntryMigrationExecutionResult.OperationalFailure(retryable = false)
+        ) shouldBe EntryMigrationExecutionResult.OperationalFailure(retryable = true)
         host.transitions shouldBe emptyList()
     }
 
     @Test
     fun `execution cancellation propagates`() = runTest {
         val host = RecordingMigrationHost(source, target)
-        val feature = feature(host)
+        val sourceRefresh = mockk<EntrySourceRefreshFeature> {
+            coEvery { refresh(any()) } throws CancellationException("cancelled")
+        }
+        val feature = feature(host, sourceRefresh = sourceRefresh)
         val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
             .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
-        host.synchronizationFailure = CancellationException("cancelled")
 
         shouldThrow<CancellationException> {
             feature.execute(
                 EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.COPY, emptySet()),
             )
         }
+    }
+
+    @Test
+    fun `target refresh is an F11 owned relationship with structured outcomes`() = runTest {
+        val sourceRefresh = mockk<EntrySourceRefreshFeature>()
+        val feature = feature(RecordingMigrationHost(source, target), sourceRefresh = sourceRefresh)
+        val intent = EntryMigrationTargetRefreshIntent(
+            source = source,
+            target = target,
+            fetchDetails = false,
+            fetchChildren = true,
+        )
+
+        coEvery { sourceRefresh.refresh(any()) } returns refreshedSourceResult()
+        feature.refreshTarget(intent) shouldBe EntryMigrationTargetRefreshResult.Refreshed
+        coVerify {
+            sourceRefresh.refresh(
+                match {
+                    it.entry == target && !it.fetchDetails && it.fetchChildren &&
+                        it.entry.profileId == target.profileId
+                },
+            )
+        }
+
+        coEvery { sourceRefresh.refresh(any()) } returns EntrySourceRefreshResult.SourceUnavailable(target.source)
+        feature.refreshTarget(intent) shouldBe EntryMigrationTargetRefreshResult.SourceUnavailable
+
+        coEvery { sourceRefresh.refresh(any()) } returns
+            EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.NoChildren)
+        feature.refreshTarget(intent) shouldBe EntryMigrationTargetRefreshResult.NoChildren
     }
 
     @Test
@@ -285,6 +323,7 @@ class EntryMigrationFeatureTest {
         progress: EntryProgressFeature? = null,
         downloads: EntryDownloadMaintenanceFeature? = null,
         consequenceDelivery: EntryMigrationConsequenceDelivery? = null,
+        sourceRefresh: EntrySourceRefreshFeature = refreshedSourceRefresh(),
     ): EntryMigrationFeature {
         val composition = createEntryInteractionComposition(
             plugins = listOf(
@@ -319,6 +358,7 @@ class EntryMigrationFeatureTest {
             evaluation = composition.featureGraphEvaluation,
             preparationHost = host,
             executionHost = host,
+            sourceRefresh = sourceRefresh,
             mergeMigration = merge,
             progress = progressFeature,
             playbackPreferences = playback,
@@ -329,6 +369,18 @@ class EntryMigrationFeatureTest {
             clockMillis = { 999 },
         )
     }
+
+    private fun refreshedSourceRefresh() = mockk<EntrySourceRefreshFeature> {
+        coEvery { refresh(any()) } returns refreshedSourceResult()
+    }
+
+    private fun refreshedSourceResult() = EntrySourceRefreshResult.Refreshed(
+        insertedChildren = emptyList(),
+        insertedChildrenTotal = 0,
+        updatedChildren = 0,
+        removedChildren = 0,
+        metadataChanged = false,
+    )
 
     private fun entry(id: Long, sourceId: Long, favorite: Boolean, dateAdded: Long = 0): Entry {
         return Entry.create().copy(
@@ -415,12 +467,8 @@ private class RecordingMigrationHost(
     var sourceChildren = emptyList<EntryChapter>()
     var targetChildren = emptyList<EntryChapter>()
     var replayResult: EntryMigrationHostReplayResult = EntryMigrationHostReplayResult.NotApplied
-    var synchronizationResult: EntryMigrationTargetSynchronizationResult =
-        EntryMigrationTargetSynchronizationResult.Synchronized
-    var synchronizationFailure: Throwable? = null
     var transitionResult: EntryMigrationHostTransitionResult =
         EntryMigrationHostTransitionResult.Applied(replayed = false, hasPendingConsequences = false)
-    var synchronizations = 0
     val transitions = mutableListOf<EntryMigrationHostTransition>()
 
     override fun profile(profileId: Long): ProfileHost = ProfileHost()
@@ -440,12 +488,6 @@ private class RecordingMigrationHost(
 
         override suspend fun replay(operation: EntryMigrationHostOperation): EntryMigrationHostReplayResult {
             return replayResult
-        }
-
-        override suspend fun synchronizeTarget(targetEntryId: Long): EntryMigrationTargetSynchronizationResult {
-            synchronizations += 1
-            synchronizationFailure?.let { throw it }
-            return synchronizationResult
         }
 
         override suspend fun inspectExecution(

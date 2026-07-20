@@ -71,6 +71,7 @@ Updated: 2026-07-20
 - Phase 6.5.4 Media context reconciliation commit: `20aefd78f` (`(refactor): reconcile media context ownership`)
 - Phase 6.6.0 Refresh migration plan commit: `eb29f2327` (`(refactor): define source refresh migration`)
 - Phase 6.6.1 Source Refresh architecture commit: `5f580cc3b` (`(refactor): establish source refresh feature`)
+- Phase 6.6.2 Direct/source-owned consumers commit: `a6a28b222` (`(refactor): migrate direct source refresh consumers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -78,8 +79,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.6.2 Direct and source-owned consumers
-- State: Phase 6.6.2 is implemented and validating for review. Phase 6.6.3 has not started.
+- Milestone: Phase 6.6.3 Migration refresh relationship
+- State: Phase 6.6.3 is implemented and validating for review. Phase 6.6.4 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1116,7 +1117,20 @@ Focused Phase 6.6.2 findings:
 - Focused root and build-logic tests pass. FOSS compilation reaches only the recorded unrelated Anime debug-launch
   callback and More-tab coroutine errors.
 
+Focused Phase 6.6.3 findings:
+
+- Automatic target search, optional details completion, and explicit target selection now invoke an F11-owned refresh
+  operation with migration-specific structured results; the application owns no refresh interpretation outside F11.
+- Mandatory execution refresh moved from the application host into `DefaultEntryMigrationFeature`, after replay and
+  live-authorization checks and before execution-state inspection.
+- The target refreshed during execution comes from the explicit-profile host inspection. Source Refresh therefore uses
+  strict persistence against the target's exact profile without a host callback or ambient title preference lookup.
+- Replay and changed authorization continue to bypass refresh, any refresh failure prevents the primary transition,
+  and cancellation propagates.
+- The raw-sync boundary now reports exactly one deferred owner: F13/Library Update. Focused F11 tests and formatting
+  pass; FOSS compilation reaches only the two recorded unrelated application errors.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.6.2 after review, then implement Phase 6.6.3 F11-owned migration refresh. Continue through Phase 6 afterward
+Commit Phase 6.6.3 after review, then implement Phase 6.6.4 F13/Library Update refresh. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

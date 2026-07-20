@@ -253,6 +253,11 @@ cross-feature refresh relationships. Raw sync mechanics are now guarded at the a
 F11 migration and F13/Library Update findings are deliberately unresolved obligations assigned to 6.6.3 and 6.6.4;
 they are not boundary exceptions.
 
+Phase 6.6.3 makes target refresh an F11-owned relationship for automatic search, optional details, explicit target
+selection, and mandatory pre-execution synchronization. Execution refreshes the authoritative target from its
+profile-pinned inspection; the application host no longer mixes source operations with persistence. The raw-sync
+boundary now identifies only F13/Library Update for 6.6.4.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

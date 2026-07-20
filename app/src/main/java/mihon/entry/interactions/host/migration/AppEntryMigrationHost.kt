@@ -22,7 +22,6 @@ private const val MAX_ERROR_LENGTH = 2_000
 
 internal class AppEntryMigrationHost(
     private val handler: DatabaseHandler,
-    private val synchronize: suspend (Entry, Long) -> Unit,
     private val prepareTracks: suspend (Entry, Entry, List<EntryTrack>) -> List<EntryTrack>,
     private val hasCustomCover: (Long) -> Boolean,
     private val clockMillis: () -> Long = System::currentTimeMillis,
@@ -164,19 +163,6 @@ internal class AppEntryMigrationHost(
                 throw error
             } catch (_: Exception) {
                 EntryMigrationHostInspectionResult.OperationalFailure(retryable = true)
-            }
-        }
-
-        override suspend fun synchronizeTarget(targetEntryId: Long): EntryMigrationTargetSynchronizationResult {
-            val target = handler.await { loadEntry(profileId, targetEntryId) }
-                ?: return EntryMigrationTargetSynchronizationResult.TargetMissing
-            return try {
-                synchronize(target, profileId)
-                EntryMigrationTargetSynchronizationResult.Synchronized
-            } catch (error: CancellationException) {
-                throw error
-            } catch (_: Exception) {
-                EntryMigrationTargetSynchronizationResult.OperationalFailure(retryable = true)
             }
         }
 

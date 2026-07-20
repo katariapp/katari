@@ -246,6 +246,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
             preparationHost = dependencies.migrationPreparationHost,
             executionHost = dependencies.migrationExecutionHost,
+            sourceRefresh = get(),
             mergeMigration = get(),
             progress = get(),
             playbackPreferences = get(),

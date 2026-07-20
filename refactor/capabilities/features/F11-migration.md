@@ -67,7 +67,7 @@ also includes code that still compiles because it never consulted the former cap
 | Automatic and manual target search | Search keeps source-owned catalogue behavior, but target filtering and acceptance use an F11 preparation result. Same-type filtering may optimize presentation but cannot be the authority. |
 | Configuration and dialog options | Chapter state, categories, notes, custom cover, and Download cleanup are explicit intent options. Contextual availability comes from current Entry state and owning Features, not a type table. |
 | Execution owner | The legacy `MigrateEntryUseCase` owned the complete workflow, read ambient preferences, returned `Unit`, and swallowed every non-cancellation failure. F11.3 removed it rather than retaining a parallel coordinator; `EntryMigrationFeature` now owns primary execution. |
-| Target synchronization | Source synchronization is a required precondition through a purpose-specific host operation. A sync failure cannot be reported as a successful migration. |
+| Target synchronization | Source synchronization is an F11-owned Source Refresh relationship. Candidate/search refresh returns migration-specific outcomes, while execution refreshes the authoritative explicit-profile target after replay and authorization checks. A refresh failure cannot be reported as a successful migration. |
 | Child state transfer | F11 owns source/target matching and the captured child-state option. Consumed and bookmarked transfer are independent Migration + F09/F10 relationships; provider absence must omit only that portion. Fetch-state policy remains F11-owned contextual state. Matching and resource mappings are shared policy, not Manga logic. |
 | Progress | F11 supplies resource mappings to F15. Provider absence is a valid skipped result; incompatible types are rejected before execution. |
 | Playback preferences | F11 invokes F16 without an Anime gate. The owning Feature decides applicability. |
@@ -471,6 +471,19 @@ Manifesto comparison:
 - An unknown future type activates the complete workflow by contributing its owned Migration provider. Missing optional
   providers skip only their own relationships; missing follow-on work after satisfied prerequisites remains visible to
   graph/enforcement validation.
+
+## Phase 6.6 Refresh Reconciliation
+
+- `EntryMigrationFeature.refreshTarget` now owns target-search, optional details, and explicit-selection refresh intent.
+  Application migration surfaces no longer call raw synchronization or Source Refresh directly.
+- `DefaultEntryMigrationFeature` consumes Source Refresh for candidate operations and for the mandatory pre-execution
+  refresh. It validates candidate pairs before refresh and maps shared refresh outcomes into F11-specific results.
+- Execution refresh uses the target returned by the profile-pinned live inspection, preserving strict target-profile
+  persistence. Replay and changed authorization still bypass refresh; cancellation still propagates.
+- `EntryMigrationExecutionProfileHost` no longer exposes target synchronization. The application host is limited to
+  profile-scoped inspection, transition persistence, transaction participation, and external tracking preparation.
+- Raw `SyncEntryWithSource` migration references are gone. The generic boundary now reports only the later
+  F13/Library Update obligation.
 
 ## Manifesto Review of the Plan
 

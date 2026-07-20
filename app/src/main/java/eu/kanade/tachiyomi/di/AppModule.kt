@@ -66,7 +66,6 @@ import tachiyomi.data.History
 import tachiyomi.data.MemoColumnAdapter
 import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.service.EntryMetadataUpdateHooks
@@ -186,16 +185,6 @@ class AppModule(val app: Application) : InjektModule {
         )
         val migrationHost = AppEntryMigrationHost(
             handler = get(),
-            synchronize = { entry, profileId ->
-                val updateLibraryTitles = LibraryPreferences(
-                    get<ProfileStore>().profileStore(profileId),
-                ).updateMangaTitles.get()
-                get<SyncEntryWithSource>().syncStrictly(
-                    entry = entry,
-                    profileId = profileId,
-                    updateLibraryTitles = updateLibraryTitles,
-                )
-            },
             prepareTracks = { source, target, tracks ->
                 val sourceManager = get<SourceManager>()
                 val trackerManager = get<TrackerManager>()

@@ -12,7 +12,6 @@ import mihon.entry.interactions.host.EntryMigrationHostReplayResult
 import mihon.entry.interactions.host.EntryMigrationHostTransition
 import mihon.entry.interactions.host.EntryMigrationHostTransitionResult
 import mihon.entry.interactions.host.EntryMigrationPreparationHost
-import mihon.entry.interactions.host.EntryMigrationTargetSynchronizationResult
 import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.domain.entry.model.Entry
 
@@ -20,6 +19,7 @@ internal class DefaultEntryMigrationFeature(
     private val evaluation: FeatureGraphEvaluation,
     private val preparationHost: EntryMigrationPreparationHost,
     private val executionHost: EntryMigrationExecutionHost,
+    private val sourceRefresh: EntrySourceRefreshFeature,
     private val mergeMigration: EntryMergeMigrationFeature,
     private val progress: EntryProgressFeature,
     private val playbackPreferences: EntryPlaybackPreferencesFeature,
@@ -97,6 +97,18 @@ internal class DefaultEntryMigrationFeature(
             ?.let { return selectionRejected(it) }
         return EntryMigrationSelectionResult.Ready(
             entries.map { entry -> EntryMigrationSubject(entry.profileId, entry.id) },
+        )
+    }
+
+    override suspend fun refreshTarget(intent: EntryMigrationTargetRefreshIntent): EntryMigrationTargetRefreshResult {
+        requirePairContext(intent.source, intent.target)
+        validatePair(intent.source, intent.target)?.let {
+            return EntryMigrationTargetRefreshResult.Rejected(it)
+        }
+        return refreshTarget(
+            target = intent.target,
+            fetchDetails = intent.fetchDetails,
+            fetchChildren = intent.fetchChildren,
         )
     }
 
@@ -249,7 +261,7 @@ internal class DefaultEntryMigrationFeature(
                 return EntryMigrationExecutionResult.OperationalFailure(replay.retryable)
             }
         }
-        when (
+        val target = when (
             val inspection = preparationHost.profile(profileId)
                 .inspectPair(reference.source.id, reference.target.id)
         ) {
@@ -264,6 +276,7 @@ internal class DefaultEntryMigrationFeature(
                 if (!authorizationStable) {
                     return EntryMigrationExecutionResult.Conflict
                 }
+                inspection.target
             }
             EntryMigrationHostInspectionResult.SourceMissing,
             EntryMigrationHostInspectionResult.TargetMissing,
@@ -280,12 +293,13 @@ internal class DefaultEntryMigrationFeature(
             }
         }
 
-        when (val sync = profile.synchronizeTarget(reference.target.id)) {
-            EntryMigrationTargetSynchronizationResult.Synchronized -> Unit
-            EntryMigrationTargetSynchronizationResult.TargetMissing -> return EntryMigrationExecutionResult.Conflict
-            is EntryMigrationTargetSynchronizationResult.OperationalFailure -> {
-                return EntryMigrationExecutionResult.OperationalFailure(sync.retryable)
-            }
+        when (refreshTarget(target, fetchDetails = true, fetchChildren = true)) {
+            EntryMigrationTargetRefreshResult.Refreshed -> Unit
+            is EntryMigrationTargetRefreshResult.Rejected -> return EntryMigrationExecutionResult.Conflict
+            EntryMigrationTargetRefreshResult.SourceUnavailable,
+            EntryMigrationTargetRefreshResult.NoChildren,
+            is EntryMigrationTargetRefreshResult.OperationalFailure,
+            -> return EntryMigrationExecutionResult.OperationalFailure(retryable = true)
         }
         val inspected = when (
             val result = profile.inspectExecution(reference.source.id, reference.target.id)
@@ -482,6 +496,31 @@ internal class DefaultEntryMigrationFeature(
         if (target.type !in migrationTypes) return EntryMigrationRejection.UNSUPPORTED_TARGET_TYPE
         if (source.id == target.id) return EntryMigrationRejection.SAME_ENTRY
         return null
+    }
+
+    private suspend fun refreshTarget(
+        target: Entry,
+        fetchDetails: Boolean,
+        fetchChildren: Boolean,
+    ): EntryMigrationTargetRefreshResult {
+        return when (
+            val result = sourceRefresh.refresh(
+                EntrySourceRefreshRequest(
+                    entry = target,
+                    fetchDetails = fetchDetails,
+                    fetchChildren = fetchChildren,
+                ),
+            )
+        ) {
+            is EntrySourceRefreshResult.Refreshed -> EntryMigrationTargetRefreshResult.Refreshed
+            is EntrySourceRefreshResult.SourceUnavailable -> EntryMigrationTargetRefreshResult.SourceUnavailable
+            is EntrySourceRefreshResult.Failed -> when (val reason = result.reason) {
+                EntrySourceRefreshFailure.NoChildren -> EntryMigrationTargetRefreshResult.NoChildren
+                is EntrySourceRefreshFailure.Operation -> {
+                    EntryMigrationTargetRefreshResult.OperationalFailure(reason.error)
+                }
+            }
+        }
     }
 
     private fun requirePairContext(source: Entry, target: Entry) {
