@@ -29,8 +29,6 @@ interface SourceManager {
 
     fun getCatalogueSource(sourceKey: Long): EntryCatalogueSource?
 
-    fun getOnlineSources(): List<UnifiedSource>
-
     fun getStubSources(): List<UnifiedSource>
 
     fun getDisplayInfo(sourceKey: Long): SourceDisplayInfo

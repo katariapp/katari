@@ -26,7 +26,6 @@ import eu.kanade.presentation.browse.CatalogContent
 import eu.kanade.presentation.components.AppSnackbarHost
 import eu.kanade.presentation.components.SearchToolbar
 import eu.kanade.presentation.util.Screen
-import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreenModel
 import eu.kanade.tachiyomi.ui.browse.catalog.FilterUiState
 import eu.kanade.tachiyomi.ui.browse.source.browse.SourceFilterDialog
@@ -38,6 +37,8 @@ import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryMigrationFeature
 import mihon.entry.interactions.EntryMigrationPreparationResult
 import mihon.entry.interactions.EntryMigrationPrepareIntent
+import mihon.entry.interactions.EntrySourceHomeFeature
+import mihon.entry.interactions.EntrySourceHomeResolution
 import mihon.feature.migration.dialog.MigrateEntryDialog
 import mihon.feature.migration.list.MigrationListScreen
 import mihon.presentation.core.util.collectAsLazyPagingItems
@@ -161,12 +162,14 @@ data class MigrateSourceSearchScreen(
                         }
                     },
                     onWebViewClick = {
-                        val source = screenModel.catalogSource?.source as? SourceHomePage
-                        val homeUrl = source?.getHomeUrl()
-                        if (homeUrl != null) {
+                        val source = screenModel.catalogSource?.source
+                        val home = source?.let {
+                            Injekt.get<EntrySourceHomeFeature>().resolve(it.id)
+                        } as? EntrySourceHomeResolution.Available
+                        if (source != null && home != null) {
                             navigator.push(
                                 WebViewScreen(
-                                    url = homeUrl,
+                                    url = home.url,
                                     initialTitle = source.name,
                                     sourceId = source.id,
                                 ),

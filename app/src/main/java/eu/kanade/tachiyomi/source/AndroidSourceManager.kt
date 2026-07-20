@@ -4,7 +4,6 @@ import android.content.Context
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
-import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -109,14 +108,10 @@ class AndroidSourceManager(
         return sourcesMap[sourceKey] as? EntryCatalogueSource
     }
 
-    override fun getOnlineSources(): List<UnifiedSource> {
-        return sourcesMap.values.filterIsInstance<SourceHomePage>()
-    }
-
     override fun getStubSources(): List<UnifiedSource> {
-        val onlineSourceIds = getOnlineSources().map { it.id }
+        val installedSourceIds = sourcesMap.keys
         return stubSourcesMap.values
-            .filterNot { it.id in onlineSourceIds }
+            .filterNot { it.id in installedSourceIds }
             .map(::UnifiedStubSource)
     }
 

@@ -132,6 +132,11 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryMergeFeatureContributor,
                 EntryMigrationFeatureContributor,
                 EntryCatalogueFeatureContributor,
+                EntrySourceSettingsFeatureContributor,
+                EntrySourceHomeFeatureContributor,
+                EntryWebViewFeatureContributor,
+                EntryDeepLinkFeatureContributor,
+                EntryTrackerSourceAdapterFeatureContributor,
             ),
         )
     }
@@ -139,6 +144,41 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         DefaultEntryCatalogueFeature(get<EntryInteractionComposition>().featureGraphEvaluation)
     }
     addSingletonFactory<EntrySourceDescriptionResolutionPort> { get<EntryCatalogueFeature>() }
+    addSingletonFactory<EntrySourceSettingsFeature> {
+        DefaultEntrySourceSettingsFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+        )
+    }
+    addSingletonFactory<EntrySourceHomeFeature> {
+        DefaultEntrySourceHomeFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+        )
+    }
+    addSingletonFactory<EntryWebViewFeature> {
+        DefaultEntryWebViewFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+        )
+    }
+    addSingletonFactory<EntryDeepLinkFeature> {
+        DefaultEntryDeepLinkFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+            networkToLocalEntry = get(),
+            entryChapterRepository = get(),
+            syncEntryWithSource = get(),
+        )
+    }
+    addSingletonFactory<EntryTrackerSourceAdapterFeature> {
+        DefaultEntryTrackerSourceAdapterFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+            settings = get(),
+            home = get(),
+        )
+    }
     addSingletonFactory {
         EntryMergeConsequenceDelivery(
             host = dependencies.mergeHost,

@@ -92,7 +92,6 @@ import eu.kanade.presentation.entry.components.DuplicateEntryDialog
 import eu.kanade.presentation.more.settings.screen.BrowseLongPressActionsScreen
 import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
-import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.source.toCatalogSource
 import eu.kanade.tachiyomi.ui.browse.catalog.BrowseLongPressOutcome
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreen
@@ -108,6 +107,8 @@ import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveSourceAvailability
+import mihon.entry.interactions.EntrySourceHomeFeature
+import mihon.entry.interactions.EntrySourceHomeResolution
 import mihon.feature.migration.dialog.MigrateEntryDialog
 import mihon.feature.profiles.core.ProfileManager
 import sh.calvin.reorderable.ReorderableItem
@@ -387,12 +388,14 @@ private fun Screen.FeedsTabContent(
                                     bottom = contentPadding.calculateBottomPadding(),
                                 ),
                                 onWebViewClick = {
-                                    val source = catalogSource?.source as? SourceHomePage
-                                    val homeUrl = source?.getHomeUrl()
-                                    if (homeUrl != null) {
+                                    val source = catalogSource?.source
+                                    val home = source?.let {
+                                        Injekt.get<EntrySourceHomeFeature>().resolve(it.id)
+                                    } as? EntrySourceHomeResolution.Available
+                                    if (source != null && home != null) {
                                         navigator.push(
                                             WebViewScreen(
-                                                url = homeUrl,
+                                                url = home.url,
                                                 initialTitle = source.name,
                                                 sourceId = source.id,
                                             ),

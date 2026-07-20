@@ -156,7 +156,6 @@ private class FakeSourceManager(
     override fun getAll(): List<UnifiedSource> = listOf(source)
     override fun getCatalogueSources(): List<UnifiedSource> = listOf(source)
     override fun getCatalogueSource(sourceKey: Long): EntryCatalogueSource? = source.takeIf { it.id == sourceKey }
-    override fun getOnlineSources(): List<UnifiedSource> = emptyList()
     override fun getStubSources(): List<UnifiedSource> = emptyList()
     override fun getDisplayInfo(sourceKey: Long): SourceDisplayInfo {
         val source = get(sourceKey)

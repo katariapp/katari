@@ -1,10 +1,7 @@
 package tachiyomi.data.source
 
-import eu.kanade.tachiyomi.source.entry.ConfigurableSource
 import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
-import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.entry.preferenceKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -27,20 +24,6 @@ class SourceRepositoryImpl(
     private val sourceDescription: EntrySourceDescriptionResolutionPort,
 ) : SourceRepository {
 
-    override fun getConfigurableSourceIds(): List<Long> {
-        return sourceManager.getAll()
-            .filterIsInstance<ConfigurableSource>()
-            .map { it.id }
-            .distinct()
-    }
-
-    override fun getConfigurableSourceKeys(): List<String> {
-        return sourceManager.getAll()
-            .filterIsInstance<ConfigurableSource>()
-            .map { it.preferenceKey() }
-            .distinct()
-    }
-
     override fun getSources(): Flow<List<DomainSource>> {
         return sourceManager.sources.map { sources ->
             sources.map {
@@ -48,14 +31,6 @@ class SourceRepositoryImpl(
                     supportsImmersiveFeed = (it as? EntryCatalogueSource)?.supportsImmersiveFeed ?: false,
                 )
             }
-        }
-    }
-
-    override fun getOnlineSources(): Flow<List<DomainSource>> {
-        return sourceManager.sources.map { sources ->
-            sources
-                .filterIsInstance<SourceHomePage>()
-                .map(::mapSourceToDomainSource)
         }
     }
 

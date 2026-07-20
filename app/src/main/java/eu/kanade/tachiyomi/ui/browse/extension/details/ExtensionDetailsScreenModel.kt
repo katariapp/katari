@@ -10,8 +10,6 @@ import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.network.NetworkHelper
-import eu.kanade.tachiyomi.source.entry.ConfigurableSource
-import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -26,6 +24,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntrySourceHomeFeature
+import mihon.entry.interactions.EntrySourceHomeResolution
+import mihon.entry.interactions.EntrySourceSettingsFeature
+import mihon.entry.interactions.EntrySourceSettingsResolution
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import tachiyomi.core.common.util.system.logcat
 import uy.kohesive.injekt.Injekt
@@ -41,6 +43,8 @@ class ExtensionDetailsScreenModel(
     private val toggleIncognito: ToggleIncognito = Injekt.get(),
     private val preferences: SourcePreferences = Injekt.get(),
     private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
+    private val sourceHomeFeature: EntrySourceHomeFeature = Injekt.get(),
+    private val sourceSettingsFeature: EntrySourceSettingsFeature = Injekt.get(),
 ) : StateScreenModel<ExtensionDetailsState>(ExtensionDetailsState()) {
 
     private val _events: Channel<ExtensionDetailsEvent> = Channel()
@@ -99,7 +103,8 @@ class ExtensionDetailsScreenModel(
                                                 lang = description.language,
                                                 labelAsName = source.labelAsName,
                                                 enabled = source.enabled,
-                                                hasSettings = source.source is ConfigurableSource,
+                                                hasSettings = sourceSettingsFeature.resolve(source.source.id) is
+                                                    EntrySourceSettingsResolution.Available,
                                                 supportedEntryTypes = description.supportedEntryTypes,
                                             )
                                         }
@@ -125,8 +130,9 @@ class ExtensionDetailsScreenModel(
         val extension = state.value.extension ?: return
 
         val urls = extension.sources
-            .mapNotNull { (it as? SourceHomePage)?.getHomeUrl() }
-            .filter { it.isNotEmpty() }
+            .mapNotNull { source ->
+                (sourceHomeFeature.resolve(source.id) as? EntrySourceHomeResolution.Available)?.url
+            }
             .distinct()
 
         val cleared = urls.sumOf {

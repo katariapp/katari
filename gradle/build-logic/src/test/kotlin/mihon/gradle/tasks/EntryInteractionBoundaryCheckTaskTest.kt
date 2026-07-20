@@ -126,6 +126,30 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application consumers cannot bypass source action Features through raw contracts`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.source.entry.ConfigurableSource
+                import eu.kanade.tachiyomi.source.entry.SourceHomePage
+                import eu.kanade.tachiyomi.source.entry.WebViewSource
+                import eu.kanade.tachiyomi.source.entry.ResolvableSource
+
+                class AppFeature
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "application source actions must use their Entry Feature boundary"
+        error.message shouldContain "ConfigurableSource"
+        error.message shouldContain "SourceHomePage"
+        error.message shouldContain "WebViewSource"
+        error.message shouldContain "ResolvableSource"
+    }
+
+    @Test
     fun `root module cannot export the provider spi`() {
         createBaseFixture(
             additionalFiles = mapOf(

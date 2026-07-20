@@ -214,6 +214,7 @@ private class EntryInteractionBoundaryRules(
             checkInternalApiReferences(file, findings)
             checkLibraryProgressDomainPortReferences(file, findings)
             checkCatalogueFeatureBypass(file, findings)
+            checkSourceActionFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
             checkRuntimeInternalReferences(file, findings)
@@ -485,6 +486,25 @@ private class EntryInteractionBoundaryRules(
                         "raw source contract ${import.importedFqName}",
                 )
             }
+    }
+
+    private fun checkSourceActionFeatureBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val isApplicationLayer = file.relativePath.startsWith("app/src/main/") ||
+            file.relativePath.startsWith("data/src/main/") ||
+            file.relativePath.startsWith("domain/src/main/")
+        if (!isApplicationLayer) return
+
+        RAW_SOURCE_ACTION_IMPORTS.forEach { (simpleName, qualifiedName) ->
+            file.findReference(simpleName)?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "application source actions must use their Entry Feature boundary, not raw source " +
+                        "contract $qualifiedName",
+                )
+            }
+        }
     }
 
     private fun checkProcessorImplementationReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
@@ -803,6 +823,13 @@ private class EntryInteractionBoundaryRules(
             "eu.kanade.tachiyomi.source.entry.entryItemOrientation",
             "eu.kanade.tachiyomi.source.entry.supportedEntryTypes",
             "eu.kanade.tachiyomi.source.sourceItemOrientation",
+        )
+
+        private val RAW_SOURCE_ACTION_IMPORTS = mapOf(
+            "ConfigurableSource" to "eu.kanade.tachiyomi.source.entry.ConfigurableSource",
+            "SourceHomePage" to "eu.kanade.tachiyomi.source.entry.SourceHomePage",
+            "WebViewSource" to "eu.kanade.tachiyomi.source.entry.WebViewSource",
+            "ResolvableSource" to "eu.kanade.tachiyomi.source.entry.ResolvableSource",
         )
 
         private val RUNTIME_MEDIA_RESOLUTION_INTERNAL_NAME_PATTERNS = listOf(

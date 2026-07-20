@@ -162,12 +162,32 @@ Completion state:
 
 ### 6.3 — Source Actions and Resolution (`C09`, `C10`, `C11`, `C13`, applicable `C17`)
 
-- [ ] Give source settings, source-home navigation, Entry WebView actions, and deep-link resolution purpose-specific
+- [x] Give source settings, source-home navigation, Entry WebView actions, and deep-link resolution purpose-specific
   Feature boundaries and structured absence/failure results.
-- [ ] Reuse those results across catalogue, feed, migration, extension details, Entry, WebView, backup, and tracker
+- [x] Reuse those results across catalogue, feed, migration, extension details, Entry, WebView, backup, and tracker
   consumers instead of repeating interface casts.
-- [ ] Preserve tracker-specific use of source configuration/home/image contracts as an explicit tracker adapter
+- [x] Preserve tracker-specific use of source configuration/home/image contracts as an explicit tracker adapter
   relationship, not an unchecked cast or a claim that every source supports it.
+
+Completion state:
+
+- Source settings, source-home navigation, Entry WebView actions, and deep-link resolution each have a distinct Feature
+  boundary. Missing sources, unsupported contracts, absent URLs or matches, and operational failures remain distinct
+  results; none makes a source or content type architecturally invalid.
+- Their contributions enumerate the follow-on product consequences rather than hiding them behind one generic access
+  flag: settings availability/screen/backup/tracker reuse, home navigation/search/cookie/tracker reuse, Entry WebView
+  availability/URL/navigation/share/assist/runtime headers, and deep-link discovery/classification/persistence/child
+  resolution.
+- Catalogue, feed, migration, extension, preferences, backup, Entry, WebView, and deep-link consumers use those Feature
+  results. Application/data/domain code can no longer cast the raw source action contracts directly.
+- Kavita consumes source settings explicitly. Suwayomi consumes a tracker adapter that composes settings, home URL, and
+  image-client relationships with separately owned evidence, blockers, and unavailable reasons, without making that
+  combination a general source capability.
+- Source-home presence no longer defines download-source participation. The Manga download cache discovers installed
+  non-local sources and stubs directly, so adding or removing a home URL cannot silently opt a source into or out of
+  download indexing.
+- Compatibility adapters, source contract definitions, and the owning root Features retain raw source mechanics.
+  Chapter WebView remains assigned to the media/renderer context work in 6.5.
 
 ### 6.4 — Existing Entry Feature Context (`C03`, `C05`, `C06`, `C20`, `C21`, `C22`, applicable `C17`/`C23`)
 

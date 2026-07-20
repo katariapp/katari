@@ -48,7 +48,6 @@ import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.entry.WebViewSource
 import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
@@ -80,11 +79,11 @@ import mihon.entry.interactions.EntryPreviewSize
 import mihon.entry.interactions.EntryRelatedEntriesAvailability
 import mihon.entry.interactions.EntryRelatedEntriesContext
 import mihon.entry.interactions.EntryRelatedEntriesFeature
+import mihon.entry.interactions.EntryWebViewFeature
+import mihon.entry.interactions.EntryWebViewResolution
 import mihon.feature.migration.config.MigrationConfigScreen
 import tachiyomi.core.common.i18n.stringResource
-import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.entry.adapter.toSEntry
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -121,6 +120,7 @@ class EntryScreen(
         val entryDownloadActionFeature = remember { Injekt.get<EntryDownloadActionFeature>() }
         val entryBookmarkFeature = remember { Injekt.get<EntryBookmarkFeature>() }
         val entryRelatedEntriesFeature = remember { Injekt.get<EntryRelatedEntriesFeature>() }
+        val entryWebViewFeature = remember { Injekt.get<EntryWebViewFeature>() }
         val screenModel = rememberScreenModel {
             EntryScreenModel(
                 context = context,
@@ -168,7 +168,10 @@ class EntryScreen(
         ) == EntryDownloadActionAvailability.Available
         val previewConfig by screenModel.previewConfig.collectAsStateWithLifecycle()
         val previewState by screenModel.previewState.collectAsStateWithLifecycle()
-        val webViewSource = remember(successState.source) { successState.source as? WebViewSource }
+        val webView = remember(successState.entry) {
+            entryWebViewFeature.resolveEntry(successState.entry)
+        }
+        val availableWebView = webView as? EntryWebViewResolution.Available
         val relatedEntriesAvailability = remember(successState.entry, successState.source) {
             entryRelatedEntriesFeature.availability(
                 EntryRelatedEntriesContext(
@@ -181,15 +184,10 @@ class EntryScreen(
         val openApplicable = entryOpenFeature.isApplicable(successState.entry.type)
         val consumptionApplicable = entryConsumptionFeature.isApplicable(successState.entry.type)
 
-        LaunchedEffect(successState.entry, webViewSource) {
-            if (webViewSource != null) {
-                try {
-                    withIOContext {
-                        assistUrl = getEntryUrl(successState.entry, webViewSource)
-                    }
-                } catch (e: Exception) {
-                    logcat(LogPriority.ERROR, e) { "Failed to get entry URL" }
-                }
+        LaunchedEffect(webView) {
+            assistUrl = availableWebView?.url
+            if (webView is EntryWebViewResolution.Failed) {
+                logcat(LogPriority.ERROR, webView.cause) { "Failed to get entry URL" }
             }
         }
 
@@ -225,19 +223,11 @@ class EntryScreen(
                     (successState.isFromSource || successState.entry.favorite)
             },
             onWebViewClicked = {
-                openEntryInWebView(
-                    navigator,
-                    successState.entry,
-                    screenModel.source,
-                )
-            }.takeIf { webViewSource != null },
+                openEntryInWebView(navigator, successState.entry, checkNotNull(availableWebView))
+            }.takeIf { availableWebView != null },
             onWebViewLongClicked = {
-                copyEntryUrl(
-                    context,
-                    successState.entry,
-                    screenModel.source,
-                )
-            }.takeIf { webViewSource != null },
+                copyEntryUrl(context, checkNotNull(availableWebView))
+            }.takeIf { availableWebView != null },
             onTrackingClicked = {
                 if (!successState.hasLoggedInTrackers) {
                     navigator.push(SettingsScreen(SettingsScreen.Destination.Tracking))
@@ -261,8 +251,8 @@ class EntryScreen(
             }.takeIf { screenModel.isContinueApplicable(successState.entry) },
             onSearch = { query, global -> scope.launch { performSearch(navigator, query, global) } },
             onCoverClicked = screenModel::showCoverDialog,
-            onShareClicked = { shareEntry(context, successState.entry, screenModel.source) }.takeIf {
-                webViewSource != null
+            onShareClicked = { shareEntry(context, checkNotNull(availableWebView)) }.takeIf {
+                availableWebView != null
             },
             onDownloadActionClicked = screenModel::runDownloadAction
                 .takeIf { bulkDownloadsAvailable },
@@ -548,37 +538,25 @@ class EntryScreen(
         )
     }
 
-    private fun getEntryUrl(entry_: Entry?, source_: UnifiedSource?): String? {
-        val entry = entry_ ?: return null
-        val source = source_ as? WebViewSource ?: return null
-
-        return try {
-            source.getContentUrl(entry.toSEntry())
-        } catch (e: Exception) {
-            null
-        }
+    private fun openEntryInWebView(
+        navigator: Navigator,
+        entry: Entry,
+        webView: EntryWebViewResolution.Available,
+    ) {
+        navigator.push(
+            WebViewScreen(
+                url = webView.url,
+                initialTitle = entry.title,
+                sourceId = webView.sourceId,
+                headers = webView.headers,
+            ),
+        )
     }
 
-    private fun openEntryInWebView(navigator: Navigator, entry_: Entry?, source_: UnifiedSource?) {
-        val source = source_ as? WebViewSource ?: return
-        getEntryUrl(entry_, source_)?.let { url ->
-            navigator.push(
-                WebViewScreen(
-                    url = url,
-                    initialTitle = entry_?.title,
-                    sourceId = source.id,
-                    headers = source.getWebViewHeaders(),
-                ),
-            )
-        }
-    }
-
-    private fun shareEntry(context: Context, entry_: Entry?, source_: UnifiedSource?) {
+    private fun shareEntry(context: Context, webView: EntryWebViewResolution.Available) {
         try {
-            getEntryUrl(entry_, source_)?.let { url ->
-                val intent = url.toUri().toShareIntent(context, type = "text/plain")
-                context.startActivity(intent)
-            }
+            val intent = webView.url.toUri().toShareIntent(context, type = "text/plain")
+            context.startActivity(intent)
         } catch (e: Exception) {
             context.toast(e.message)
         }
@@ -630,9 +608,8 @@ class EntryScreen(
     /**
      * Copy Entry URL to Clipboard
      */
-    private fun copyEntryUrl(context: Context, entry_: Entry?, source_: UnifiedSource?) {
-        val url = getEntryUrl(entry_, source_) ?: return
-        context.copyToClipboard(url, url)
+    private fun copyEntryUrl(context: Context, webView: EntryWebViewResolution.Available) {
+        context.copyToClipboard(webView.url, webView.url)
     }
 }
 

@@ -32,11 +32,9 @@ import eu.kanade.presentation.entry.components.rankMergeTargets
 import eu.kanade.presentation.util.ioCoroutineScope
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
-import eu.kanade.tachiyomi.source.entry.ConfigurableSource
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.source.sourceNotInstalledName
 import eu.kanade.tachiyomi.source.toCatalogSource
 import kotlinx.collections.immutable.ImmutableList
@@ -71,6 +69,10 @@ import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.entry.interactions.EntryPreviewAvailability
 import mihon.entry.interactions.EntryPreviewContext
 import mihon.entry.interactions.EntryPreviewFeature
+import mihon.entry.interactions.EntrySourceHomeFeature
+import mihon.entry.interactions.EntrySourceHomeResolution
+import mihon.entry.interactions.EntrySourceSettingsFeature
+import mihon.entry.interactions.EntrySourceSettingsResolution
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
@@ -128,6 +130,8 @@ class CatalogScreenModel(
     private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
     private val entryImmersiveFeature: EntryImmersiveFeature = Injekt.get(),
     private val entryCatalogueFeature: EntryCatalogueFeature = Injekt.get(),
+    private val entrySourceHomeFeature: EntrySourceHomeFeature = Injekt.get(),
+    private val entrySourceSettingsFeature: EntrySourceSettingsFeature = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
     private val application: Application = Injekt.get(),
@@ -232,10 +236,10 @@ class CatalogScreenModel(
             ?: EntryItemOrientation.VERTICAL
 
     val homeUrl: String?
-        get() = (sourceManager.getOrStub(sourceId) as? SourceHomePage)?.getHomeUrl()
+        get() = (entrySourceHomeFeature.resolve(sourceId) as? EntrySourceHomeResolution.Available)?.url
 
     val isConfigurable: Boolean
-        get() = catalogSource?.source is ConfigurableSource
+        get() = entrySourceSettingsFeature.resolve(sourceId) is EntrySourceSettingsResolution.Available
 
     fun getColumnsPreference(
         orientation: Int,

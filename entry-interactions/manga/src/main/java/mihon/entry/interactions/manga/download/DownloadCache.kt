@@ -48,6 +48,7 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
+import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.io.File
@@ -417,7 +418,7 @@ internal class DownloadCache(
     }
 
     private fun getSources(): List<UnifiedSource> {
-        return sourceManager.getOnlineSources() + sourceManager.getStubSources()
+        return sourceManager.getAll().filterNot { it.id == LocalSource.ID } + sourceManager.getStubSources()
     }
 
     private fun notifyChanges() {

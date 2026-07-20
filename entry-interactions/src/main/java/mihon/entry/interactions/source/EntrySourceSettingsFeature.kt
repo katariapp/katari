@@ -1,0 +1,123 @@
+package mihon.entry.interactions
+
+import eu.kanade.tachiyomi.source.entry.ConfigurableSource
+import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContextInputId
+import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureContextBlocker
+import mihon.feature.graph.FeatureContextDecision
+import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureGraphContributionSink
+import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.FeatureGraphEvaluation
+import mihon.feature.graph.FeatureId
+import mihon.feature.graph.FeatureIntegration
+import mihon.feature.graph.FeatureIntegrationId
+import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.contextEvidence
+import mihon.feature.graph.contextInputDefinition
+import mihon.feature.graph.featureContextRule
+import tachiyomi.domain.source.service.SourceManager
+
+private val SOURCE_SETTINGS_FEATURE_ID = FeatureId("entry.source-settings")
+private val SOURCE_SETTINGS_OWNER = ContributionOwner("entry-source-settings")
+private val SOURCE_SETTINGS_INTEGRATION_ID = FeatureIntegrationId("entry.source-settings.access")
+
+private data class SourceSettingsContext(val installed: Boolean, val configurable: Boolean)
+
+private val SOURCE_SETTINGS_CONTEXT = contextInputDefinition<SourceSettingsContext>(
+    ContextInputId("entry.source-settings.context"),
+    ContributionOwner("entry-source"),
+)
+private val SOURCE_SETTINGS_MISSING = FeatureContextBlocker(
+    FeatureArtifactId("entry.source-settings.source-missing"),
+    listOf(SOURCE_SETTINGS_CONTEXT),
+)
+private val SOURCE_SETTINGS_UNSUPPORTED = FeatureContextBlocker(
+    FeatureArtifactId("entry.source-settings.unsupported"),
+    listOf(SOURCE_SETTINGS_CONTEXT),
+)
+private enum class SourceSettingsConsequence(
+    override val id: FeatureArtifactId,
+) : SharedFeatureConsequence {
+    AVAILABILITY(FeatureArtifactId("entry.source-settings.availability")),
+    PREFERENCE_SCREEN(FeatureArtifactId("entry.source-settings.preference-screen")),
+    BACKUP(FeatureArtifactId("entry.source-settings.backup")),
+    TRACKER_ADAPTER(FeatureArtifactId("entry.source-settings.tracker-adapter")),
+}
+
+internal object EntrySourceSettingsFeatureContributor : FeatureGraphContributor {
+    override val owner = SOURCE_SETTINGS_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(
+            FeatureContribution(
+                feature = SOURCE_SETTINGS_FEATURE_ID,
+                owner = owner,
+                integrations = listOf(
+                    FeatureIntegration(
+                        id = SOURCE_SETTINGS_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Always,
+                        contextInputs = listOf(SOURCE_SETTINGS_CONTEXT),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            val context = evidence.value(SOURCE_SETTINGS_CONTEXT)
+                            when {
+                                !context.installed -> FeatureContextDecision.Blocked(listOf(SOURCE_SETTINGS_MISSING))
+                                !context.configurable ->
+                                    FeatureContextDecision.Blocked(listOf(SOURCE_SETTINGS_UNSUPPORTED))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(SOURCE_SETTINGS_MISSING, SOURCE_SETTINGS_UNSUPPORTED),
+                        sharedConsequences = SourceSettingsConsequence.entries,
+                    ),
+                ),
+            ),
+        )
+    }
+}
+
+internal class DefaultEntrySourceSettingsFeature(
+    private val evaluation: FeatureGraphEvaluation,
+    private val sourceManager: SourceManager,
+) : EntrySourceSettingsFeature {
+
+    override fun resolve(sourceId: Long): EntrySourceSettingsResolution {
+        val source = sourceManager.get(sourceId)
+        val configurable = source as? ConfigurableSource
+        requireState(installed = source != null, configurable = configurable != null)
+        if (source == null) return EntrySourceSettingsResolution.Missing(sourceId)
+        if (configurable == null) return EntrySourceSettingsResolution.Unsupported(sourceId)
+
+        return runCatching {
+            EntrySourceSettingsResolution.Available(
+                sourceId = sourceId,
+                preferences = configurable.getSourcePreferences(),
+                populateScreen = configurable::setupPreferenceScreen,
+            )
+        }.getOrElse { EntrySourceSettingsResolution.Failed(sourceId, it) }
+    }
+
+    override fun supportedSourceIds(): List<Long> {
+        return sourceManager.getAll()
+            .filterIsInstance<ConfigurableSource>()
+            .onEach { requireState(installed = true, configurable = true) }
+            .map { it.id }
+            .sorted()
+    }
+
+    private fun requireState(installed: Boolean, configurable: Boolean) {
+        SourceSettingsConsequence.entries.forEach { consequence ->
+            evaluation.requireSourceContextState(
+                feature = SOURCE_SETTINGS_FEATURE_ID,
+                integration = SOURCE_SETTINGS_INTEGRATION_ID,
+                consequence = consequence.id,
+                evidence = listOf(
+                    contextEvidence(SOURCE_SETTINGS_CONTEXT, SourceSettingsContext(installed, configurable)),
+                ),
+                applicable = installed && configurable,
+            )
+        }
+    }
+}

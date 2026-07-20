@@ -44,6 +44,7 @@ Updated: 2026-07-20
 - F11.5 application consumer commit: `9ffa03ca3` (`(refactor): migrate entry migration consumers`)
 - Phase 6 plan commit: `ac9c46d41` (`(docs): plan contextual integration migration`)
 - Phase 6.1 runtime-context commit: `7ad238af7` (`(feat): resolve runtime feature context`)
+- Phase 6.2 catalogue/source-description commit: `9685d465a` (`(refactor): migrate catalogue source description`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -51,8 +52,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.2 catalogue and source description
-- State: Phase 6.2 is implemented and validated for review. Phase 6.3 has not started.
+- Milestone: Phase 6.3 source actions and resolution
+- State: Phase 6.3 is implemented and validated for review. Phase 6.4 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -94,6 +95,24 @@ Focused Phase 6.2 findings:
   Immersive opt-in and its source-type pruning are deliberately left for their owning F20 contextual milestone in 6.4.
 - Boundary validation prevents future application code from recreating catalogue, metadata, or orientation gates with
   raw source contracts, while allowing the reviewed source-composition owners to implement those external contracts.
+
+Focused Phase 6.3 findings:
+
+- Source settings, source-home navigation, Entry WebView actions, and deep-link resolution are separate Feature-owned
+  boundaries with structured missing, unsupported, absent, and failed outcomes. Partial source support remains valid.
+- Each contribution declares its distinct UI, runtime, backup, persistence, maintenance, and adapter consequences;
+  product integrations are not collapsed into an opaque generic-access consequence.
+- Catalogue, feed, migration, extension, preferences, backup, Entry, WebView, and deep-link consumers no longer repeat
+  raw source action casts. Build validation rejects reintroducing those casts in application/data/domain code.
+- Kavita depends on the settings Feature. Suwayomi depends on an explicit tracker adapter relationship that composes
+  separately owned settings, home URL, and image-client evidence with explicit blockers and unavailable reasons,
+  without promoting that combination to a universal source capability.
+- Deep-link resolution owns source discovery, persistence, and child lookup; the persisted returned Entry remains
+  authoritative instead of being validated against descriptive source metadata.
+- Source-home support no longer acts as a proxy for download participation. Manga download indexing uses installed
+  non-local sources plus retained stubs, preventing an unrelated UI-navigation contract from authorizing downloads.
+- Raw contracts remain only in source definitions/compatibility, the owning root Features, tests, and the separately
+  assigned Manga child-WebView runtime for Phase 6.5.
 
 Focused F11.0 findings:
 
@@ -754,5 +773,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.2 after review, then begin Phase 6.3 source actions and resolution (`C09`, `C10`, `C11`, `C13`, and the
-applicable part of `C17`).
+Commit Phase 6.3 after review, then begin Phase 6.4 existing Entry Feature context (`C03`, `C05`, `C06`, `C20`, `C21`,
+`C22`, and the applicable parts of `C17`/`C23`).
