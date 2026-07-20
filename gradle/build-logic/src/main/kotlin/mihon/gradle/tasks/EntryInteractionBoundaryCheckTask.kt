@@ -216,6 +216,7 @@ private class EntryInteractionBoundaryRules(
             checkCatalogueFeatureBypass(file, findings)
             checkSourceActionFeatureBypass(file, findings)
             checkSourceRefreshFeatureBypass(file, findings)
+            checkSourceRefreshMechanicsBypass(file, findings)
             checkMeteredSourcePolicyBypass(file, findings)
             checkChildWebViewFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
@@ -536,6 +537,26 @@ private class EntryInteractionBoundaryRules(
                 reason = "Entry refresh consumers must use EntrySourceRefreshFeature, " +
                     "not raw SyncEntryWithSource mechanics",
             )
+        }
+    }
+
+    private fun checkSourceRefreshMechanicsBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val ownsSourceContract = file.relativePath.startsWith("entry-source-api/src/") ||
+            file.relativePath.startsWith("source-api/src/") ||
+            file.relativePath.startsWith("source-compat/src/") ||
+            file.relativePath.startsWith("source-local/src/") ||
+            file.relativePath == "domain/src/main/java/tachiyomi/domain/entry/interactor/SyncEntryWithSource.kt"
+        if (ownsSourceContract) return
+
+        SOURCE_REFRESH_MECHANICS_CONTRACTS.forEach { contract ->
+            file.findReference(contract)?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "$contract interpretation belongs to SyncEntryWithSource source-refresh mechanics",
+                )
+            }
         }
     }
 
@@ -902,6 +923,12 @@ private class EntryInteractionBoundaryRules(
             "RelatedEntriesSource" to "eu.kanade.tachiyomi.source.entry.RelatedEntriesSource",
             "EntryImageSource" to "eu.kanade.tachiyomi.source.entry.EntryImageSource",
             "SubtitleSource" to "eu.kanade.tachiyomi.source.entry.SubtitleSource",
+        )
+
+        private val SOURCE_REFRESH_MECHANICS_CONTRACTS = listOf(
+            "EmptyChapterListSource",
+            "IncrementalChapterSource",
+            "ChapterNumberRecognitionSource",
         )
 
         private val RAW_IMMERSIVE_SOURCE_OPT_IN_ACCESS = Regex("""\.\s*supportsImmersiveFeed\b""")

@@ -74,6 +74,7 @@ Updated: 2026-07-20
 - Phase 6.6.2 Direct/source-owned consumers commit: `a6a28b222` (`(refactor): migrate direct source refresh consumers`)
 - Phase 6.6.3 Migration refresh relationship commit: `fd86a52a8` (`(refactor): move migration refresh behind feature`)
 - Phase 6.6.4 Library Update refresh commit: `d20cf9fba` (`(refactor): move library refresh behind feature`)
+- Phase 6.6.5 Metered-source policy commit: `f73dc2232` (`(refactor): move queue warning policy behind feature`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -81,8 +82,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.6.5 Metered-source notification policy
-- State: Phase 6.6.5 is implemented and validating for review. Phase 6.6.6 has not started.
+- Milestone: Phase 6.6.6 Refresh and network reconciliation
+- State: Phase 6.6.6 is implemented and validating for review. Phase 6.7 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1155,7 +1156,19 @@ Focused Phase 6.6.5 findings:
 - Application production code cannot inspect `UnmeteredSource`; focused build validation enforces the F24 boundary
   without blocking source contracts, root Feature policy, or type-owned mechanics.
 
+Focused Phase 6.6.6 findings:
+
+- The production census finds one C15 mechanics owner, one root Source Refresh boundary, no raw application sync
+  consumer, and no unclassified refresh caller.
+- Build validation now rejects direct interpretation of empty-list, incremental-list, and number-recognition source
+  contracts outside SDK/source compatibility/implementation code and `SyncEntryWithSource`.
+- Current C16 runtime authority is `entry.UnmeteredSource`, interpreted only by F24 and Manga F03. The unused legacy
+  source-api marker is recorded as an explicit C24 compatibility obligation for 6.8.
+- Installed-source absence, Local behavior, Entry/child state, metadata/fetch-window preferences, and explicit profiles
+  are owned by their individual consequences; no global context capability or support matrix was introduced.
+- The raw synchronization, source-mechanics, and generic metering boundaries pass without migration allowlists.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.6.5 after review, then implement Phase 6.6.6 refresh/network reconciliation. Continue through Phase 6 afterward
+Commit Phase 6.6.6 after review, then implement Phase 6.7 Tracking integration. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

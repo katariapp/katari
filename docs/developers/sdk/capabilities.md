@@ -37,7 +37,7 @@ actions, and behavioral applicability remain owned by the notification feature.
 | `EmptyChapterListSource` | Declares that a successful child-list response may legitimately be empty. |
 | `IncrementalChapterSource` | Receives currently stored child items while refreshing the list. |
 | `ChapterNumberRecognitionSource` | Requests host-side number recognition for unknown child numbers. |
-| `UnmeteredSource` | Excludes the source from Katari's metered-source update warning. |
+| `entry.UnmeteredSource` | Excludes the source from Katari's metered-source queue warnings. |
 
 ## Catalogue presentation
 
@@ -138,6 +138,9 @@ Keep authentication values out of logs and public error messages. Removing a pre
 
 ## Metered-source warning
 
-`UnmeteredSource` affects Katari's warning policy during library updates. It does not alter Android network accounting, force an unmetered transport, or guarantee that the provider transfers little data.
+Implement `eu.kanade.tachiyomi.source.entry.UnmeteredSource` to affect Katari's warning policy during library updates
+and type-owned download queue processing. The legacy `eu.kanade.tachiyomi.source.UnmeteredSource` contract is retained
+for source ABI compatibility but is not the current runtime capability. Neither contract alters Android network
+accounting, forces an unmetered transport, or guarantees that the provider transfers little data.
 
 Only opt in when the source's update traffic should intentionally be excluded from that warning.

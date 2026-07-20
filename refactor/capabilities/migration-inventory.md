@@ -219,7 +219,7 @@ exception.
 | `C13` | Concrete `ResolvableSource` presence and resolution result | Deep-link resolution Feature migration; returned Entry/child type is authoritative. | 6.3 |
 | `C14` | `EntryItemOrientationProvider` with source default | Catalogue/description projection owns Browse/feed/library orientation; F21 already carries orientation in its loaded result. | 6.2 |
 | `C15` | Three source-owned child-list contracts | `SyncEntryWithSource` remains the single owner-local mechanics coordinator; invoking Features declare refresh state/results as context rather than recasting the interfaces. | 6.6 |
-| `C16` | Concrete `UnmeteredSource` presence | Downloader policy remains type-owned F03 mechanics; Library-update queue warning moves to its update Feature consequence. | 6.6 |
+| `C16` | Concrete `entry.UnmeteredSource` presence | Downloader policy remains type-owned F03 mechanics; F24 owns Library-update queue warning. The unused legacy source-api marker is a C24 ABI/adapter obligation, not runtime authority. | 6.6 |
 | `C17` | Installed, missing, bundled Local, or stub source state | Distributed contextual evidence for F04/F14/F24 and source action/catalogue Features; every blocker is reconciled by consequence, not by a global local/stub capability. | 6.3, 6.4, 6.6 |
 | `C18` | Tracker-declared `supportedEntryTypes` | New Tracking Feature composes Entry type, tracker applicability, authentication, Entry/Library actions, sync, filters, Stats, and documentation. | 6.7 |
 | `C19` | Tracker-owned dates/privacy/status/scoring facts | Same Tracking Feature exposes purpose-specific fields/actions; tracker implementations remain authoritative. | 6.7 |
@@ -265,6 +265,11 @@ collection. The raw-sync application boundary is now green with no migration exc
 Phase 6.6.5 moves the Library queue-size threshold and `UnmeteredSource` interpretation into F24. Android notification
 code renders only the structured decision, and application boundary validation rejects raw metering inspection. Manga
 downloader metering remains type-owned F03 execution mechanics.
+
+Phase 6.6.6 closes the nested census. `SyncEntryWithSource` is the only C15 mechanics interpreter; Source Refresh is the
+only root boundary and has no raw application consumer. F24 and Manga F03 are the only current C16 interpreters. C17,
+C20, and C22 remain consequence-specific invocation evidence with strict Entry-profile refresh. The unused legacy
+source-api metering marker is recorded for C24 compatibility reconciliation in 6.8.
 
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 

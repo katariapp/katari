@@ -180,6 +180,31 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `refresh consumers cannot interpret source refresh mechanics contracts`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.source.entry.ChapterNumberRecognitionSource
+                import eu.kanade.tachiyomi.source.entry.EmptyChapterListSource
+                import eu.kanade.tachiyomi.source.entry.IncrementalChapterSource
+
+                class AppFeature(
+                    private val empty: EmptyChapterListSource,
+                    private val incremental: IncrementalChapterSource,
+                    private val recognition: ChapterNumberRecognitionSource,
+                )
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "EmptyChapterListSource interpretation belongs to SyncEntryWithSource"
+        error.message shouldContain "IncrementalChapterSource interpretation belongs to SyncEntryWithSource"
+        error.message shouldContain "ChapterNumberRecognitionSource interpretation belongs to SyncEntryWithSource"
+    }
+
+    @Test
     fun `application queue warning policy cannot inspect raw metered source context`() {
         createBaseFixture(
             appSource = """

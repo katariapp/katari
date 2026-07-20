@@ -614,10 +614,10 @@ them closes a future bypass without expanding any Feature, declaring support, or
 
 ### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
 
-- [ ] Retain `SyncEntryWithSource` as the single owner of source refresh mechanics and its source capability contracts.
-- [ ] Compose refresh safety, incremental behavior, chapter-number recognition, one-shot state, local/stub access,
+- [x] Retain `SyncEntryWithSource` as the single owner of source refresh mechanics and its source capability contracts.
+- [x] Compose refresh safety, incremental behavior, chapter-number recognition, one-shot state, local/stub access,
   update preferences, and unmetered-source policy into their F11/F13/Library-update consequences.
-- [ ] Keep downloader use of unmetered-source behavior inside the Download provider while removing duplicated
+- [x] Keep downloader use of unmetered-source behavior inside the Download provider while removing duplicated
   application warning policy.
 
 #### 6.6.0 — Refresh Ownership Census and Architecture Split
@@ -825,6 +825,43 @@ Update policy to type-specific download execution and would erase the consequenc
 Application boundary validation rejects raw `UnmeteredSource` inspection. Source contracts and implementations, root
 Feature policy, and type-owned interaction mechanics remain valid owners; generic application consumers must enter
 through a Feature result.
+
+#### 6.6.6 — Refresh and Network Reconciliation
+
+- [x] Re-run the production census for raw refresh mechanics, refresh consumers, source availability, metering, Entry
+  state, and profile/preference evidence.
+- [x] Enforce that the three child-list source contracts remain owned by `SyncEntryWithSource`.
+- [x] Verify raw synchronization and application metering boundaries are green without migration exceptions.
+- [x] Reconcile every `C15`, `C16`, and applicable `C17`, `C20`, and `C22` consequence against its executable owner.
+- [x] Update Feature, SDK, atlas, inventory, and status documentation from executable behavior.
+
+| Context | Reconciled executable owner |
+| --- | --- |
+| `C15` refresh mechanics | `SyncEntryWithSource` alone interprets empty child lists, incremental requests, and host-side number recognition. Source Refresh is the sole root boundary over it. Build validation rejects those contracts elsewhere while allowing SDK/compatibility/source implementations. |
+| `C16` metering | F24 owns Library queue concentration and the shared threshold; Manga F03 owns its download-queue mechanics. Generic application/data/domain/presentation code cannot interpret the marker. |
+| `C17` installed/local/stub state | Source Refresh uses installed-source lookup and returns structured absence; Local is an installed source. F24 treats missing sources conservatively as metered. F04 retains its separate local/stub action context. No global source-state capability was added. |
+| `C20` Entry/child state | F13 evaluates the queued Library snapshot; Source Refresh receives an authoritative Entry; F20/Deep Link/F11 map their own consequences; F05 receives only successful inserted children. State remains invocation evidence rather than support truth. |
+| `C22` profile/preferences | Source Refresh resolves title-update policy for `entry.profileId` and always synchronizes strictly. Library metadata preference and fetch window remain request evidence; F11 execution refresh uses its profile-pinned inspected target. |
+
+The production census finds one mechanics implementation and no raw application consumer. Direct Source Refresh use is
+limited to its base Entry/metadata consumers and root Feature coordinators for F11, F20, Deep Link, and Library Update.
+No consumer registry exists: each consuming Feature declares and owns its consequence.
+
+The active `eu.kanade.tachiyomi.source.entry.UnmeteredSource` contract is the runtime metering authority. The older
+`eu.kanade.tachiyomi.source.UnmeteredSource` class remains only in the legacy public source-api ABI and baseline profile;
+no production decision consumes it. Whether the legacy adapter must translate that marker into the current contract is
+an explicit `C24` compatibility obligation for Phase 6.8, not a second current metering authority or a hidden 6.6
+allowlist.
+
+Boundary validation now protects both levels of dependency direction: application consumers cannot borrow raw
+`SyncEntryWithSource` or `UnmeteredSource`, and no Feature/type/application code can reinterpret the three C15 source
+mechanics contracts. SDK/source declarations, source compatibility implementations, the mechanics coordinator, root
+Feature policy, and type-owned download mechanics remain narrow named owners.
+
+Manifesto comparison found no content-type support matrix, provider requirement, mandatory refresh operation, consumer
+allowlist, compatibility synchronizer, duplicated metering rule, or presentation-owned behavior. A future contributed
+type participates in Source Refresh, F13, Library Update Refresh, and F24 automatically; it implements only genuinely
+type-specific interactions.
 
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
