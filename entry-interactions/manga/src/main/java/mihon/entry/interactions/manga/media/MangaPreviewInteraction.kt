@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import mihon.entry.interactions.EntryPreviewConfig
 import mihon.entry.interactions.EntryPreviewConfigurationProvider
-import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryPreviewHandle
 import mihon.entry.interactions.EntryPreviewLoadMode
 import mihon.entry.interactions.EntryPreviewPage
@@ -39,9 +38,6 @@ internal class MangaPreviewInteraction(
         pageCount = entryInteractionPreferences.mangaPreviewPageCount,
         size = entryInteractionPreferences.mangaPreviewSize,
     )
-
-    override fun contextAvailability(entry: Entry, source: UnifiedSource): EntryPreviewContextResult =
-        EntryPreviewContextResult.Available
 
     override fun config(): EntryPreviewConfig {
         return EntryPreviewConfig(

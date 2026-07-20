@@ -1,13 +1,17 @@
 package mihon.entry.interactions
 
+import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
 import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureContextBlocker
+import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -17,10 +21,14 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
+import mihon.feature.graph.contextEvidence
+import mihon.feature.graph.contextInputDefinition
+import mihon.feature.graph.featureContextRule
 
 private val ENTRY_PREVIEW_FEATURE_ID = FeatureId("entry.preview")
 private val ENTRY_PREVIEW_FEATURE_OWNER = ContributionOwner("entry-preview")
 private val ENTRY_PREVIEW_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.preview.provider")
+private val ENTRY_PREVIEW_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.preview.context")
 private val ENTRY_PREVIEW_CONFIGURATION_INTEGRATION_ID = FeatureIntegrationId("entry.preview.configuration")
 private val ENTRY_PREVIEW_CHILD_INTEGRATION_ID = FeatureIntegrationId("entry.preview.first-reading-child")
 private val ENTRY_PREVIEW_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.preview.open-target")
@@ -52,6 +60,31 @@ private object EntryPreviewBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.preview.behavior")
 }
 
+private object EntryPreviewProviderDispatchConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.preview.provider-dispatch")
+}
+
+private val ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT = contextInputDefinition<EntryPreviewSourceRequirement>(
+    ContextInputId("entry.preview.source-requirement"),
+    ContributionOwner("entry-preview-provider"),
+)
+private val ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.preview.source-support"),
+    ContributionOwner("entry-source"),
+)
+private val ENTRY_PREVIEW_ENABLED_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.preview.enabled"),
+    ContributionOwner("entry-preview-configuration"),
+)
+private val ENTRY_PREVIEW_SOURCE_UNSUPPORTED = FeatureContextBlocker(
+    FeatureArtifactId("entry.preview.source-unsupported"),
+    listOf(ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT, ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT),
+)
+private val ENTRY_PREVIEW_DISABLED = FeatureContextBlocker(
+    FeatureArtifactId("entry.preview.disabled"),
+    listOf(ENTRY_PREVIEW_ENABLED_CONTEXT),
+)
+
 internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_PREVIEW_FEATURE_OWNER
 
@@ -64,6 +97,28 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_PREVIEW_PROVIDER_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryPreviewCapability.definition),
+                        sharedConsequences = listOf(EntryPreviewProviderDispatchConsequence),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_PREVIEW_CONTEXT_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryPreviewCapability.definition),
+                        contextInputs = listOf(
+                            ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT,
+                            ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT,
+                            ENTRY_PREVIEW_ENABLED_CONTEXT,
+                        ),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            val sourceRequired = evidence.value(ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT) ==
+                                EntryPreviewSourceRequirement.PREVIEW_CAPABILITY
+                            when {
+                                !evidence.value(ENTRY_PREVIEW_ENABLED_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_PREVIEW_DISABLED))
+                                sourceRequired && !evidence.value(ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_PREVIEW_SOURCE_UNSUPPORTED))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(ENTRY_PREVIEW_SOURCE_UNSUPPORTED, ENTRY_PREVIEW_DISABLED),
                         sharedConsequences = EntryPreviewConsequence.entries,
                         behavioralContracts = listOf(EntryPreviewBehaviorContract),
                     ),
@@ -98,25 +153,15 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
 }
 
 internal class DefaultEntryPreviewFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val interaction: EntryPreviewInteraction,
     private val childList: EntryChildListFeature,
 ) : EntryPreviewFeature {
-    private val previewTypes = EntryPreviewConsequence.entries
-        .map { consequence ->
-            evaluation.applicableProviderTypes<EntryPreviewProcessor>(
-                feature = ENTRY_PREVIEW_FEATURE_ID,
-                integration = ENTRY_PREVIEW_PROVIDER_INTEGRATION_ID,
-                consequence = consequence.id,
-            )
-        }
-        .also { selected ->
-            check(selected.distinct().size <= 1) {
-                "Preview consequences selected different provider sets: $selected"
-            }
-        }
-        .firstOrNull()
-        .orEmpty()
+    private val previewTypes = evaluation.applicableProviderTypes<EntryPreviewProcessor>(
+        feature = ENTRY_PREVIEW_FEATURE_ID,
+        integration = ENTRY_PREVIEW_PROVIDER_INTEGRATION_ID,
+        consequence = EntryPreviewProviderDispatchConsequence.id,
+    )
     private val configuredTypes = evaluation.applicableProviderTypes<EntryPreviewConfigurationProvider>(
         feature = ENTRY_PREVIEW_FEATURE_ID,
         integration = ENTRY_PREVIEW_CONFIGURATION_INTEGRATION_ID,
@@ -135,7 +180,11 @@ internal class DefaultEntryPreviewFeature(
 
     override val settings: List<EntryPreviewSettings> = configuredTypes
         .sortedBy(EntryType::name)
-        .map { type -> requireNotNull(interaction.configuration(type)).settings }
+        .map { type ->
+            requireNotNull(interaction.configuration(type)).settings.copy(
+                sourceRequirement = requireNotNull(interaction.processor(type)).sourceRequirement,
+            )
+        }
 
     init {
         val missingChildList = previewTypes.filter { type ->
@@ -155,15 +204,7 @@ internal class DefaultEntryPreviewFeature(
         val processor = interaction.processor(context.entry.type)
             ?: return EntryPreviewAvailability.Inapplicable(context.entry.type)
         val config = config(context.entry.type)
-        return when (val contextual = processor.contextAvailability(context.entry, context.source)) {
-            EntryPreviewContextResult.Available -> if (config.enabled) {
-                EntryPreviewAvailability.Available(config)
-            } else {
-                EntryPreviewAvailability.Disabled(config)
-            }
-            is EntryPreviewContextResult.Unavailable ->
-                EntryPreviewAvailability.ContextuallyUnavailable(config, contextual.reason)
-        }
+        return availability(context, processor, config)
     }
 
     override fun availabilityChanges(context: EntryPreviewContext): Flow<EntryPreviewAvailability> {
@@ -176,6 +217,9 @@ internal class DefaultEntryPreviewFeature(
         val processor = interaction.processor(entry.type)
             ?: return EntryPreviewLoadResult.Inapplicable(entry.type)
         val config = config(entry.type)
+        contextUnavailableReason(processor, request.previewContext.source, config)?.let { reason ->
+            return EntryPreviewLoadResult.ContextuallyUnavailable(reason)
+        }
         if (!config.enabled) return EntryPreviewLoadResult.Disabled(config)
 
         val child = when (processor.loadMode) {
@@ -200,10 +244,9 @@ internal class DefaultEntryPreviewFeature(
             }
         }
         val source = child?.source ?: request.previewContext.source
-        when (val contextual = processor.contextAvailability(entry, source)) {
-            EntryPreviewContextResult.Available -> Unit
-            is EntryPreviewContextResult.Unavailable ->
-                return EntryPreviewLoadResult.ContextuallyUnavailable(contextual.reason)
+        val contextUnavailable = contextUnavailableReason(processor, source, config)
+        if (contextUnavailable != null) {
+            return EntryPreviewLoadResult.ContextuallyUnavailable(contextUnavailable)
         }
         return EntryPreviewLoadResult.Loaded(
             interaction.loadPreview(
@@ -254,14 +297,51 @@ internal class DefaultEntryPreviewFeature(
         config: EntryPreviewConfig,
     ): EntryPreviewAvailability {
         val processor = requireNotNull(interaction.processor(context.entry.type))
-        return when (val contextual = processor.contextAvailability(context.entry, context.source)) {
-            EntryPreviewContextResult.Available -> if (config.enabled) {
-                EntryPreviewAvailability.Available(config)
-            } else {
-                EntryPreviewAvailability.Disabled(config)
-            }
-            is EntryPreviewContextResult.Unavailable ->
-                EntryPreviewAvailability.ContextuallyUnavailable(config, contextual.reason)
+        return availability(context, processor, config)
+    }
+
+    private fun availability(
+        context: EntryPreviewContext,
+        processor: EntryPreviewProcessor,
+        config: EntryPreviewConfig,
+    ): EntryPreviewAvailability {
+        val unavailable = contextUnavailableReason(processor, context.source, config)
+        return when {
+            unavailable != null -> EntryPreviewAvailability.ContextuallyUnavailable(config, unavailable)
+            !config.enabled -> EntryPreviewAvailability.Disabled(config)
+            else -> EntryPreviewAvailability.Available(config)
+        }
+    }
+
+    private fun contextUnavailableReason(
+        processor: EntryPreviewProcessor,
+        source: eu.kanade.tachiyomi.source.entry.UnifiedSource,
+        config: EntryPreviewConfig,
+    ): EntryPreviewUnavailableReason? {
+        val sourceSupported = source is EntryPreviewSource
+        val applicable = (
+            processor.sourceRequirement == EntryPreviewSourceRequirement.NONE || sourceSupported
+            ) && config.enabled
+        evaluation.requireEntryContextState(
+            type = processor.type,
+            feature = ENTRY_PREVIEW_FEATURE_ID,
+            integration = ENTRY_PREVIEW_CONTEXT_INTEGRATION_ID,
+            consequences = EntryPreviewConsequence.entries.map(EntryPreviewConsequence::id),
+            evidence = listOf(
+                contextEvidence(ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT, processor.sourceRequirement),
+                contextEvidence(ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT, sourceSupported),
+                contextEvidence(ENTRY_PREVIEW_ENABLED_CONTEXT, config.enabled),
+            ),
+            applicable = applicable,
+        )
+        return if (
+            config.enabled &&
+            processor.sourceRequirement == EntryPreviewSourceRequirement.PREVIEW_CAPABILITY &&
+            !sourceSupported
+        ) {
+            EntryPreviewUnavailableReason.SourceUnsupported
+        } else {
+            null
         }
     }
 }

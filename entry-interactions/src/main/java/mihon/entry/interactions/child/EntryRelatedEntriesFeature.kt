@@ -3,12 +3,16 @@ package mihon.entry.interactions
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureContextBlocker
+import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -17,6 +21,9 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.contextEvidence
+import mihon.feature.graph.contextInputDefinition
+import mihon.feature.graph.featureContextRule
 import tachiyomi.domain.entry.adapter.toEntry
 import tachiyomi.domain.entry.adapter.toSEntry
 import tachiyomi.domain.entry.interactor.GetEntry
@@ -46,6 +53,23 @@ private object EntryRelatedEntriesBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.related-entries.behavior")
 }
 
+private val ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.related-entries.source-installed"),
+    ContributionOwner("entry-source"),
+)
+private val ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.related-entries.source-support"),
+    ContributionOwner("entry-source"),
+)
+private val ENTRY_RELATED_ENTRIES_SOURCE_MISSING = FeatureContextBlocker(
+    FeatureArtifactId("entry.related-entries.source-missing"),
+    listOf(ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT),
+)
+private val ENTRY_RELATED_ENTRIES_SOURCE_UNSUPPORTED = FeatureContextBlocker(
+    FeatureArtifactId("entry.related-entries.source-unsupported"),
+    listOf(ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT),
+)
+
 internal object EntryRelatedEntriesFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_RELATED_ENTRIES_FEATURE_OWNER
 
@@ -58,6 +82,23 @@ internal object EntryRelatedEntriesFeatureContributor : FeatureGraphContributor 
                     FeatureIntegration(
                         id = ENTRY_RELATED_ENTRIES_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Always,
+                        contextInputs = listOf(
+                            ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT,
+                            ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT,
+                        ),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            when {
+                                !evidence.value(ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_RELATED_ENTRIES_SOURCE_MISSING))
+                                !evidence.value(ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_RELATED_ENTRIES_SOURCE_UNSUPPORTED))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(
+                            ENTRY_RELATED_ENTRIES_SOURCE_MISSING,
+                            ENTRY_RELATED_ENTRIES_SOURCE_UNSUPPORTED,
+                        ),
                         sharedConsequences = EntryRelatedEntriesConsequence.entries,
                         behavioralContracts = listOf(EntryRelatedEntriesBehaviorContract),
                     ),
@@ -68,50 +109,27 @@ internal object EntryRelatedEntriesFeatureContributor : FeatureGraphContributor 
 }
 
 internal class DefaultEntryRelatedEntriesFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val sourceManager: SourceManager,
     private val networkToLocalEntry: NetworkToLocalEntry,
     private val getEntry: GetEntry,
     private val sourceDescription: EntrySourceDescriptionResolutionPort,
 ) : EntryRelatedEntriesFeature {
-    private val selectedTypesByConsequence = EntryRelatedEntriesConsequence.entries.associateWith { consequence ->
-        evaluation.sharedConsequences
-            .asSequence()
-            .filter { applicability ->
-                applicability.subject.feature == ENTRY_RELATED_ENTRIES_FEATURE_ID &&
-                    applicability.subject.integration == ENTRY_RELATED_ENTRIES_INTEGRATION_ID &&
-                    applicability.consequence.id == consequence.id
-            }
-            .mapTo(mutableSetOf()) { it.subject.contentType }
-    }
-    private val selectedTypes = selectedTypesByConsequence.getValue(EntryRelatedEntriesConsequence.AVAILABILITY)
-
-    init {
-        check(selectedTypesByConsequence.values.toSet().size == 1) {
-            "Related Entries consequences selected different content types"
-        }
-    }
 
     override fun availability(context: EntryRelatedEntriesContext): EntryRelatedEntriesAvailability {
-        requireComposedOrigin(context.entry.type)
         val source = context.source
-            ?: return EntryRelatedEntriesAvailability.Unavailable(
-                EntryRelatedEntriesUnavailableReason.SOURCE_MISSING,
-            )
-        check(source.id == context.entry.source) {
-            "Related Entries context source ${source.id} does not own Entry source ${context.entry.source}"
+        if (source != null) {
+            check(source.id == context.entry.source) {
+                "Related Entries context source ${source.id} does not own Entry source ${context.entry.source}"
+            }
         }
-        return source.availability()
+        return availability(context.entry.type, source)
     }
 
     override suspend fun load(entryId: Long): EntryRelatedEntriesLoadResult {
         val entry = getEntry.await(entryId) ?: error("Entry $entryId was not found")
-        requireComposedOrigin(entry.type)
         val source = sourceManager.get(entry.source)
-            ?: return EntryRelatedEntriesLoadResult.Unavailable(
-                EntryRelatedEntriesUnavailableReason.SOURCE_MISSING,
-            )
-        val availability = source.availability()
+        val availability = availability(entry.type, source)
         if (availability is EntryRelatedEntriesAvailability.Unavailable) {
             return EntryRelatedEntriesLoadResult.Unavailable(availability.reason)
         }
@@ -128,18 +146,29 @@ internal class DefaultEntryRelatedEntriesFeature(
         return getEntry.subscribe(entry.url, entry.source, entry.type).filterNotNull()
     }
 
-    private fun requireComposedOrigin(type: EntryType) {
-        check(type.toContentTypeId() in selectedTypes) {
-            "Entry type $type was not contributed to the Related Entries feature graph"
-        }
-    }
-
-    private fun eu.kanade.tachiyomi.source.entry.UnifiedSource.availability(): EntryRelatedEntriesAvailability {
-        return if (this is RelatedEntriesSource) {
-            EntryRelatedEntriesAvailability.Available(sourceDescription.describe(this).itemOrientation)
+    private fun availability(type: EntryType, source: UnifiedSource?): EntryRelatedEntriesAvailability {
+        val installed = source != null
+        val supported = source is RelatedEntriesSource
+        evaluation.requireEntryContextState(
+            type = type,
+            feature = ENTRY_RELATED_ENTRIES_FEATURE_ID,
+            integration = ENTRY_RELATED_ENTRIES_INTEGRATION_ID,
+            consequences = EntryRelatedEntriesConsequence.entries.map(EntryRelatedEntriesConsequence::id),
+            evidence = listOf(
+                contextEvidence(ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT, installed),
+                contextEvidence(ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT, supported),
+            ),
+            applicable = installed && supported,
+        )
+        return if (source is RelatedEntriesSource) {
+            EntryRelatedEntriesAvailability.Available(sourceDescription.describe(source).itemOrientation)
         } else {
             EntryRelatedEntriesAvailability.Unavailable(
-                EntryRelatedEntriesUnavailableReason.SOURCE_UNSUPPORTED,
+                if (source == null) {
+                    EntryRelatedEntriesUnavailableReason.SOURCE_MISSING
+                } else {
+                    EntryRelatedEntriesUnavailableReason.SOURCE_UNSUPPORTED
+                },
             )
         }
     }

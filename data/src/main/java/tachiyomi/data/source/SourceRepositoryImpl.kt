@@ -1,6 +1,5 @@
 package tachiyomi.data.source
 
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -25,13 +24,7 @@ class SourceRepositoryImpl(
 ) : SourceRepository {
 
     override fun getSources(): Flow<List<DomainSource>> {
-        return sourceManager.sources.map { sources ->
-            sources.map {
-                mapSourceToDomainSource(it).copy(
-                    supportsImmersiveFeed = (it as? EntryCatalogueSource)?.supportsImmersiveFeed ?: false,
-                )
-            }
-        }
+        return sourceManager.sources.map { sources -> sources.map(::mapSourceToDomainSource) }
     }
 
     override fun getSourcesWithFavoriteCount(): Flow<List<Pair<DomainSource, Long>>> {

@@ -135,8 +135,12 @@ class EntryInteractionBoundaryCheckTaskTest {
                 import eu.kanade.tachiyomi.source.entry.SourceHomePage
                 import eu.kanade.tachiyomi.source.entry.WebViewSource
                 import eu.kanade.tachiyomi.source.entry.ResolvableSource
+                import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
+                import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
 
-                class AppFeature
+                class AppFeature(private val source: Any) {
+                    val immersive = source.supportsImmersiveFeed
+                }
             """.trimIndent(),
         )
 
@@ -147,6 +151,9 @@ class EntryInteractionBoundaryCheckTaskTest {
         error.message shouldContain "SourceHomePage"
         error.message shouldContain "WebViewSource"
         error.message shouldContain "ResolvableSource"
+        error.message shouldContain "EntryPreviewSource"
+        error.message shouldContain "RelatedEntriesSource"
+        error.message shouldContain "Immersive source opt-in must be interpreted by EntryImmersiveFeature"
     }
 
     @Test

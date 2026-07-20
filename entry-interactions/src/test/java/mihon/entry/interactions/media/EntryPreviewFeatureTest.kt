@@ -2,6 +2,7 @@ package mihon.entry.interactions
 
 import android.app.PendingIntent
 import android.content.Context
+import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -66,6 +67,22 @@ class EntryPreviewFeatureTest {
 
         feature.settings.map(EntryPreviewSettings::type) shouldBe listOf(entry.type)
         feature.availability(previewContext()) shouldBe EntryPreviewAvailability.Disabled(configuration.config())
+    }
+
+    @Test
+    fun `source requirement is resolved by the Feature instead of the type provider`() {
+        val processor = RecordingPreviewProcessor(
+            sourceRequirement = EntryPreviewSourceRequirement.PREVIEW_CAPABILITY,
+        )
+        val feature = featureFor(EntryPreviewCapability.bind(processor))
+
+        feature.availability(previewContext()) shouldBe EntryPreviewAvailability.ContextuallyUnavailable(
+            config = EntryPreviewConfig.Default,
+            reason = EntryPreviewUnavailableReason.SourceUnsupported,
+        )
+        val previewSource = mockk<EntryPreviewSource>(relaxed = true)
+        feature.availability(EntryPreviewContext(entry, previewSource)) shouldBe
+            EntryPreviewAvailability.Available(EntryPreviewConfig.Default)
     }
 
     @Test
@@ -141,13 +158,11 @@ class EntryPreviewFeatureTest {
 
     private class RecordingPreviewProcessor(
         override val loadMode: EntryPreviewLoadMode = EntryPreviewLoadMode.ENTRY,
+        override val sourceRequirement: EntryPreviewSourceRequirement = EntryPreviewSourceRequirement.NONE,
     ) : EntryPreviewProcessor {
         override val type = EntryType.BOOK
         var loadedChild: EntryChapter? = null
         var releaseCount = 0
-
-        override fun contextAvailability(entry: Entry, source: UnifiedSource) =
-            EntryPreviewContextResult.Available
 
         override suspend fun loadPreview(
             context: Context,

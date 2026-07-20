@@ -2,7 +2,6 @@ package mihon.entry.interactions.anime
 
 import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryMedia
-import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.PlaybackDescriptor
 import eu.kanade.tachiyomi.source.entry.PlaybackSelection
@@ -41,7 +40,6 @@ import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
-import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryProgressResourceMapping
 import mihon.entry.interactions.EntryProgressSnapshot
 import mihon.entry.interactions.EntryProgressStateSnapshot
@@ -868,32 +866,6 @@ class AnimeEntryInteractionPluginTest {
             ),
         )
 
-        requireNotNull(interactions.preview.configuration(EntryType.ANIME)).config().enabled shouldBe true
-    }
-
-    @Test
-    fun `anime preview remains registered for a preview capable source`() = runTest {
-        val entryInteractionPreferences = EntryInteractionPreferences(InMemoryPreferenceStore())
-        entryInteractionPreferences.enableAnimePreview.set(true)
-        val previewSource = mockk<EntryPreviewSource>(relaxed = true) {
-            every { id } returns 1L
-            every { name } returns "Preview source"
-        }
-        val interactions = createEntryInteractions(
-            listOf(
-                animeEntryInteractionPlugin(
-                    dependencies(
-                        entryInteractionPreferences = entryInteractionPreferences,
-                        sourceManager = mockSourceManager(previewSource),
-                    ),
-                ),
-            ),
-        )
-
-        interactions.preview.processor(EntryType.ANIME)?.contextAvailability(
-            entry(EntryType.ANIME, sourceId = 1L),
-            previewSource,
-        ) shouldBe EntryPreviewContextResult.Available
         requireNotNull(interactions.preview.configuration(EntryType.ANIME)).config().enabled shouldBe true
     }
 

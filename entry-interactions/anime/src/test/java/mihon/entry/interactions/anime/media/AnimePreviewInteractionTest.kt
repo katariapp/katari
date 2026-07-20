@@ -4,7 +4,6 @@ import android.content.Context
 import eu.kanade.tachiyomi.source.entry.EntryPreviewImage
 import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
@@ -12,9 +11,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryPreviewPageStatus
-import mihon.entry.interactions.EntryPreviewUnavailableReason
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import org.junit.jupiter.api.Test
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
@@ -23,20 +20,6 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 class AnimePreviewInteractionTest {
     private val context = mockk<Context>(relaxed = true)
-
-    @Test
-    fun `source support is contextual while config remains independent`() {
-        val source = previewSource()
-        val preferences = EntryInteractionPreferences(InMemoryPreferenceStore()).apply {
-            enableAnimePreview.set(true)
-        }
-        val interaction = AnimePreviewInteraction(preferences)
-
-        interaction.contextAvailability(entry(), source) shouldBe EntryPreviewContextResult.Available
-        interaction.contextAvailability(entry(), mockk<UnifiedSource>()) shouldBe
-            EntryPreviewContextResult.Unavailable(EntryPreviewUnavailableReason.SourceUnsupported)
-        interaction.config().enabled shouldBe true
-    }
 
     @Test
     fun `loads source title images as ready preview pages and honors page count`() = runTest {

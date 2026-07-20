@@ -505,6 +505,14 @@ private class EntryInteractionBoundaryRules(
                 )
             }
         }
+        file.content.lines().forEachIndexed { index, line ->
+            if (!RAW_IMMERSIVE_SOURCE_OPT_IN_ACCESS.containsMatchIn(line.substringBefore("//"))) return@forEachIndexed
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = index + 1,
+                reason = "Immersive source opt-in must be interpreted by EntryImmersiveFeature",
+            )
+        }
     }
 
     private fun checkProcessorImplementationReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
@@ -830,7 +838,11 @@ private class EntryInteractionBoundaryRules(
             "SourceHomePage" to "eu.kanade.tachiyomi.source.entry.SourceHomePage",
             "WebViewSource" to "eu.kanade.tachiyomi.source.entry.WebViewSource",
             "ResolvableSource" to "eu.kanade.tachiyomi.source.entry.ResolvableSource",
+            "EntryPreviewSource" to "eu.kanade.tachiyomi.source.entry.EntryPreviewSource",
+            "RelatedEntriesSource" to "eu.kanade.tachiyomi.source.entry.RelatedEntriesSource",
         )
+
+        private val RAW_IMMERSIVE_SOURCE_OPT_IN_ACCESS = Regex("""\.\s*supportsImmersiveFeed\b""")
 
         private val RUNTIME_MEDIA_RESOLUTION_INTERNAL_NAME_PATTERNS = listOf(
             Regex("""Resolver$"""),

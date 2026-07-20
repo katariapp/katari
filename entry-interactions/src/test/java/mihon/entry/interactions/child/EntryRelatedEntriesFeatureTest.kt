@@ -31,33 +31,6 @@ import java.io.IOException
 class EntryRelatedEntriesFeatureTest {
 
     @Test
-    fun `provider-less content type receives every shared consequence and behavior contract`() {
-        val composition = compositionFor(EntryType.BOOK)
-
-        composition.featureGraphEvaluation.sharedConsequences
-            .filter { it.subject.feature.value == "entry.related-entries" }
-            .map { it.subject.contentType.value }
-            .distinct()
-            .shouldContainExactly("book")
-        composition.featureGraphEvaluation.sharedConsequences
-            .filter { it.subject.feature.value == "entry.related-entries" }
-            .map { it.consequence.id.value }
-            .shouldContainExactly(
-                "entry.related-entries.availability",
-                "entry.related-entries.details-navigation",
-                "entry.related-entries.entry-surface",
-                "entry.related-entries.fetch",
-                "entry.related-entries.library-state",
-                "entry.related-entries.orientation",
-                "entry.related-entries.persistence",
-            )
-        composition.featureArtifacts.behavioralContracts
-            .filter { it.subject.feature.value == "entry.related-entries" }
-            .map { it.contract.id.value }
-            .shouldContainExactly("entry.related-entries.behavior")
-    }
-
-    @Test
     fun `source absence and unsupported source are structured contextual results`() = runTest {
         val origin = entry(ORIGIN_ID, "/origin", EntryType.BOOK)
         val repository = repository(origin)

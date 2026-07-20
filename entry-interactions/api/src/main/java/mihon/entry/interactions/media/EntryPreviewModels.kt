@@ -32,12 +32,12 @@ data class EntryPreviewSettings(
     val enabled: Preference<Boolean>,
     val pageCount: Preference<Int>,
     val size: Preference<EntryPreviewSize>,
-    val contextRequirement: EntryPreviewContextRequirement = EntryPreviewContextRequirement.NONE,
+    val sourceRequirement: EntryPreviewSourceRequirement = EntryPreviewSourceRequirement.NONE,
 )
 
-enum class EntryPreviewContextRequirement {
+enum class EntryPreviewSourceRequirement {
     NONE,
-    SOURCE_CAPABILITY,
+    PREVIEW_CAPABILITY,
 }
 
 data class EntryPreviewContext(

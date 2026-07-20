@@ -72,15 +72,10 @@ enum class EntryPreviewLoadMode {
     FIRST_READING_CHILD,
 }
 
-sealed interface EntryPreviewContextResult {
-    data object Available : EntryPreviewContextResult
-    data class Unavailable(val reason: EntryPreviewUnavailableReason) : EntryPreviewContextResult
-}
-
 interface EntryPreviewProcessor : EntryInteractionProvider {
     val loadMode: EntryPreviewLoadMode
-
-    fun contextAvailability(entry: Entry, source: UnifiedSource): EntryPreviewContextResult
+    val sourceRequirement: EntryPreviewSourceRequirement
+        get() = EntryPreviewSourceRequirement.NONE
 
     suspend fun loadPreview(
         context: android.content.Context,

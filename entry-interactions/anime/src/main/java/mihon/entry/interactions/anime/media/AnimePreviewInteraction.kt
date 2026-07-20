@@ -10,15 +10,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import mihon.entry.interactions.EntryPreviewConfig
 import mihon.entry.interactions.EntryPreviewConfigurationProvider
-import mihon.entry.interactions.EntryPreviewContextRequirement
-import mihon.entry.interactions.EntryPreviewContextResult
 import mihon.entry.interactions.EntryPreviewHandle
 import mihon.entry.interactions.EntryPreviewLoadMode
 import mihon.entry.interactions.EntryPreviewPage
 import mihon.entry.interactions.EntryPreviewPageStatus
 import mihon.entry.interactions.EntryPreviewProcessor
 import mihon.entry.interactions.EntryPreviewSettings
-import mihon.entry.interactions.EntryPreviewUnavailableReason
+import mihon.entry.interactions.EntryPreviewSourceRequirement
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.domain.entry.adapter.toSEntry
 import tachiyomi.domain.entry.model.Entry
@@ -34,15 +32,8 @@ internal class AnimePreviewInteraction(
         enabled = entryInteractionPreferences.enableAnimePreview,
         pageCount = entryInteractionPreferences.animePreviewPageCount,
         size = entryInteractionPreferences.animePreviewSize,
-        contextRequirement = EntryPreviewContextRequirement.SOURCE_CAPABILITY,
     )
-
-    override fun contextAvailability(entry: Entry, source: UnifiedSource): EntryPreviewContextResult =
-        if (source is EntryPreviewSource) {
-            EntryPreviewContextResult.Available
-        } else {
-            EntryPreviewContextResult.Unavailable(EntryPreviewUnavailableReason.SourceUnsupported)
-        }
+    override val sourceRequirement = EntryPreviewSourceRequirement.PREVIEW_CAPABILITY
 
     override fun config(): EntryPreviewConfig {
         return EntryPreviewConfig(

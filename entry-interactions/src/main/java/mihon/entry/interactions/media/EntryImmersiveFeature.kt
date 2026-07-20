@@ -6,9 +6,12 @@ import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.supportedEntryTypes
 import kotlinx.coroutines.CancellationException
 import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureContextBlocker
+import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -18,10 +21,15 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
+import mihon.feature.graph.contextEvidence
+import mihon.feature.graph.contextInputDefinition
+import mihon.feature.graph.featureContextRule
 
 private val ENTRY_IMMERSIVE_FEATURE_ID = FeatureId("entry.immersive")
 private val ENTRY_IMMERSIVE_FEATURE_OWNER = ContributionOwner("entry-immersive")
 private val ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.provider")
+private val ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.source-context")
+private val ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.entry-context")
 private val ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.first-reading-child")
 private val ENTRY_IMMERSIVE_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.open-target")
 
@@ -39,6 +47,49 @@ private enum class EntryImmersiveConsequence(
     PROGRESS(FeatureArtifactId("entry.immersive.progress")),
     LIFECYCLE(FeatureArtifactId("entry.immersive.lifecycle")),
 }
+
+private val ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES = setOf(
+    EntryImmersiveConsequence.SOURCE_AVAILABILITY,
+    EntryImmersiveConsequence.CATALOGUE_SURFACE,
+    EntryImmersiveConsequence.FEED_SURFACE,
+    EntryImmersiveConsequence.LONG_PRESS,
+)
+private val ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES = setOf(
+    EntryImmersiveConsequence.ENTRY_AVAILABILITY,
+    EntryImmersiveConsequence.LOAD,
+    EntryImmersiveConsequence.RENDER,
+    EntryImmersiveConsequence.PROGRESS,
+    EntryImmersiveConsequence.LIFECYCLE,
+)
+
+private object EntryImmersiveProviderDispatchConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.immersive.provider-dispatch")
+}
+
+private val ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.immersive.source-installed"),
+    ContributionOwner("entry-source"),
+)
+private val ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.immersive.source-opt-in"),
+    ContributionOwner("entry-source"),
+)
+private val ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.immersive.declared-type-compatibility"),
+    ContributionOwner("entry-source-description"),
+)
+private val ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE = FeatureContextBlocker(
+    FeatureArtifactId("entry.immersive.source-unavailable"),
+    listOf(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT),
+)
+private val ENTRY_IMMERSIVE_SOURCE_OPTED_OUT = FeatureContextBlocker(
+    FeatureArtifactId("entry.immersive.source-opted-out"),
+    listOf(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT),
+)
+private val ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE = FeatureContextBlocker(
+    FeatureArtifactId("entry.immersive.declared-type-incompatible"),
+    listOf(ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT),
+)
 
 private object EntryImmersiveChildConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.immersive.first-reading-child.selection")
@@ -64,7 +115,58 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
-                        sharedConsequences = EntryImmersiveConsequence.entries,
+                        sharedConsequences = listOf(
+                            EntryImmersiveProviderDispatchConsequence,
+                            EntryImmersiveConsequence.PRELOAD,
+                        ),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                        contextInputs = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT,
+                            ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT,
+                            ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT,
+                        ),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            when {
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE))
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_OPTED_OUT))
+                                !evidence.value(ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE,
+                            ENTRY_IMMERSIVE_SOURCE_OPTED_OUT,
+                            ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE,
+                        ),
+                        sharedConsequences = ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES.toList(),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                        contextInputs = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT,
+                            ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT,
+                        ),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            when {
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE))
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_OPTED_OUT))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE,
+                            ENTRY_IMMERSIVE_SOURCE_OPTED_OUT,
+                        ),
+                        sharedConsequences = ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES.toList(),
                         behavioralContracts = listOf(EntryImmersiveBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -90,25 +192,15 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
 }
 
 internal class DefaultEntryImmersiveFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val interaction: EntryImmersiveInteraction,
     private val childList: EntryChildListFeature,
 ) : EntryImmersiveFeature {
-    private val immersiveTypes = EntryImmersiveConsequence.entries
-        .map { consequence ->
-            evaluation.applicableProviderTypes<EntryImmersiveProcessor>(
-                feature = ENTRY_IMMERSIVE_FEATURE_ID,
-                integration = ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID,
-                consequence = consequence.id,
-            )
-        }
-        .also { selected ->
-            check(selected.distinct().size <= 1) {
-                "Immersive consequences selected different provider sets: $selected"
-            }
-        }
-        .firstOrNull()
-        .orEmpty()
+    private val immersiveTypes = evaluation.applicableProviderTypes<EntryImmersiveProcessor>(
+        feature = ENTRY_IMMERSIVE_FEATURE_ID,
+        integration = ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID,
+        consequence = EntryImmersiveProviderDispatchConsequence.id,
+    )
     private val childTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
         integration = ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID,
@@ -135,23 +227,28 @@ internal class DefaultEntryImmersiveFeature(
     }
 
     override fun sourceAvailability(source: UnifiedSource?): EntryImmersiveSourceAvailability {
-        source ?: return EntryImmersiveSourceAvailability.SourceUnavailable
-        val catalogue = source as? EntryCatalogueSource
-            ?: return EntryImmersiveSourceAvailability.SourceOptedOut
-        if (!catalogue.supportsImmersiveFeed) return EntryImmersiveSourceAvailability.SourceOptedOut
         if (immersiveTypes.isEmpty()) return EntryImmersiveSourceAvailability.NoRuntimeType
+        val catalogue = source as? EntryCatalogueSource
+        val installed = source != null
+        val optedIn = catalogue?.supportsImmersiveFeed == true
 
-        val declaredTypes = source.supportedEntryTypes()
-        return if (declaredTypes != null && declaredTypes.none(immersiveTypes::contains)) {
-            EntryImmersiveSourceAvailability.NoCompatibleDeclaredType(declaredTypes)
-        } else {
-            EntryImmersiveSourceAvailability.Available
+        val declaredTypes = source?.supportedEntryTypes()
+        val declaredCompatible = declaredTypes == null || declaredTypes.any(immersiveTypes::contains)
+        requireSourceContextState(installed, optedIn, declaredTypes)
+        return when {
+            !installed -> EntryImmersiveSourceAvailability.SourceUnavailable
+            !optedIn -> EntryImmersiveSourceAvailability.SourceOptedOut
+            !declaredCompatible -> {
+                EntryImmersiveSourceAvailability.NoCompatibleDeclaredType(declaredTypes)
+            }
+            else -> EntryImmersiveSourceAvailability.Available
         }
     }
 
     override fun availability(context: EntryImmersiveContext): EntryImmersiveAvailability {
         val processor = interaction.processor(context.entry.type)
             ?: return EntryImmersiveAvailability.Inapplicable(context.entry.type)
+        requireEntryContextState(context.entry.type, context.source)
         return when (val reason = sourceAvailabilityForEntry(context.source)) {
             null -> EntryImmersiveAvailability.Available(
                 preloadRadius = processor.preloadRadius,
@@ -170,6 +267,7 @@ internal class DefaultEntryImmersiveFeature(
     override suspend fun load(request: EntryImmersiveLoadRequest): EntryImmersiveLoadResult {
         val processor = interaction.processor(request.entry.type)
             ?: return EntryImmersiveLoadResult.Inapplicable(request.entry.type)
+        requireEntryContextState(request.entry.type, request.source)
         sourceAvailabilityForEntry(request.source)?.let {
             return EntryImmersiveLoadResult.ContextuallyUnavailable(it)
         }
@@ -227,9 +325,51 @@ internal class DefaultEntryImmersiveFeature(
 
     /** Returned Entry.type is authoritative; descriptive source metadata never rejects an actual entry. */
     private fun sourceAvailabilityForEntry(source: UnifiedSource?): EntryImmersiveUnavailableReason? {
-        source ?: return EntryImmersiveUnavailableReason.SourceUnavailable
-        val catalogue = source as? EntryCatalogueSource ?: return EntryImmersiveUnavailableReason.SourceOptedOut
-        return if (catalogue.supportsImmersiveFeed) null else EntryImmersiveUnavailableReason.SourceOptedOut
+        val installed = source != null
+        val optedIn = (source as? EntryCatalogueSource)?.supportsImmersiveFeed == true
+        return when {
+            !installed -> EntryImmersiveUnavailableReason.SourceUnavailable
+            !optedIn -> EntryImmersiveUnavailableReason.SourceOptedOut
+            else -> null
+        }
+    }
+
+    private fun requireSourceContextState(
+        installed: Boolean,
+        optedIn: Boolean,
+        declaredTypes: Set<EntryType>?,
+    ) {
+        immersiveTypes.forEach { type ->
+            val declaredCompatible = declaredTypes == null || type in declaredTypes
+            evaluation.requireEntryContextState(
+                type = type,
+                feature = ENTRY_IMMERSIVE_FEATURE_ID,
+                integration = ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID,
+                consequences = ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES.map(EntryImmersiveConsequence::id),
+                evidence = listOf(
+                    contextEvidence(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT, installed),
+                    contextEvidence(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT, optedIn),
+                    contextEvidence(ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT, declaredCompatible),
+                ),
+                applicable = installed && optedIn && declaredCompatible,
+            )
+        }
+    }
+
+    private fun requireEntryContextState(type: EntryType, source: UnifiedSource?) {
+        val installed = source != null
+        val optedIn = (source as? EntryCatalogueSource)?.supportsImmersiveFeed == true
+        evaluation.requireEntryContextState(
+            type = type,
+            feature = ENTRY_IMMERSIVE_FEATURE_ID,
+            integration = ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID,
+            consequences = ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES.map(EntryImmersiveConsequence::id),
+            evidence = listOf(
+                contextEvidence(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT, installed),
+                contextEvidence(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT, optedIn),
+            ),
+            applicable = installed && optedIn,
+        )
     }
 }
 

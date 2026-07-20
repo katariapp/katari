@@ -7,7 +7,6 @@ data class Source(
     val lang: String,
     val name: String,
     val catalogue: EntryCatalogueDescription?,
-    val supportsImmersiveFeed: Boolean = false,
     val supportedEntryTypes: Set<EntryType>? = null,
     val isStub: Boolean,
     val pin: Pins = Pins.unpinned,

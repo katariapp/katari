@@ -198,6 +198,24 @@ Completion state:
 - [ ] Preserve the completed F04, F11, F12, F13, F14, F18–F22, F24–F27 coordinator ownership while replacing their
   locally undiscoverable contextual dependencies with declared evidence and structured results.
 
+#### 6.4.1 — Preview, Immersive, and Related Entries Context
+
+- [x] Separate installed Preview/Immersive provider dispatch from live contextual applicability, so provider presence
+  remains fundamental support while source and preference state decide only the affected product consequences.
+- [x] Move Preview source requirements into provider-owned metadata interpreted by the Preview Feature; settings derive
+  their explanatory projection from the same requirement instead of restating it.
+- [x] Declare Immersive source presence, source opt-in, and descriptive source-surface compatibility separately. Source
+  metadata may prune catalogue/feed surfaces but never rejects an authoritative returned Entry type.
+- [x] Make Related Entries source presence/support contextual for every discovered type and remove unconditional
+  consequences for source combinations that cannot provide related entries.
+- [x] Remove the duplicate Domain `supportsImmersiveFeed` projection and reject new application/data/domain bypasses of
+  Preview, Immersive opt-in, and Related Entries Feature ownership.
+
+This slice intentionally leaves first-reading-child absence as an operation result: the child candidates are request
+payload evaluated through the existing Child List Feature, not a type-wide support fact. Successful Preview/Immersive
+loads authorize their subsequent page, renderer, progress, open-target, and lifecycle operations without turning live
+handles into global context capabilities.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

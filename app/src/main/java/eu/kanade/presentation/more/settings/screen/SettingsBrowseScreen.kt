@@ -16,10 +16,10 @@ import eu.kanade.tachiyomi.util.system.AuthenticatorUtil.authenticate
 import kotlinx.collections.immutable.toImmutableMap
 import mihon.core.common.CustomPreferences
 import mihon.domain.extension.interactor.GetExtensionStoreCountAsFlow
-import mihon.entry.interactions.EntryPreviewContextRequirement
 import mihon.entry.interactions.EntryPreviewFeature
 import mihon.entry.interactions.EntryPreviewSettings
 import mihon.entry.interactions.EntryPreviewSize
+import mihon.entry.interactions.EntryPreviewSourceRequirement
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.i18n.MR
@@ -145,7 +145,7 @@ object SettingsBrowseScreen : SearchableSettings {
                         title = "$typeName ${stringResource(MR.strings.pref_browse_long_press_action_preview)}",
                     ),
                 )
-                if (previewSettings.contextRequirement == EntryPreviewContextRequirement.SOURCE_CAPABILITY) {
+                if (previewSettings.sourceRequirement == EntryPreviewSourceRequirement.PREVIEW_CAPABILITY) {
                     add(
                         Preference.PreferenceItem.InfoPreference(
                             stringResource(MR.strings.pref_anime_preview_source_support_info),

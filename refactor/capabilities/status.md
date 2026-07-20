@@ -45,6 +45,7 @@ Updated: 2026-07-20
 - Phase 6 plan commit: `ac9c46d41` (`(docs): plan contextual integration migration`)
 - Phase 6.1 runtime-context commit: `7ad238af7` (`(feat): resolve runtime feature context`)
 - Phase 6.2 catalogue/source-description commit: `9685d465a` (`(refactor): migrate catalogue source description`)
+- Phase 6.3 source-action commit: `debbb1c29` (`(refactor): migrate source action features`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -52,8 +53,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.3 source actions and resolution
-- State: Phase 6.3 is implemented and validated for review. Phase 6.4 has not started.
+- Milestone: Phase 6.4.1 Preview, Immersive, and Related Entries context
+- State: Phase 6.4.1 is implemented and validating for review. Later Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -113,6 +114,22 @@ Focused Phase 6.3 findings:
   non-local sources plus retained stubs, preventing an unrelated UI-navigation contract from authorizing downloads.
 - Raw contracts remain only in source definitions/compatibility, the owning root Features, tests, and the separately
   assigned Manga child-WebView runtime for Phase 6.5.
+
+Focused Phase 6.4.1 findings:
+
+- Preview and Immersive provider presence continues to select installed type-owned runtime dispatch. Live source and
+  preference evidence is declared on separate contextual integrations, so a disabled preference or unsupported source
+  blocks only the affected product consequences rather than redefining type support.
+- Preview source requirements are provider-owned metadata interpreted by the Preview Feature. The settings explanation
+  is derived from that same metadata; Anime no longer implements a parallel availability gate in its processor.
+- Immersive source presence, source opt-in, and descriptive declared-type compatibility have separate blockers.
+  Declared types prune only source-level catalogue/feed surfaces, while actual returned Entry types remain authoritative.
+- Related Entries consequences are contextual on installed `RelatedEntriesSource` support for the operation's origin
+  type. Missing/unsupported sources remain structured results and no longer receive unconditional graph consequences.
+- First-reading-child absence remains an operation result from request candidates and Child List selection. It is not
+  promoted to an Entry-State or Selection capability.
+- The unused Domain immersive-opt-in copy is removed. Boundary validation prevents application/data/domain code from
+  reconstructing Preview, Immersive opt-in, or Related Entries gates from raw source contracts.
 
 Focused F11.0 findings:
 
@@ -773,5 +790,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.3 after review, then begin Phase 6.4 existing Entry Feature context (`C03`, `C05`, `C06`, `C20`, `C21`,
-`C22`, and the applicable parts of `C17`/`C23`).
+Commit Phase 6.4.1 after review, then continue the remaining existing Entry Feature context audit and migration for
+operation-scoped source access, Entry state, selection, preferences/profile, and platform conditions.
