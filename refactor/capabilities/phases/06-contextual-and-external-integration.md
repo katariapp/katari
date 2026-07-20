@@ -272,6 +272,19 @@ capability, type matrix, or per-type product-action opt-in is introduced.
 Download and Bookmark provider presence remain the only type-wide facts. No Lifecycle, Viewer-State, Category,
 Preferences, or runtime-readiness capability is introduced.
 
+#### 6.4.6 — Update Eligibility Policy and Request Context
+
+- [x] Keep F13 participation, policy availability, smart-update settings, and its behavior contract context-free for
+  every contributed content type.
+- [x] Move policy decisions, Library Update eligibility, and Stats eligibility onto a contextual relationship using the
+  active-profile configuration and normalized request state.
+- [x] Represent one-shot, completed, not-caught-up, not-started, and outside-release-period outcomes as matching graph
+  blockers and existing structured skip reasons with the same precedence.
+- [x] Preserve unknown progress evidence as eligible unless another known condition blocks the request.
+
+F13 remains provider-free and universally participates through runtime content-type composition. No Update Eligibility,
+Entry-State, Preferences, or release-window capability is introduced.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

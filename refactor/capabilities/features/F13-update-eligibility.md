@@ -6,10 +6,11 @@ Status: complete
 
 - Feature owner: `entry-update-eligibility`
 - Prerequisite: unconditional (`CapabilityExpression.Always`) for every content type contributed to runtime composition
-- Shared consequences: smart-update policy, library-update queue eligibility, Stats update count, and smart-update setting
-  interpretation
-- Operation context: the concrete Entry, stored child counts, whether consumption has started, and the current fetch-window
-  upper bound
+- Context-free consequences: participation in the shared policy, policy availability, smart-update setting
+  interpretation, and selection of the fixture-free behavior contract
+- Contextual consequences: the concrete policy decision consumed by Library Update and Stats
+- Operation context: active-profile smart-update configuration, the concrete Entry, stored child counts, whether
+  consumption has started, and the current fetch-window upper bound
 - Specialized requirement: none. The previous Manga, Anime, and Book processors implemented the same policy and were
   removed during Phase 4.
 - Presentation projection: none. F23 owns general type vocabulary and F24 owns library-update notification vocabulary.
@@ -28,8 +29,12 @@ interprets the current smart-update preferences itself, so workers and statistic
 independently.
 
 `DefaultEntryUpdateEligibilityFeature` verifies that the request Entry's content-type identity has the graph-selected
-shared F13 consequence. This makes `Always` operational: provider-less contributed types participate, while an Entry
+context-free F13 participation consequence. This makes `Always` operational: provider-less contributed types participate, while an Entry
 type missing from runtime composition is a composition error rather than ordinary unsupported behavior.
+
+The request decision is a separate contextual relationship. One-shot state, completed state, unconsumed state,
+not-started state, release-window position, and current configuration enter as owned evidence. Only an eligible decision
+receives the policy, Library Update, and Stats consequences; each skip reason has a matching contextual blocker.
 
 The raw `EntryUpdateEligibilityInteraction`, its dispatcher, and its member on the operational `EntryInteractions`
 aggregate are removed. F13 has no media provider or SPI operation to dispatch.
@@ -74,6 +79,7 @@ outcomes. It does not assert a current Manga/Anime/Book support matrix or duplic
 - Provider absence is valid because F13 has no provider; runtime content-type contribution is the composition boundary.
 - Workers and Stats use one feature-owned contract and cannot call raw SPI or reinterpret smart-update preference keys.
 - Structured contextual results distinguish policy decisions without creating type support labels.
+- Smart-update settings remain context-free because configuration exists independently of any concrete Entry decision.
 - A future contributed type receives the shared consequences and selected contract without editing F13 or application
   consumers.
 - No capability matrix, mandatory operation, no-op provider, support-label test, compatibility facade, or direct-type

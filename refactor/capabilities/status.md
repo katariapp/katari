@@ -50,6 +50,7 @@ Updated: 2026-07-20
 - Phase 6.4.2 Download Action context commit: `756beb981` (`(refactor): resolve download action context`)
 - Phase 6.4.3 Automatic Download context commit: `381ea4e11` (`(refactor): resolve automatic download context`)
 - Phase 6.4.4 Entry state-mutation context commit: `c75c813d7` (`(refactor): resolve entry state mutation context`)
+- Phase 6.4.5 Download Lifecycle context commit: `ceb7af876` (`(refactor): resolve download lifecycle context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -57,8 +58,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.5 Download Lifecycle policy context
-- State: Phase 6.4.5 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.6 Update Eligibility policy and request context
+- State: Phase 6.4.6 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -178,6 +179,17 @@ Focused Phase 6.4.5 findings:
   merged owners.
 - Owner resolution, reading-order membership, download continuity, deduplication, and empty candidates remain operation
   results because they exist only during concrete event execution; no runtime-readiness capability was invented.
+
+Focused Phase 6.4.6 findings:
+
+- F13 remains provider-free and context-free participation is selected automatically for every contributed content
+  type, including types with no interaction providers.
+- Smart-update settings and the behavior contract remain context-free. Policy decisions, Library Update, and Stats move
+  to one request-context relationship.
+- Active-profile configuration, one-shot state, completion, consumption progress, started state, and release-window
+  position are typed contextual evidence with blockers matching the existing structured skip reasons and precedence.
+- Unknown progress evidence remains non-blocking. No Update Eligibility, Entry-State, Preferences, or release-window
+  capability or type-specific opt-in is introduced.
 
 Focused F11.0 findings:
 
@@ -838,5 +850,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.5 after review, then continue the remaining Entry Feature context audit, beginning with F13 Update
-Eligibility policy and request state.
+Commit Phase 6.4.6 after review, then continue the remaining Entry Feature context audit with F14 Library Filtering
+state and external tracker/filter inputs.
