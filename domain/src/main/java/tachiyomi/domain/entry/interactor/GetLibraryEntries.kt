@@ -1,7 +1,6 @@
 package tachiyomi.domain.entry.interactor
 
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
-import eu.kanade.tachiyomi.source.entry.entryItemOrientation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -24,6 +23,7 @@ import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.model.LibraryItemKey
+import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
 import tachiyomi.domain.source.service.HiddenSourceIds
 import tachiyomi.domain.source.service.SourceManager
 import kotlin.time.Duration.Companion.seconds
@@ -36,6 +36,7 @@ class GetLibraryEntries(
     private val libraryGrouping: EntryLibraryGroupingResolutionPort,
     private val hiddenSourceIds: HiddenSourceIds,
     private val sourceManager: SourceManager,
+    private val sourceDescription: EntrySourceDescriptionResolutionPort,
 ) {
 
     suspend fun await(): List<LibraryItem> {
@@ -182,7 +183,7 @@ class GetLibraryEntries(
         val sourceDisplayInfo = sourceManager.getDisplayInfo(entry.source)
         val sourceName = sourceDisplayInfo.name
         val sourceLanguage = sourceDisplayInfo.lang
-        val sourceItemOrientation = source.entryItemOrientation()
+        val sourceItemOrientation = sourceDescription.describe(source).itemOrientation
 
         return LibraryItem(
             entry = entry,

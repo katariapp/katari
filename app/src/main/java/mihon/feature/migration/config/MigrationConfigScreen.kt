@@ -46,10 +46,10 @@ import eu.kanade.presentation.browse.components.SourceIcon
 import eu.kanade.presentation.components.AppBar
 import eu.kanade.presentation.components.AppBarActions
 import eu.kanade.presentation.util.Screen
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateSearchScreen
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import kotlinx.coroutines.flow.update
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryMigrationOption
 import mihon.entry.interactions.EntryMigrationSubject
 import mihon.feature.migration.list.MigrationListScreen
@@ -319,6 +319,7 @@ class MigrationConfigScreen(private val subjects: Collection<EntryMigrationSubje
     private class ScreenModel(
         val sourcePreferences: SourcePreferences = Injekt.get(),
         private val sourceManager: SourceManager = Injekt.get(),
+        private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
     ) : StateScreenModel<ScreenModel.State>(State()) {
 
         private val sourcesComparator = { includedSources: List<Long> ->
@@ -351,16 +352,17 @@ class MigrationConfigScreen(private val subjects: Collection<EntryMigrationSubje
             val includedSources = sourcePreferences.migrationSources.get()
             val disabledSources = sourcePreferences.disabledSources.get()
                 .mapNotNull { it.toLongOrNull() }
-            val sources = sourceManager.getAll()
+            val sources = sourceManager.getCatalogueSources()
                 .asSequence()
-                .filterIsInstance<EntryCatalogueSource>()
-                .filter { it.lang in languages }
-                .map {
+                .mapNotNull {
+                    val description = catalogueFeature.describe(it)
+                    val catalogue = description.catalogue ?: return@mapNotNull null
+                    if (description.language !in languages) return@mapNotNull null
                     val source = Source(
                         id = it.id,
-                        lang = it.lang,
+                        lang = description.language,
                         name = it.name,
-                        supportsLatest = it.supportsLatest,
+                        catalogue = catalogue,
                         isStub = false,
                     )
                     MigrationSource(

@@ -11,7 +11,6 @@ import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.network.NetworkHelper
 import eu.kanade.tachiyomi.source.entry.ConfigurableSource
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import kotlinx.collections.immutable.persistentListOf
@@ -26,9 +25,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryCatalogueFeature
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.source.service.resolvedSupportedEntryTypes
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -41,6 +40,7 @@ class ExtensionDetailsScreenModel(
     private val toggleSource: ToggleSource = Injekt.get(),
     private val toggleIncognito: ToggleIncognito = Injekt.get(),
     private val preferences: SourcePreferences = Injekt.get(),
+    private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
 ) : StateScreenModel<ExtensionDetailsState>(ExtensionDetailsState()) {
 
     private val _events: Channel<ExtensionDetailsEvent> = Channel()
@@ -72,10 +72,10 @@ class ExtensionDetailsScreenModel(
                                 compareBy(
                                     { !it.enabled },
                                     { item ->
-                                        val catalogueSource = item.source as? EntryCatalogueSource
+                                        val description = catalogueFeature.describe(item.source)
                                         item.source.name.takeIf { item.labelAsName }
                                             ?: LocaleHelper.getSourceDisplayName(
-                                                catalogueSource?.lang.orEmpty(),
+                                                description.language,
                                                 context,
                                             ).lowercase()
                                     },
@@ -91,16 +91,16 @@ class ExtensionDetailsScreenModel(
                                 it.copyWithSources(
                                     sources
                                         .map { source ->
-                                            val catalogueSource = source.source as? EntryCatalogueSource
+                                            val description = catalogueFeature.describe(source.source)
                                             ExtensionDetailsSourceUiModel(
                                                 id = source.source.id,
                                                 name = source.source.name,
                                                 title = source.source.name,
-                                                lang = catalogueSource?.lang.orEmpty(),
+                                                lang = description.language,
                                                 labelAsName = source.labelAsName,
                                                 enabled = source.enabled,
                                                 hasSettings = source.source is ConfigurableSource,
-                                                supportedEntryTypes = source.source.resolvedSupportedEntryTypes(),
+                                                supportedEntryTypes = description.supportedEntryTypes,
                                             )
                                         }
                                         .toImmutableList(),

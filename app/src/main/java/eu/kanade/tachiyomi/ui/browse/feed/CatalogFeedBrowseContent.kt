@@ -57,11 +57,11 @@ import eu.kanade.presentation.library.components.EntryCompactGridItem
 import eu.kanade.presentation.library.components.EntryListItem
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import mihon.entry.interactions.EntryCatalogueFeature
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.source.model.CatalogListItem
 import tachiyomi.domain.source.service.CatalogSource
@@ -75,6 +75,8 @@ import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.source.local.LocalSource
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 import eu.kanade.presentation.entry.components.EntryCover as CoverType
 import tachiyomi.core.common.i18n.stringResource as coreStringResource
 
@@ -92,6 +94,7 @@ fun CatalogFeedBrowseContent(
     onItemClick: (CatalogListItem) -> Unit,
     onItemLongClick: (CatalogListItem) -> Unit,
 ) {
+    val catalogueFeature = remember { Injekt.get<EntryCatalogueFeature>() }
     val context = LocalContext.current
     val state by screenModel.state.collectAsState()
     val listState = rememberLazyListState()
@@ -229,7 +232,8 @@ fun CatalogFeedBrowseContent(
         return
     }
 
-    val sourceItemOrientation = source?.source?.sourceItemOrientation() ?: EntryItemOrientation.VERTICAL
+    val sourceItemOrientation = source?.source?.let(catalogueFeature::describe)?.itemOrientation
+        ?: EntryItemOrientation.VERTICAL
 
     Box {
         when (displayMode) {

@@ -2,13 +2,14 @@ package tachiyomi.data.source
 
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
-import eu.kanade.tachiyomi.source.entry.entryItemOrientation
 import tachiyomi.domain.source.repository.CatalogPagingSource
 import tachiyomi.domain.source.repository.CatalogSourceRepository
+import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
 import tachiyomi.domain.source.service.SourceManager
 
 class CatalogSourceRepositoryImpl(
     private val sourceManager: SourceManager,
+    private val sourceDescription: EntrySourceDescriptionResolutionPort,
 ) : CatalogSourceRepository {
 
     override fun search(sourceId: Long, query: String, filterList: EntryFilterList): CatalogPagingSource {
@@ -39,6 +40,6 @@ class CatalogSourceRepositoryImpl(
 
     private fun getOrientation(sourceId: Long): EntryItemOrientation {
         val source = sourceManager.get(sourceId)
-        return source?.entryItemOrientation() ?: EntryItemOrientation.VERTICAL
+        return source?.let { sourceDescription.describe(it).itemOrientation } ?: EntryItemOrientation.VERTICAL
     }
 }

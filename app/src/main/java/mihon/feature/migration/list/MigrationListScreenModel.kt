@@ -4,7 +4,7 @@ import androidx.annotation.FloatRange
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -19,6 +19,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryMigrationExecuteIntent
 import mihon.entry.interactions.EntryMigrationExecutionResult
 import mihon.entry.interactions.EntryMigrationFeature
@@ -54,6 +55,7 @@ class MigrationListScreenModel(
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
     private val migration: EntryMigrationFeature = Injekt.get(),
+    private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
 ) : StateScreenModel<MigrationListScreenModel.State>(State()) {
 
     private val smartSearchEngine = SmartSourceSearchEngine(extraSearchQuery)
@@ -130,7 +132,8 @@ class MigrationListScreenModel(
         val deepSearchMode = preferences.migrationDeepSearchMode.get()
 
         val sources = preferences.migrationSources.get()
-            .mapNotNull { sourceManager.getCatalogueSource(it) }
+            .mapNotNull(sourceManager::get)
+            .filter { catalogueFeature.describe(it).catalogue != null }
 
         for (entry in entries) {
             if (!currentCoroutineContext().isActive) break
@@ -200,7 +203,7 @@ class MigrationListScreenModel(
 
     private suspend fun searchSource(
         entry: Entry,
-        source: EntryCatalogueSource,
+        source: UnifiedSource,
         deepSearchMode: Boolean,
     ): Pair<Entry, ChapterInfo>? {
         return try {

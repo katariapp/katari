@@ -47,7 +47,6 @@ import eu.kanade.presentation.library.DeleteLibraryEntriesDialog
 import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.WebViewSource
 import eu.kanade.tachiyomi.source.isLocalOrStub
@@ -67,6 +66,7 @@ import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryChildGroupFilterStateResult
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
@@ -618,7 +618,8 @@ class EntryScreen(
         }
 
         val previousController = navigator.items[navigator.size - 2]
-        if (previousController is CatalogScreen && source is EntryCatalogueSource) {
+        val hasCatalogue = source?.let { Injekt.get<EntryCatalogueFeature>().describe(it).catalogue != null } == true
+        if (previousController is CatalogScreen && hasCatalogue) {
             navigator.pop()
             previousController.searchGenre(genreName)
         } else {

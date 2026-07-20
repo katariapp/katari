@@ -99,6 +99,33 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application consumers cannot bypass Catalogue Feature through raw source description`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
+                import eu.kanade.tachiyomi.source.sourceItemOrientation
+                import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
+
+                class AppFeature(
+                    private val source: EntryCatalogueSource,
+                    private val description: EntrySourceDescriptionResolutionPort,
+                ) {
+                    val orientation = source.sourceItemOrientation()
+                }
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "application consumers must use EntryCatalogueFeature"
+        error.message shouldContain "raw source contract"
+        error.message shouldContain "EntryCatalogueSource"
+        error.message shouldContain "sourceItemOrientation"
+    }
+
+    @Test
     fun `root module cannot export the provider spi`() {
         createBaseFixture(
             additionalFiles = mapOf(

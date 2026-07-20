@@ -19,7 +19,7 @@ class GetLanguagesWithCatalogSources(
             preferences.disabledSources.changes(),
             repository.getOnlineSources(),
         ) { enabledLanguages, disabledSources, onlineSources ->
-            val sortedSources = onlineSources.sortedWith(
+            val sortedSources = onlineSources.filter { it.catalogue != null }.sortedWith(
                 compareBy<Source> { it.id.toString() in disabledSources }
                     .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name },
             )

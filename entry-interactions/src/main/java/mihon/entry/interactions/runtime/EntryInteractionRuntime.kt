@@ -28,6 +28,7 @@ import tachiyomi.domain.entry.service.EntryChildOwnershipResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryGroupingResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.library.service.LibraryPreferences
+import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingletonFactory
@@ -130,9 +131,14 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryMediaCacheFeatureContributor,
                 EntryMergeFeatureContributor,
                 EntryMigrationFeatureContributor,
+                EntryCatalogueFeatureContributor,
             ),
         )
     }
+    addSingletonFactory<EntryCatalogueFeature> {
+        DefaultEntryCatalogueFeature(get<EntryInteractionComposition>().featureGraphEvaluation)
+    }
+    addSingletonFactory<EntrySourceDescriptionResolutionPort> { get<EntryCatalogueFeature>() }
     addSingletonFactory {
         EntryMergeConsequenceDelivery(
             host = dependencies.mergeHost,
@@ -375,6 +381,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             sourceManager = get(),
             networkToLocalEntry = get(),
             getEntry = get(),
+            sourceDescription = get(),
         )
     }
     addSingletonFactory<EntryTypePresentationFeature> {

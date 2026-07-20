@@ -134,7 +134,7 @@ class DomainModule : InjektModule {
         addFactory { SetEntryCategories(get()) }
         addFactory { SetEntryChapterFlags(get()) }
         addFactory { NetworkToLocalEntry(get()) }
-        addFactory { GetLibraryEntries(get(), get(), get(), get(), get(), get(), get()) }
+        addFactory { GetLibraryEntries(get(), get(), get(), get(), get(), get(), get(), get()) }
         addFactory { SyncEntryWithSource(get(), get(), get(), get(), get(), get(), get()) }
 
         addFactory { GetEntryWithChapters(get(), get()) }
@@ -171,8 +171,8 @@ class DomainModule : InjektModule {
         addFactory { GetUpdates(get(), get()) }
 
         addSingletonFactory<HiddenSourceIds> { ProfileHiddenSourceIds(get()) }
-        addSingletonFactory<SourceRepository> { SourceRepositoryImpl(get(), get(), get()) }
-        addSingletonFactory<CatalogSourceRepository> { CatalogSourceRepositoryImpl(get()) }
+        addSingletonFactory<SourceRepository> { SourceRepositoryImpl(get(), get(), get(), get()) }
+        addSingletonFactory<CatalogSourceRepository> { CatalogSourceRepositoryImpl(get(), get()) }
         addSingletonFactory<StubSourceRepository> { StubSourceRepositoryImpl(get()) }
         addFactory { GetEnabledSources(get(), get()) }
         addFactory { GetEnabledCatalogSources(get(), get(), get()) }

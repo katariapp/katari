@@ -4,21 +4,23 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import eu.kanade.presentation.browse.components.GlobalSearchCardRow
 import eu.kanade.presentation.browse.components.GlobalSearchErrorResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchLoadingResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchToolbar
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SearchItemResult
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SearchScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SourceFilter
 import eu.kanade.tachiyomi.util.system.LocaleHelper
+import mihon.entry.interactions.EntryCatalogueFeature
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.presentation.core.components.material.Scaffold
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun MigrateSearchScreen(
@@ -74,16 +76,18 @@ internal fun MigrateSearchContent(
     onLongClickItem: (Entry) -> Unit,
     fromSourceId: Long? = null,
 ) {
+    val catalogueFeature = remember { Injekt.get<EntryCatalogueFeature>() }
     LazyColumn(
         contentPadding = contentPadding,
     ) {
         items.forEach { (source, result) ->
             item(key = source.id) {
+                val description = catalogueFeature.describe(source)
                 GlobalSearchResultItem(
                     title = fromSourceId?.let {
                         "▶ ${source.name}".takeIf { source.id == fromSourceId }
                     } ?: source.name,
-                    subtitle = LocaleHelper.getLocalizedDisplayName((source as? EntryCatalogueSource)?.lang.orEmpty()),
+                    subtitle = LocaleHelper.getLocalizedDisplayName(description.language),
                     onClick = { onClickSource(source) },
                     modifier = Modifier.animateItem(),
                 ) {
@@ -95,7 +99,7 @@ internal fun MigrateSearchContent(
                             GlobalSearchCardRow(
                                 titles = result.result,
                                 getEntryState = getEntryState,
-                                sourceItemOrientation = source.sourceItemOrientation(),
+                                sourceItemOrientation = description.itemOrientation,
                                 onClick = onClickItem,
                                 onLongClick = onLongClickItem,
                             )

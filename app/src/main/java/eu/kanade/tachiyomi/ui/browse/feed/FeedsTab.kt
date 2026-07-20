@@ -93,7 +93,6 @@ import eu.kanade.presentation.more.settings.screen.BrowseLongPressActionsScreen
 import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.SourceHomePage
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.source.toCatalogSource
 import eu.kanade.tachiyomi.ui.browse.catalog.BrowseLongPressOutcome
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreen
@@ -106,6 +105,7 @@ import eu.kanade.tachiyomi.ui.home.HomeScreen
 import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveSourceAvailability
 import mihon.feature.migration.dialog.MigrateEntryDialog
@@ -326,7 +326,8 @@ private fun Screen.FeedsTabContent(
                     EntryImmersiveScreenModel()
                 }
                 val catalogSource = catalogSourceManager.get(activeSource.id)?.toCatalogSource()
-                val sourceItemOrientation = catalogSource?.source?.sourceItemOrientation()
+                val catalogueFeature = remember { Injekt.get<EntryCatalogueFeature>() }
+                val sourceItemOrientation = catalogSource?.source?.let(catalogueFeature::describe)?.itemOrientation
                     ?: EntryItemOrientation.VERTICAL
                 val columns = remember(activeDisplayMode) {
                     val isLandscape = context.resources.configuration.orientation ==

@@ -137,12 +137,28 @@ Completion notes:
 
 ### 6.2 — Catalogue and Source Description (`C01`, `C02`, `C04`, `C14`)
 
-- [ ] Compose catalogue presence, Latest, source orientation, and descriptive entry-type metadata once for Browse,
+- [x] Compose catalogue presence, Latest, source orientation, and descriptive entry-type metadata once for Browse,
   search, feeds, migration source selection, extension/source presentation, repository projection, and filters.
-- [ ] Keep returned Entry type authoritative. Descriptive metadata may filter or label a source surface but may not
+- [x] Keep returned Entry type authoritative. Descriptive metadata may filter or label a source surface but may not
   authorize Entry behavior or reject returned data.
-- [ ] Remove repeated application casts and booleans while retaining source-manager and paging mechanics behind the
+- [x] Remove repeated application casts and booleans while retaining source-manager and paging mechanics behind the
   source-owned boundary.
+
+Completion state:
+
+- One Catalogue Feature now owns the application projection of catalogue presence, Latest availability, language,
+  descriptive entry types, and source-item orientation. Catalogue and Latest absence are contextual blockers; a source
+  without either remains a valid source.
+- Browse, global and migration search, feeds, migration source selection, extension/source presentation, content-type
+  filters, repository projection, Library orientation, and Related Entries orientation consume that projection or its
+  Domain assembly port.
+- The Domain source projection represents catalogue presence structurally instead of carrying a free-standing Latest
+  authorization boolean. Descriptive entry-type metadata remains presentation/filter input only; returned Entry types
+  are not checked against it.
+- Source-manager discovery, extension loading/stub persistence, compatibility conversion, and paging calls retain raw
+  source contracts as owner-local mechanics. Immersive source opt-in and its metadata pruning remain assigned to 6.4.
+- Boundary validation rejects new application imports of raw catalogue, metadata, and orientation contracts outside
+  source composition owners, and rejects application use of the Domain assembly port instead of the Catalogue Feature.
 
 ### 6.3 — Source Actions and Resolution (`C09`, `C10`, `C11`, `C13`, applicable `C17`)
 

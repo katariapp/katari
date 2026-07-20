@@ -37,7 +37,6 @@ import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.SourceHomePage
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.source.sourceNotInstalledName
 import eu.kanade.tachiyomi.source.toCatalogSource
 import kotlinx.collections.immutable.ImmutableList
@@ -53,6 +52,7 @@ import kotlinx.coroutines.launch
 import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryImmersiveAvailability
 import mihon.entry.interactions.EntryImmersiveContext
 import mihon.entry.interactions.EntryImmersiveFeature
@@ -127,6 +127,7 @@ class CatalogScreenModel(
     private val entryRepository: EntryRepository = Injekt.get(),
     private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
     private val entryImmersiveFeature: EntryImmersiveFeature = Injekt.get(),
+    private val entryCatalogueFeature: EntryCatalogueFeature = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
     private val application: Application = Injekt.get(),
@@ -148,7 +149,7 @@ class CatalogScreenModel(
         )
 
     private val filterLoader = CatalogFilterLoader(sourceManager)
-    private val presetHelper = CatalogPresetHelper(sourceId, sourceManager, browseFeedService)
+    private val presetHelper = CatalogPresetHelper(sourceId, sourceManager, browseFeedService, entryCatalogueFeature)
 
     val catalogSource = sourceManager.get(sourceId)?.toCatalogSource()
     val isImmersiveSourceAvailable: Boolean
@@ -227,7 +228,8 @@ class CatalogScreenModel(
         get() = state.value.filterState !is FilterUiState.Unavailable
 
     val sourceItemOrientation: EntryItemOrientation
-        get() = catalogSource?.source?.sourceItemOrientation() ?: EntryItemOrientation.VERTICAL
+        get() = catalogSource?.source?.let(entryCatalogueFeature::describe)?.itemOrientation
+            ?: EntryItemOrientation.VERTICAL
 
     val homeUrl: String?
         get() = (sourceManager.getOrStub(sourceId) as? SourceHomePage)?.getHomeUrl()

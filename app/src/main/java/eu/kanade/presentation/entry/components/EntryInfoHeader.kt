@@ -114,10 +114,10 @@ import eu.kanade.presentation.components.MarkdownRender
 import eu.kanade.presentation.components.getMarkdownLinkStyle
 import eu.kanade.presentation.entry.components.EntryNotesSection
 import eu.kanade.tachiyomi.R
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.ui.entry.EntryScreenModel
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import kotlinx.coroutines.flow.collectLatest
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryPreviewPage
 import mihon.entry.interactions.EntryPreviewPageStatus
 import org.intellij.markdown.MarkdownElementTypes
@@ -153,7 +153,8 @@ fun EntryInfoBox(
     modifier: Modifier = Modifier,
 ) {
     val coverType = remember(entry.source) {
-        Injekt.get<SourceManager>().getOrStub(entry.source).sourceItemOrientation().toGridCoverType()
+        val source = Injekt.get<SourceManager>().getOrStub(entry.source)
+        Injekt.get<EntryCatalogueFeature>().describe(source).itemOrientation.toGridCoverType()
     }
 
     Box(modifier = modifier) {

@@ -213,6 +213,7 @@ private class EntryInteractionBoundaryRules(
             checkLegacyInteractionApis(file, findings)
             checkInternalApiReferences(file, findings)
             checkLibraryProgressDomainPortReferences(file, findings)
+            checkCatalogueFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
             checkRuntimeInternalReferences(file, findings)
@@ -455,6 +456,35 @@ private class EntryInteractionBoundaryRules(
                     "application consumers must use EntryLibraryProgressFeature",
             )
         }
+    }
+
+    private fun checkCatalogueFeatureBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath() || !file.relativePath.startsWith("app/src/main/")) return
+
+        file.findReference("EntrySourceDescriptionResolutionPort")?.let { reference ->
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = reference.lineNumber,
+                reason = "application consumers must use EntryCatalogueFeature, not its Domain assembly port",
+            )
+        }
+
+        val ownsSourceComposition = file.relativePath.startsWith(
+            "app/src/main/java/eu/kanade/tachiyomi/source/",
+        ) || file.relativePath ==
+            "app/src/main/java/eu/kanade/tachiyomi/extension/util/ExtensionLoader.kt"
+        if (ownsSourceComposition) return
+
+        file.imports
+            .filter { it.importedFqName in RAW_SOURCE_DESCRIPTION_IMPORTS }
+            .forEach { import ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = import.lineNumber,
+                    reason = "application source availability and description must use EntryCatalogueFeature, not " +
+                        "raw source contract ${import.importedFqName}",
+                )
+            }
     }
 
     private fun checkProcessorImplementationReferences(file: KotlinSourceFile, findings: MutableList<Finding>) {
@@ -765,6 +795,15 @@ private class EntryInteractionBoundaryRules(
         )
 
         private const val LEGACY_MANGA_PAGE_FQ_NAME = "eu.kanade.tachiyomi.source.model.Page"
+
+        private val RAW_SOURCE_DESCRIPTION_IMPORTS = setOf(
+            "eu.kanade.tachiyomi.source.entry.EntryCatalogueSource",
+            "eu.kanade.tachiyomi.source.entry.EntryItemOrientationProvider",
+            "eu.kanade.tachiyomi.source.entry.SourceMetadata",
+            "eu.kanade.tachiyomi.source.entry.entryItemOrientation",
+            "eu.kanade.tachiyomi.source.entry.supportedEntryTypes",
+            "eu.kanade.tachiyomi.source.sourceItemOrientation",
+        )
 
         private val RUNTIME_MEDIA_RESOLUTION_INTERNAL_NAME_PATTERNS = listOf(
             Regex("""Resolver$"""),

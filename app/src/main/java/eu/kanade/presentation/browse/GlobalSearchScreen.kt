@@ -4,21 +4,23 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import eu.kanade.presentation.browse.components.GlobalSearchErrorResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchItemCardRow
 import eu.kanade.presentation.browse.components.GlobalSearchLoadingResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchResultItem
 import eu.kanade.presentation.browse.components.GlobalSearchToolbar
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchItem
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchItemResult
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreenModel
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SourceFilter
 import eu.kanade.tachiyomi.util.system.LocaleHelper
+import mihon.entry.interactions.EntryCatalogueFeature
 import tachiyomi.presentation.core.components.material.Scaffold
+import uy.kohesive.injekt.Injekt
+import uy.kohesive.injekt.api.get
 
 @Composable
 fun GlobalSearchScreen(
@@ -72,18 +74,18 @@ internal fun GlobalSearchContent(
     onLongClickItem: (GlobalSearchItem) -> Unit,
     fromSourceId: Long? = null,
 ) {
+    val catalogueFeature = remember { Injekt.get<EntryCatalogueFeature>() }
     LazyColumn(
         contentPadding = contentPadding,
     ) {
         items.forEach { (source, result) ->
             item(key = source.id) {
-                val lang = (source as? EntryCatalogueSource)?.lang.orEmpty()
-                val orientation = source.sourceItemOrientation()
+                val description = catalogueFeature.describe(source)
                 GlobalSearchResultItem(
                     title = fromSourceId?.let {
                         "▶ ${source.name}".takeIf { source.id == fromSourceId }
                     } ?: source.name,
-                    subtitle = LocaleHelper.getLocalizedDisplayName(lang),
+                    subtitle = LocaleHelper.getLocalizedDisplayName(description.language),
                     onClick = { onClickSource(source) },
                     modifier = Modifier.animateItem(),
                 ) {
@@ -95,7 +97,7 @@ internal fun GlobalSearchContent(
                             GlobalSearchItemCardRow(
                                 titles = result.result,
                                 getItem = getItem,
-                                sourceItemOrientation = orientation,
+                                sourceItemOrientation = description.itemOrientation,
                                 onClick = onClickItem,
                                 onLongClick = onLongClickItem,
                             )

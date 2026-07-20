@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
 import eu.kanade.tachiyomi.source.isLocalOrStub
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -42,6 +41,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import mihon.core.common.utils.mutate
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
@@ -126,6 +126,7 @@ class LibraryScreenModel(
     private val entryMergeLibraryLifecycleFeature: EntryMergeLibraryLifecycleFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryLibraryFilterFeature: EntryLibraryFilterFeature = Injekt.get(),
+    private val entryCatalogueFeature: EntryCatalogueFeature = Injekt.get(),
     private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
     private val trackerManager: TrackerManager = Injekt.get(),
     private val profileStore: ProfileAwareStore = Injekt.get(),
@@ -584,7 +585,8 @@ class LibraryScreenModel(
             item.copy(
                 sourceName = sourceName,
                 sourceLanguage = sourceLanguage,
-                sourceItemOrientation = displayUnifiedSource?.sourceItemOrientation() ?: EntryItemOrientation.VERTICAL,
+                sourceItemOrientation = displayUnifiedSource?.let(entryCatalogueFeature::describe)?.itemOrientation
+                    ?: EntryItemOrientation.VERTICAL,
                 isLocal = item.sourceIds.size == 1 && item.entry.source == LocalSource.ID,
                 downloadCount = downloadCount,
             )

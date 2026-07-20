@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
 import eu.kanade.tachiyomi.source.entry.SEntry
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
+import eu.kanade.tachiyomi.source.entry.entryItemOrientation
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -22,6 +23,8 @@ import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryRepository
+import tachiyomi.domain.source.model.EntrySourceDescription
+import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
 import tachiyomi.domain.source.service.SourceManager
 import java.io.IOException
 
@@ -146,6 +149,14 @@ class EntryRelatedEntriesFeatureTest {
             sourceManager = sourceManager,
             networkToLocalEntry = NetworkToLocalEntry(repository),
             getEntry = GetEntry(repository),
+            sourceDescription = EntrySourceDescriptionResolutionPort { source ->
+                EntrySourceDescription(
+                    language = "",
+                    supportedEntryTypes = null,
+                    itemOrientation = source.entryItemOrientation(),
+                    catalogue = null,
+                )
+            },
         )
     }
 

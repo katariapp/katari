@@ -42,6 +42,8 @@ Updated: 2026-07-20
 - F11.3 primary transfer commit: `fff5aa853` (`(refactor): implement migration primary transfer`)
 - F11.4 consequence delivery commit: `7e44c5c71` (`(refactor): implement migration consequences`)
 - F11.5 application consumer commit: `9ffa03ca3` (`(refactor): migrate entry migration consumers`)
+- Phase 6 plan commit: `ac9c46d41` (`(docs): plan contextual integration migration`)
+- Phase 6.1 runtime-context commit: `7ad238af7` (`(feat): resolve runtime feature context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -49,8 +51,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.1 runtime context resolution
-- State: Phase 6.1 is implemented and validated for review. No `C01`–`C24` production consumer migration has started.
+- Milestone: Phase 6.2 catalogue and source description
+- State: Phase 6.2 is implemented and validated for review. Phase 6.3 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -77,6 +79,21 @@ Focused Phase 6.1 findings:
   unable to depend on or export the graph machinery.
 - An unknown contextual contribution passes through unchanged discovery and exercises every runtime result without a
   type, feature, capability, context, or blocker registry edit.
+
+Focused Phase 6.2 findings:
+
+- Catalogue presence, Latest availability, language, descriptive entry types, and item orientation now enter one
+  Feature-owned source description. Catalogue and Latest absence are contextual blockers rather than invalid-source
+  states.
+- Browse, searches, feeds, migration source selection, extensions/sources, filters, repository projection, Library,
+  and Related Entries consume the same projection. Domain/data assembly uses a narrow port implemented by that Feature;
+  application code is required to use the Feature itself.
+- Domain source models carry optional catalogue structure instead of an independent Latest-support boolean. Source
+  metadata remains descriptive and never validates or authorizes returned Entry behavior.
+- Raw source discovery, paging calls, extension/stub persistence, and compatibility conversion remain owner-local.
+  Immersive opt-in and its source-type pruning are deliberately left for their owning F20 contextual milestone in 6.4.
+- Boundary validation prevents future application code from recreating catalogue, metadata, or orientation gates with
+  raw source contracts, while allowing the reviewed source-composition owners to implement those external contracts.
 
 Focused F11.0 findings:
 
@@ -737,5 +754,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Reconcile contextual register `C01`–`C24` with the completed Feature boundaries and split it into sequential owner-based
-milestones before changing contextual production behavior.
+Commit Phase 6.2 after review, then begin Phase 6.3 source actions and resolution (`C09`, `C10`, `C11`, `C13`, and the
+applicable part of `C17`).

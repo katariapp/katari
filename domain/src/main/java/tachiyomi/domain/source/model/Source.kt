@@ -6,7 +6,7 @@ data class Source(
     val id: Long,
     val lang: String,
     val name: String,
-    val supportsLatest: Boolean,
+    val catalogue: EntryCatalogueDescription?,
     val supportsImmersiveFeed: Boolean = false,
     val supportedEntryTypes: Set<EntryType>? = null,
     val isStub: Boolean,

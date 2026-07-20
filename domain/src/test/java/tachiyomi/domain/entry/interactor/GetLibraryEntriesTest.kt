@@ -1,5 +1,6 @@
 package tachiyomi.domain.entry.interactor
 
+import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import io.kotest.matchers.shouldBe
@@ -22,7 +23,9 @@ import tachiyomi.domain.entry.service.EntryLibraryGroupingResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryProgressSummary
+import tachiyomi.domain.source.model.EntrySourceDescription
 import tachiyomi.domain.source.model.SourceDisplayInfo
+import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
 import tachiyomi.domain.source.service.HiddenSourceIds
 import tachiyomi.domain.source.service.SourceManager
 
@@ -34,6 +37,14 @@ class GetLibraryEntriesTest {
     private val libraryGrouping = mockk<EntryLibraryGroupingResolutionPort>()
     private val hiddenSourceIds = mockk<HiddenSourceIds>()
     private val sourceManager = mockk<SourceManager>()
+    private val sourceDescription = EntrySourceDescriptionResolutionPort {
+        EntrySourceDescription(
+            language = "",
+            supportedEntryTypes = null,
+            itemOrientation = EntryItemOrientation.VERTICAL,
+            catalogue = null,
+        )
+    }
     private val unavailableSummaryEntryIds = mutableSetOf<Long>()
     private val entryLibraryProgressResolver = testProgressPort()
 
@@ -45,6 +56,7 @@ class GetLibraryEntriesTest {
         libraryGrouping = libraryGrouping,
         hiddenSourceIds = hiddenSourceIds,
         sourceManager = sourceManager,
+        sourceDescription = sourceDescription,
     )
 
     @Test

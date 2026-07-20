@@ -9,7 +9,6 @@ import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.util.ioCoroutineScope
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.defaultBackgroundFilterList
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -20,6 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mihon.entry.interactions.EntryCatalogueFeature
 import tachiyomi.core.common.preference.toggle
 import tachiyomi.domain.entry.adapter.toEntry
 import tachiyomi.domain.entry.interactor.GetEntry
@@ -38,6 +38,7 @@ class GlobalSearchScreenModel(
     private val networkToLocalEntry: NetworkToLocalEntry = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val preferences: SourcePreferences = Injekt.get(),
+    private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
 ) : StateScreenModel<GlobalSearchScreenModel.State>(State(searchQuery = initialQuery)) {
 
     private val coroutineDispatcher = Executors.newFixedThreadPool(5).asCoroutineDispatcher()
@@ -56,7 +57,7 @@ class GlobalSearchScreenModel(
         compareBy<UnifiedSource>(
             { (map[it] as? GlobalSearchItemResult.Success)?.isEmpty ?: true },
             { "${it.id}" !in pinnedSources },
-            { "${it.name.lowercase()} (${(it as? EntryCatalogueSource)?.lang ?: ""})" },
+            { "${it.name.lowercase()} (${catalogueFeature.describe(it).language})" },
         )
     }
 
@@ -89,12 +90,12 @@ class GlobalSearchScreenModel(
 
     private fun getEnabledSources(): List<UnifiedSource> {
         return sourceManager.getCatalogueSources()
-            .filter { (it as? EntryCatalogueSource)?.lang in enabledLanguages || it.isLocal }
+            .filter { catalogueFeature.describe(it).language in enabledLanguages || it.isLocal }
             .filterNot { it.isDisabled(disabledSources) }
             .sortedWith(
                 compareBy(
                     { "${it.id}" !in pinnedSources },
-                    { "${it.name.lowercase()} (${(it as? EntryCatalogueSource)?.lang ?: ""})" },
+                    { "${it.name.lowercase()} (${catalogueFeature.describe(it).language})" },
                 ),
             )
     }

@@ -8,10 +8,10 @@ import eu.kanade.domain.source.service.ProfileSourcePreferences
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.sourceItemOrientation
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogFilterLoader
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import mihon.entry.interactions.EntryCatalogueFeature
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.source.interactor.GetRemoteCatalog
 import tachiyomi.domain.source.model.CatalogListItem
@@ -31,6 +31,7 @@ class CatalogChronologicalFeedScreenModel(
     private val sourceManager: SourceManager = Injekt.get(),
     private val getRemoteCatalog: GetRemoteCatalog = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
+    private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
 ) : FeedScreenModel<CatalogListItem>(
     feedId = feedId,
     listingQuery = listingQuery,
@@ -80,7 +81,7 @@ class CatalogChronologicalFeedScreenModel(
     }
 
     private val sourceItemOrientation
-        get() = sourceManager.getCatalogueSource(sourceId)?.sourceItemOrientation()
+        get() = sourceManager.get(sourceId)?.let(catalogueFeature::describe)?.itemOrientation
             ?: EntryItemOrientation.VERTICAL
 
     companion object {
