@@ -154,6 +154,7 @@ internal fun HtmlProseReaderScreen(
     val layoutMode by settings.layoutMode.state.collectEffectiveValue()
     val tapNavigation by settings.tapNavigation.state.collectEffectiveValue()
     val showProgress by settings.showProgress.state.collectEffectiveValue()
+    val drawUnderCutout by settings.drawUnderCutout.state.collectEffectiveValue()
     val paginated = layoutMode == HtmlProseSettingsProvider.LAYOUT_PAGINATED
     val palette = prosePalette(theme, isSystemInDarkTheme())
     var position by remember(state.currentChapterId) {
@@ -170,7 +171,13 @@ internal fun HtmlProseReaderScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .windowInsetsPadding(WindowInsets.displayCutout),
+                    .then(
+                        if (drawUnderCutout) {
+                            Modifier
+                        } else {
+                            Modifier.windowInsetsPadding(WindowInsets.displayCutout)
+                        },
+                    ),
             ) {
                 key(state.viewerResetKey) {
                     if (paginated) {
@@ -510,7 +517,9 @@ private fun PaginatedProseViewer(
                 is ProsePagerItem.Transition -> ProseTransition(
                     transition = item.transition,
                     palette = palette,
-                    modifier = Modifier.padding(28.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(28.dp),
                 )
                 is ProsePagerItem.Loading -> ProseLoading(
                     chapterName = item.chapter.name,
@@ -646,7 +655,7 @@ private fun ScrollingProseViewer(
                     transition = item.transition,
                     palette = palette,
                     modifier = Modifier
-                        .fillParentMaxHeight()
+                        .fillMaxWidth()
                         .clickable(
                             interactionSource = null,
                             indication = null,
@@ -936,6 +945,7 @@ private fun ProseAppearanceSettings(settings: HtmlProseSettingsBinding) {
     val theme by settings.theme.state.collectEffectiveValue()
     val font by settings.fontFamily.state.collectEffectiveValue()
     val fontSize by settings.fontSize.state.collectEffectiveValue()
+    val drawUnderCutout by settings.drawUnderCutout.state.collectEffectiveValue()
     ProseSettingChips(
         stringResource(R.string.prose_reader_theme),
         listOf(
@@ -964,6 +974,11 @@ private fun ProseAppearanceSettings(settings: HtmlProseSettingsBinding) {
         label = stringResource(R.string.prose_reader_font_size),
         valueString = "$fontSize%",
         onChange = settings.fontSize::setProfileValue,
+    )
+    CheckboxItem(
+        label = i18nStringResource(MR.strings.pref_cutout_short),
+        checked = drawUnderCutout,
+        onClick = { settings.drawUnderCutout.setProfileValue(!drawUnderCutout) },
     )
 }
 

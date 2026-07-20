@@ -44,6 +44,9 @@ object SettingsHtmlProseReaderScreen : AppEntryViewerSettingsScreenProjection {
         val showProgress = remember(provider, binder) {
             binder.bind(provider.showProgressSetting).asProfilePreference()
         }
+        val drawUnderCutout = remember(provider, binder) {
+            binder.bind(provider.drawUnderCutoutSetting).asProfilePreference()
+        }
 
         val fontSizeValue by fontSize.collectAsState()
         val lineHeightValue by lineHeight.collectAsState()
@@ -90,6 +93,10 @@ object SettingsHtmlProseReaderScreen : AppEntryViewerSettingsScreenProjection {
                         title = stringResource(MR.strings.pref_epub_font_size),
                         valueString = "$fontSizeValue%",
                         onValueChanged = fontSize::set,
+                    ),
+                    Preference.PreferenceItem.SwitchPreference(
+                        preference = drawUnderCutout,
+                        title = stringResource(MR.strings.pref_cutout_short),
                     ),
                 ),
             ),
