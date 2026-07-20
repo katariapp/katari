@@ -1,6 +1,6 @@
 # F11 — Entry Source Migration
 
-Status: F11.0-F11.2 committed; F11.3 implemented and awaiting review
+Status: F11.0-F11.4 committed; F11.5 implemented and awaiting review
 
 ## Architectural Classification
 
@@ -348,6 +348,42 @@ Exit gate: unsupported Entries cannot enter a silent no-op flow, and a newly con
 UI path without another type edit.
 
 Review request: verify Entry/Library/Browse behavior for Manga, Anime, Book absence, mixed selections, and failures.
+
+Implementation record:
+
+- Entry actions and Library selection now consume `EntryMigrationFeature` availability and selection results. Library
+  selection preserves the rule that every selected Entry must participate, while mixed participating types remain
+  valid.
+- Feature-issued profile/Entry subjects are retained through Entry, Library, Browse selection, configuration, search,
+  and batch-list navigation. Loading a source Entry no longer silently switches identity if the active profile changes
+  during the workflow.
+- Browse source rows and counts are projected from Entries with available Migration behavior. Source-entry selection
+  applies the same availability result, so a source containing only unsupported Entries is absent instead of leading to
+  a no-op screen.
+- Automatic, global, and source-specific target paths retain their source-owned search mechanics and same-type
+  presentation optimization, but a target is accepted only after F11 preparation succeeds.
+- The dialog renders only Feature-prepared options. Stored flags remain UI defaults and are translated once at the
+  presentation boundary, intersected with current available options, captured for execution, and never used as
+  authorization or as a consequence checklist.
+- Single and batch execution now prepare and execute through F11. Applied results alone advance or close the workflow;
+  rejection, conflict, and operational failure remain visible instead of being swallowed as success. Batch execution
+  snapshots defaults once and reports any failed item rather than navigating away as if the whole batch completed.
+
+Validation record:
+
+- Formatting and the Entry interaction boundary task pass with no legacy Migration consumer findings.
+- FOSS application compilation reports only the previously recorded unrelated debug-player callback and profile
+  shortcut errors. It reports no F11.5 consumer, navigation, option, or result-handling error.
+
+Manifesto comparison:
+
+- UI support follows Feature results; no Manga/Anime/Book matrix or parallel support query was introduced.
+- A future Migration provider automatically reaches Entry actions, Library selection, Browse source/Entry filtering,
+  search acceptance, option preparation, and execution through the same Feature boundary.
+- Preferences remain defaults rather than support truth, unsupported Entries do not enter a silent no-op path, explicit
+  profile identity survives navigation, and failures are not converted to unconditional completion.
+- Search and source mechanics remain with their existing owners while Migration authorization and orchestration remain
+  exclusively Feature-owned.
 
 ### F11.6 — Integrated enforcement, tests, documentation, and completion
 

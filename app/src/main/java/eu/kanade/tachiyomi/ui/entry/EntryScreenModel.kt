@@ -64,7 +64,6 @@ import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
-import mihon.entry.interactions.EntryCapabilityInteraction
 import mihon.entry.interactions.EntryChildGroupFilterFeature
 import mihon.entry.interactions.EntryChildGroupFilterObservationResult
 import mihon.entry.interactions.EntryChildGroupFilterResult
@@ -108,6 +107,10 @@ import mihon.entry.interactions.EntryMergePreparationResult
 import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.entry.interactions.EntryMergeRemoveEntriesIntent
 import mihon.entry.interactions.EntryMergeSubject
+import mihon.entry.interactions.EntryMigrationAvailability
+import mihon.entry.interactions.EntryMigrationFeature
+import mihon.entry.interactions.EntryMigrationSelectionResult
+import mihon.entry.interactions.EntryMigrationSubject
 import mihon.entry.interactions.EntryPreviewAvailability
 import mihon.entry.interactions.EntryPreviewChildCandidate
 import mihon.entry.interactions.EntryPreviewConfig
@@ -173,7 +176,7 @@ class EntryScreenModel(
     private val entryDownloadOptionsFeature: EntryDownloadOptionsFeature = Injekt.get(),
     private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get(),
     private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
-    private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
+    private val entryMigrationFeature: EntryMigrationFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryBookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val entryContinueFeature: EntryContinueFeature = Injekt.get(),
@@ -1225,8 +1228,15 @@ class EntryScreenModel(
         }
     }
 
-    fun supportsMigration(): Boolean {
-        return successState?.entry?.let(entryCapabilityInteraction::supportsMigration) == true
+    fun migrationAvailable(): Boolean {
+        return successState?.entry?.let(entryMigrationFeature::availability) is EntryMigrationAvailability.Available
+    }
+
+    fun migrationSubject(): EntryMigrationSubject? {
+        val entry = successState?.entry ?: return null
+        return (entryMigrationFeature.prepareSelection(listOf(entry)) as? EntryMigrationSelectionResult.Ready)
+            ?.subjects
+            ?.singleOrNull()
     }
 
     fun supportsTracking(): Boolean {

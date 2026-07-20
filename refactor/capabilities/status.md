@@ -1,6 +1,6 @@
 # Capability Refactor Status
 
-Updated: 2026-07-19
+Updated: 2026-07-20
 
 ## Repository Snapshot
 
@@ -40,6 +40,7 @@ Updated: 2026-07-19
 - F11.1 Migration boundary commit: `4804a8b41` (`(refactor): define migration feature boundary`)
 - F11.2 transaction semantics commit: `de55ae95f` (`(docs): define migration transaction semantics`)
 - F11.3 primary transfer commit: `fff5aa853` (`(refactor): implement migration primary transfer`)
+- F11.4 consequence delivery commit: `7e44c5c71` (`(refactor): implement migration consequences`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -47,8 +48,9 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F11.4` — Entry Source Migration cross-feature and external consequences
-- State: F11.0-F11.3 are committed. F11.4 is implemented, validated within its intentional boundary, and awaits review.
+- Milestone: `F11.5` — Entry Source Migration application consumers
+- State: F11.0-F11.4 are committed. F11.5 is implemented, validated within the current branch boundary, and awaits
+  review.
 
 Focused F11.0 findings:
 
@@ -689,5 +691,6 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Review and commit F11.4, then begin F11.5. Migrate every Entry, Library, Browse, search, configuration, and dialog
-consumer to the shared Migration Feature without reintroducing a support facade or caller-owned transfer pipeline.
+Review and commit F11.5, then begin F11.6. Remove the obsolete Migration capability facade and composition residue,
+complete integrated enforcement and behavior validation, update the public capability reference, and close F11 against
+the manifesto census.

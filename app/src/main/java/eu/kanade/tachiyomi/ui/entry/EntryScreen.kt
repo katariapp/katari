@@ -277,8 +277,9 @@ class EntryScreen(
                 navigator.push(EntryScreen(successState.mergeTargetId))
             }.takeIf { successState.showMergeNotice },
             onMigrateClicked = {
-                navigator.push(MigrationConfigScreen(successState.entry.id))
-            }.takeIf { successState.entry.favorite && screenModel.supportsMigration() },
+                screenModel.migrationSubject()?.let { navigator.push(MigrationConfigScreen(it)) }
+                Unit
+            }.takeIf { screenModel.migrationAvailable() },
             onRelatedEntriesClicked = {
                 showRelatedEntriesDialog = true
             }.takeIf { relatedEntriesAvailability is EntryRelatedEntriesAvailability.Available },
@@ -436,9 +437,7 @@ class EntryScreen(
                 )
             }
             is EntryScreenModel.Dialog.Migrate -> {
-                // TODO(Phase 7.5): Add a type-aware migrate dialog for unified entries.
-                // For now navigate to the migration config screen for the current entry.
-                navigator.push(MigrationConfigScreen(dialog.current.id))
+                screenModel.migrationSubject()?.let { navigator.push(MigrationConfigScreen(it)) }
                 screenModel.dismissDialog()
             }
             is EntryScreenModel.Dialog.SelectMergeTarget -> {

@@ -42,7 +42,6 @@ import kotlinx.coroutines.flow.updateAndGet
 import mihon.core.common.utils.mutate
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
-import mihon.entry.interactions.EntryCapabilityInteraction
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
@@ -63,6 +62,9 @@ import mihon.entry.interactions.EntryMergeFeature
 import mihon.entry.interactions.EntryMergeLibraryLifecycleFeature
 import mihon.entry.interactions.EntryMergePreparationResult
 import mihon.entry.interactions.EntryMergePrepareIntent
+import mihon.entry.interactions.EntryMigrationFeature
+import mihon.entry.interactions.EntryMigrationSelectionResult
+import mihon.entry.interactions.EntryMigrationSubject
 import mihon.feature.profiles.core.EntryProfileMoveConflictResolution
 import mihon.feature.profiles.core.EntryProfileMovePreview
 import mihon.feature.profiles.core.EntryProfileMoveRequest
@@ -119,7 +121,7 @@ class LibraryScreenModel(
     private val sourceManager: SourceManager = Injekt.get(),
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
-    private val entryCapabilityInteraction: EntryCapabilityInteraction = Injekt.get(),
+    private val entryMigrationFeature: EntryMigrationFeature = Injekt.get(),
     private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
     private val entryMergeLibraryLifecycleFeature: EntryMergeLibraryLifecycleFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
@@ -1001,13 +1003,17 @@ class LibraryScreenModel(
     }
 
     fun canMigrateSelection(): Boolean {
-        val items = state.value.selectedLibraryItems
-        return entryCapabilityInteraction.canMigrate(items.map { it.entry })
+        return selectedMigrationResult() is EntryMigrationSelectionResult.Ready
     }
 
-    fun selectedMigrationEntryIds(): List<Long> {
-        return entryCapabilityInteraction.migrationEntries(state.value.selectedLibraryItems.map { it.entry })
-            .map { it.id }
+    fun selectedMigrationSubjects(): List<EntryMigrationSubject> {
+        return (selectedMigrationResult() as? EntryMigrationSelectionResult.Ready)
+            ?.subjects
+            .orEmpty()
+    }
+
+    private fun selectedMigrationResult(): EntryMigrationSelectionResult {
+        return entryMigrationFeature.prepareSelection(state.value.selectedLibraryItems.map { it.entry })
     }
 
     fun openMergeDialog() {

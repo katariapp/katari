@@ -206,7 +206,7 @@ data object LibraryTab : Tab {
                         .takeIf { screenModel.canDownloadSelection() },
                     onDeleteClicked = screenModel::openDeleteEntriesDialog,
                     onMigrateClicked = {
-                        val selection = screenModel.selectedMigrationEntryIds()
+                        val selection = screenModel.selectedMigrationSubjects()
                         screenModel.clearSelection()
                         navigator.push(MigrationConfigScreen(selection))
                     }.takeIf { screenModel.canMigrateSelection() },

@@ -50,6 +50,8 @@ import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.ui.browse.migration.search.MigrateSearchScreen
 import eu.kanade.tachiyomi.util.system.LocaleHelper
 import kotlinx.coroutines.flow.update
+import mihon.entry.interactions.EntryMigrationOption
+import mihon.entry.interactions.EntryMigrationSubject
 import mihon.feature.migration.list.MigrationListScreen
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
@@ -69,9 +71,9 @@ import tachiyomi.presentation.core.util.shouldExpandFAB
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
-class MigrationConfigScreen(private val entryIds: Collection<Long>) : Screen() {
+class MigrationConfigScreen(private val subjects: Collection<EntryMigrationSubject>) : Screen() {
 
-    constructor(entryId: Long) : this(listOf(entryId))
+    constructor(subject: EntryMigrationSubject) : this(listOf(subject))
 
     @Composable
     override fun Content() {
@@ -82,16 +84,20 @@ class MigrationConfigScreen(private val entryIds: Collection<Long>) : Screen() {
 
         var migrationSheetOpen by rememberSaveable { mutableStateOf(false) }
 
-        fun continueMigration(openSheet: Boolean, extraSearchQuery: String?) {
-            val entryId = entryIds.singleOrNull()
-            if (entryId == null && openSheet) {
+        fun continueMigration(
+            openSheet: Boolean,
+            extraSearchQuery: String?,
+            selectedOptions: Set<EntryMigrationOption> = emptySet(),
+        ) {
+            val subject = subjects.singleOrNull()
+            if (subject == null && openSheet) {
                 migrationSheetOpen = true
                 return
             }
-            val screen = if (entryId == null) {
-                MigrationListScreen(entryIds, extraSearchQuery)
+            val screen = if (subject == null) {
+                MigrationListScreen(subjects, extraSearchQuery, selectedOptions)
             } else {
-                MigrateSearchScreen(entryId)
+                MigrateSearchScreen(subject)
             }
             navigator.replace(screen)
         }
@@ -208,9 +214,13 @@ class MigrationConfigScreen(private val entryIds: Collection<Long>) : Screen() {
             MigrationConfigScreenSheet(
                 preferences = screenModel.sourcePreferences,
                 onDismissRequest = { migrationSheetOpen = false },
-                onStartMigration = { extraSearchQuery ->
+                onStartMigration = { extraSearchQuery, selectedOptions ->
                     migrationSheetOpen = false
-                    continueMigration(openSheet = false, extraSearchQuery = extraSearchQuery)
+                    continueMigration(
+                        openSheet = false,
+                        extraSearchQuery = extraSearchQuery,
+                        selectedOptions = selectedOptions,
+                    )
                 },
             )
         }

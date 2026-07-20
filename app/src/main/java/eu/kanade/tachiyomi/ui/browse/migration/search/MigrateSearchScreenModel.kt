@@ -7,17 +7,22 @@ import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SearchItemResult
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.SearchScreenModel
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import tachiyomi.domain.entry.interactor.GetEntry
+import mihon.entry.interactions.EntryMigrationFeature
+import mihon.entry.interactions.EntryMigrationPreparationResult
+import mihon.entry.interactions.EntryMigrationPrepareIntent
+import mihon.entry.interactions.EntryMigrationSubject
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class MigrateSearchScreenModel(
-    val entryId: Long,
-    getEntry: GetEntry = Injekt.get(),
+    val subject: EntryMigrationSubject,
+    private val entryRepository: EntryRepository = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     private val sourcePreferences: SourcePreferences = Injekt.get(),
+    private val migration: EntryMigrationFeature = Injekt.get(),
 ) : SearchScreenModel() {
 
     private val migrationSources by lazy { sourcePreferences.migrationSources.get() }
@@ -32,7 +37,7 @@ class MigrateSearchScreenModel(
 
     init {
         screenModelScope.launch {
-            val entry = getEntry.await(entryId)!!
+            val entry = entryRepository.getEntryById(subject.entryId, subject.profileId) ?: return@launch
             entryType = entry.type
             mutableState.update {
                 it.copy(
@@ -51,5 +56,10 @@ class MigrateSearchScreenModel(
     override fun filterSearchResults(entries: List<Entry>): List<Entry> {
         val type = entryType ?: return emptyList()
         return entries.filter { it.type == type }
+    }
+
+    suspend fun acceptsTarget(target: Entry): Boolean {
+        val source = state.value.from ?: return false
+        return migration.prepare(EntryMigrationPrepareIntent(source, target)) is EntryMigrationPreparationResult.Ready
     }
 }
