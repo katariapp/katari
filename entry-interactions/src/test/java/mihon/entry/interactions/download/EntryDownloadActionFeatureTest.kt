@@ -103,6 +103,9 @@ class EntryDownloadActionFeatureTest {
     fun `notification action adds its selection limit without changing type support`() {
         val feature = featureFor(EntryDownloadCapability.bind(downloadProcessor()))
 
+        feature.notificationAvailability(remoteTarget, 0) shouldBe EntryDownloadActionAvailability.Blocked(
+            setOf(EntryDownloadActionBlocker.EMPTY_SELECTION),
+        )
         feature.notificationAvailability(remoteTarget, 15) shouldBe EntryDownloadActionAvailability.Available
         feature.notificationAvailability(remoteTarget, 16) shouldBe EntryDownloadActionAvailability.Blocked(
             setOf(EntryDownloadActionBlocker.NOTIFICATION_SELECTION_TOO_LARGE),

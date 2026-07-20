@@ -11,8 +11,9 @@ Status: complete
   `EntryBookmarkCapability`
 - Shared consequences: manual child download/delete/cancel/retry dispatch, media-specific candidate-pool resolution, and
   shared next/unread/bookmarked candidate selection
-- Context: the actual source access, entry, child selection, merge members, notification selection size, and current
-  download state remain operation inputs rather than type-wide support facts
+- Context: actual source access and actionable child/notification selection state enter Feature-owned contextual
+  integrations; the concrete Entry, merge members, candidate pools, and current download state remain operation data
+  rather than type-wide support facts
 - Specialized requirement: none; each contributed bulk-candidate provider already owns media-specific pool construction
 - Presentation projection: none; dropdown labels and type vocabulary remain presentation-owned and cannot authorize an
   action
@@ -41,9 +42,16 @@ explicitly deferred F07 options and F08 maintenance paths.
 
 ## Contextual Blockers
 
-`LOCAL_OR_STUB`, `EMPTY_SELECTION`, and `NOTIFICATION_SELECTION_TOO_LARGE` are structured request blockers. They do not
-become negative content-type declarations and do not alter graph applicability. Adding a remote source or changing the
-selection can therefore make the same provider-backed action available without changing its content-type contribution.
+`LOCAL_OR_STUB`, `EMPTY_SELECTION`, and `NOTIFICATION_SELECTION_TOO_LARGE` are structured contextual blockers. Source
+access and selection state are declared only on the individual, bulk, and notification relationships that consume
+them; they do not become negative content-type declarations or generic Source/Selection capabilities. Adding a remote
+source or changing the selection can therefore make the same provider-backed action available without changing its
+content-type contribution.
+
+Provider-dispatch integrations remain context-free and select only installed type-owned implementations. Separate
+contextual integrations authorize individual availability, download/delete, bulk availability/resolution, and the
+notification action. An empty target list has no Entry type to use as a graph subject and remains an explicit request
+result; an empty media-specific candidate pool likewise remains `NoCandidates` after the applicable provider runs.
 
 ## Automatic-Participation Proof
 
@@ -58,7 +66,10 @@ The focused feature test builds one anonymous partial content-type contribution 
 ## Manifesto Review
 
 - No Manga/Anime/Book support matrix, mandatory download rule, no-op provider, or capability-label assertion was added.
-- The three graph integrations, not application booleans, are the only source of static action applicability.
+- The three context-free provider integrations, not application booleans, are the only source of static action
+  applicability.
+- Product consequences are resolved through their operation-specific context integrations rather than inferred from
+  the context-free provider-dispatch integrations.
 - Shared action consequences and cross-capability Bookmark behavior are feature-owned.
 - Candidate construction remains genuinely media-specific while candidate selection is shared.
 - A future type activates every generic F04 surface by contributing the matching providers; contextual blockers remain

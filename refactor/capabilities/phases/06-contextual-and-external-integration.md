@@ -216,6 +216,21 @@ payload evaluated through the existing Child List Feature, not a type-wide suppo
 loads authorize their subsequent page, renderer, progress, open-target, and lifecycle operations without turning live
 handles into global context capabilities.
 
+#### 6.4.2 — Download Action Source and Selection Context
+
+- [x] Separate F04 provider dispatch from contextual product consequences for individual, bulk, bookmarked-bulk, and
+  Library-update notification actions.
+- [x] Declare source access and actionable selection state as independently owned inputs consumed only by the Download
+  Action relationships that give them meaning.
+- [x] Resolve local/stub, empty-child, and notification-size blockers through the graph while preserving the existing
+  Feature-owned structured availability and operation results.
+- [x] Keep an empty target list and an empty media-specific candidate pool as operation results: the former has no Entry
+  type that can be a contextual graph subject, while the latter is known only after an applicable provider executes.
+
+Core Download, Bulk Candidate, and Bookmark provider presence remain the only type-wide support facts. No Source,
+Selection, Download, or Bookmark support matrix is introduced, and application consumers continue to depend only on
+the F04 Feature API.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

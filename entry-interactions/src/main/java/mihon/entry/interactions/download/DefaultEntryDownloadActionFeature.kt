@@ -1,138 +1,57 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.feature.graph.CapabilityExpression
-import mihon.feature.graph.ContributionOwner
-import mihon.feature.graph.FeatureArtifactId
-import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureGraphContributionSink
-import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
-import mihon.feature.graph.FeatureId
-import mihon.feature.graph.FeatureIntegration
-import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
-import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.service.sortedForReading
 
-private val ENTRY_DOWNLOAD_ACTION_FEATURE_ID = FeatureId("entry.download.actions")
-private val ENTRY_DOWNLOAD_ACTION_FEATURE_OWNER = ContributionOwner("entry-download-actions")
-
-private val ENTRY_DOWNLOAD_INDIVIDUAL_INTEGRATION_ID =
-    FeatureIntegrationId("entry.download.actions.individual")
-private val ENTRY_DOWNLOAD_BULK_INTEGRATION_ID =
-    FeatureIntegrationId("entry.download.actions.bulk")
-private val ENTRY_DOWNLOAD_BOOKMARKED_BULK_INTEGRATION_ID =
-    FeatureIntegrationId("entry.download.actions.bulk.bookmarked")
-
-private val ENTRY_DOWNLOAD_INDIVIDUAL_CONSEQUENCE_ID =
-    FeatureArtifactId("entry.download.actions.individual.dispatch")
-private val ENTRY_DOWNLOAD_BULK_CONSEQUENCE_ID =
-    FeatureArtifactId("entry.download.actions.bulk.resolve")
-private val ENTRY_DOWNLOAD_BOOKMARKED_BULK_CONSEQUENCE_ID =
-    FeatureArtifactId("entry.download.actions.bulk.bookmarked.resolve")
-
-private object EntryDownloadIndividualConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_INDIVIDUAL_CONSEQUENCE_ID
-}
-
-private object EntryDownloadBulkConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_BULK_CONSEQUENCE_ID
-}
-
-private object EntryDownloadBookmarkedBulkConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_BOOKMARKED_BULK_CONSEQUENCE_ID
-}
-
-internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor {
-    override val owner = ENTRY_DOWNLOAD_ACTION_FEATURE_OWNER
-
-    override fun contributeTo(sink: FeatureGraphContributionSink) {
-        sink.add(
-            FeatureContribution(
-                feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
-                owner = owner,
-                integrations = listOf(
-                    FeatureIntegration(
-                        id = ENTRY_DOWNLOAD_INDIVIDUAL_INTEGRATION_ID,
-                        prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                        sharedConsequences = listOf(EntryDownloadIndividualConsequence),
-                    ),
-                    FeatureIntegration(
-                        id = ENTRY_DOWNLOAD_BULK_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                            CapabilityExpression.Provided(EntryBulkDownloadCandidateCapability.definition),
-                        ),
-                        sharedConsequences = listOf(EntryDownloadBulkConsequence),
-                    ),
-                    FeatureIntegration(
-                        id = ENTRY_DOWNLOAD_BOOKMARKED_BULK_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                            CapabilityExpression.Provided(EntryBulkDownloadCandidateCapability.definition),
-                            CapabilityExpression.Provided(EntryBookmarkCapability.definition),
-                        ),
-                        sharedConsequences = listOf(EntryDownloadBookmarkedBulkConsequence),
-                    ),
-                ),
-            ),
-        )
-    }
-}
-
 internal class DefaultEntryDownloadActionFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val interaction: EntryDownloadInteraction,
 ) : EntryDownloadActionFeature {
-    private val individualTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
-        feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
-        integration = ENTRY_DOWNLOAD_INDIVIDUAL_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_INDIVIDUAL_CONSEQUENCE_ID,
-    )
-    private val bulkTypes = evaluation.applicableProviderTypes<EntryBulkDownloadCandidateProcessor>(
-        feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
-        integration = ENTRY_DOWNLOAD_BULK_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_BULK_CONSEQUENCE_ID,
-    )
-    private val bookmarkedBulkTypes = evaluation.applicableProviderTypes<EntryBookmarkProcessor>(
-        feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
-        integration = ENTRY_DOWNLOAD_BOOKMARKED_BULK_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_BOOKMARKED_BULK_CONSEQUENCE_ID,
-    )
+    private val individualTypes = evaluation.downloadIndividualTypes()
+    private val bulkTypes = evaluation.downloadBulkTypes()
+    private val bookmarkedBulkTypes = evaluation.downloadBookmarkedBulkTypes()
 
     override fun individualAvailability(target: EntryDownloadActionTarget): EntryDownloadActionAvailability {
-        return availability(listOf(target), individualTypes)
+        return availability(listOf(target), individualTypes, evaluation::requireDownloadIndividualContext)
     }
 
     override fun individualSelectionAvailability(
         targets: List<EntryDownloadActionTarget>,
     ): EntryDownloadActionAvailability {
-        return availability(targets, individualTypes)
+        return availability(targets, individualTypes, evaluation::requireDownloadIndividualContext)
     }
 
     override fun bulkAvailability(
         targets: List<EntryDownloadActionTarget>,
         action: EntryBulkDownloadAction,
     ): EntryDownloadActionAvailability {
-        val applicableTypes = when (action.type) {
-            EntryBulkDownloadActionType.NEXT,
-            EntryBulkDownloadActionType.UNREAD,
-            -> bulkTypes
-            EntryBulkDownloadActionType.BOOKMARKED -> bookmarkedBulkTypes
+        val bookmarked = action.type == EntryBulkDownloadActionType.BOOKMARKED
+        val applicableTypes = if (bookmarked) bookmarkedBulkTypes else bulkTypes
+        return availability(targets, applicableTypes) { target ->
+            evaluation.requireDownloadBulkContext(target, bookmarked)
         }
-        return availability(targets, applicableTypes)
     }
 
     override fun notificationAvailability(
         target: EntryDownloadActionTarget,
         childCount: Int,
     ): EntryDownloadActionAvailability {
-        val base = individualAvailability(target)
-        if (base !is EntryDownloadActionAvailability.Available) return base
+        if (target.type !in individualTypes) {
+            return EntryDownloadActionAvailability.Inapplicable(setOf(target.type))
+        }
+        val selectionState = when {
+            childCount <= 0 -> EntryDownloadSelectionState.EMPTY
+            childCount > NOTIFICATION_DOWNLOAD_SELECTION_LIMIT ->
+                EntryDownloadSelectionState.NOTIFICATION_LIMIT_EXCEEDED
+            else -> EntryDownloadSelectionState.ACTIONABLE
+        }
+        evaluation.requireDownloadNotificationContext(target, selectionState)
         return when {
+            target.sourceAccess == EntryDownloadSourceAccess.LOCAL_OR_STUB ->
+                blockedBy(EntryDownloadActionBlocker.LOCAL_OR_STUB)
             childCount <= 0 -> blockedBy(EntryDownloadActionBlocker.EMPTY_SELECTION)
             childCount > NOTIFICATION_DOWNLOAD_SELECTION_LIMIT -> {
                 blockedBy(EntryDownloadActionBlocker.NOTIFICATION_SELECTION_TOO_LARGE)
@@ -192,7 +111,7 @@ internal class DefaultEntryDownloadActionFeature(
     }
 
     override fun retry(targets: List<EntryDownloadActionTarget>): EntryDownloadActionResult {
-        return when (val availability = availability(targets, individualTypes)) {
+        return when (val availability = individualSelectionAvailability(targets)) {
             EntryDownloadActionAvailability.Available -> {
                 interaction.startDownloads()
                 EntryDownloadActionResult.Performed
@@ -231,18 +150,28 @@ internal class DefaultEntryDownloadActionFeature(
         target: EntryDownloadActionTarget,
         chapters: List<EntryChapter>,
     ): EntryDownloadActionAvailability {
-        val availability = individualAvailability(target)
-        if (availability !is EntryDownloadActionAvailability.Available) return availability
-        return if (chapters.isEmpty()) {
-            blockedBy(EntryDownloadActionBlocker.EMPTY_SELECTION)
+        if (target.type !in individualTypes) {
+            return EntryDownloadActionAvailability.Inapplicable(setOf(target.type))
+        }
+        val selectionState = if (chapters.isEmpty()) {
+            EntryDownloadSelectionState.EMPTY
         } else {
-            EntryDownloadActionAvailability.Available
+            EntryDownloadSelectionState.ACTIONABLE
+        }
+        evaluation.requireDownloadIndividualOperationContext(target, selectionState)
+        return when {
+            target.sourceAccess == EntryDownloadSourceAccess.LOCAL_OR_STUB ->
+                blockedBy(EntryDownloadActionBlocker.LOCAL_OR_STUB)
+            selectionState == EntryDownloadSelectionState.EMPTY ->
+                blockedBy(EntryDownloadActionBlocker.EMPTY_SELECTION)
+            else -> EntryDownloadActionAvailability.Available
         }
     }
 
     private fun availability(
         targets: List<EntryDownloadActionTarget>,
         applicableTypes: Set<EntryType>,
+        requireContext: (EntryDownloadActionTarget) -> Unit,
     ): EntryDownloadActionAvailability {
         if (targets.isEmpty()) return blockedBy(EntryDownloadActionBlocker.EMPTY_SELECTION)
 
@@ -253,15 +182,11 @@ internal class DefaultEntryDownloadActionFeature(
             return EntryDownloadActionAvailability.Inapplicable(inapplicableTypes)
         }
 
-        val blockers = buildSet {
-            if (targets.any { it.sourceAccess == EntryDownloadSourceAccess.LOCAL_OR_STUB }) {
-                add(EntryDownloadActionBlocker.LOCAL_OR_STUB)
-            }
-        }
-        return if (blockers.isEmpty()) {
-            EntryDownloadActionAvailability.Available
+        targets.forEach(requireContext)
+        return if (targets.any { it.sourceAccess == EntryDownloadSourceAccess.LOCAL_OR_STUB }) {
+            blockedBy(EntryDownloadActionBlocker.LOCAL_OR_STUB)
         } else {
-            EntryDownloadActionAvailability.Blocked(blockers)
+            EntryDownloadActionAvailability.Available
         }
     }
 
