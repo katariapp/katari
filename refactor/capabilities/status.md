@@ -54,6 +54,7 @@ Updated: 2026-07-20
 - Phase 6.4.6 Update Eligibility context commit: `edc5600a9` (`(refactor): resolve update eligibility context`)
 - Phase 6.4.7 Library Filter context commit: `d300ca7c4` (`(refactor): resolve library filter context`)
 - Phase 6.4.8 Child Group Filtering disposition commit: `053e99595` (`(refactor): classify child filtering request state`)
+- Phase 6.4.9 Library Progress disposition commit: `6ee097b12` (`(refactor): classify library progress request state`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -61,8 +62,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.9 Library Progress request-state disposition
-- State: Phase 6.4.9 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.10 Library Update Notification child-action context
+- State: Phase 6.4.10 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -225,6 +226,16 @@ Focused Phase 6.4.9 findings:
   merge input remains an invalid coordinator call rather than content-type inapplicability.
 - Contribution metadata and the default coordinator are now separated so graph selection and summary calculation are
   independently discoverable.
+
+Focused Phase 6.4.10 findings:
+
+- F24 Open and Consumption participation remains derived independently from provider presence. Non-empty update
+  children now contextually activate only the child-open and Mark Consumed consequences.
+- Empty updates remain valid notifications targeting Entry Details. They block child-specific consequences without
+  making the type or base notification relationship inapplicable.
+- Download continues through F04 notification availability, so F24 does not duplicate source-access, empty-selection,
+  or notification-size evidence and policy.
+- Merged visible identity remains a same-type invariant; concrete child lists and descriptions remain operation data.
 
 Focused F11.0 findings:
 
@@ -885,4 +896,4 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.9 after review, then continue the remaining Entry Feature request-state audit before Phase 6.5.
+Commit Phase 6.4.10 after review, then complete the remaining Entry Feature request-state audit before Phase 6.5.

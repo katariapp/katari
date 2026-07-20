@@ -9,13 +9,14 @@ Status: complete
   routing, grouping, summary, child-notification, and Entry-details behavior
 - Presentation relationship: F23 Type Presentation supplies vocabulary and numbering policy; presentation never
   authorizes notification participation or an action
-- Open relationship: F01 Open adds the child-open destination independently
-- Consumption relationship: F09 Consumption adds Mark Consumed independently
+- Open relationship: F01 Open establishes participation; non-empty update children activate the child-open destination
+- Consumption relationship: F09 Consumption establishes participation; non-empty update children activate Mark Consumed
 - Download relationship: F04 Download Actions adds Download independently, with its existing source, empty-selection,
   and 15-child contextual policy
 - Always-available action: normal Entry-details navigation is not F01 Open
-- Context: actual updated Entries/children, merged visible Entry identity, concrete source access, hidden-content privacy,
-  and Android notification rendering
+- Context: non-empty update children activate F24-owned child actions; F04 independently resolves concrete Download
+  source/selection context. Merged visible identity is an invariant, while hidden-content privacy and Android rendering
+  remain downstream platform mechanics.
 - Behavioral contract: partial action combinations, contextual Download rejection, vocabulary-driven description
   construction, frozen legacy routes, and derived neutral routing
 
@@ -33,6 +34,16 @@ set. `LibraryUpdateNotifier` supplies only actual update/source context and rend
 F23 supplies resource tokens plus child-number policy through `EntryTypePresentationFeature`. F24 applies those tokens
 with one shared formatter. A contributed presentation is graph-accounted; explicit generic presentation remains an
 observable F23 result for a valid partial type and does not become behavioral authorization.
+
+## Context Resolution
+
+Open and Consumption provider presence remain context-free participation facts. F24 separately declares whether the
+current update contains children and resolves its child-open and Mark Consumed consequences from that evidence. An
+empty update remains a valid notification projected to Entry Details; only child-specific consequences are blocked.
+
+Download context is not duplicated in F24. The F24 plus Download relationship selects potential participation, then
+F24 consumes F04's purpose-specific notification availability result. F04 remains the sole owner of source access,
+empty selection, and notification-size policy.
 
 ## Routing and Compatibility
 
@@ -53,8 +64,8 @@ its own neutral Item route and F23 vocabulary; it can never fall through to Mang
 | Summary grouping | F24 groups by authoritative `Entry.type`, selects a stable route, and supplies F23-owned summary vocabulary. |
 | Merged visible identity | F24 resolves the visible Entry before projecting destinations. F12 only permits same-type merges; a mismatched visible type is a failed invariant rather than a route/action reinterpretation. |
 | Child description | F24 owns one generic description algorithm. F23 supplies nouns, plural resources, recognized-number policy, and display limit without authorizing behavior. |
-| Child tap | F01 plus F24 yields Open Child. If F01 is absent, the explicit destination is Entry Details; notification participation is retained. |
-| Mark Consumed | Present only for the F24 plus F09 relationship and non-empty children. Execution remains the F09 Feature path, including its F06 lifecycle consequence. |
+| Child tap | F01 plus F24 establishes participation; non-empty update context activates Open Child. Missing F01 or empty children yields Entry Details without removing notification participation. |
+| Mark Consumed | F09 plus F24 establishes participation; non-empty update context activates Mark Consumed. Execution remains the F09 Feature path, including its F06 lifecycle consequence. |
 | View Entry | Always opens normal Entry details for the resolved visible Entry. It is not F01 Open. |
 | Download | Present only for the F24 plus F04 relationship after F04 accepts concrete source access and selection size. Execution remains F04. |
 | F03 runtime | No direct relationship: notification downloads use F04 actions; queue execution and foreground download notifications remain F03-owned. |
@@ -76,6 +87,9 @@ uses every discovered type and contains no current-type support matrix.
 - Actual type contribution plus update participation activates shared notification behavior automatically.
 - F01, F09, and F04 relationships are derived from their providers; F24 declares no combined provider or per-type
   action flag.
+- F24 declares non-empty update state once for the child-open and Mark Consumed consequences instead of hiding the
+  condition in coordinator branches. Empty updates remain valid notifications.
+- F04 remains the sole owner of Download context; F24 does not restate source or selection policy.
 - Normal Entry-details navigation is kept distinct from F01 child opening.
 - F23 vocabulary varies independently and never decides behavioral support.
 - Book receives explicit neutral Item vocabulary and derived routing, never a Manga fallback.

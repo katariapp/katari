@@ -325,6 +325,19 @@ ordinary method arguments as context would violate the Phase 6 boundary and crea
 F22 requires no contextual integration. Live Library data changes computed summary values but neither activates nor
 blocks a discovered relationship, so duplicating it as graph evidence would not expose any missing integration.
 
+#### 6.4.10 — Library Update Notification Child-Action Context
+
+- [x] Keep shared notification participation, routing, rendering, and provider-derived Presentation/Open/Consumption/
+  Download participation context-free.
+- [x] Declare non-empty update children as F24-owned contextual evidence for child-open and Mark Consumed consequences.
+- [x] Preserve an empty update as a valid Entry-details notification while blocking only child-specific consequences.
+- [x] Continue consuming F04's notification availability for Download instead of duplicating its source-access,
+  empty-selection, or notification-size policy in F24.
+- [x] Keep same-type visible Entry resolution as a Merge invariant and concrete children/descriptions as operation data.
+
+Open and Consumption provider presence remain independent type-wide facts. Selection state affects only F24's current
+notification projection and does not become an Entry-Selection capability.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

@@ -98,6 +98,22 @@ class EntryLibraryUpdateNotificationFeatureTest {
     }
 
     @Test
+    fun `empty update context blocks child actions without removing the notification`() = runTest {
+        val feature = featureFor(
+            plugin(
+                EntryType.BOOK,
+                EntryOpenCapability.bind(openProvider()),
+                EntryConsumptionCapability.bind(consumptionProvider()),
+            ),
+        )
+
+        val item = feature.project(listOf(input(children = emptyList()))).groups.single().updates.single()
+
+        item.destination shouldBe EntryLibraryUpdateNotificationDestination.ENTRY_DETAILS
+        item.actions.shouldContainExactly(EntryLibraryUpdateNotificationAction.VIEW_ENTRY)
+    }
+
+    @Test
     fun `available Download alone adds only Download`() = runTest {
         val feature = featureFor(
             plugin(EntryType.BOOK, EntryDownloadCapability.bind(downloadProvider())),

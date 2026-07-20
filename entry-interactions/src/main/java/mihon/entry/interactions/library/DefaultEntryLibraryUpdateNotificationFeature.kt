@@ -5,7 +5,7 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.domain.entry.model.Entry
 
 internal class DefaultEntryLibraryUpdateNotificationFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val presentationFeature: EntryTypePresentationFeature,
     private val openFeature: EntryOpenFeature,
     private val consumptionFeature: EntryConsumptionFeature,
@@ -77,22 +77,35 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
                         "Visible notification target ${visibleEntry.id} has type ${visibleEntry.type}, " +
                             "but origin ${update.entry.id} has type ${update.entry.type}"
                     }
-                    val destination = if (visibleEntry.type in openTypes && update.children.isNotEmpty()) {
-                        check(openFeature.isApplicable(visibleEntry.type)) {
-                            "Library-update notifications selected Open for ${visibleEntry.type}, but Open rejected it"
+                    val hasChildren = update.children.isNotEmpty()
+                    val destination = if (visibleEntry.type in openTypes) {
+                        evaluation.requireLibraryUpdateNotificationOpenContext(visibleEntry.type, hasChildren)
+                        if (hasChildren) {
+                            check(openFeature.isApplicable(visibleEntry.type)) {
+                                "Library-update notifications selected Open for ${visibleEntry.type}, " +
+                                    "but Open rejected it"
+                            }
+                            EntryLibraryUpdateNotificationDestination.OPEN_CHILD
+                        } else {
+                            EntryLibraryUpdateNotificationDestination.ENTRY_DETAILS
                         }
-                        EntryLibraryUpdateNotificationDestination.OPEN_CHILD
                     } else {
                         EntryLibraryUpdateNotificationDestination.ENTRY_DETAILS
                     }
                     val actions = buildSet {
                         add(EntryLibraryUpdateNotificationAction.VIEW_ENTRY)
-                        if (update.entry.type in consumptionTypes && update.children.isNotEmpty()) {
-                            check(consumptionFeature.isApplicable(update.entry.type)) {
-                                "Library-update notifications selected Consumption for ${update.entry.type}, " +
-                                    "but Consumption rejected it"
+                        if (update.entry.type in consumptionTypes) {
+                            evaluation.requireLibraryUpdateNotificationConsumptionContext(
+                                update.entry.type,
+                                hasChildren,
+                            )
+                            if (hasChildren) {
+                                check(consumptionFeature.isApplicable(update.entry.type)) {
+                                    "Library-update notifications selected Consumption for ${update.entry.type}, " +
+                                        "but Consumption rejected it"
+                                }
+                                add(EntryLibraryUpdateNotificationAction.MARK_CONSUMED)
                             }
-                            add(EntryLibraryUpdateNotificationAction.MARK_CONSUMED)
                         }
                         if (update.entry.type in downloadTypes) {
                             val availability = downloadActionFeature.notificationAvailability(
