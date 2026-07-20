@@ -11,10 +11,19 @@ interface EntryLibraryUpdateNotificationFeature {
     /** Every route selected from contributed content types, including explicit generic presentation outcomes. */
     fun routes(): List<EntryLibraryUpdateNotificationRoute>
 
+    /** Resolves whether metered-source queue concentration requires the shared warning. */
+    fun queueWarning(entries: List<Entry>): EntryLibraryUpdateQueueWarning
+
     /** Converts actual library-update participation into the complete shared notification render plan. */
     suspend fun project(
         updates: List<EntryLibraryUpdateNotificationInput>,
     ): EntryLibraryUpdateNotificationProjection
+}
+
+sealed interface EntryLibraryUpdateQueueWarning {
+    data object NotRequired : EntryLibraryUpdateQueueWarning
+
+    data class Required(val maxEntriesPerMeteredSource: Int) : EntryLibraryUpdateQueueWarning
 }
 
 data class EntryLibraryUpdateNotificationInput(

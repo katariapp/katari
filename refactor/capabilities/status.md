@@ -73,6 +73,7 @@ Updated: 2026-07-20
 - Phase 6.6.1 Source Refresh architecture commit: `5f580cc3b` (`(refactor): establish source refresh feature`)
 - Phase 6.6.2 Direct/source-owned consumers commit: `a6a28b222` (`(refactor): migrate direct source refresh consumers`)
 - Phase 6.6.3 Migration refresh relationship commit: `fd86a52a8` (`(refactor): move migration refresh behind feature`)
+- Phase 6.6.4 Library Update refresh commit: `d20cf9fba` (`(refactor): move library refresh behind feature`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -80,8 +81,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.6.4 Library Update refresh relationship
-- State: Phase 6.6.4 is implemented and validating for review. Phase 6.6.5 has not started.
+- Milestone: Phase 6.6.5 Metered-source notification policy
+- State: Phase 6.6.5 is implemented and validating for review. Phase 6.6.6 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1144,7 +1145,17 @@ Focused Phase 6.6.4 findings:
 - Formatting and focused Library Update Refresh behavior tests pass. FOSS compilation reaches only the two recorded
   unrelated application errors.
 
+Focused Phase 6.6.5 findings:
+
+- F24 now owns the Library queue-warning threshold and `UnmeteredSource` interpretation for every contributed type.
+  The Android notifier renders only a structured required/not-required result.
+- Existing source grouping, strict greater-than threshold, missing-source treatment, notification rendering, timeout,
+  and help destination are preserved for both Library and metadata update callers.
+- Manga downloader metering remains untouched inside type-owned F03 queue mechanics.
+- Application production code cannot inspect `UnmeteredSource`; focused build validation enforces the F24 boundary
+  without blocking source contracts, root Feature policy, or type-owned mechanics.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.6.4 after review, then implement Phase 6.6.5 metered-source notification policy. Continue through Phase 6 afterward
+Commit Phase 6.6.5 after review, then implement Phase 6.6.6 refresh/network reconciliation. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

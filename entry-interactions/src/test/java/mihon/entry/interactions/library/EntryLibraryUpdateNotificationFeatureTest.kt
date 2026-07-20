@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
+import eu.kanade.tachiyomi.source.entry.UnmeteredSource
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -11,6 +13,7 @@ import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
+import tachiyomi.domain.source.service.SourceManager
 
 class EntryLibraryUpdateNotificationFeatureTest {
     private val entry = Entry.create().copy(id = 7L, source = 11L, type = EntryType.BOOK)
@@ -214,12 +217,40 @@ class EntryLibraryUpdateNotificationFeatureTest {
         }
     }
 
+    @Test
+    fun `queue warning excludes unmetered sources and applies shared threshold`() {
+        val unmetered = mockk<UnifiedSource>(moreInterfaces = arrayOf(UnmeteredSource::class))
+        val metered = mockk<UnifiedSource>()
+        val sourceManager = mockk<SourceManager> {
+            every { get(1L) } returns unmetered
+            every { get(2L) } returns metered
+        }
+        val feature = featureFor(
+            plugin(EntryType.BOOK),
+            sourceManager = sourceManager,
+            queueWarningThreshold = 2,
+        )
+        val entries = listOf(
+            entry.copy(id = 1L, source = 1L),
+            entry.copy(id = 2L, source = 1L),
+            entry.copy(id = 3L, source = 1L),
+            entry.copy(id = 4L, source = 2L),
+            entry.copy(id = 5L, source = 2L),
+        )
+
+        feature.queueWarning(entries) shouldBe EntryLibraryUpdateQueueWarning.NotRequired
+        feature.queueWarning(entries + entry.copy(id = 6L, source = 2L)) shouldBe
+            EntryLibraryUpdateQueueWarning.Required(maxEntriesPerMeteredSource = 3)
+    }
+
     private fun featureFor(
         vararg plugins: EntryInteractionPlugin,
         downloadAvailability: EntryDownloadActionAvailability = EntryDownloadActionAvailability.Inapplicable(
             setOf(EntryType.BOOK),
         ),
         resolveVisibleEntry: suspend (Entry) -> Entry = { it },
+        sourceManager: SourceManager = mockk(relaxed = true),
+        queueWarningThreshold: Int = 60,
     ): EntryLibraryUpdateNotificationFeature {
         val composition = createEntryInteractionComposition(
             plugins = plugins.toList(),
@@ -254,7 +285,9 @@ class EntryLibraryUpdateNotificationFeatureTest {
             openFeature = openFeature,
             consumptionFeature = consumptionFeature,
             downloadActionFeature = downloadFeature,
+            sourceManager = sourceManager,
             resolveVisibleEntry = resolveVisibleEntry,
+            queueWarningThreshold = queueWarningThreshold,
         )
     }
 

@@ -180,6 +180,24 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application queue warning policy cannot inspect raw metered source context`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.source.entry.UnmeteredSource
+
+                class AppFeature(private val source: UnmeteredSource)
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "Library queue warning policy must use"
+        error.message shouldContain "EntryLibraryUpdateNotificationFeature"
+    }
+
+    @Test
     fun `type modules cannot bypass child WebView Feature through raw source contract`() {
         createBaseFixture(
             mangaProcessorSource = """

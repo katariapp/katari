@@ -15,8 +15,9 @@ Status: complete
   and 15-child contextual policy
 - Always-available action: normal Entry-details navigation is not F01 Open
 - Context: non-empty update children activate F24-owned child actions; F04 independently resolves concrete Download
-  source/selection context. Merged visible identity is an invariant, while hidden-content privacy and Android rendering
-  remain downstream platform mechanics.
+  source/selection context. Library queue concentration and source metering activate the shared size warning. Merged
+  visible identity is an invariant, while hidden-content privacy and Android rendering remain downstream platform
+  mechanics.
 - Behavioral contract: partial action combinations, contextual Download rejection, vocabulary-driven description
   construction, frozen legacy routes, and derived neutral routing
 
@@ -30,6 +31,10 @@ Application code receives `EntryLibraryUpdateNotificationFeature`. Its projectio
 render plan: routes, groups, summaries, resolved visible Entries, child descriptions, destination policy, and action
 set. `LibraryUpdateNotifier` supplies only actual update/source context and renders Android builders and pending intents.
 `Notifications.createChannels` consumes the Feature's discovered routes rather than maintaining a second type list.
+
+The same Feature resolves the Library queue-size warning from actual queued Entries. F24 owns the shared threshold and
+interprets `UnmeteredSource`; the notifier receives only required/not-required plus diagnostic concentration. Missing
+sources retain the existing conservative metered treatment.
 
 F23 supplies resource tokens plus child-number policy through `EntryTypePresentationFeature`. F24 applies those tokens
 with one shared formatter. A contributed presentation is graph-accounted; explicit generic presentation remains an
@@ -60,6 +65,7 @@ its own neutral Item route and F23 vocabulary; it can never fall through to Mang
 | Surface | Disposition |
 | --- | --- |
 | Update worker | Continues reporting actual `(Entry, children)` updates. The notifier converts source access to structured F04 context and calls only the F24 Feature for notification policy. |
+| Queue-size warning | F24 groups queued Entries by source, excludes explicitly unmetered sources, applies the shared threshold, and returns a structured decision. The notifier only renders it. |
 | Notification channels | Created from `EntryLibraryUpdateNotificationFeature.routes()`. Adding a contributed type produces a route without editing `Notifications.kt`. |
 | Summary grouping | F24 groups by authoritative `Entry.type`, selects a stable route, and supplies F23-owned summary vocabulary. |
 | Merged visible identity | F24 resolves the visible Entry before projecting destinations. F12 only permits same-type merges; a mismatched visible type is a failed invariant rather than a route/action reinterpretation. |
@@ -97,6 +103,8 @@ uses every discovered type and contains no current-type support matrix.
 - New routes are derived and collision-validated; channel creation consumes Feature output instead of a type list.
 - The app notifier consumes one Feature projection and does not rebuild type grouping, action eligibility, or vocabulary
   selection.
+- F24 owns Library queue-warning metering and threshold policy. Manga downloader metering remains separate F03
+  execution mechanics rather than a duplicated application rule.
 - No mandatory operation, no-op/fallback provider, type support matrix, capability declaration test, or silent action
   fallback was added.
 

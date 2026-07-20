@@ -216,6 +216,7 @@ private class EntryInteractionBoundaryRules(
             checkCatalogueFeatureBypass(file, findings)
             checkSourceActionFeatureBypass(file, findings)
             checkSourceRefreshFeatureBypass(file, findings)
+            checkMeteredSourcePolicyBypass(file, findings)
             checkChildWebViewFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
@@ -534,6 +535,25 @@ private class EntryInteractionBoundaryRules(
                 lineNumber = reference.lineNumber,
                 reason = "Entry refresh consumers must use EntrySourceRefreshFeature, " +
                     "not raw SyncEntryWithSource mechanics",
+            )
+        }
+    }
+
+    private fun checkMeteredSourcePolicyBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val isGenericConsumer = file.relativePath.startsWith("app/src/main/") ||
+            file.relativePath.startsWith("data/src/main/") ||
+            file.relativePath.startsWith("domain/src/main/") ||
+            file.relativePath.startsWith("presentation-core/src/main/") ||
+            file.relativePath.startsWith("presentation-widget/src/main/")
+        if (!isGenericConsumer) return
+
+        file.findReference("UnmeteredSource")?.let { reference ->
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = reference.lineNumber,
+                reason = "application Library queue warning policy must use " +
+                    "EntryLibraryUpdateNotificationFeature, not raw UnmeteredSource context",
             )
         }
     }

@@ -262,6 +262,10 @@ Phase 6.6.4 adds a provider-less Library Update Refresh Feature after F13 eligib
 Source Refresh into library-specific results while passing only successful inserted children to F05 and notification
 collection. The raw-sync application boundary is now green with no migration exceptions.
 
+Phase 6.6.5 moves the Library queue-size threshold and `UnmeteredSource` interpretation into F24. Android notification
+code renders only the structured decision, and application boundary validation rejects raw metering inspection. Manga
+downloader metering remains type-owned F03 execution mechanics.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

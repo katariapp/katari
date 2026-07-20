@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.data.notification.NotificationHandler
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.source.entry.UnmeteredSource
 import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.lang.chop
@@ -38,6 +37,7 @@ import mihon.entry.interactions.EntryLibraryUpdateNotificationInput
 import mihon.entry.interactions.EntryLibraryUpdateNotificationItem
 import mihon.entry.interactions.EntryLibraryUpdateNotificationRoute
 import mihon.entry.interactions.EntryLibraryUpdateNotificationText
+import mihon.entry.interactions.EntryLibraryUpdateQueueWarning
 import tachiyomi.core.common.Constants
 import tachiyomi.core.common.i18n.pluralStringResource
 import tachiyomi.core.common.i18n.stringResource
@@ -126,12 +126,10 @@ class LibraryUpdateNotifier(
      * Warn when excessively checking any single source.
      */
     fun showQueueSizeWarningNotificationIfNeeded(entriesToUpdate: List<LibraryItem>) {
-        val maxUpdatesFromSource = entriesToUpdate
-            .groupBy { it.entry.source }
-            .filterKeys { sourceManager.get(it) !is UnmeteredSource }
-            .maxOfOrNull { it.value.size } ?: 0
-
-        if (maxUpdatesFromSource <= MANGA_PER_SOURCE_QUEUE_WARNING_THRESHOLD) {
+        if (
+            notificationFeature.queueWarning(entriesToUpdate.map(LibraryItem::entry)) ==
+            EntryLibraryUpdateQueueWarning.NotRequired
+        ) {
             return
         }
 
@@ -409,5 +407,4 @@ private fun EntryLibraryUpdateNotificationItem.downloadChildrenIntent(
 
 private const val NOTIF_TITLE_MAX_LEN = 45
 private const val NOTIF_ICON_SIZE = 192
-private const val MANGA_PER_SOURCE_QUEUE_WARNING_THRESHOLD = 60
 private const val WARNING_NOTIF_TIMEOUT_MS = 30_000L

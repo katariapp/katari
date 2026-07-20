@@ -42,6 +42,8 @@ internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_ROUTE_CONSEQUENCE_ID =
     FeatureArtifactId("entry.library-update-notifications.route")
 internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_RENDER_CONSEQUENCE_ID =
     FeatureArtifactId("entry.library-update-notifications.render")
+internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_QUEUE_WARNING_CONSEQUENCE_ID =
+    FeatureArtifactId("entry.library-update-notifications.queue-warning")
 internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_CONSEQUENCE_ID =
     FeatureArtifactId("entry.library-update-notifications.presentation-vocabulary")
 internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_CONSEQUENCE_ID =
@@ -102,6 +104,7 @@ internal object EntryLibraryUpdateNotificationFeatureContributor : FeatureGraphC
                         sharedConsequences = listOf(
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_ROUTE_CONSEQUENCE_ID),
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_RENDER_CONSEQUENCE_ID),
+                            NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_QUEUE_WARNING_CONSEQUENCE_ID),
                         ),
                         behavioralContracts = listOf(EntryLibraryUpdateNotificationBehaviorContract),
                     ),

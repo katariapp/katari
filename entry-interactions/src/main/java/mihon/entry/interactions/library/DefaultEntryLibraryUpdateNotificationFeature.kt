@@ -1,8 +1,10 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import eu.kanade.tachiyomi.source.entry.UnmeteredSource
 import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.source.service.SourceManager
 
 internal class DefaultEntryLibraryUpdateNotificationFeature(
     private val evaluation: FeatureGraphEvaluation,
@@ -10,7 +12,9 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
     private val openFeature: EntryOpenFeature,
     private val consumptionFeature: EntryConsumptionFeature,
     private val downloadActionFeature: EntryDownloadActionFeature,
+    private val sourceManager: SourceManager,
     private val resolveVisibleEntry: suspend (Entry) -> Entry,
+    private val queueWarningThreshold: Int = 60,
 ) : EntryLibraryUpdateNotificationFeature {
     private val participatingTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_BASE_INTEGRATION_ID,
@@ -19,6 +23,10 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
     private val renderTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_BASE_INTEGRATION_ID,
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_RENDER_CONSEQUENCE_ID,
+    )
+    private val queueWarningTypes = evaluation.libraryUpdateNotificationTypes(
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_BASE_INTEGRATION_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_QUEUE_WARNING_CONSEQUENCE_ID,
     )
     private val contributedPresentationTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_INTEGRATION_ID,
@@ -44,9 +52,31 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
         check(participatingTypes == renderTypes) {
             "Library-update notification routing and rendering selected different content types"
         }
+        check(participatingTypes == queueWarningTypes) {
+            "Library-update notification routing and queue warnings selected different content types"
+        }
+        require(queueWarningThreshold >= 0) { "Library-update queue warning threshold must be non-negative" }
     }
 
     override fun routes(): List<EntryLibraryUpdateNotificationRoute> = routesByType.values.toList()
+
+    override fun queueWarning(entries: List<Entry>): EntryLibraryUpdateQueueWarning {
+        entries.forEach { entry ->
+            check(entry.type in queueWarningTypes) {
+                "Entry type ${entry.type} was not contributed to Library Update notifications"
+            }
+        }
+        val maxEntriesPerMeteredSource = entries
+            .groupBy(Entry::source)
+            .filterKeys { sourceId -> sourceManager.get(sourceId) !is UnmeteredSource }
+            .maxOfOrNull { (_, sourceEntries) -> sourceEntries.size }
+            ?: 0
+        return if (maxEntriesPerMeteredSource > queueWarningThreshold) {
+            EntryLibraryUpdateQueueWarning.Required(maxEntriesPerMeteredSource)
+        } else {
+            EntryLibraryUpdateQueueWarning.NotRequired
+        }
+    }
 
     override suspend fun project(
         updates: List<EntryLibraryUpdateNotificationInput>,

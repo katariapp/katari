@@ -800,6 +800,32 @@ The generic raw-sync boundary is now green. `SyncEntryWithSource` is referenced 
 construction, the root Source Refresh implementation, and tests. Future application refresh consumers must choose and
 declare their owning Feature relationship rather than borrowing the mechanics coordinator.
 
+#### 6.6.5 — Metered-source Notification Policy
+
+- [x] Move Library Update queue-warning threshold and metered-source interpretation into F24.
+- [x] Make the Android notifier render only F24's required/not-required decision.
+- [x] Preserve the existing per-source threshold, missing-source treatment, warning channel, text, timeout, and help
+  destination.
+- [x] Guard application code from directly interpreting `UnmeteredSource` for Library queue-warning policy.
+- [x] Retain Manga downloader `UnmeteredSource` checks as type-owned F03 queue-execution mechanics.
+
+F24's unconditional base relationship now includes the queue-warning consequence for every contributed content type.
+Its Feature receives actual queued Entries, groups them by source, excludes installed sources declaring unmetered
+access, and returns a structured decision containing the largest metered-source group when the shared threshold is
+exceeded. A missing source remains metered for warning purposes, matching existing behavior.
+
+`LibraryUpdateNotifier` no longer owns source metering or the threshold. It maps Library items to Entries, asks F24 for
+the decision, and retains only Android notification construction. Both normal Library Update and metadata update use
+that same path. This prevents another worker or notifier from independently rebuilding metering policy.
+
+The Manga downloader's check is intentionally unchanged. It controls warning behavior for Manga's active download
+queue and lives beside Manga's source-aware execution mechanics. Moving it into F24 would couple user-visible Library
+Update policy to type-specific download execution and would erase the consequence ownership established by F03.
+
+Application boundary validation rejects raw `UnmeteredSource` inspection. Source contracts and implementations, root
+Feature policy, and type-owned interaction mechanics remain valid owners; generic application consumers must enter
+through a Feature result.
+
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
 - [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,

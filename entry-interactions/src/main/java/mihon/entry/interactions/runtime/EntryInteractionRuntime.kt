@@ -465,6 +465,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             openFeature = get(),
             consumptionFeature = get(),
             downloadActionFeature = get(),
+            sourceManager = get(),
             resolveVisibleEntry = { entry ->
                 val visibleEntryId = get<EntryMergeNavigationFeature>()
                     .resolveNavigation(EntryMergeSubject(entry.profileId, entry.id))
