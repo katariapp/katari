@@ -121,6 +121,19 @@ Recommended preservation and correction:
 - unsupported Entries and source rows do not enter Migration UI and cannot reach a silent execution no-op;
 - source interfaces and returned Entry type remain contextual evidence, not replacements for F11 participation.
 
+### Phase 6 context resolution
+
+Migration provider presence remains the context-free participation and dispatch fact. F11 separately declares persisted
+Entry state and Library membership for availability, Entry actions, Browse source projection, and source-Entry
+selection. Its Library-selection relationship additionally declares whether all selected Entries belong to one
+profile. These conditions block only the affected product consequences and never redefine type support.
+
+An empty selection remains a structured operation rejection because it has no Entry type to use as a contextual graph
+subject. Mixed participating types remain valid; every supported selected type resolves the same F11 selection rule.
+An unsupported type has no Migration candidate relationship and continues to produce the existing structured
+unsupported result. Pair identity/type/profile validation, current option availability, and execution reference state
+remain assigned to subsequent F11 contextual milestones rather than being flattened into this availability decision.
+
 ## Sequential Milestones
 
 Each milestone is implemented by one agent, compared with the manifesto, committed separately, and stopped for review.

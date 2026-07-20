@@ -17,7 +17,7 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import tachiyomi.domain.entry.model.Entry
 
 internal class DefaultEntryMigrationFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val preparationHost: EntryMigrationPreparationHost,
     private val executionHost: EntryMigrationExecutionHost,
     private val mergeMigration: EntryMergeMigrationFeature,
@@ -33,7 +33,7 @@ internal class DefaultEntryMigrationFeature(
     private val migrationTypes = evaluation.applicableProviderTypes<EntryMigrationProvider>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_BASE_INTEGRATION_ID,
-        consequence = EntryMigrationBaseConsequence.AVAILABILITY.id,
+        consequence = EntryMigrationBaseConsequence.PROVIDER_DISPATCH.id,
     )
     private val consumptionTypes = evaluation.applicableProviderTypes<EntryConsumptionProcessor>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
@@ -48,6 +48,13 @@ internal class DefaultEntryMigrationFeature(
 
     override fun availability(entry: Entry): EntryMigrationAvailability {
         val rejection = entry.sourceRejection()
+        if (entry.type in migrationTypes) {
+            evaluation.requireMigrationSourceContext(
+                type = entry.type,
+                persisted = entry.isPersisted(),
+                inLibrary = entry.favorite,
+            )
+        }
         return if (rejection == null) {
             EntryMigrationAvailability.Available
         } else {
@@ -57,7 +64,23 @@ internal class DefaultEntryMigrationFeature(
 
     override fun prepareSelection(entries: List<Entry>): EntryMigrationSelectionResult {
         if (entries.isEmpty()) return selectionRejected(EntryMigrationRejection.EMPTY_SELECTION)
-        if (entries.map(Entry::profileId).distinct().size != 1) {
+        val singleProfile = entries.map(Entry::profileId).distinct().size == 1
+        entries
+            .filter { it.type in migrationTypes }
+            .forEach { entry ->
+                evaluation.requireMigrationSourceContext(
+                    type = entry.type,
+                    persisted = entry.isPersisted(),
+                    inLibrary = entry.favorite,
+                )
+                evaluation.requireMigrationSelectionContext(
+                    type = entry.type,
+                    persisted = entry.isPersisted(),
+                    inLibrary = entry.favorite,
+                    singleProfile = singleProfile,
+                )
+            }
+        if (!singleProfile) {
             return selectionRejected(EntryMigrationRejection.MIXED_SELECTION_PROFILES)
         }
         entries.firstNotNullOfOrNull { entry -> entry.sourceRejection() }
@@ -387,11 +410,13 @@ internal class DefaultEntryMigrationFeature(
     }
 
     private fun Entry.sourceRejection(): EntryMigrationRejection? {
-        if (id <= 0L || profileId <= 0L) return EntryMigrationRejection.UNPERSISTED_ENTRY
+        if (!isPersisted()) return EntryMigrationRejection.UNPERSISTED_ENTRY
         if (!favorite) return EntryMigrationRejection.SOURCE_NOT_IN_LIBRARY
         if (type !in migrationTypes) return EntryMigrationRejection.UNSUPPORTED_SOURCE_TYPE
         return null
     }
+
+    private fun Entry.isPersisted(): Boolean = id > 0L && profileId > 0L
 
     private fun Entry.subject() = EntryMigrationSubject(profileId, id)
 

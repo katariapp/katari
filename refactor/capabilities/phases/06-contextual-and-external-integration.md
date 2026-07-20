@@ -338,6 +338,21 @@ blocks a discovered relationship, so duplicating it as graph evidence would not 
 Open and Consumption provider presence remain independent type-wide facts. Selection state affects only F24's current
 notification projection and does not become an Entry-Selection capability.
 
+#### 6.4.11 — Migration Availability and Selection Context
+
+- [x] Keep F11 provider dispatch, target search, configuration, execution, synchronization, and transfer relationships
+  context-free once a Migration provider is present.
+- [x] Declare persisted state and Library membership for Migration availability, Entry actions, Browse source
+  projection, and source-Entry selection.
+- [x] Declare single-profile selection independently for the Library-selection consequence while preserving mixed-type
+  selections across independently participating providers.
+- [x] Keep empty selection as a structured request result because no content type exists as a contextual graph subject.
+- [x] Leave pair identity/type/profile validation, current transfer-option availability, and execution reference state
+  to later F11 context slices.
+
+Migration provider presence remains the only type-wide support fact. Persisted, Library, profile, and selection state
+are operation evidence owned by F11 and do not become Migration or Entry-State capabilities.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

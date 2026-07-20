@@ -42,6 +42,32 @@ class EntryMigrationFeatureTest {
     }
 
     @Test
+    fun `current source state context controls migration availability`() {
+        val feature = feature(RecordingMigrationHost(source, target))
+
+        feature.availability(source) shouldBe EntryMigrationAvailability.Available
+        feature.availability(source.copy(favorite = false)) shouldBe
+            EntryMigrationAvailability.Unavailable(EntryMigrationRejection.SOURCE_NOT_IN_LIBRARY)
+        feature.availability(source.copy(id = 0L)) shouldBe
+            EntryMigrationAvailability.Unavailable(EntryMigrationRejection.UNPERSISTED_ENTRY)
+    }
+
+    @Test
+    fun `selection context preserves single-profile readiness and mixed-profile rejection`() {
+        val feature = feature(RecordingMigrationHost(source, target))
+        val second = source.copy(id = 12L, source = 101L, url = "entry-12")
+
+        feature.prepareSelection(listOf(source, second)) shouldBe EntryMigrationSelectionResult.Ready(
+            listOf(
+                EntryMigrationSubject(source.profileId, source.id),
+                EntryMigrationSubject(second.profileId, second.id),
+            ),
+        )
+        feature.prepareSelection(listOf(source, second.copy(profileId = 5L))) shouldBe
+            EntryMigrationSelectionResult.Rejected(EntryMigrationRejection.MIXED_SELECTION_PROFILES)
+    }
+
+    @Test
     fun `preparation derives options from current state and optional relationships`() = runTest {
         val preparedSource = source.copy(notes = "keep")
         val host = RecordingMigrationHost(preparedSource, target).apply {

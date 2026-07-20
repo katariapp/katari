@@ -23,11 +23,7 @@ private val ENTRY_MIGRATION_FEATURE_OWNER = ContributionOwner("entry-migration")
 internal enum class EntryMigrationBaseConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence {
-    AVAILABILITY(FeatureArtifactId("entry.migration.availability")),
-    ENTRY_ACTION(FeatureArtifactId("entry.migration.entry-action")),
-    LIBRARY_SELECTION(FeatureArtifactId("entry.migration.library-selection")),
-    BROWSE_SOURCE_LIST(FeatureArtifactId("entry.migration.browse-source-list")),
-    SOURCE_ENTRY_SELECTION(FeatureArtifactId("entry.migration.source-entry-selection")),
+    PROVIDER_DISPATCH(FeatureArtifactId("entry.migration.provider-dispatch")),
     TARGET_SEARCH(FeatureArtifactId("entry.migration.target-search")),
     CONFIGURATION(FeatureArtifactId("entry.migration.configuration")),
     EXECUTION(FeatureArtifactId("entry.migration.execution")),
@@ -108,6 +104,8 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         sharedConsequences = EntryMigrationBaseConsequence.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract),
                     ),
+                    entryMigrationSourceContextIntegration(owner, migration),
+                    entryMigrationSelectionContextIntegration(owner, migration),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID,
                         prerequisites = allOf(

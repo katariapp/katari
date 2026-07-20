@@ -55,6 +55,8 @@ Updated: 2026-07-20
 - Phase 6.4.7 Library Filter context commit: `d300ca7c4` (`(refactor): resolve library filter context`)
 - Phase 6.4.8 Child Group Filtering disposition commit: `053e99595` (`(refactor): classify child filtering request state`)
 - Phase 6.4.9 Library Progress disposition commit: `6ee097b12` (`(refactor): classify library progress request state`)
+- Phase 6.4.10 Library Update Notification context commit: `a2beb6ed8` (`(refactor): resolve library update notification context`)
+- Release baseline merge: `54b839168` (merged `origin/upcoming` at `131163af6`, including v1.3.2)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -62,8 +64,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.10 Library Update Notification child-action context
-- State: Phase 6.4.10 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.11 Migration availability and selection context
+- State: Phase 6.4.11 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -236,6 +238,18 @@ Focused Phase 6.4.10 findings:
 - Download continues through F04 notification availability, so F24 does not duplicate source-access, empty-selection,
   or notification-size evidence and policy.
 - Merged visible identity remains a same-type invariant; concrete child lists and descriptions remain operation data.
+
+Focused Phase 6.4.11 findings:
+
+- F11 provider presence remains the sole type-wide participation fact. Provider dispatch and later preparation/
+  execution relationships remain context-free in this slice.
+- Persisted Entry state and Library membership now contextually control availability, Entry actions, Browse source
+  projection, and source-Entry selection through one F11-owned rule.
+- Library selection additionally declares single-profile state. Mixed participating types remain valid, and each
+  supported selected type resolves the same rule without a production type matrix.
+- Empty selection remains a structured operation result because it has no content-type graph subject. Unsupported
+  types have no contextual candidate and retain the existing structured unsupported result.
+- Pair compatibility, current option availability, and execution-reference state remain separate F11 context work.
 
 Focused F11.0 findings:
 
@@ -896,4 +910,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.10 after review, then complete the remaining Entry Feature request-state audit before Phase 6.5.
+Commit Phase 6.4.11 after review, then continue F11 pair/option context and F12 selection/membership context before
+Phase 6.5.
