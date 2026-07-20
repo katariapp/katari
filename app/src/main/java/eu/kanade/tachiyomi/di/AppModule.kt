@@ -240,6 +240,9 @@ class AppModule(val app: Application) : InjektModule {
                     SettingsReadiumEpubReaderScreen,
                     SettingsHtmlProseReaderScreen,
                 ),
+                sourceRefreshUpdateLibraryTitles = { profileId ->
+                    LibraryPreferences(get<ProfileStore>().profileStore(profileId)).updateMangaTitles.get()
+                },
                 mergeHost = mergeHost,
                 mergeLibraryEntryInitializer = { entry ->
                     val sourceManager = get<SourceManager>()

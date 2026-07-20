@@ -242,6 +242,12 @@ persistence mechanics owner behind a new Source Refresh Feature. Entry/metadata 
 F13/Library Update, F20, and Deep Link declare their own relationships. F24 owns the Library queue-size warning derived
 from metered source context. Manga downloader use of `UnmeteredSource` remains a type-owned F03 operation mechanic.
 
+Phase 6.6.1 installs the Source Refresh Feature and graph/context contract without migrating consumers. Installed-source
+absence is contextual; retained stub metadata is not an executable state of the authoritative refresh lookup. Operation
+failures are structured after an available snapshot. Every request uses strict Entry-profile persistence and
+Feature-owned resolution of the existing title-update preference. The domain coordinator remains the sole interpreter
+of `C15` source contracts.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

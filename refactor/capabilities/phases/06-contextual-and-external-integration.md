@@ -651,9 +651,10 @@ intervals. The new Feature is an application and graph boundary around that oper
 or a raw source facade.
 
 Source Refresh has no content-type provider and no mandatory operation. Every contributed type can request refresh from
-its concrete `UnifiedSource`; installed/missing/stub source state determines runtime applicability. A bundled Local
-source remains an ordinary installed source and is not rejected by a generic local flag. Source absence is contextual,
-while empty child lists, network failures, and persistence failures are structured operation outcomes.
+its concrete `UnifiedSource`; installed-source presence determines runtime applicability, while retained stub metadata
+is non-executable and appears as absence through the authoritative lookup. A bundled Local source remains an ordinary
+installed source and is not rejected by a generic local flag. Source absence is contextual, while empty child lists,
+network failures, and persistence failures are structured operation outcomes.
 
 The Feature owns refresh-specific interpretation of profile-scoped title-update policy. Callers still supply the
 product decision to fetch details, fetch children, treat the request as manual, or use a fetch window. F13 alone owns
@@ -680,6 +681,39 @@ Implementation proceeds in architecture-first slices:
    `SourceManager`/`UnmeteredSource` decision, and guard generic consumers while retaining Manga downloader mechanics.
 6. **6.6.6 — Refresh/network reconciliation:** rerun the nested census, update Feature documents/projections, and close
    every `C15`, `C16`, and applicable `C17`, `C20`, and `C22` disposition.
+
+#### 6.6.1 — Source Refresh Architecture
+
+- [x] Add one application-facing `EntrySourceRefreshFeature` contract with an explicit request, fetch window, and
+  structured refreshed/source-unavailable/failed results.
+- [x] Contribute Source Refresh through an unconditional graph integration selected for every contributed content type;
+  installed-source presence is contextual evidence with a named unavailable blocker.
+- [x] Select the Source Refresh behavioral contract from the same discovered integration without a type list or
+  provider declaration.
+- [x] Keep `SyncEntryWithSource` as the only mechanics implementation and adapt its result at the root Feature boundary.
+- [x] Resolve title-update policy from the Entry's explicit profile and invoke strict synchronization for every request.
+- [x] Install the Feature in root composition before migrating any application caller or adding raw-sync enforcement.
+
+The public request carries only invocation choices: Entry, details/children selection, manual intent, and fetch window.
+At least one fetch operation is required as an API invariant. The successful result exposes inserted visible children,
+the total inserted count, updated/removed counts, metadata change, and aggregate child-change state without exporting
+the domain coordinator's result type.
+
+`SourceManager.get()` is the authoritative refresh lookup and exposes only an installed source or absence; retained stub
+metadata is not executable refresh context. Absence therefore has one structured outcome and blocker rather than an
+unreachable stub variant. Once an installed-source snapshot makes the integration applicable, a later source
+disappearance or `SourceNotInstalledException` is an operation failure rather than retroactively contradicting graph
+evaluation. `NoChaptersException` is a separate structured failure; cancellation continues propagating and other
+source, network, or persistence errors retain their cause.
+
+The Feature always calls `syncStrictly` with `entry.profileId`. Its composition dependency resolves the existing
+profile-scoped title-update preference for that same profile. This removes active-profile ambiguity from the future
+migration and preserves the coordinator's explicit-profile persistence checks without moving preference ownership into
+the source contract.
+
+No current consumer is migrated in this slice. Direct `SyncEntryWithSource` calls deliberately remain visible until
+their owning 6.6.2–6.6.4 relationships are installed; compilation is not preserved with a fallback Feature path or
+parallel refresh implementation.
 
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 

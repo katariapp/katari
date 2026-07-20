@@ -44,6 +44,7 @@ data class EntryInteractionRuntimeDependencies(
     val basePreferenceStore: PreferenceStore,
     val profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
     val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
+    val sourceRefreshUpdateLibraryTitles: (profileId: Long) -> Boolean,
     val mergeHost: EntryMergeHost,
     val mergeLibraryEntryInitializer: suspend (Entry) -> Unit,
     val mergeCoverCleanup: suspend (Entry) -> Unit,
@@ -135,6 +136,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntrySourceSettingsFeatureContributor,
                 EntrySourceHomeFeatureContributor,
                 EntryCoverNetworkFeatureContributor,
+                EntrySourceRefreshFeatureContributor,
                 EntryWebViewFeatureContributor,
                 EntryDeepLinkFeatureContributor,
                 EntryTrackerSourceAdapterFeatureContributor,
@@ -161,6 +163,14 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         DefaultEntryCoverNetworkFeature(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
             sourceManager = get(),
+        )
+    }
+    addSingletonFactory<EntrySourceRefreshFeature> {
+        DefaultEntrySourceRefreshFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+            syncEntryWithSource = get(),
+            updateLibraryTitles = dependencies.sourceRefreshUpdateLibraryTitles,
         )
     }
     addSingletonFactory<EntryWebViewFeature> {
