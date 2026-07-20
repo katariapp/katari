@@ -5,7 +5,6 @@ interface EntryInteractions {
     val open: EntryOpenInteraction
     val continueEntry: EntryContinueInteraction
     val download: EntryDownloadInteraction
-    val capability: EntryCapabilityInteraction
     val consumption: EntryConsumptionInteraction
     val bookmark: EntryBookmarkInteraction
     val preview: EntryPreviewInteraction

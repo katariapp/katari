@@ -41,16 +41,17 @@ Updated: 2026-07-20
 - F11.2 transaction semantics commit: `de55ae95f` (`(docs): define migration transaction semantics`)
 - F11.3 primary transfer commit: `fff5aa853` (`(refactor): implement migration primary transfer`)
 - F11.4 consequence delivery commit: `7e44c5c71` (`(refactor): implement migration consequences`)
+- F11.5 application consumer commit: `9ffa03ca3` (`(refactor): migrate entry migration consumers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F11.5` — Entry Source Migration application consumers
-- State: F11.0-F11.4 are committed. F11.5 is implemented, validated within the current branch boundary, and awaits
-  review.
+- Phase: Phase 6 — Contextual and External Integration
+- Milestone: Phase 6 preparation and `C01`–`C24` owner-based split
+- State: Phase 5 and F11 are complete. Phase 6 classification and sequencing are next; no contextual production
+  behavior has changed yet.
 
 Focused F11.0 findings:
 
@@ -122,6 +123,26 @@ Focused F11.4 findings:
   owning optional relationship.
 - The remaining boundary/compiler queue is still intentionally assigned to F11.5; no UI compatibility authority was
   introduced to make the application compile early.
+
+Focused F11.5 findings:
+
+- Entry, Library, Browse sources and Entries, automatic/manual search, configuration, dialogs, and batch execution now
+  consume F11 availability, selection, preparation, and execution results.
+- Explicit profile/Entry subjects survive navigation. Stored flags are presentation defaults captured as explicit
+  options; they neither authorize Migration nor reconstruct its consequence pipeline.
+- Unsupported Entries cannot enter a silent no-op flow. Only applied results advance workflows, while rejection,
+  conflict, and operational failure remain visible.
+
+Focused F11.6 findings:
+
+- The obsolete capability facade, provider-backed dispatcher, composition field, and unused provider projection are
+  removed. Migration provider bindings remain graph evidence only.
+- Generic SPI enforcement now discovers top-level `Entry…Capability` properties as well as provider types; application
+  code cannot bypass a Feature by importing either form.
+- Shared and per-type interaction suites plus the complete boundary pass. The final census contains no production
+  legacy authority, type matrix, ambient coordinator option read, or swallowed Migration cancellation.
+- Public documentation now agrees with executable provider truth: Manga and Anime support source Migration; Book does
+  not currently contribute it.
 
 ## Why the Plan Was Reset
 
@@ -691,6 +712,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Review and commit F11.5, then begin F11.6. Remove the obsolete Migration capability facade and composition residue,
-complete integrated enforcement and behavior validation, update the public capability reference, and close F11 against
-the manifesto census.
+Reconcile contextual register `C01`–`C24` with the completed Feature boundaries and split it into sequential owner-based
+milestones before changing contextual production behavior.

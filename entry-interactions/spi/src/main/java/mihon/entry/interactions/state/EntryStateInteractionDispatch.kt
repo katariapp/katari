@@ -4,24 +4,6 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
-internal class ProviderBackedEntryCapabilityInteraction(
-    private val migrationProviders: Map<EntryType, EntryMigrationProvider>,
-) : EntryCapabilityInteraction {
-    override fun supportsMigration(entry: Entry): Boolean {
-        val provider = migrationProviders[entry.type] ?: return false
-        provider.requireMatchingEntryType("migration", entry, migrationProviders.keys)
-        return true
-    }
-
-    override fun canMigrate(entries: List<Entry>): Boolean {
-        return entries.isNotEmpty() && entries.all(::supportsMigration)
-    }
-
-    override fun migrationEntries(entries: List<Entry>): List<Entry> {
-        return entries.filter(::supportsMigration)
-    }
-}
-
 internal class ProviderBackedEntryConsumptionInteraction(
     private val consumptionProcessors: Map<EntryType, EntryConsumptionProcessor>,
 ) : EntryConsumptionInteraction {

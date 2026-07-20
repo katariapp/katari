@@ -4,12 +4,6 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
-interface EntryCapabilityInteraction {
-    fun supportsMigration(entry: Entry): Boolean
-    fun canMigrate(entries: List<Entry>): Boolean
-    fun migrationEntries(entries: List<Entry>): List<Entry>
-}
-
 interface EntryConsumptionInteraction {
     suspend fun setConsumed(
         entry: Entry,

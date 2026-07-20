@@ -83,13 +83,16 @@ private class EntryInteractionBoundaryRules(
         .filter { it.startsWith("Entry") && it.endsWith("Processor") }
         .toSet()
 
-    private val internalApiNames = sourceIndex.files
-        .asSequence()
-        .filter { it.relativePath.startsWith("entry-interactions/spi/src/main/") }
-        .flatMap { it.topLevelDeclarations.asSequence() }
-        .filter { it.isPublic && it.kind != KotlinDeclarationKind.FUNCTION }
-        .map(KotlinDeclaration::name)
-        .toSet()
+    private val internalApiNames = buildSet {
+        val spiFiles = sourceIndex.files.filter { it.relativePath.startsWith("entry-interactions/spi/src/main/") }
+        addAll(
+            spiFiles
+                .flatMap(KotlinSourceFile::topLevelDeclarations)
+                .filter { it.isPublic && it.kind != KotlinDeclarationKind.FUNCTION }
+                .map(KotlinDeclaration::name),
+        )
+        addAll(spiFiles.asSequence().flatMap(KotlinSourceFile::publicTopLevelPropertyNames))
+    }
     private val processorImplementations = sourceIndex.files
         .asSequence()
         .filter { it.owningTypeModule() != null }
@@ -859,7 +862,16 @@ private data class KotlinSourceFile(
             ?.plus(1)
     }
 
+    fun publicTopLevelPropertyNames(): Sequence<String> {
+        return content.lineSequence().mapNotNull { line ->
+            PUBLIC_TOP_LEVEL_PROPERTY.matchEntire(line)?.groupValues?.get(1)
+        }
+    }
+
     companion object {
+        private val PUBLIC_TOP_LEVEL_PROPERTY =
+            Regex("""(?:(?:public|const|lateinit)\s+)*(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*).*$""")
+
         fun from(relativePath: String, content: String): KotlinSourceFile {
             val lineStarts = content.lineStarts()
             val tokens = content.kotlinTokens(lineStarts)

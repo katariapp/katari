@@ -16,7 +16,37 @@ class EntryMigrationBoundaryRulesTest {
     lateinit var tempDir: Path
 
     @Test
-    fun `application consumers cannot retain the transitional Migration facade or use case`() {
+    fun `application consumers cannot access raw Migration provider contracts`() {
+        createFixture(
+            appSource = """
+                package app
+
+                class AppFeature(
+                    private val provider: EntryMigrationProvider,
+                ) {
+                    val binding = EntryMigrationCapability
+                }
+            """.trimIndent(),
+            additionalFiles = mapOf(
+                "entry-interactions/spi/src/main/java/test/EntryMigrationProvider.kt" to
+                    """
+                        package test
+
+                        interface EntryMigrationProvider
+
+                        val EntryMigrationCapability = Any()
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "EntryMigrationProvider is root/type-module Entry interaction internals"
+        error.message shouldContain "EntryMigrationCapability is root/type-module Entry interaction internals"
+    }
+
+    @Test
+    fun `application consumers cannot recreate legacy Migration authorities`() {
         createFixture(
             appSource = """
                 package app
@@ -25,7 +55,7 @@ class EntryMigrationBoundaryRulesTest {
                     private val capability: EntryCapabilityInteraction,
                     private val migrate: MigrateEntryUseCase,
                 ) {
-                    fun available(entry: Entry) = capability.supportsMigration(entry)
+                    fun supportsMigration(entry: Entry) = true
                 }
             """.trimIndent(),
         )

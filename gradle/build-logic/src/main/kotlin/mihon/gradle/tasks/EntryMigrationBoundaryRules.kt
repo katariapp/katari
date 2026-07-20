@@ -153,8 +153,6 @@ private const val LEGACY_MIGRATION_USE_CASE_PATH =
 
 private val RAW_MIGRATION_AUTHORITY_NAMES = setOf(
     "EntryCapabilityInteraction",
-    "EntryMigrationCapability",
-    "EntryMigrationProvider",
     "MigrateEntryUseCase",
     "supportsMigration",
     "canMigrate",

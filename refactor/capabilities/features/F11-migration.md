@@ -1,6 +1,6 @@
 # F11 — Entry Source Migration
 
-Status: F11.0-F11.4 committed; F11.5 implemented and awaiting review
+Status: Complete
 
 ## Architectural Classification
 
@@ -398,6 +398,44 @@ Exit gate: no raw Migration authority, type matrix, ambient option read, swallow
 documentation, or known follow-up remains.
 
 Review request: approve F11 and Phase 5 completion against the manifesto.
+
+Implementation record:
+
+- `EntryCapabilityInteraction`, its provider-backed dispatcher, the aggregate `EntryInteractions.capability` field, and
+  the unused provider-index projection are removed. The Migration provider binding remains the one authoritative
+  participation fact consumed by graph evaluation, not an operational facade available beside F11.
+- Application and lower-layer consumers are generically blocked from public SPI provider contracts. The generic rule
+  now also discovers public top-level `Entry…Capability` properties, closing a gap where a caller could import the
+  binding property even though provider classes and interfaces were already protected.
+- Migration-specific enforcement retains only rejection of known legacy orchestration/support vocabulary, ambient
+  authority inside F11, concrete Entry-type authorization, and host-port borrowing. Type modules remain allowed to own
+  ordinary Migration provider participation.
+- The final cancellation audit corrected two target-search synchronization catches so cancellation cannot be converted
+  into a missing match. Search failures remain source-search outcomes; F11 preparation and execution failures remain
+  structured Feature results.
+- The public content-type reference now records the executable result: Manga and Anime support source Migration, while
+  Book's missing provider remains valid unavailable behavior.
+
+Validation record:
+
+- Formatting, build-logic enforcement tests, the repository Entry interaction boundary, the shared F11 behavior
+  contract, and Manga/Anime/Book interaction suites pass.
+- The production census finds no legacy facade, dispatcher, use case, or support method outside the enforcement fixtures
+  that deliberately prove those paths are rejected.
+- FOSS application compilation continues to report only the pre-recorded unrelated debug-player callback and profile
+  shortcut errors; no F11 production error remains.
+
+Manifesto comparison:
+
+- No central content-type or capability allowlist was added. Capability-property protection is discovered from SPI
+  declarations, and provider presence remains the sole Migration participation fact.
+- No per-type matrix, mandatory interaction, capability-label assertion, feature-specific substitute architecture,
+  compatibility authority, raw application dispatch, or type branch remains in the completed Migration path.
+- The relationship graph, owner-produced optional consequences, durable obligations, shared behavioral contract,
+  Feature-facing presentation, and public documentation all describe the same executable support result.
+- An unknown future type activates the complete workflow by contributing its owned Migration provider. Missing optional
+  providers skip only their own relationships; missing follow-on work after satisfied prerequisites remains visible to
+  graph/enforcement validation.
 
 ## Manifesto Review of the Plan
 

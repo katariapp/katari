@@ -219,6 +219,8 @@ class MigrationListScreenModel(
                     fetchDetails = false,
                     fetchChapters = true,
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 logcat(LogPriority.ERROR, e)
             }
@@ -260,6 +262,8 @@ class MigrationListScreenModel(
                         fetchChapters = true,
                     )
                     entryRepository.getEntryById(target, migratingEntry.entry.profileId) ?: entry
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {
                     null
                 }

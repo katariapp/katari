@@ -56,7 +56,7 @@ Current progress:
   [`../features/F27-profile-preference-ownership.md`](../features/F27-profile-preference-ownership.md).
 - [x] `F12` — Complete in `5e67ce793`. See
   [`../features/F12-merge.md`](../features/F12-merge.md).
-- [ ] `F11` — `F11.0`-`F11.1` committed; `F11.2` transaction/consequence semantics accepted. See
+- [x] `F11` — Complete. See
   [`../features/F11-migration.md`](../features/F11-migration.md).
 
 ## Architecture Gate 5.0 — Application Feature Access

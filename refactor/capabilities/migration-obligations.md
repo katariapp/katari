@@ -1,6 +1,6 @@
 # Capability Architecture Migration Obligations
 
-Updated: 2026-07-19
+Updated: 2026-07-20
 
 This ledger records production and test code exposed by the Phase 3.5 dependency cut. These failures are expected until
 their owning phases migrate them to feature contributions and evaluated graph results. They must not be hidden with a
@@ -185,6 +185,24 @@ SPI boundary is not an exit gate for Phase 3.5.
   Entry, Library, dialog, and list consumers; none is allowlisted or hidden behind a compatibility implementation.
 - F11.4 still owns immutable Progress, Playback Preferences, Viewer Settings, Download, and staged-cover consequences,
   including verified Download completion. F11.5 still owns every UI, Browse, source/search, and configuration consumer.
+
+### Resolved by F11.4-F11.5: complete behavior and consumer ownership
+
+- Cross-feature and external consequences use owner-produced immutable payloads with durable retry and aggregate status.
+  Optional provider absence skips only its owning relationship; it does not invalidate base Migration.
+- Entry, Library, Browse, source selection, search, configuration, dialogs, and batch execution consume F11 results.
+  Explicit profile/Entry identity and captured options survive navigation and execution.
+- Unsupported Entries no longer reach a silent no-op. Applied, rejected, conflicted, operationally failed, and
+  incomplete-follow-up outcomes remain distinct.
+
+### Verified by F11.6: integrated Migration completeness
+
+- The transitional capability facade, dispatcher, aggregate field, and unused provider projection are deleted.
+  Migration provider bindings remain ordinary graph-discovered participation evidence.
+- Generic enforcement discovers SPI provider types and top-level `Entry…Capability` properties. Legacy support/use-case
+  vocabulary, ambient coordinator authority, concrete type authorization, and host-port borrowing are rejected.
+- The full census, shared behavior contract, per-type interaction suites, boundary validation, and public content-type
+  reference agree: Manga and Anime participate, Book provider absence is valid, and no known F11 follow-up remains.
 
 ### Resolved in Architecture Gate 5.0: application access to raw interactions
 
