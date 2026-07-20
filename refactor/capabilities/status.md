@@ -49,9 +49,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6 preparation and `C01`–`C24` owner-based split
-- State: Phase 5, F11, and Phase 6.0 are complete. Decision `0022` and the `C01`–`C24` owner-based sequence are
-  approved; Phase 6.1 runtime context resolution is next.
+- Milestone: Phase 6.1 runtime context resolution
+- State: Phase 6.1 is implemented and validated for review. No `C01`–`C24` production consumer migration has started.
 
 Focused Phase 6 preparation findings:
 
@@ -65,6 +64,19 @@ Focused Phase 6 preparation findings:
   operation-scoped evidence for each owning Feature; they do not become global support capabilities or one context
   manager.
 - Decision `0022` is accepted. Phase 6 preparation changed planning only and introduced no production behavior.
+
+Focused Phase 6.1 findings:
+
+- Context inputs, the Feature-owned rule, and possible blocker definitions are declared together. Undeclared evidence
+  reads and ad hoc blockers fail rather than remaining invisible to reporting.
+- Static conditional relationships now expose candidate consequences without authorizing them and retain both supplied
+  and pending specialized adapters.
+- Runtime evidence resolution distinguishes missing, blocked, incomplete, and applicable results. Obligations appear
+  only after context establishes applicability, and consequences appear only after the relationship is complete.
+- Resolution uses the exact evaluated subject and module-controlled evaluation objects. Application modules remain
+  unable to depend on or export the graph machinery.
+- An unknown contextual contribution passes through unchanged discovery and exercises every runtime result without a
+  type, feature, capability, context, or blocker registry edit.
 
 Focused F11.0 findings:
 

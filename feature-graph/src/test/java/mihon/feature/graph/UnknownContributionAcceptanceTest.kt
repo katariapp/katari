@@ -2,6 +2,7 @@ package mihon.feature.graph
 
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.jupiter.api.Test
 
 class UnknownContributionAcceptanceTest {
@@ -93,6 +94,121 @@ class UnknownContributionAcceptanceTest {
         )
     }
 
+    @Test
+    fun `unknown contextual integration resolves through unchanged discovery path`() {
+        val typesOwner = ContributionOwner("future.types")
+        val capabilityOwner = ContributionOwner("future.capability")
+        val contextOwner = ContributionOwner("future.context")
+        val featureOwner = ContributionOwner("future.feature")
+        val capability = capabilityDefinition<FutureProvider>(CapabilityId("future.capability"), capabilityOwner)
+        val context = contextInputDefinition<FutureContext>(ContextInputId("future.context"), contextOwner)
+        val adapter = specializedAdapterDefinition<FutureAdapter>(
+            SpecializedAdapterId("future.adapter"),
+            featureOwner,
+        )
+        val consequence = consequence("future.consequence")
+        val blocker = FeatureContextBlocker(FeatureArtifactId("future.disabled"), listOf(context))
+        val types = mutableListOf<ContentTypeContribution>()
+        val features = mutableListOf<FeatureContribution>()
+        val contributors = listOf(
+            featureGraphContributor(typesOwner) { types.forEach(::add) },
+            featureGraphContributor(featureOwner) { features.forEach(::add) },
+        )
+
+        types += ContentTypeContribution(ContentTypeId("future.empty"), typesOwner)
+        features += FeatureContribution(
+            feature = FeatureId("future.baseline"),
+            owner = featureOwner,
+            integrations = listOf(
+                FeatureIntegration(
+                    id = FeatureIntegrationId("future.baseline"),
+                    prerequisites = CapabilityExpression.Always,
+                    sharedConsequences = listOf(consequence("future.baseline")),
+                ),
+            ),
+        )
+        discoverAndAssembleFeatureGraph(contributors)
+
+        types += ContentTypeContribution(
+            contentType = ContentTypeId("future.complete"),
+            owner = typesOwner,
+            providers = listOf(CapabilityProvider(capability, FutureProvider())),
+            specializedAdapters = listOf(SpecializedAdapter(adapter, FutureAdapter())),
+        )
+        types += ContentTypeContribution(
+            contentType = ContentTypeId("future.incomplete"),
+            owner = typesOwner,
+            providers = listOf(CapabilityProvider(capability, FutureProvider())),
+        )
+        features += FeatureContribution(
+            feature = FeatureId("future.conditional"),
+            owner = featureOwner,
+            integrations = listOf(
+                FeatureIntegration(
+                    id = FeatureIntegrationId("future.conditional"),
+                    prerequisites = CapabilityExpression.Provided(capability),
+                    contextInputs = listOf(context),
+                    contextRule = featureContextRule(featureOwner) { evidence ->
+                        if (evidence.value(context).enabled) {
+                            FeatureContextDecision.Applicable
+                        } else {
+                            FeatureContextDecision.Blocked(listOf(blocker))
+                        }
+                    },
+                    contextBlockers = listOf(blocker),
+                    specializedRequirements = listOf(adapter),
+                    sharedConsequences = listOf(consequence),
+                ),
+            ),
+        )
+
+        val graph = discoverAndAssembleFeatureGraph(contributors)
+        val evaluation = evaluateFeatureGraph(graph)
+        evaluation.candidateConsequences
+            .filter { it.subject.feature == FeatureId("future.conditional") }
+            .map { it.subject.contentType } shouldContainExactly listOf(
+            ContentTypeId("future.complete"),
+            ContentTypeId("future.incomplete"),
+        )
+        evaluation.candidateConsequences
+            .filter { it.subject.feature == FeatureId("future.conditional") }
+            .all { it.consequence === consequence } shouldBe true
+
+        resolveFeatureContext(
+            evaluation,
+            ContentTypeId("future.complete"),
+            FeatureId("future.conditional"),
+            FeatureIntegrationId("future.conditional"),
+            emptyList(),
+        )
+            .integration.shouldBeInstanceOf<MissingFeatureContextEvidence>()
+        resolveFeatureContext(
+            evaluation = evaluation,
+            contentType = ContentTypeId("future.complete"),
+            feature = FeatureId("future.conditional"),
+            integration = FeatureIntegrationId("future.conditional"),
+            evidence = listOf(contextEvidence(context, FutureContext(enabled = false))),
+        ).integration.shouldBeInstanceOf<BlockedFeatureContext>()
+        resolveFeatureContext(
+            evaluation = evaluation,
+            contentType = ContentTypeId("future.complete"),
+            feature = FeatureId("future.conditional"),
+            integration = FeatureIntegrationId("future.conditional"),
+            evidence = listOf(contextEvidence(context, FutureContext(enabled = true))),
+        ).sharedConsequences.map { it.consequence } shouldContainExactly listOf(consequence)
+
+        val incomplete = resolveFeatureContext(
+            evaluation = evaluation,
+            contentType = ContentTypeId("future.incomplete"),
+            feature = FeatureId("future.conditional"),
+            integration = FeatureIntegrationId("future.conditional"),
+            evidence = listOf(contextEvidence(context, FutureContext(enabled = true))),
+        )
+        incomplete.integration.shouldBeInstanceOf<IncompleteFeatureContext>()
+        incomplete.obligations.single().responsibleOwner shouldBe typesOwner
+        incomplete.obligations.single().requirement shouldBe adapter
+    }
+
     private fun contentType(
         id: String,
         owner: ContributionOwner,
@@ -131,4 +247,10 @@ class UnknownContributionAcceptanceTest {
     private class AlphaProvider
 
     private class ExampleAdapter
+
+    private data class FutureContext(val enabled: Boolean)
+
+    private class FutureProvider
+
+    private class FutureAdapter
 }

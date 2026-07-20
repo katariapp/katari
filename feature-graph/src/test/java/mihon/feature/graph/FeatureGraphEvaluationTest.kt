@@ -122,9 +122,11 @@ class FeatureGraphEvaluationTest {
 
         val result = evaluation.integrations.single() as ConditionalFeatureIntegration
         result.unresolvedContextInputs shouldContainExactly listOf(context)
+        result.suppliedAdapters shouldBe emptyList()
         result.pendingSpecializedRequirements shouldContainExactly listOf(adapter)
         evaluation.obligations shouldBe emptyList()
         evaluation.sharedConsequences shouldBe emptyList()
+        evaluation.candidateConsequences shouldHaveSize 1
     }
 
     @Test
@@ -243,6 +245,11 @@ class FeatureGraphEvaluationTest {
             id = FeatureIntegrationId(id),
             prerequisites = prerequisites,
             contextInputs = contextInputs,
+            contextRule = if (contextInputs.isEmpty()) {
+                null
+            } else {
+                featureContextRule(featureOwner) { FeatureContextDecision.Applicable }
+            },
             specializedRequirements = specializedRequirements,
             sharedConsequences = listOf(consequence),
         )

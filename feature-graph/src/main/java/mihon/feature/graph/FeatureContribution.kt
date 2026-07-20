@@ -40,18 +40,6 @@ private fun requireTerms(label: String, terms: List<CapabilityExpression>) {
     }
 }
 
-/** Context whose value is supplied later without flattening it into type-wide capability support. */
-data class ContextInputDefinition<C : Any>(
-    val id: ContextInputId,
-    val owner: ContributionOwner,
-    val valueType: KClass<C>,
-)
-
-inline fun <reified C : Any> contextInputDefinition(
-    id: ContextInputId,
-    owner: ContributionOwner,
-): ContextInputDefinition<C> = ContextInputDefinition(id, owner, C::class)
-
 /** Shared executable behavior supplied by a feature when an integration applies. */
 interface SharedFeatureConsequence {
     val id: FeatureArtifactId
@@ -100,6 +88,8 @@ data class FeatureIntegration(
     val id: FeatureIntegrationId,
     val prerequisites: CapabilityExpression,
     val contextInputs: List<ContextInputDefinition<*>> = emptyList(),
+    val contextRule: FeatureContextRule? = null,
+    val contextBlockers: List<FeatureContextBlocker> = emptyList(),
     val specializedRequirements: List<SpecializedAdapterDefinition<*>> = emptyList(),
     val sharedConsequences: List<SharedFeatureConsequence> = emptyList(),
     val behavioralContracts: List<FeatureBehaviorContract> = emptyList(),
@@ -108,6 +98,18 @@ data class FeatureIntegration(
 ) {
     init {
         requireUnique("Context inputs for $id", contextInputs.map { it.id.value })
+        require(contextInputs.isNotEmpty() == (contextRule != null)) {
+            "Feature integration $id must declare context inputs and a context rule together"
+        }
+        requireUnique("Context blockers for $id", contextBlockers.map { it.id.value })
+        val declaredContextInputs = contextInputs.toSet()
+        contextBlockers.forEach { blocker ->
+            blocker.inputs.forEach { input ->
+                require(input in declaredContextInputs) {
+                    "Context blocker ${blocker.id} on $id references undeclared input ${input.id}"
+                }
+            }
+        }
         requireUnique("Specialized requirements for $id", specializedRequirements.map { it.id.value })
         requireUnique("Shared consequences for $id", sharedConsequences.map { it.id.value })
         requireUnique("Behavioral contracts for $id", behavioralContracts.map { it.id.value })
@@ -141,6 +143,11 @@ data class FeatureContribution(
 ) {
     init {
         requireUnique("Integrations for $feature", integrations.map { it.id.value })
+        integrations.mapNotNull { it.contextRule }.forEach { rule ->
+            require(rule.owner == owner) {
+                "Feature $feature cannot use context rule owned by ${rule.owner}"
+            }
+        }
         integrations.flatMap { it.specializedRequirements }.forEach { requirement ->
             require(requirement.owner == owner) {
                 "Feature $feature cannot own specialized requirement ${requirement.id} declared by ${requirement.owner}"

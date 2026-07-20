@@ -77,6 +77,7 @@ class ContributionSemanticsTest {
                 CapabilityExpression.Provided(beta),
             ),
             contextInputs = listOf(context),
+            contextRule = featureContextRule(featureOwner) { FeatureContextDecision.Applicable },
             specializedRequirements = listOf(adapter),
             sharedConsequences = listOf(consequence),
             behavioralContracts = listOf(contract),
@@ -92,6 +93,7 @@ class ContributionSemanticsTest {
 
         feature.integrations.single().prerequisites shouldBe integration.prerequisites
         feature.integrations.single().contextInputs shouldContainExactly listOf(context)
+        feature.integrations.single().contextRule shouldBe integration.contextRule
         feature.integrations.single().specializedRequirements shouldContainExactly listOf(adapter)
         feature.integrations.single().sharedConsequences shouldContainExactly listOf(consequence)
         feature.integrations.single().behavioralContracts shouldContainExactly listOf(contract)
@@ -117,6 +119,65 @@ class ContributionSemanticsTest {
                         specializedRequirements = listOf(foreignRequirement),
                     ),
                 ),
+            )
+        }
+    }
+
+    @Test
+    fun `context inputs require a rule owned by the feature`() {
+        val context = contextInputDefinition<ExampleContext>(
+            id = ContextInputId("example.context"),
+            owner = ContributionOwner("example.context-owner"),
+        )
+        val otherContext = contextInputDefinition<ExampleContext>(
+            id = ContextInputId("example.other-context"),
+            owner = ContributionOwner("example.context-owner"),
+        )
+
+        shouldThrow<IllegalArgumentException> {
+            FeatureIntegration(
+                id = FeatureIntegrationId("example.conditional"),
+                prerequisites = CapabilityExpression.Always,
+                contextInputs = listOf(context),
+            )
+        }
+        shouldThrow<IllegalArgumentException> {
+            FeatureIntegration(
+                id = FeatureIntegrationId("example.context-free"),
+                prerequisites = CapabilityExpression.Always,
+                contextRule = featureContextRule(featureOwner) { FeatureContextDecision.Applicable },
+            )
+        }
+        shouldThrow<IllegalArgumentException> {
+            FeatureContribution(
+                feature = FeatureId("example"),
+                owner = featureOwner,
+                integrations = listOf(
+                    FeatureIntegration(
+                        id = FeatureIntegrationId("example.conditional"),
+                        prerequisites = CapabilityExpression.Always,
+                        contextInputs = listOf(context),
+                        contextRule = featureContextRule(ContributionOwner("other.feature")) {
+                            FeatureContextDecision.Applicable
+                        },
+                        sharedConsequences = listOf(consequence("example.consequence")),
+                    ),
+                ),
+            )
+        }
+        shouldThrow<IllegalArgumentException> {
+            FeatureIntegration(
+                id = FeatureIntegrationId("example.conditional"),
+                prerequisites = CapabilityExpression.Always,
+                contextInputs = listOf(context),
+                contextRule = featureContextRule(featureOwner) { FeatureContextDecision.Applicable },
+                contextBlockers = listOf(
+                    FeatureContextBlocker(
+                        id = FeatureArtifactId("example.other-blocker"),
+                        inputs = listOf(otherContext),
+                    ),
+                ),
+                sharedConsequences = listOf(consequence("example.consequence")),
             )
         }
     }

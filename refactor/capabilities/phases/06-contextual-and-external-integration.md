@@ -102,12 +102,38 @@ product behavior is available, they must consume the owning Feature result.
 
 ### 6.1 — Context Resolution Architecture
 
-- [ ] Implement the architecture gate above in `feature-graph` before migrating production consumers.
-- [ ] Define immutable operation subjects, typed evidence, feature-owned resolution, enabling/blocking results, delayed
+- [x] Implement the architecture gate above in `feature-graph` before migrating production consumers.
+- [x] Define immutable operation subjects, typed evidence, feature-owned resolution, enabling/blocking results, delayed
   obligations, and candidate consequence semantics.
-- [ ] Extend discovery, consistency validation, evaluation, and synthetic unknown-contribution coverage without adding a
+- [x] Extend discovery, consistency validation, evaluation, and synthetic unknown-contribution coverage without adding a
   product identifier or central context catalog.
-- [ ] Establish the Feature-facing dependency boundary before application migrations begin.
+- [x] Establish the Feature-facing dependency boundary before application migrations begin.
+
+Completion notes:
+
+- A contextual integration now declares typed inputs, one Feature-owned rule, and every possible blocker definition.
+  Construction rejects a rule without inputs, inputs without a rule, foreign rule ownership, duplicate blockers, and
+  blockers that cite undeclared evidence.
+- Static evaluation keeps capability absence as ordinary inapplicability. Satisfied contextual integrations retain
+  matched providers, supplied and pending specialized adapters, and candidate consequence edges without granting
+  runtime applicability.
+- Runtime resolution accepts a complete typed evidence snapshot for one evaluated content-type/Feature/integration
+  subject. It rejects unexpected, contradictory, duplicate, and undeclared reads and returns distinct missing-evidence,
+  blocked, incomplete, or applicable states.
+- Missing evidence and blockers activate neither consequences nor obligations. An applicable result exposes delayed
+  specialized obligations when required work is absent; only a complete applicable result activates consequence edges.
+- Applicable and blocked results retain the authoritative evidence definitions and values. Blockers must be selected
+  from the Feature's declared definitions, so reporting cannot receive an ad hoc runtime-only reason.
+- Resolution is stateless and reevaluates each snapshot. Evaluation/result constructors are module-controlled, and the
+  public resolver locates the exact discovered subject rather than accepting a caller-fabricated applicability object.
+- The synthetic acceptance proof adds previously unknown types, a capability, context definition, Feature, blocker,
+  adapter, and consequence through unchanged contributors. It proves missing, blocked, applicable, and delayed-obligation
+  outcomes without a product registry edit.
+- The existing app dependency check continues to reject direct `feature-graph` access. Entry Feature API does not export
+  the context machinery, so later consumers must receive purpose-specific Feature results.
+- Feature-graph, root Entry-interactions compilation/tests, formatting, build-logic tests, and boundary checks pass. FOSS
+  compilation reaches only the already recorded unrelated `AnimePlayerLauncherScreen` callback and `MoreTab` coroutine
+  errors; it reports no context-resolution or Entry-interactions failure.
 
 ### 6.2 — Catalogue and Source Description (`C01`, `C02`, `C04`, `C14`)
 

@@ -23,7 +23,7 @@ sealed interface FeatureIntegrationEvaluation {
 }
 
 /** A prerequisite provider is absent. This is ordinary unsupported behavior and creates no obligation. */
-data class InapplicableFeatureIntegration(
+data class InapplicableFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
     val matchedProviders: List<CapabilityProvider<*>>,
@@ -31,16 +31,17 @@ data class InapplicableFeatureIntegration(
 ) : FeatureIntegrationEvaluation
 
 /** Capability prerequisites are satisfied, but runtime context must decide whether the integration applies. */
-data class ConditionalFeatureIntegration(
+data class ConditionalFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
     val matchedProviders: List<CapabilityProvider<*>>,
     val unresolvedContextInputs: List<ContextInputDefinition<*>>,
+    val suppliedAdapters: List<SpecializedAdapter<*>>,
     val pendingSpecializedRequirements: List<SpecializedAdapterDefinition<*>>,
 ) : FeatureIntegrationEvaluation
 
 /** Prerequisites are satisfied, but the affected content type has not supplied required specialized work. */
-data class IncompleteFeatureIntegration(
+data class IncompleteFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
     val matchedProviders: List<CapabilityProvider<*>>,
@@ -49,7 +50,7 @@ data class IncompleteFeatureIntegration(
 ) : FeatureIntegrationEvaluation
 
 /** All statically evaluable prerequisites and specialized requirements are satisfied. */
-data class ApplicableFeatureIntegration(
+data class ApplicableFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
     val matchedProviders: List<CapabilityProvider<*>>,
@@ -82,11 +83,18 @@ data class SharedConsequenceApplicability(
     val consequence: SharedFeatureConsequence,
 )
 
+/** A conditional consequence discovered statically and installed without granting runtime applicability. */
+data class SharedConsequenceCandidate(
+    val subject: FeatureIntegrationSubject,
+    val consequence: SharedFeatureConsequence,
+)
+
 /** Deterministic derived evaluation of an assembled [FeatureGraph]. */
-data class FeatureGraphEvaluation(
+data class FeatureGraphEvaluation internal constructor(
     val integrations: List<FeatureIntegrationEvaluation>,
     val obligations: List<SpecializedFeatureObligation>,
     val sharedConsequences: List<SharedConsequenceApplicability>,
+    val candidateConsequences: List<SharedConsequenceCandidate>,
 )
 
 fun evaluateFeatureGraph(graph: FeatureGraph): FeatureGraphEvaluation {
@@ -111,6 +119,13 @@ fun evaluateFeatureGraph(graph: FeatureGraph): FeatureGraphEvaluation {
                 evaluation.integration.sharedConsequences
                     .sortedBy { it.id.value }
                     .map { consequence -> SharedConsequenceApplicability(evaluation.subject, consequence) }
+            },
+        candidateConsequences = evaluations
+            .filterIsInstance<ConditionalFeatureIntegration>()
+            .flatMap { evaluation ->
+                evaluation.integration.sharedConsequences
+                    .sortedBy { it.id.value }
+                    .map { consequence -> SharedConsequenceCandidate(evaluation.subject, consequence) }
             },
     )
 }
@@ -156,6 +171,7 @@ private fun evaluateIntegration(
             integration = integration,
             matchedProviders = prerequisiteResult.matchedProviders,
             unresolvedContextInputs = integration.contextInputs.sortedBy { it.id.value },
+            suppliedAdapters = suppliedAdapters,
             pendingSpecializedRequirements = missingRequirements,
         )
     }
