@@ -143,9 +143,9 @@ internal class MangaDownloadProcessor(
         downloadManager.enqueueChaptersToDelete(chapters, entry)
     }
 
-    override suspend fun deleteEntryDownloads(entry: Entry) {
+    override suspend fun deleteEntryDownloads(entry: Entry): Boolean {
         entry.requireManga()
-        downloadManager.deleteManga(entry, dependencies.sourceManager.getOrStub(entry.source))
+        return downloadManager.deleteManga(entry, dependencies.sourceManager.getOrStub(entry.source))
     }
 
     override fun hasDownloads(entry: Entry): Boolean {

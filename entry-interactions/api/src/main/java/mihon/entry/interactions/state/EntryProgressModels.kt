@@ -1,11 +1,14 @@
 package mihon.entry.interactions
 
+import kotlinx.serialization.Serializable
 import tachiyomi.domain.entry.model.EntryProgressLocator
 
+@Serializable
 data class EntryProgressSnapshot(
     val states: List<EntryProgressStateSnapshot> = emptyList(),
 )
 
+@Serializable
 data class EntryProgressStateSnapshot(
     val contentKey: String = "",
     val resourceKey: String,
@@ -24,6 +27,7 @@ data class EntryProgressStateSnapshot(
     }
 }
 
+@Serializable
 data class EntryProgressResourceMapping(
     val sourceContentKey: String = "",
     val sourceResourceKey: String,

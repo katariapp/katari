@@ -39,6 +39,7 @@ Updated: 2026-07-19
 - F11.0 Migration planning commit: `da19e7df3` (`(docs): plan entry source migration`)
 - F11.1 Migration boundary commit: `4804a8b41` (`(refactor): define migration feature boundary`)
 - F11.2 transaction semantics commit: `de55ae95f` (`(docs): define migration transaction semantics`)
+- F11.3 primary transfer commit: `fff5aa853` (`(refactor): implement migration primary transfer`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -46,8 +47,8 @@ Updated: 2026-07-19
 ## Active Work
 
 - Phase: Phase 5 — Feature Integration Migration
-- Milestone: `F11.3` — Entry Source Migration shared coordinator and primary transfer
-- State: F11.0-F11.2 are committed. F11.3 is implemented, validated within its intentional boundary, and awaits review.
+- Milestone: `F11.4` — Entry Source Migration cross-feature and external consequences
+- State: F11.0-F11.3 are committed. F11.4 is implemented, validated within its intentional boundary, and awaits review.
 
 Focused F11.0 findings:
 
@@ -105,6 +106,20 @@ Focused F11.3 findings:
   handler and therefore does not pre-empt F11.4's owner-produced immutable payload work.
 - The legacy orchestration use case and DI binding are gone. The boundary queue is now 10 findings across five files,
   all intentionally assigned to the F11.5 application-consumer migration.
+
+Focused F11.4 findings:
+
+- Progress, Playback Preferences, and Viewer Settings produce immutable target-bound payloads; retry restores captured
+  values without rereading mutable source state.
+- Viewer Settings owns provider-specific legacy flag normalization. Migration contains no production EntryType branch.
+- Download cleanup captures pre-replacement owners and acknowledges only verified absence. Merge uses the same corrected
+  completion result.
+- Custom covers are staged before commit, promoted after commit, retained until acknowledgement, and covered by bounded
+  orphan cleanup.
+- Durable delivery, aggregate status/retry, and runtime retry warmup are installed. Provider absence skips only the
+  owning optional relationship.
+- The remaining boundary/compiler queue is still intentionally assigned to F11.5; no UI compatibility authority was
+  introduced to make the application compile early.
 
 ## Why the Plan Was Reset
 
@@ -674,6 +689,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Review and commit F11.3, then begin F11.4. Prepare immutable owner-produced payloads and durable delivery for Progress,
-Playback Preferences, Viewer Settings, selected Download cleanup, and staged custom-cover promotion without migrating
-application UI consumers early.
+Review and commit F11.4, then begin F11.5. Migrate every Entry, Library, Browse, search, configuration, and dialog
+consumer to the shared Migration Feature without reintroducing a support facade or caller-owned transfer pipeline.

@@ -222,9 +222,9 @@ internal class AnimeDownloadProcessor(
         animeDownloadManager.deleteEpisodes(entry, chapters)
     }
 
-    override suspend fun deleteEntryDownloads(entry: Entry) {
+    override suspend fun deleteEntryDownloads(entry: Entry): Boolean {
         entry.requireAnime()
-        animeDownloadManager.deleteAnime(entry)
+        return animeDownloadManager.deleteAnime(entry)
     }
 
     override fun hasDownloads(entry: Entry): Boolean {

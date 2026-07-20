@@ -258,20 +258,21 @@ internal class BookDownloadManager(
         cache.remove(deletedKeys)
     }
 
-    suspend fun deleteEntryDownloads(entry: Entry) {
+    suspend fun deleteEntryDownloads(entry: Entry): Boolean {
         removeFromQueue(queueState.value.filter { it.entry.id == entry.id }.map { it.chapter.id })
         cache.ensureInitialized()
-        val deletedKeys = cache.packages.value.values
+        val downloads = cache.packages.value.values
             .filter {
                 (it.manifest.sourceId == entry.source && it.manifest.entryUrl == entry.url) ||
                     it.manifest.entryId == entry.id
             }
-            .mapNotNull { download ->
-                download.manifest.packageKey.takeIf {
-                    download.directory.delete() || !download.directory.exists()
-                }
+        val deletedKeys = downloads.mapNotNull { download ->
+            download.manifest.packageKey.takeIf {
+                download.directory.delete() || !download.directory.exists()
             }
+        }
         cache.remove(deletedKeys)
+        return deletedKeys.size == downloads.size
     }
 
     fun invalidateCache() {

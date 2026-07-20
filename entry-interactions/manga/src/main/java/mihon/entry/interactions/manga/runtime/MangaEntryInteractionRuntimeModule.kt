@@ -36,6 +36,7 @@ fun mangaEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerI
         val typeViewerSettingsProvider = DefaultEntryViewerSettingsProvider(
             type = EntryType.MANGA,
             surfaces = listOf(viewerSettingsProvider),
+            legacyViewerFlagsNormalization = { flags -> flags and LEGACY_MANGA_VIEWER_MASK.inv() },
         )
         addSingletonFactory { viewerSettingsProvider }
         val progressRepository = get<EntryProgressRepository>()
@@ -57,6 +58,8 @@ fun mangaEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerI
         )
     }
 }
+
+private const val LEGACY_MANGA_VIEWER_MASK = 0x3FL
 
 private fun InjektRegistrar.addMangaEntryInteractionRuntime(app: Application): () -> Unit {
     addSingletonFactory { DownloadProvider(app) }

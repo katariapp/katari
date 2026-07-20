@@ -6,6 +6,9 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.host.EntryMigrationExecutionHost
@@ -159,12 +162,50 @@ class EntryMigrationFeatureTest {
         }
     }
 
+    @Test
+    fun `one applicable owner adds only its immutable consequence`() = runTest {
+        val host = RecordingMigrationHost(source, target).apply {
+            transitionResult = EntryMigrationHostTransitionResult.Applied(
+                replayed = false,
+                hasPendingConsequences = true,
+            )
+        }
+        val progress = mockk<EntryProgressFeature>()
+        coEvery { progress.prepareMigration(any(), any(), any()) } returns
+            EntryProgressMigrationPreparation.Prepared(
+                EntryProgressMigrationPayload(target, EntryProgressSnapshot()),
+            )
+        val delivery = mockk<EntryMigrationConsequenceDelivery>()
+        coEvery { delivery.deliverOperation(any()) } returns EntryMigrationFollowUp.COMPLETE
+        val feature = feature(
+            host = host,
+            bindings = listOf(
+                EntryMigrationCapability.bind(MigrationProvider()),
+                EntryProgressCapability.bind(ProgressProvider()),
+            ),
+            progress = progress,
+            consequenceDelivery = delivery,
+        )
+        val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
+            .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
+
+        feature.execute(
+            EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.COPY, emptySet()),
+        ).shouldBeInstanceOf<EntryMigrationExecutionResult.Applied>()
+
+        host.transitions.single().consequenceRequests.map { it.artifactId } shouldBe
+            listOf(EntryMigrationConsequenceArtifact.PROGRESS)
+        coVerify(exactly = 1) { delivery.deliverOperation(any()) }
+    }
+
     private fun feature(
         host: RecordingMigrationHost,
         merge: RecordingMergeMigrationFeature = RecordingMergeMigrationFeature(),
         bindings: List<EntryInteractionProviderBinding<*>> = listOf(
             EntryMigrationCapability.bind(MigrationProvider()),
         ),
+        progress: EntryProgressFeature? = null,
+        consequenceDelivery: EntryMigrationConsequenceDelivery? = null,
     ): EntryMigrationFeature {
         val composition = createEntryInteractionComposition(
             plugins = listOf(
@@ -176,11 +217,34 @@ class EntryMigrationFeatureTest {
             ),
             featureContributors = listOf(EntryMigrationFeatureContributor),
         )
+        val progressFeature = progress ?: mockk<EntryProgressFeature>().also {
+            coEvery { it.prepareMigration(any(), any(), any()) } returns
+                EntryProgressMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
+        }
+        val playback = mockk<EntryPlaybackPreferencesFeature>()
+        coEvery { playback.prepareMigration(any(), any()) } returns
+            EntryPlaybackPreferencesMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
+        val viewerSettings = mockk<EntryViewerSettingsFeature>()
+        coEvery { viewerSettings.prepareMigration(any(), any()) } returns
+            EntryViewerSettingsMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
+        val downloads = mockk<EntryDownloadMaintenanceFeature>()
+        coEvery { downloads.inspectEntry(any()) } returns
+            EntryDownloadMaintenanceInspection.Inapplicable(EntryType.BOOK)
+        coEvery { downloads.prepareRemoval(any()) } returns EntryDownloadRemovalPreparation.Inapplicable(EntryType.BOOK)
+        val delivery = consequenceDelivery ?: mockk<EntryMigrationConsequenceDelivery>().also {
+            coEvery { it.deliverOperation(any()) } returns EntryMigrationFollowUp.INCOMPLETE
+        }
         return DefaultEntryMigrationFeature(
             evaluation = composition.featureGraphEvaluation,
             preparationHost = host,
             executionHost = host,
             mergeMigration = merge,
+            progress = progressFeature,
+            playbackPreferences = playback,
+            viewerSettings = viewerSettings,
+            downloads = downloads,
+            customCover = mockk(relaxed = true),
+            consequences = delivery,
             clockMillis = { 999 },
         )
     }
@@ -235,6 +299,18 @@ class EntryMigrationFeatureTest {
         override val type = EntryType.BOOK
 
         override suspend fun setBookmarked(entry: Entry, chapters: List<EntryChapter>, bookmarked: Boolean) = Unit
+    }
+
+    private class ProgressProvider : EntryProgressProcessor {
+        override val type = EntryType.BOOK
+
+        override suspend fun snapshot(entry: Entry) = EntryProgressSnapshot()
+        override suspend fun restore(entry: Entry, snapshot: EntryProgressSnapshot) = Unit
+        override suspend fun copy(
+            sourceEntry: Entry,
+            targetEntry: Entry,
+            resourceMappings: List<EntryProgressResourceMapping>,
+        ) = Unit
     }
 }
 

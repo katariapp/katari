@@ -222,16 +222,18 @@ internal class AnimeDownloadManager(
         }
     }
 
-    suspend fun deleteAnime(anime: Entry) {
-        withIOContext {
+    suspend fun deleteAnime(anime: Entry): Boolean {
+        return withIOContext {
             val queuedEpisodeIds = queueState.value
                 .filter { it.anime.id == anime.id }
                 .map { it.episode.id }
             removeFromQueue(queuedEpisodeIds)
-            sourceManager.get(anime.source)?.let { source ->
-                provider.findAnimeDir(anime.title, source)?.delete()
-            }
+            val source = sourceManager.get(anime.source)
+            val animeDirectory = source?.let { provider.findAnimeDir(anime.title, it) }
+            val removed = animeDirectory == null || animeDirectory.delete() || !animeDirectory.exists()
+            if (!removed) return@withIOContext false
             cache.removeAnime(anime)
+            true
         }
     }
 

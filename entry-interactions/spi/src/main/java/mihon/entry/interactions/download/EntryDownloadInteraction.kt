@@ -47,7 +47,7 @@ interface EntryDownloadInteraction {
     ): List<EntryChapter>
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
     suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>)
-    suspend fun deleteEntryDownloads(entry: Entry)
+    suspend fun deleteEntryDownloads(entry: Entry): Boolean
 
     fun hasDownloads(entry: Entry): Boolean
     fun getDownloadCount(entry: Entry): Int

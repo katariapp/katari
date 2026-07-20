@@ -52,6 +52,20 @@ class EntryPlaybackPreferencesFeatureTest {
     }
 
     @Test
+    fun `migration preparation captures preferences before durable restore`() = runTest {
+        val processor = RecordingPlaybackPreferencesProcessor(snapshot)
+        val feature = featureFor(EntryPlaybackPreferencesCapability.bind(processor))
+
+        val prepared = feature.prepareMigration(sourceEntry, targetEntry)
+            as EntryPlaybackPreferencesMigrationPreparation.Prepared
+
+        prepared.payload shouldBe EntryPlaybackPreferencesMigrationPayload(targetEntry, snapshot)
+        processor.copied shouldBe null
+        feature.applyMigration(prepared.payload) shouldBe EntryPlaybackPreferencesRestoreResult.Applied
+        processor.restored shouldBe (targetEntry to snapshot)
+    }
+
+    @Test
     fun `raw dispatch is strict because structured absence belongs to the feature`() = runTest {
         val composition = compositionFor()
         val interaction = composition.interactions.playbackPreferences

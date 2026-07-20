@@ -1,6 +1,7 @@
 package tachiyomi.data.entry
 
 import app.cash.sqldelight.async.coroutines.await
+import app.cash.sqldelight.async.coroutines.awaitAsList
 import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import app.cash.sqldelight.async.coroutines.awaitCreate
@@ -62,6 +63,29 @@ class EntryMigrationPersistenceQueriesTest {
             }
 
             database.entry_migration_operationsQueries.getById("operation").awaitAsOneOrNull() shouldBe null
+            database.entry_migration_consequencesQueries.countByOperation("operation").awaitAsOne() shouldBe 0
+        }
+    }
+
+    @Test
+    fun `consequence failure remains pending until acknowledged`() = runTest {
+        withDatabase { database, _ ->
+            database.entry_migration_operationsQueries.insert("operation", "copy", 2, 10, 11, "COPY", 1)
+            database.entry_migration_consequencesQueries.insert(
+                "consequence",
+                "operation",
+                2,
+                "progress",
+                "payload",
+                1,
+            )
+
+            database.entry_migration_consequencesQueries.pending(0, 10).awaitAsList().size shouldBe 1
+            database.entry_migration_consequencesQueries.recordFailure(100, "failed", "consequence")
+            database.entry_migration_consequencesQueries.pending(99, 10).awaitAsList() shouldBe emptyList()
+            database.entry_migration_consequencesQueries.makeRetryable()
+            database.entry_migration_consequencesQueries.pending(0, 10).awaitAsList().single().attempts shouldBe 1
+            database.entry_migration_consequencesQueries.acknowledge("consequence")
             database.entry_migration_consequencesQueries.countByOperation("operation").awaitAsOne() shouldBe 0
         }
     }

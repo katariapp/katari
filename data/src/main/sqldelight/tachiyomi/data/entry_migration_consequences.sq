@@ -21,6 +21,38 @@ SELECT count(*)
 FROM entry_migration_consequences
 WHERE operation_id = :operationId;
 
+payloadsByArtifact:
+SELECT payload
+FROM entry_migration_consequences
+WHERE artifact_id = :artifactId;
+
+pending:
+SELECT consequence_id, operation_id, profile_id, artifact_id, payload, attempts
+FROM entry_migration_consequences
+WHERE next_attempt_at <= :now
+ORDER BY created_at, consequence_id
+LIMIT :limit;
+
+pendingByOperation:
+SELECT consequence_id, operation_id, profile_id, artifact_id, payload, attempts
+FROM entry_migration_consequences
+WHERE operation_id = :operationId AND next_attempt_at <= :now
+ORDER BY created_at, consequence_id
+LIMIT :limit;
+
+consequenceStatus:
+SELECT
+    count(*) AS pending_count,
+    coalesce(sum(CASE WHEN attempts > 0 THEN 1 ELSE 0 END), 0) AS failed_count,
+    (
+        SELECT last_error
+        FROM entry_migration_consequences
+        WHERE last_error IS NOT NULL
+        ORDER BY next_attempt_at DESC, created_at DESC
+        LIMIT 1
+    ) AS last_failure
+FROM entry_migration_consequences;
+
 insert:
 INSERT INTO entry_migration_consequences(
     consequence_id,
@@ -38,3 +70,18 @@ VALUES (
     :payload,
     :createdAt
 );
+
+acknowledge:
+DELETE FROM entry_migration_consequences
+WHERE consequence_id = :consequenceId;
+
+recordFailure:
+UPDATE entry_migration_consequences
+SET attempts = attempts + 1,
+    next_attempt_at = :retryAtMillis,
+    last_error = :message
+WHERE consequence_id = :consequenceId;
+
+makeRetryable:
+UPDATE entry_migration_consequences
+SET next_attempt_at = 0;

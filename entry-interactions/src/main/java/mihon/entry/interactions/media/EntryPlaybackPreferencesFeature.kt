@@ -104,4 +104,28 @@ internal class DefaultEntryPlaybackPreferencesFeature(
             EntryPlaybackPreferencesCopyResult.NoPreferences
         }
     }
+
+    override suspend fun prepareMigration(
+        sourceEntry: Entry,
+        targetEntry: Entry,
+    ): EntryPlaybackPreferencesMigrationPreparation {
+        if (sourceEntry.type != targetEntry.type) {
+            return EntryPlaybackPreferencesMigrationPreparation.TypeMismatch(sourceEntry.type, targetEntry.type)
+        }
+        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - applicableTypes
+        if (inapplicableTypes.isNotEmpty()) {
+            return EntryPlaybackPreferencesMigrationPreparation.Inapplicable(inapplicableTypes)
+        }
+        return interaction.snapshot(sourceEntry)
+            ?.let {
+                EntryPlaybackPreferencesMigrationPreparation.Prepared(
+                    EntryPlaybackPreferencesMigrationPayload(targetEntry, it),
+                )
+            }
+            ?: EntryPlaybackPreferencesMigrationPreparation.NoPreferences
+    }
+
+    override suspend fun applyMigration(
+        payload: EntryPlaybackPreferencesMigrationPayload,
+    ): EntryPlaybackPreferencesRestoreResult = restore(payload.target, payload.snapshot)
 }

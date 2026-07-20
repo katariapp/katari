@@ -9,6 +9,8 @@ import kotlinx.coroutines.launch
 import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
 import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
 import mihon.entry.interactions.host.EntryMergeHost
+import mihon.entry.interactions.host.EntryMigrationConsequenceHost
+import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.EntryMigrationExecutionHost
 import mihon.entry.interactions.host.EntryMigrationPreparationHost
 import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
@@ -46,6 +48,8 @@ data class EntryInteractionRuntimeDependencies(
     val mergeCoverCleanup: suspend (Entry) -> Unit,
     val migrationPreparationHost: EntryMigrationPreparationHost,
     val migrationExecutionHost: EntryMigrationExecutionHost,
+    val migrationConsequenceHost: EntryMigrationConsequenceHost,
+    val migrationCustomCoverHost: EntryMigrationCustomCoverHost,
 )
 
 fun interface EntryInteractionRuntimeWarmup {
@@ -161,12 +165,31 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         EntryMergeConsequenceStatusCoordinator(dependencies.mergeHost, get())
     }
     addSingletonFactory<EntryMergeMigrationFeature> { EntryMergeMigrationCoordinator(dependencies.mergeHost) }
+    addSingletonFactory {
+        EntryMigrationConsequenceDelivery(
+            host = dependencies.migrationConsequenceHost,
+            progress = { get() },
+            playbackPreferences = { get() },
+            viewerSettings = { get() },
+            downloads = { get() },
+            customCover = dependencies.migrationCustomCoverHost,
+        )
+    }
+    addSingletonFactory<EntryMigrationConsequenceStatusFeature> {
+        EntryMigrationConsequenceStatusCoordinator(dependencies.migrationConsequenceHost, get())
+    }
     addSingletonFactory<EntryMigrationFeature> {
         DefaultEntryMigrationFeature(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
             preparationHost = dependencies.migrationPreparationHost,
             executionHost = dependencies.migrationExecutionHost,
             mergeMigration = get(),
+            progress = get(),
+            playbackPreferences = get(),
+            viewerSettings = get(),
+            downloads = get(),
+            customCover = dependencies.migrationCustomCoverHost,
+            consequences = get(),
         )
     }
     addSingletonFactory<EntryMergeChildOwnershipProjection> {
@@ -208,6 +231,12 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             overrideRepository = get<ViewerSettingOverrideRepository>(),
             legacyMangaViewerFlagsReset = EntryLegacyMangaViewerFlagsReset {
                 get<EntryRepository>().resetViewerFlags()
+            },
+            migrationStore = EntryViewerFlagsMigrationStore { entryId, profileId, viewerFlags ->
+                val repository = get<EntryRepository>()
+                repository.getEntryById(entryId, profileId)
+                    ?.let { current -> repository.update(current.copy(viewerFlags = viewerFlags), profileId) }
+                    ?: false
             },
         )
     }
@@ -395,6 +424,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             get<EntryDownloadNotificationManager>().start()
             CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
                 get<EntryMergeConsequenceDelivery>().runRetryLoop()
+            }
+            CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+                get<EntryMigrationConsequenceDelivery>().runRetryLoop()
             }
         }
     }

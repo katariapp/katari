@@ -297,6 +297,46 @@ Exit gate: the coordinator owns the complete consequence pipeline without raw di
 
 Review request: verify transfer completeness and any user-visible partial-effect reporting.
 
+Implementation record:
+
+- F15 Progress, F16 Playback Preferences, and F25 Viewer Settings now prepare target-bound immutable values before the
+  primary transition and expose idempotent apply operations. Durable delivery never calls their source-reading `copy`
+  operations.
+- F15 owns resource-key translation in its prepared progress snapshot. F25 owns portable override filtering and
+  type-provided legacy viewer-flag normalization; the Migration coordinator contains no Manga/Anime/Book branch.
+- F08 captures the concrete Download owners that currently contain downloads before Replace can change Merge
+  membership. Applying that plan verifies every captured owner afterward and returns `Incomplete` while any provider
+  still reports content. F12 Merge cleanup now observes the same verified result instead of acknowledging blindly.
+- Selected custom-cover bytes are staged under the stable operation identity before commit, promoted from the immutable
+  stage after commit, retained across failed delivery, and discarded after acknowledgement. Startup cleanup removes a
+  bounded batch of old stages that have no durable consequence.
+- One durable delivery coordinator dispatches artifact IDs to their owning Features, records retry time and error,
+  propagates cancellation, and reports only aggregate complete/incomplete state. A separate Feature exposes aggregate
+  pending/failed status and retry without exposing the consequence checklist.
+- Preparation now derives custom-cover and Download-removal option availability from current owner state. Provider
+  absence omits only that optional relationship; it does not invalidate the content type or the base Migration.
+- The feature graph records explicit Migration cooperation contracts for Progress, Viewer Settings, and verified
+  Download cleanup. The only Merge call remains the previously approved narrow transaction-participation Feature.
+
+Validation record:
+
+- Formatting, root interaction behavior tests, durable-consequence persistence tests, and focused API/SPI/root/data
+  compilation pass.
+- FOSS application compilation reaches only the intentional F11.5 consumer queue plus the previously recorded unrelated
+  debug-launcher and profile-shortcut errors; it reports no F11.4 payload, host, SQL, runtime-wiring, or type-module
+  compilation error.
+
+Manifesto comparison:
+
+- Optional relationships are discovered from the same provider evidence as their owning Features; the coordinator has
+  no content-type matrix and no caller-supplied consequence list.
+- Each owner defines the data needed for retry and the completion semantics of applying it. Adding a provider activates
+  the relationship through graph evaluation instead of requiring another Migration-specific type edit.
+- Durable records make forgotten or failed follow-up visible and retryable after release rather than silently reporting
+  success. Missing providers remain ordinary unsupported behavior and skip only their own consequence.
+- Presentation remains deliberately unmigrated until F11.5, so compilation is not being restored with a parallel
+  authority or compatibility checklist.
+
 ### F11.5 — Entry, Library, Browse, search, configuration, and dialogs
 
 - Migrate the three transitional facade consumers and every already-compiling Migration surface.

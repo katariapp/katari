@@ -45,7 +45,9 @@ interface EntryDownloadProcessor : EntryInteractionProvider {
     suspend fun download(entry: Entry, chapters: List<EntryChapter>, startNow: Boolean)
     suspend fun delete(entry: Entry, chapters: List<EntryChapter>)
     suspend fun cleanup(entry: Entry, chapters: List<EntryChapter>) = delete(entry, chapters)
-    suspend fun deleteEntryDownloads(entry: Entry)
+
+    /** Returns true only when the owned storage is absent after deletion. */
+    suspend fun deleteEntryDownloads(entry: Entry): Boolean
 
     fun hasDownloads(entry: Entry): Boolean
     fun getDownloadCount(entry: Entry): Int

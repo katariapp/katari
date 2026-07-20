@@ -243,12 +243,14 @@ internal class DownloadManager(
      * @param source the source of the manga.
      * @param removeQueued whether to also remove queued downloads.
      */
-    suspend fun deleteManga(manga: Entry, source: UnifiedSource, removeQueued: Boolean = true) {
-        withIOContext {
+    suspend fun deleteManga(manga: Entry, source: UnifiedSource, removeQueued: Boolean = true): Boolean {
+        return withIOContext {
             if (removeQueued) {
                 downloader.removeFromQueue(manga)
             }
-            provider.findEntryDir(manga.title, source)?.delete()
+            val entryDirectory = provider.findEntryDir(manga.title, source)
+            val removed = entryDirectory == null || entryDirectory.delete() || !entryDirectory.exists()
+            if (!removed) return@withIOContext false
             cache.removeManga(manga)
 
             // Delete source directory if empty
@@ -257,6 +259,7 @@ internal class DownloadManager(
                 sourceDir.delete()
                 cache.removeSource(source)
             }
+            true
         }
     }
 

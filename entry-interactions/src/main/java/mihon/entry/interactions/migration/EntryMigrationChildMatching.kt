@@ -2,6 +2,7 @@ package mihon.entry.interactions
 
 import mihon.entry.interactions.host.EntryMigrationHostChildUpdate
 import tachiyomi.domain.entry.model.EntryChapter
+import tachiyomi.domain.entry.model.progressResourceKey
 
 internal fun prepareMigrationChildUpdates(
     sourceChildren: List<EntryChapter>,
@@ -37,7 +38,22 @@ internal fun prepareMigrationChildUpdates(
     }
 }
 
-private fun findMigrationSourceChild(
+internal fun prepareMigrationProgressMappings(
+    sourceChildren: List<EntryChapter>,
+    targetChildren: List<EntryChapter>,
+): List<EntryProgressResourceMapping> {
+    return targetChildren.mapNotNull { target ->
+        findMigrationSourceChild(target, sourceChildren)?.let { source ->
+            EntryProgressResourceMapping(
+                sourceResourceKey = source.progressResourceKey,
+                targetResourceKey = target.progressResourceKey,
+                targetChapterId = target.id,
+            )
+        }
+    }
+}
+
+internal fun findMigrationSourceChild(
     target: EntryChapter,
     sourceChildren: List<EntryChapter>,
 ): EntryChapter? {

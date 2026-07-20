@@ -68,12 +68,17 @@ internal fun interface EntryLegacyMangaViewerFlagsReset {
     suspend fun reset(): Boolean
 }
 
+internal fun interface EntryViewerFlagsMigrationStore {
+    suspend fun update(entryId: Long, profileId: Long, viewerFlags: Long): Boolean
+}
+
 internal class DefaultEntryViewerSettingsFeature(
     evaluation: FeatureGraphEvaluation,
     interaction: EntryViewerSettingsInteraction,
     projections: Collection<EntryViewerSettingsScreenProjection>,
     private val overrideRepository: ViewerSettingOverrideRepository,
     private val legacyMangaViewerFlagsReset: EntryLegacyMangaViewerFlagsReset,
+    private val migrationStore: EntryViewerFlagsMigrationStore,
 ) : EntryViewerSettingsFeature {
     private val applicableTypes = EntryViewerSettingsConsequence.entries
         .map { consequence ->
@@ -179,6 +184,60 @@ internal class DefaultEntryViewerSettingsFeature(
             .values
         accepted.forEach { override -> overrideRepository.upsert(override.copy(entryId = target.id)) }
         return EntryViewerSettingsCopyResult.Copied(accepted.size)
+    }
+
+    override suspend fun prepareMigration(
+        source: Entry,
+        target: Entry,
+    ): EntryViewerSettingsMigrationPreparation {
+        if (source.type != target.type) {
+            return EntryViewerSettingsMigrationPreparation.TypeMismatch(source.type, target.type)
+        }
+        val sourceDefinitions = overrideDefinitions(source.type)
+        val targetDefinitions = overrideDefinitions(target.type)
+        if (sourceDefinitions == null || targetDefinitions == null) {
+            return EntryViewerSettingsMigrationPreparation.Inapplicable(setOf(source.type, target.type))
+        }
+        val sharedDefinitions = sourceDefinitions.keys intersect targetDefinitions.keys
+        val overrides = overrideRepository.getByEntryId(source.id)
+            .filter { override ->
+                override.settingId in sharedDefinitions &&
+                    sourceDefinitions.getValue(override.settingId).accepts(override.encodedValue) &&
+                    targetDefinitions.getValue(override.settingId).accepts(override.encodedValue)
+            }
+            .associateBy { it.settingId }
+            .values
+            .map { override ->
+                EntryViewerSettingMigrationValue(
+                    providerId = override.settingId.providerId,
+                    settingKey = override.settingId.key,
+                    encodedValue = override.encodedValue,
+                    updatedAt = override.updatedAt,
+                )
+            }
+        val normalizedFlags = providersByType.getValue(source.type).normalizeLegacyViewerFlags(source.viewerFlags)
+        return EntryViewerSettingsMigrationPreparation.Prepared(
+            EntryViewerSettingsMigrationPayload(target, normalizedFlags, overrides),
+        )
+    }
+
+    override suspend fun applyMigration(
+        payload: EntryViewerSettingsMigrationPayload,
+    ): EntryViewerSettingsRestoreResult {
+        check(
+            migrationStore.update(payload.target.id, payload.target.profileId, payload.normalizedViewerFlags),
+        ) { "Viewer flags were not persisted for Migration target ${payload.target.id}" }
+        return restore(
+            payload.target,
+            payload.overrides.map { value ->
+                ViewerSettingOverride(
+                    entryId = payload.target.id,
+                    settingId = ViewerSettingId(value.providerId, value.settingKey),
+                    encodedValue = value.encodedValue,
+                    updatedAt = value.updatedAt,
+                )
+            },
+        )
     }
 
     override suspend fun resetProfileOverrides(profileId: Long): EntryViewerSettingsResetResult {

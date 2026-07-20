@@ -154,10 +154,10 @@ internal class EntryDownloadInteractionDispatch(
         processor.cleanup(entry, chapters)
     }
 
-    override suspend fun deleteEntryDownloads(entry: Entry) {
-        val processor = processors[entry.type] ?: return
+    override suspend fun deleteEntryDownloads(entry: Entry): Boolean {
+        val processor = processors[entry.type] ?: return false
         processor.requireMatchingEntryType("download", entry, processors.keys)
-        processor.deleteEntryDownloads(entry)
+        return processor.deleteEntryDownloads(entry)
     }
 
     override fun hasDownloads(entry: Entry): Boolean {

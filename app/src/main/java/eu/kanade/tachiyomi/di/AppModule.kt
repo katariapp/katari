@@ -42,6 +42,7 @@ import mihon.entry.interactions.EntryInteractionRuntimeWarmup
 import mihon.entry.interactions.addEntryInteractionRuntime
 import mihon.entry.interactions.host.AppEntryMergeDuplicateCandidateHost
 import mihon.entry.interactions.host.AppEntryMergeHost
+import mihon.entry.interactions.host.AppEntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.AppEntryMigrationHost
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
@@ -219,6 +220,7 @@ class AppModule(val app: Application) : InjektModule {
             },
             hasCustomCover = { entryId -> get<CoverCache>().getCustomCoverFile(entryId).exists() },
         )
+        val migrationCustomCoverHost = AppEntryMigrationCustomCoverHost(app, get())
         addEntryInteractionRuntime(
             app = app,
             dependencies = EntryInteractionRuntimeDependencies(
@@ -252,6 +254,8 @@ class AppModule(val app: Application) : InjektModule {
                 },
                 migrationPreparationHost = migrationHost,
                 migrationExecutionHost = migrationHost,
+                migrationConsequenceHost = migrationHost,
+                migrationCustomCoverHost = migrationCustomCoverHost,
             ),
         )
 

@@ -84,6 +84,30 @@ class EntryProgressFeatureTest {
         processor.copied shouldBe emptyList()
     }
 
+    @Test
+    fun `migration preparation captures target-ready progress without invoking copy`() = runTest {
+        val processor = RecordingProgressProcessor(snapshot)
+        val feature = featureFor(compositionFor(EntryProgressCapability.bind(processor)))
+
+        val prepared = feature.prepareMigration(source, target, mappings)
+            as EntryProgressMigrationPreparation.Prepared
+
+        prepared.payload shouldBe EntryProgressMigrationPayload(
+            target = target,
+            snapshot = EntryProgressSnapshot(
+                listOf(
+                    snapshot.states.single().copy(
+                        resourceKey = "chapter-2",
+                        sourceChildKey = "chapter-2",
+                    ),
+                ),
+            ),
+        )
+        processor.copied shouldBe emptyList()
+        feature.applyMigration(prepared.payload) shouldBe EntryProgressRestoreResult.Applied
+        processor.restored shouldBe listOf(target to prepared.payload.snapshot)
+    }
+
     private fun compositionFor(
         vararg bindings: EntryInteractionProviderBinding<*>,
     ): EntryInteractionComposition {

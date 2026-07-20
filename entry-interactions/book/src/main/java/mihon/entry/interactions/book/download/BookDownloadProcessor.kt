@@ -118,9 +118,9 @@ internal class BookDownloadProcessor(
         manager.delete(entry, chapters)
     }
 
-    override suspend fun deleteEntryDownloads(entry: Entry) {
+    override suspend fun deleteEntryDownloads(entry: Entry): Boolean {
         entry.requireBook()
-        manager.deleteEntryDownloads(entry)
+        return manager.deleteEntryDownloads(entry)
     }
 
     override fun hasDownloads(entry: Entry): Boolean = getDownloadCount(entry) > 0

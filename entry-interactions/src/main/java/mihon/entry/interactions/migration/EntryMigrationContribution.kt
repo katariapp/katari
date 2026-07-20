@@ -80,6 +80,18 @@ private object EntryMigrationBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.migration.behavior")
 }
 
+private object EntryMigrationProgressCooperationContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.migration.progress-cooperation")
+}
+
+private object EntryMigrationViewerSettingsCooperationContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.migration.viewer-settings-cooperation")
+}
+
+private object EntryMigrationDownloadCooperationContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.migration.download-cooperation")
+}
+
 internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_MIGRATION_FEATURE_OWNER
 
@@ -119,6 +131,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryProgressCapability.definition),
                         ),
                         sharedConsequences = EntryMigrationProgressConsequence.entries,
+                        behavioralContracts = listOf(EntryMigrationProgressCooperationContract),
                     ),
                     FeatureIntegration(
                         id = FeatureIntegrationId("entry.migration.playback-preferences"),
@@ -135,6 +148,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
                         ),
                         sharedConsequences = EntryMigrationViewerSettingsConsequence.entries,
+                        behavioralContracts = listOf(EntryMigrationViewerSettingsCooperationContract),
                     ),
                     FeatureIntegration(
                         id = FeatureIntegrationId("entry.migration.downloads"),
@@ -143,6 +157,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryDownloadCapability.definition),
                         ),
                         sharedConsequences = EntryMigrationDownloadConsequence.entries,
+                        behavioralContracts = listOf(EntryMigrationDownloadCooperationContract),
                     ),
                 ),
             ),

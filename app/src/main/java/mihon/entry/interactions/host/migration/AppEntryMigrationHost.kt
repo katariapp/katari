@@ -1,8 +1,10 @@
 package mihon.entry.interactions.host
 
 import app.cash.sqldelight.async.coroutines.awaitAsList
+import app.cash.sqldelight.async.coroutines.awaitAsOne
 import app.cash.sqldelight.async.coroutines.awaitAsOneOrNull
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
 import mihon.entry.interactions.EntryMergeMigrationReplacementResult
 import mihon.entry.interactions.EntryMigrationMode
 import tachiyomi.data.Database
@@ -16,14 +18,96 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.track.model.EntryTrack
 
+private const val MAX_ERROR_LENGTH = 2_000
+
 internal class AppEntryMigrationHost(
     private val handler: DatabaseHandler,
     private val synchronize: suspend (Entry, Long) -> Unit,
     private val prepareTracks: suspend (Entry, Entry, List<EntryTrack>) -> List<EntryTrack>,
     private val hasCustomCover: (Long) -> Boolean,
     private val clockMillis: () -> Long = System::currentTimeMillis,
-) : EntryMigrationPreparationHost, EntryMigrationExecutionHost {
+) : EntryMigrationPreparationHost, EntryMigrationExecutionHost, EntryMigrationConsequenceHost {
     override fun profile(profileId: Long): ProfileHost = ProfileHost(profileId)
+
+    override suspend fun pendingConsequences(limit: Int): List<EntryMigrationPendingConsequence> {
+        require(limit > 0) { "Migration consequence batch size must be positive" }
+        return handler.awaitList {
+            entry_migration_consequencesQueries.pending(clockMillis(), limit.toLong()) {
+                    id,
+                    operationId,
+                    profileId,
+                    artifactId,
+                    payload,
+                    attempts,
+                ->
+                EntryMigrationPendingConsequence(id, operationId, profileId, artifactId, payload, attempts)
+            }
+        }
+    }
+
+    override suspend fun pendingConsequences(
+        operationId: String,
+        limit: Int,
+    ): List<EntryMigrationPendingConsequence> {
+        require(limit > 0) { "Migration consequence batch size must be positive" }
+        return handler.awaitList {
+            entry_migration_consequencesQueries.pendingByOperation(operationId, clockMillis(), limit.toLong()) {
+                    id,
+                    persistedOperationId,
+                    profileId,
+                    artifactId,
+                    payload,
+                    attempts,
+                ->
+                EntryMigrationPendingConsequence(
+                    id,
+                    persistedOperationId,
+                    profileId,
+                    artifactId,
+                    payload,
+                    attempts,
+                )
+            }
+        }
+    }
+
+    override suspend fun acknowledgeConsequence(consequenceId: String) {
+        handler.await { entry_migration_consequencesQueries.acknowledge(consequenceId) }
+    }
+
+    override suspend fun recordConsequenceFailure(
+        consequenceId: String,
+        message: String,
+        retryAtMillis: Long,
+    ) {
+        handler.await {
+            entry_migration_consequencesQueries.recordFailure(
+                retryAtMillis,
+                message.take(MAX_ERROR_LENGTH),
+                consequenceId,
+            )
+        }
+    }
+
+    override suspend fun pendingConsequenceCount(operationId: String): Long {
+        return handler.awaitOne { entry_migration_consequencesQueries.countByOperation(operationId) }
+    }
+
+    override suspend fun consequencePayloads(artifactId: String): List<String> {
+        return handler.awaitList { entry_migration_consequencesQueries.payloadsByArtifact(artifactId) }
+    }
+
+    override fun observeConsequenceStatus(): Flow<EntryMigrationConsequenceStatusSnapshot> {
+        return handler.subscribeToOne {
+            entry_migration_consequencesQueries.consequenceStatus { pendingCount, failedCount, lastFailure ->
+                EntryMigrationConsequenceStatusSnapshot(pendingCount, failedCount, lastFailure)
+            }
+        }
+    }
+
+    override suspend fun makeConsequencesRetryable() {
+        handler.await { entry_migration_consequencesQueries.makeRetryable() }
+    }
 
     internal inner class ProfileHost(
         private val profileId: Long,

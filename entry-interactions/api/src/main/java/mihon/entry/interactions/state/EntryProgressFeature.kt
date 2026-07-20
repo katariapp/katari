@@ -1,6 +1,7 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import kotlinx.serialization.Serializable
 import tachiyomi.domain.entry.model.Entry
 
 /** Feature-owned boundary for portable progress snapshot, restore, and copy operations. */
@@ -19,6 +20,30 @@ interface EntryProgressFeature {
         targetEntry: Entry,
         resourceMappings: List<EntryProgressResourceMapping>,
     ): EntryProgressCopyResult
+
+    /** Captures a target-ready value so durable Migration retry never rereads the source. */
+    suspend fun prepareMigration(
+        sourceEntry: Entry,
+        targetEntry: Entry,
+        resourceMappings: List<EntryProgressResourceMapping>,
+    ): EntryProgressMigrationPreparation
+
+    suspend fun applyMigration(payload: EntryProgressMigrationPayload): EntryProgressRestoreResult
+}
+
+@Serializable
+data class EntryProgressMigrationPayload(
+    val target: Entry,
+    val snapshot: EntryProgressSnapshot,
+)
+
+sealed interface EntryProgressMigrationPreparation {
+    data class Prepared(val payload: EntryProgressMigrationPayload) : EntryProgressMigrationPreparation
+    data class Inapplicable(val types: Set<EntryType>) : EntryProgressMigrationPreparation
+    data class IncompatibleTypes(
+        val sourceType: EntryType,
+        val targetType: EntryType,
+    ) : EntryProgressMigrationPreparation
 }
 
 sealed interface EntryProgressSnapshotResult {

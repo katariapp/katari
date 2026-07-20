@@ -1,5 +1,8 @@
 package mihon.entry.interactions
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class EntryPlaybackPreferencesSnapshot(
     val dubKey: String? = null,
     val streamKey: String? = null,
@@ -16,6 +19,7 @@ data class EntryPlaybackPreferencesSnapshot(
     val updatedAt: Long = 0L,
 )
 
+@Serializable
 enum class EntryPlaybackQualityMode {
     AUTO,
     SPECIFIC_HEIGHT,

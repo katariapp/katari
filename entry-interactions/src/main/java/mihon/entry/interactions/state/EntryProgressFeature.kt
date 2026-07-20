@@ -104,4 +104,33 @@ internal class DefaultEntryProgressFeature(
         interaction.copy(sourceEntry, targetEntry, resourceMappings)
         return EntryProgressCopyResult.Applied
     }
+
+    override suspend fun prepareMigration(
+        sourceEntry: Entry,
+        targetEntry: Entry,
+        resourceMappings: List<EntryProgressResourceMapping>,
+    ): EntryProgressMigrationPreparation {
+        if (sourceEntry.type != targetEntry.type) {
+            return EntryProgressMigrationPreparation.IncompatibleTypes(sourceEntry.type, targetEntry.type)
+        }
+        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type).filterNotTo(mutableSetOf(), ::isApplicable)
+        if (inapplicableTypes.isNotEmpty()) return EntryProgressMigrationPreparation.Inapplicable(inapplicableTypes)
+
+        val sourceStates = interaction.snapshot(sourceEntry).states
+            .associateBy { it.contentKey to it.resourceKey }
+        val targetStates = resourceMappings.mapNotNull { mapping ->
+            sourceStates[mapping.sourceContentKey to mapping.sourceResourceKey]?.copy(
+                contentKey = mapping.targetContentKey,
+                resourceKey = mapping.targetResourceKey,
+                sourceChildKey = mapping.targetResourceKey,
+            )
+        }
+        return EntryProgressMigrationPreparation.Prepared(
+            EntryProgressMigrationPayload(targetEntry, EntryProgressSnapshot(targetStates)),
+        )
+    }
+
+    override suspend fun applyMigration(payload: EntryProgressMigrationPayload): EntryProgressRestoreResult {
+        return restore(payload.target, payload.snapshot)
+    }
 }

@@ -1,6 +1,9 @@
 package mihon.entry.interactions
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.EntryMigrationExecutionHost
 import mihon.entry.interactions.host.EntryMigrationExecutionInspectionResult
 import mihon.entry.interactions.host.EntryMigrationHostInspectionResult
@@ -18,6 +21,13 @@ internal class DefaultEntryMigrationFeature(
     private val preparationHost: EntryMigrationPreparationHost,
     private val executionHost: EntryMigrationExecutionHost,
     private val mergeMigration: EntryMergeMigrationFeature,
+    private val progress: EntryProgressFeature,
+    private val playbackPreferences: EntryPlaybackPreferencesFeature,
+    private val viewerSettings: EntryViewerSettingsFeature,
+    private val downloads: EntryDownloadMaintenanceFeature,
+    private val customCover: EntryMigrationCustomCoverHost,
+    private val consequences: EntryMigrationConsequenceDelivery,
+    private val consequenceCodec: EntryMigrationConsequenceCodec = EntryMigrationConsequenceCodec(),
     private val clockMillis: () -> Long = System::currentTimeMillis,
 ) : EntryMigrationFeature {
     private val migrationTypes = evaluation.applicableProviderTypes<EntryMigrationProvider>(
@@ -97,7 +107,7 @@ internal class DefaultEntryMigrationFeature(
         }
     }
 
-    private fun prepare(
+    private suspend fun prepare(
         inspection: EntryMigrationHostInspectionResult.Ready,
         intent: EntryMigrationPrepareIntent,
     ): EntryMigrationPreparationResult {
@@ -114,6 +124,10 @@ internal class DefaultEntryMigrationFeature(
             }
             if (inspection.sourceCategoryIds.isNotEmpty()) add(EntryMigrationOption.CATEGORIES)
             if (inspection.source.notes.isNotBlank()) add(EntryMigrationOption.NOTES)
+            if (inspection.sourceHasCustomCover) add(EntryMigrationOption.CUSTOM_COVER)
+            if (downloads.inspectEntry(inspection.source) == EntryDownloadMaintenanceInspection.HasDownloads) {
+                add(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS)
+            }
         }
         val reference = FeatureEntryMigrationReference(
             sessionId = newEntryMigrationSessionId(),
@@ -148,7 +162,12 @@ internal class DefaultEntryMigrationFeature(
             )
         ) {
             is EntryMigrationHostReplayResult.Applied -> {
-                return applied(reference, intent.mode, replay.hasPendingConsequences)
+                val followUp = if (replay.hasPendingConsequences) {
+                    consequences.deliverOperation(reference.sessionId)
+                } else {
+                    EntryMigrationFollowUp.COMPLETE
+                }
+                return applied(reference, intent.mode, followUp)
             }
             EntryMigrationHostReplayResult.Conflict -> return EntryMigrationExecutionResult.Conflict
             EntryMigrationHostReplayResult.NotApplied -> Unit
@@ -211,6 +230,72 @@ internal class DefaultEntryMigrationFeature(
             emptyList()
         }
         val replace = intent.mode == EntryMigrationMode.REPLACE
+        val progressMappings = if (transferChildren) {
+            prepareMigrationProgressMappings(inspected.sourceChildren, inspected.targetChildren)
+        } else {
+            emptyList()
+        }
+        var stagedCover: mihon.entry.interactions.host.EntryMigrationCustomCoverPayload? = null
+        val consequenceRequests = buildList {
+            when (val prepared = progress.prepareMigration(inspected.source, inspected.target, progressMappings)) {
+                is EntryProgressMigrationPreparation.Prepared -> add(
+                    consequenceRequest(
+                        EntryMigrationConsequenceArtifact.PROGRESS,
+                        consequenceCodec.encode(prepared.payload),
+                    ),
+                )
+                is EntryProgressMigrationPreparation.Inapplicable -> Unit
+                is EntryProgressMigrationPreparation.IncompatibleTypes -> return EntryMigrationExecutionResult.Conflict
+            }
+            when (val prepared = playbackPreferences.prepareMigration(inspected.source, inspected.target)) {
+                is EntryPlaybackPreferencesMigrationPreparation.Prepared -> add(
+                    consequenceRequest(
+                        EntryMigrationConsequenceArtifact.PLAYBACK_PREFERENCES,
+                        consequenceCodec.encode(prepared.payload),
+                    ),
+                )
+                EntryPlaybackPreferencesMigrationPreparation.NoPreferences,
+                is EntryPlaybackPreferencesMigrationPreparation.Inapplicable,
+                -> Unit
+                is EntryPlaybackPreferencesMigrationPreparation.TypeMismatch -> {
+                    return EntryMigrationExecutionResult.Conflict
+                }
+            }
+            when (val prepared = viewerSettings.prepareMigration(inspected.source, inspected.target)) {
+                is EntryViewerSettingsMigrationPreparation.Prepared -> add(
+                    consequenceRequest(
+                        EntryMigrationConsequenceArtifact.VIEWER_SETTINGS,
+                        consequenceCodec.encode(prepared.payload),
+                    ),
+                )
+                is EntryViewerSettingsMigrationPreparation.Inapplicable -> Unit
+                is EntryViewerSettingsMigrationPreparation.TypeMismatch -> return EntryMigrationExecutionResult.Conflict
+            }
+            if (EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS in intent.selectedOptions) {
+                when (val prepared = downloads.prepareRemoval(inspected.source)) {
+                    is EntryDownloadRemovalPreparation.Prepared -> add(
+                        consequenceRequest(
+                            EntryMigrationConsequenceArtifact.DOWNLOAD_REMOVAL,
+                            consequenceCodec.encode(prepared.plan),
+                        ),
+                    )
+                    EntryDownloadRemovalPreparation.NothingToRemove,
+                    is EntryDownloadRemovalPreparation.Inapplicable,
+                    -> Unit
+                }
+            }
+            if (EntryMigrationOption.CUSTOM_COVER in intent.selectedOptions) {
+                customCover.stage(reference.sessionId, inspected.source, inspected.target)?.let { payload ->
+                    stagedCover = payload
+                    add(
+                        consequenceRequest(
+                            EntryMigrationConsequenceArtifact.CUSTOM_COVER,
+                            consequenceCodec.encode(payload),
+                        ),
+                    )
+                }
+            }
+        }
         val targetUpdate = inspected.target.copy(
             favorite = true,
             chapterFlags = inspected.source.chapterFlags,
@@ -238,6 +323,7 @@ internal class DefaultEntryMigrationFeature(
             childUpdates = childUpdates,
             expectedSourceTracks = inspected.sourceTracks,
             preparedTracks = inspected.preparedTracks,
+            consequenceRequests = consequenceRequests,
         )
         val mergeReplacement = if (replace) {
             suspend {
@@ -248,9 +334,25 @@ internal class DefaultEntryMigrationFeature(
         } else {
             null
         }
-        return when (val result = profile.applyTransition(transition, mergeReplacement)) {
+        val result = try {
+            profile.applyTransition(transition, mergeReplacement)
+        } catch (error: CancellationException) {
+            stagedCover?.let { payload ->
+                withContext(NonCancellable) { runCatching { customCover.discard(payload) } }
+            }
+            throw error
+        }
+        if (result !is EntryMigrationHostTransitionResult.Applied) {
+            stagedCover?.let { payload -> runCatching { customCover.discard(payload) } }
+        }
+        return when (result) {
             is EntryMigrationHostTransitionResult.Applied -> {
-                applied(reference, intent.mode, result.hasPendingConsequences)
+                val followUp = if (result.hasPendingConsequences) {
+                    consequences.deliverOperation(reference.sessionId)
+                } else {
+                    EntryMigrationFollowUp.COMPLETE
+                }
+                applied(reference, intent.mode, followUp)
             }
             EntryMigrationHostTransitionResult.Conflict -> EntryMigrationExecutionResult.Conflict
             is EntryMigrationHostTransitionResult.OperationalFailure -> {
@@ -262,18 +364,14 @@ internal class DefaultEntryMigrationFeature(
     private fun applied(
         reference: FeatureEntryMigrationReference,
         mode: EntryMigrationMode,
-        hasPendingConsequences: Boolean,
+        followUp: EntryMigrationFollowUp,
     ): EntryMigrationExecutionResult.Applied {
         return EntryMigrationExecutionResult.Applied(
             EntryMigrationOutcome(
                 source = reference.source.subject(),
                 target = reference.target.subject(),
                 mode = mode,
-                followUp = if (hasPendingConsequences) {
-                    EntryMigrationFollowUp.INCOMPLETE
-                } else {
-                    EntryMigrationFollowUp.COMPLETE
-                },
+                followUp = followUp,
             ),
         )
     }
@@ -310,4 +408,7 @@ internal class DefaultEntryMigrationFeature(
     private fun preparationRejected(reason: EntryMigrationRejection) = EntryMigrationPreparationResult.Rejected(reason)
 
     private fun executionRejected(reason: EntryMigrationRejection) = EntryMigrationExecutionResult.Rejected(reason)
+
+    private fun consequenceRequest(artifactId: String, payload: String) =
+        mihon.entry.interactions.host.EntryMigrationConsequenceRequest(artifactId, payload)
 }

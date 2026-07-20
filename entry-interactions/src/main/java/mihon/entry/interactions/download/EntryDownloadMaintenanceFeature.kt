@@ -136,11 +136,33 @@ internal class DefaultEntryDownloadMaintenanceFeature(
     }
 
     override suspend fun removeEntryDownloads(entry: Entry): EntryDownloadMaintenanceResult {
-        if (entry.type !in removalTypes) return inapplicable(entry.type)
-        ownership.resolveDownloadOwners(entry.mergeSubject()).orderedOwners.forEach {
-            interaction.deleteEntryDownloads(it)
+        return when (val preparation = prepareRemoval(entry)) {
+            is EntryDownloadRemovalPreparation.Prepared -> applyRemoval(preparation.plan)
+            EntryDownloadRemovalPreparation.NothingToRemove -> EntryDownloadMaintenanceResult.Performed
+            is EntryDownloadRemovalPreparation.Inapplicable -> inapplicable(preparation.type)
         }
-        return EntryDownloadMaintenanceResult.Performed
+    }
+
+    override suspend fun prepareRemoval(entry: Entry): EntryDownloadRemovalPreparation {
+        if (entry.type !in removalTypes) return EntryDownloadRemovalPreparation.Inapplicable(entry.type)
+        val owners = ownership.resolveDownloadOwners(entry.mergeSubject()).orderedOwners
+            .filter(interaction::hasDownloads)
+        return if (owners.isEmpty()) {
+            EntryDownloadRemovalPreparation.NothingToRemove
+        } else {
+            EntryDownloadRemovalPreparation.Prepared(EntryDownloadRemovalPlan(owners))
+        }
+    }
+
+    override suspend fun applyRemoval(plan: EntryDownloadRemovalPlan): EntryDownloadMaintenanceResult {
+        val remaining = plan.owners.filter { owner ->
+            !interaction.deleteEntryDownloads(owner) || interaction.hasDownloads(owner)
+        }
+        return if (remaining.isEmpty()) {
+            EntryDownloadMaintenanceResult.Performed
+        } else {
+            EntryDownloadMaintenanceResult.Incomplete(remaining)
+        }
     }
 
     private fun inapplicable(type: EntryType): EntryDownloadMaintenanceResult {

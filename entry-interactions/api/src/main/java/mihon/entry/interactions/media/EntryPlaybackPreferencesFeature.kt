@@ -1,6 +1,7 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import kotlinx.serialization.Serializable
 import tachiyomi.domain.entry.model.Entry
 
 /** Feature-owned boundary for playback-preference backup and transfer. */
@@ -18,6 +19,32 @@ interface EntryPlaybackPreferencesFeature {
         sourceEntry: Entry,
         targetEntry: Entry,
     ): EntryPlaybackPreferencesCopyResult
+
+    /** Captures a target-ready value so durable Migration retry never rereads the source. */
+    suspend fun prepareMigration(
+        sourceEntry: Entry,
+        targetEntry: Entry,
+    ): EntryPlaybackPreferencesMigrationPreparation
+
+    suspend fun applyMigration(
+        payload: EntryPlaybackPreferencesMigrationPayload,
+    ): EntryPlaybackPreferencesRestoreResult
+}
+
+@Serializable
+data class EntryPlaybackPreferencesMigrationPayload(
+    val target: Entry,
+    val snapshot: EntryPlaybackPreferencesSnapshot,
+)
+
+sealed interface EntryPlaybackPreferencesMigrationPreparation {
+    data class Prepared(
+        val payload: EntryPlaybackPreferencesMigrationPayload,
+    ) : EntryPlaybackPreferencesMigrationPreparation
+    data object NoPreferences : EntryPlaybackPreferencesMigrationPreparation
+    data class Inapplicable(val types: Set<EntryType>) : EntryPlaybackPreferencesMigrationPreparation
+    data class TypeMismatch(val sourceType: EntryType, val targetType: EntryType) :
+        EntryPlaybackPreferencesMigrationPreparation
 }
 
 sealed interface EntryPlaybackPreferencesSnapshotResult {

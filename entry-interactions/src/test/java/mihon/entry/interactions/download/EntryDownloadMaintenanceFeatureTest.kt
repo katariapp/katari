@@ -23,7 +23,7 @@ class EntryDownloadMaintenanceFeatureTest {
         val processor = processor()
         val oldSource = mockk<UnifiedSource>()
         val newSource = mockk<UnifiedSource>()
-        every { processor.hasDownloads(entry) } returns true
+        every { processor.hasDownloads(entry) } returnsMany listOf(true, true, false)
         val feature = featureFor(EntryDownloadCapability.bind(processor))
 
         feature.invalidateCaches() shouldBe
@@ -37,7 +37,7 @@ class EntryDownloadMaintenanceFeatureTest {
         verify(exactly = 1) { processor.invalidateCache() }
         verify(exactly = 1) { processor.renameSource(oldSource, newSource) }
         coVerify(exactly = 1) { processor.renameEntry(entry, "Renamed") }
-        verify(exactly = 1) { processor.hasDownloads(entry) }
+        verify(exactly = 3) { processor.hasDownloads(entry) }
         coVerify(exactly = 1) { processor.deleteEntryDownloads(entry) }
     }
 
@@ -65,8 +65,8 @@ class EntryDownloadMaintenanceFeatureTest {
     fun `merged download maintenance visits each concrete owner`() = runTest {
         val member = entry.copy(id = 8L, url = "/member")
         val processor = processor()
-        every { processor.hasDownloads(entry) } returns false
-        every { processor.hasDownloads(member) } returns true
+        every { processor.hasDownloads(entry) } returnsMany listOf(false, false)
+        every { processor.hasDownloads(member) } returnsMany listOf(true, true, false)
         val feature = featureFor(
             EntryDownloadCapability.bind(processor),
             owners = listOf(entry, member),
@@ -75,10 +75,35 @@ class EntryDownloadMaintenanceFeatureTest {
         feature.inspectEntry(entry) shouldBe EntryDownloadMaintenanceInspection.HasDownloads
         feature.removeEntryDownloads(entry) shouldBe EntryDownloadMaintenanceResult.Performed
 
-        verify(exactly = 1) { processor.hasDownloads(entry) }
-        verify(exactly = 1) { processor.hasDownloads(member) }
-        coVerify(exactly = 1) { processor.deleteEntryDownloads(entry) }
+        verify(exactly = 2) { processor.hasDownloads(entry) }
+        verify(exactly = 3) { processor.hasDownloads(member) }
+        coVerify(exactly = 0) { processor.deleteEntryDownloads(entry) }
         coVerify(exactly = 1) { processor.deleteEntryDownloads(member) }
+    }
+
+    @Test
+    fun `removal remains incomplete while a captured owner still reports downloads`() = runTest {
+        val processor = processor()
+        every { processor.hasDownloads(entry) } returns true
+        val feature = featureFor(EntryDownloadCapability.bind(processor))
+
+        val preparation = feature.prepareRemoval(entry)
+            as EntryDownloadRemovalPreparation.Prepared
+
+        feature.applyRemoval(preparation.plan) shouldBe EntryDownloadMaintenanceResult.Incomplete(listOf(entry))
+    }
+
+    @Test
+    fun `provider deletion failure cannot be acknowledged from an evicted cache`() = runTest {
+        val processor = processor()
+        every { processor.hasDownloads(entry) } returns true
+        coEvery { processor.deleteEntryDownloads(entry) } returns false
+        val feature = featureFor(EntryDownloadCapability.bind(processor))
+        val plan = (feature.prepareRemoval(entry) as EntryDownloadRemovalPreparation.Prepared).plan
+
+        feature.applyRemoval(plan) shouldBe EntryDownloadMaintenanceResult.Incomplete(listOf(entry))
+
+        verify(exactly = 1) { processor.hasDownloads(entry) }
     }
 
     private fun featureFor(
@@ -127,6 +152,7 @@ class EntryDownloadMaintenanceFeatureTest {
             every { queueStatusUpdates() } returns emptyFlow()
             every { queueProgressUpdates() } returns emptyFlow()
             coEvery { runDownloadsUntilIdle() } returns Unit
+            coEvery { deleteEntryDownloads(any()) } returns true
         }
     }
 }

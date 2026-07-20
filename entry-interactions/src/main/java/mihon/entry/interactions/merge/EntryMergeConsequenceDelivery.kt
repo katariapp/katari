@@ -61,7 +61,9 @@ internal class EntryMergeConsequenceDelivery(
             EntryMergeBaseConsequence.LIBRARY_INITIALIZATION.id.value -> libraryEntryInitializer(entry)
             EntryMergeBaseConsequence.COVER_CLEANUP.id.value -> coverCleanup(entry)
             EntryMergeDownloadConsequence.REMOVAL.id.value -> {
-                downloadMaintenance().removeEntryDownloads(entry)
+                check(
+                    downloadMaintenance().removeEntryDownloads(entry) == EntryDownloadMaintenanceResult.Performed,
+                ) { "Merge download removal was not verified" }
             }
             else -> error("No Merge consequence handler for ${consequence.artifactId}")
         }

@@ -7,11 +7,15 @@ import mihon.feature.graph.CapabilityId
 /** Type-owned collection of genuine viewer engines and their settings definitions. */
 interface EntryViewerSettingsProvider : EntryInteractionProvider {
     val surfaces: List<ViewerSettingsProvider>
+
+    /** Removes type-owned legacy viewer state while preserving unrelated flags. */
+    fun normalizeLegacyViewerFlags(flags: Long): Long = flags
 }
 
 class DefaultEntryViewerSettingsProvider(
     override val type: EntryType,
     override val surfaces: List<ViewerSettingsProvider>,
+    private val legacyViewerFlagsNormalization: (Long) -> Long = { it },
 ) : EntryViewerSettingsProvider {
     init {
         require(surfaces.isNotEmpty()) { "A Viewer Settings provider must contribute at least one surface" }
@@ -35,6 +39,8 @@ class DefaultEntryViewerSettingsProvider(
             }
         }
     }
+
+    override fun normalizeLegacyViewerFlags(flags: Long): Long = legacyViewerFlagsNormalization(flags)
 }
 
 val EntryViewerSettingsCapability = entryInteractionCapability<EntryViewerSettingsProvider>(

@@ -100,18 +100,51 @@ class EntryViewerSettingsFeatureTest {
         coVerify(exactly = 0) { repository.upsert(any()) }
     }
 
+    @Test
+    fun `migration payload includes provider-owned legacy normalization and portable overrides`() = runTest {
+        val repository = mockk<ViewerSettingOverrideRepository>(relaxed = true)
+        val surface = surface("book.epub", ViewerSettingsCategory.READER)
+        val stored = ViewerSettingOverride(entry.id, surface.overrideSetting.id, "scroll", 4L)
+        coEvery { repository.getByEntryId(entry.id) } returns listOf(stored)
+        var storedFlags: Triple<Long, Long, Long>? = null
+        val feature = featureFor(
+            surfaces = listOf(surface.provider),
+            projections = listOf(projection(surface.provider.id)),
+            repository = repository,
+            normalization = { flags -> flags and 0x3FL.inv() },
+            migrationStore = { entryId, profileId, flags ->
+                storedFlags = Triple(entryId, profileId, flags)
+                true
+            },
+        )
+        val source = entry.copy(viewerFlags = 0x7FL)
+
+        val prepared = feature.prepareMigration(source, target)
+            as EntryViewerSettingsMigrationPreparation.Prepared
+
+        prepared.payload.normalizedViewerFlags shouldBe 0x40L
+        prepared.payload.overrides shouldBe listOf(
+            EntryViewerSettingMigrationValue("book.epub", "layout", "scroll", 4L),
+        )
+        feature.applyMigration(prepared.payload) shouldBe EntryViewerSettingsRestoreResult.Restored(1, emptySet())
+        storedFlags shouldBe Triple(target.id, target.profileId, 0x40L)
+        coVerify { repository.upsert(stored.copy(entryId = target.id)) }
+    }
+
     private fun featureFor(
         surfaces: List<ViewerSettingsProvider> = emptyList(),
         projections: List<EntryViewerSettingsScreenProjection> = emptyList(),
         repository: ViewerSettingOverrideRepository = mockk(relaxed = true),
         legacyReset: suspend () -> Boolean = { true },
+        normalization: (Long) -> Long = { it },
+        migrationStore: suspend (Long, Long, Long) -> Boolean = { _, _, _ -> true },
     ): EntryViewerSettingsFeature {
         val bindings = if (surfaces.isEmpty()) {
             emptyList()
         } else {
             listOf(
                 EntryViewerSettingsCapability.bind(
-                    DefaultEntryViewerSettingsProvider(EntryType.BOOK, surfaces),
+                    DefaultEntryViewerSettingsProvider(EntryType.BOOK, surfaces, normalization),
                 ),
             )
         }
@@ -131,6 +164,7 @@ class EntryViewerSettingsFeatureTest {
             projections = projections,
             overrideRepository = repository,
             legacyMangaViewerFlagsReset = EntryLegacyMangaViewerFlagsReset { legacyReset() },
+            migrationStore = EntryViewerFlagsMigrationStore(migrationStore),
         )
     }
 
