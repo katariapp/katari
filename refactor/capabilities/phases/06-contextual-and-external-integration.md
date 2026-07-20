@@ -502,6 +502,28 @@ The implementation proceeds in these bounded slices:
 4. **6.5.4 — Media context reconciliation:** rerun the media/context census, update Feature documents and projections,
    and close every `C07`, `C08`, `C12`, `C20`, `C22`, and `C23` row assigned to this milestone.
 
+#### 6.5.1 — Cover Network Context
+
+- [x] Add one purpose-specific Cover Network Feature that resolves the source image call factory and headers together.
+- [x] Declare installed-source and image-source evidence, missing/unsupported blockers, and separate call-factory/header
+  consequences without making image pages a content-type capability.
+- [x] Migrate both generic Entry cover fetcher factories from `SourceManager` and `EntryImageSource` to one lazy,
+  structured Feature resolution.
+- [x] Preserve the generic-client fallback for missing or unsupported sources and preserve operational failure when a
+  supported source cannot expose its client or headers.
+- [x] Reject future application/data/domain use of raw `EntryImageSource` while retaining source contracts,
+  compatibility adapters, root Feature composition, and type-owned media mechanics.
+
+The Feature resolves source-specific network access only when a remote cover request actually reaches the network.
+Cached, custom, file, and content-URI covers do not resolve source context. An `Available` result supplies client and
+headers from one snapshot; `Missing` and `Unsupported` retain the existing generic-client behavior; `Failed` retains the
+source error rather than silently changing network identity.
+
+The tracker-source adapter remains a separate explicit relationship because it composes settings, home URL, and image
+client access for a different external integration. Manga reader, downloader, and Immersive processors retain direct
+`EntryImageSource` mechanics inside their type-owned modules. This slice therefore removes the application leak without
+turning a consequence-specific result into a reusable raw-source facade.
+
 ### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
 
 - [ ] Retain `SyncEntryWithSource` as the single owner of source refresh mechanics and its source capability contracts.

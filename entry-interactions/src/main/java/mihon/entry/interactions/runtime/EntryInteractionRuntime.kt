@@ -134,6 +134,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryCatalogueFeatureContributor,
                 EntrySourceSettingsFeatureContributor,
                 EntrySourceHomeFeatureContributor,
+                EntryCoverNetworkFeatureContributor,
                 EntryWebViewFeatureContributor,
                 EntryDeepLinkFeatureContributor,
                 EntryTrackerSourceAdapterFeatureContributor,
@@ -152,6 +153,12 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     }
     addSingletonFactory<EntrySourceHomeFeature> {
         DefaultEntrySourceHomeFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceManager = get(),
+        )
+    }
+    addSingletonFactory<EntryCoverNetworkFeature> {
+        DefaultEntryCoverNetworkFeature(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
             sourceManager = get(),
         )

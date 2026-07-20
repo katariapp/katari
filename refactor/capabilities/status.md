@@ -64,6 +64,7 @@ Updated: 2026-07-20
 - Phase 6.4.15 Merge execution context commit: `6418180b7` (`(refactor): resolve merge execution context`)
 - Phase 6.4.16 Merge context audit commit: `0360453ab` (`(refactor): complete merge context audit`)
 - Phase 6.4.17 Entry Feature context closure commit: `f8653cdfd` (`(refactor): complete entry feature context migration`)
+- Phase 6.5.0 Media context migration plan commit: `3ff63d635` (`(refactor): define media context migration`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -71,8 +72,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.5.0 Media ownership census and architecture split
-- State: Phase 6.5.0 is implemented and validating for review. No Phase 6.5 production migration has started.
+- Milestone: Phase 6.5.1 Cover network context
+- State: Phase 6.5.1 is implemented and validating for review. Phase 6.5.2 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1005,7 +1006,20 @@ Focused Phase 6.5.0 findings:
 - The documented census globs now use `**/src/main/**`; the former single-segment form omitted nested modules and could
   have allowed future media consumers to escape the closure audit.
 
+Focused Phase 6.5.1 findings:
+
+- One Cover Network Feature declares source installation and `EntryImageSource` presence as contextual evidence and
+  exposes call-factory and request-header consequences through one structured resolution.
+- Both generic cover factories now resolve that Feature lazily. Missing and unsupported sources retain the generic
+  client fallback, while source property failures remain failures; cache/file/content paths do not perform resolution.
+- `EntryCoverFetcher` no longer imports `EntryImageSource` or `SourceManager`, and the boundary task rejects future raw
+  image-source use in application/data/domain code.
+- Tracker adaptation remains separately graph-owned, and Manga reader/download/Immersive code remains type-owned media
+  mechanics. No global image/media capability or reusable source facade was added.
+- Root Entry-interactions behavior tests, the boundary task, build-logic tests, formatting, and diff checks pass. FOSS
+  compilation reaches only the recorded unrelated Anime debug-launch callback and More-tab coroutine errors.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.5.0 after review, then implement Phase 6.5.1 Cover network context. Continue through Phase 6 afterward
+Commit Phase 6.5.1 after review, then implement Phase 6.5.2 Child WebView context. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.
