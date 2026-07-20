@@ -68,6 +68,7 @@ Updated: 2026-07-20
 - Phase 6.5.1 Cover network context commit: `dfd0de181` (`(refactor): resolve cover network context`)
 - Phase 6.5.2 Child WebView context commit: `e0b7f7637` (`(refactor): resolve child web view context`)
 - Phase 6.5.3 Type-owned media closure commit: `9c665de83` (`(refactor): close type-owned media context`)
+- Phase 6.5.4 Media context reconciliation commit: `20aefd78f` (`(refactor): reconcile media context ownership`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -75,8 +76,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.5.4 Media context reconciliation
-- State: Phase 6.5.4 is implemented and validating for review. Phase 6.6 has not started.
+- Milestone: Phase 6.6.0 Refresh ownership census and architecture split
+- State: Phase 6.6.0 planning is complete and validating for review. Phase 6.6.1 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1067,7 +1068,24 @@ Focused Phase 6.5.4 findings:
   boundary and closure without introducing a media capability, support matrix, or completion list.
 - Boundary and build-logic tests pass after the reconciliation change.
 
+Focused Phase 6.6.0 findings:
+
+- `SyncEntryWithSource` is the sole refresh mechanics implementation. Its direct callers are Entry, Library Update,
+  metadata update, migration, Immersive, Deep Link, and root migration hosting; none implements separate source refresh
+  semantics.
+- One Source Refresh Feature will structure source availability and operation outcomes while keeping incremental fetch,
+  empty-list safety, number recognition, persistence, progress rekeying, metadata hooks, and fetch intervals inside the
+  existing domain coordinator.
+- Source Refresh has no content-type provider. Installed source context authorizes a request; Local remains a valid
+  installed source, and missing/stub state is contextual rather than a content-type validity claim.
+- F11, F13/Library Update, F20, and Deep Link will declare their own refresh relationships. Source Refresh will not keep
+  a consumer registry or type matrix. Entry and details-only metadata refresh are its base product consequences.
+- F24 owns the Library queue-size warning derived from `UnmeteredSource`; Manga's separate downloader warning stays
+  inside Manga F03 mechanics because it governs that downloader's queue execution.
+- Migration is split into six architecture-first slices, starting with the Feature and graph contract before any caller
+  migration or compilation cleanup.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.5.4 after review, then begin Phase 6.6 Refresh and Network Policy. Continue through Phase 6 afterward
+Commit Phase 6.6.0 after review, then implement Phase 6.6.1 Source Refresh architecture. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

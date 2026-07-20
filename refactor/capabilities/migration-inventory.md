@@ -237,6 +237,11 @@ no unclassified media consumer. Raw image/subtitle source contracts are rejected
 generic presentation modules; type-owned media mechanics, source compatibility, and purpose-specific root Features
 remain explicit owners rather than exceptions available to generic code.
 
+Phase 6.6.0 classifies all refresh/network consumers. `SyncEntryWithSource` remains the internal source-contract and
+persistence mechanics owner behind a new Source Refresh Feature. Entry/metadata are base refresh consequences; F11,
+F13/Library Update, F20, and Deep Link declare their own relationships. F24 owns the Library queue-size warning derived
+from metered source context. Manga downloader use of `UnmeteredSource` remains a type-owned F03 operation mechanic.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

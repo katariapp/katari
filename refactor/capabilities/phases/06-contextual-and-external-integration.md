@@ -620,6 +620,67 @@ them closes a future bypass without expanding any Feature, declaring support, or
 - [ ] Keep downloader use of unmetered-source behavior inside the Download provider while removing duplicated
   application warning policy.
 
+#### 6.6.0 — Refresh Ownership Census and Architecture Split
+
+- [x] Classify every production `SyncEntryWithSource` and `UnmeteredSource` consumer by consequence owner.
+- [x] Keep `EmptyChapterListSource`, `IncrementalChapterSource`, and `ChapterNumberRecognitionSource` interpretation
+  inside `SyncEntryWithSource`; they are source refresh mechanics, not content-type capabilities.
+- [x] Define one application-facing Source Refresh Feature before migrating callers, with structured source/context and
+  operation results while retaining `SyncEntryWithSource` as its internal mechanics coordinator.
+- [x] Assign each cross-feature refresh relationship to the consuming Feature contribution rather than maintaining a
+  Source Refresh consumer list.
+- [x] Assign Library-update queue-warning policy to F24 and retain Manga downloader metering checks as type-owned F03
+  execution mechanics.
+
+The census found one shared operation with several product owners, not several refresh implementations:
+
+| Consumer | Current use | Final owner |
+| --- | --- | --- |
+| Entry screen | manual/automatic details and child refresh, including merged source owners | Source Refresh base consequence; F12 continues selecting concrete merge owners |
+| Library update | child refresh after F13 eligibility and optional metadata refresh | F13/Library-update relationship consumes Source Refresh; F05 receives only inserted children afterward |
+| Metadata update job | details-only refresh | Source Refresh base metadata consequence |
+| Migration search/use and migration host | destination details/children refresh, including explicit-profile persistence | F11 declares and consumes its Source Refresh relationship |
+| Immersive retry/empty-child load | children-only refresh before F20 media loading | F20 declares and consumes its Source Refresh relationship |
+| Deep-link child resolution | persist resolved Entry and refresh children before matching the canonical child | Deep-link Feature declares and consumes its Source Refresh relationship |
+| Library-update queue warning | exclude sources declaring unmetered access before applying per-source threshold | F24 notification consequence |
+| Manga download queue | exclude unmetered sources from downloader-owned queue warning thresholds | Manga F03 mechanics; no shared application policy or Feature exposure |
+
+`SyncEntryWithSource` remains the only implementation that fetches details/children, interprets incremental and empty-list
+contracts, recognizes child numbers, updates persistence, rekeys progress, runs metadata hooks, and updates fetch
+intervals. The new Feature is an application and graph boundary around that operation; it is not a second synchronizer
+or a raw source facade.
+
+Source Refresh has no content-type provider and no mandatory operation. Every contributed type can request refresh from
+its concrete `UnifiedSource`; installed/missing/stub source state determines runtime applicability. A bundled Local
+source remains an ordinary installed source and is not rejected by a generic local flag. Source absence is contextual,
+while empty child lists, network failures, and persistence failures are structured operation outcomes.
+
+The Feature owns refresh-specific interpretation of profile-scoped title-update policy. Callers still supply the
+product decision to fetch details, fetch children, treat the request as manual, or use a fetch window. F13 alone owns
+smart-update eligibility preferences and one-shot policy; F05 alone owns automatic-download selection after successful
+refresh. Live Entry/favorite state, existing children, fetch windows, and preference values remain request evidence,
+not support facts.
+
+Cross-feature participation is discovered at the consuming contribution. F11, F13/Library Update, F20, and Deep Link
+each declare the refresh consequence they use; Source Refresh does not enumerate those Features. Adding a future
+Feature that needs refresh therefore requires declaring that Feature's relationship once, not editing Source Refresh or
+every content type.
+
+Implementation proceeds in architecture-first slices:
+
+1. **6.6.1 — Source Refresh architecture:** add the Feature contract, structured results, graph/context contribution,
+   and root implementation over `SyncEntryWithSource` before migrating application callers.
+2. **6.6.2 — Direct and source-owned consumers:** migrate Entry/manual refresh, metadata refresh, Immersive, and Deep
+   Link; declare F20 and Deep Link relationships and establish the raw-sync application boundary.
+3. **6.6.3 — Migration refresh relationship:** migrate migration search/use and the strict explicit-profile host path
+   through the F11-owned relationship without weakening transaction/profile invariants.
+4. **6.6.4 — Library-update refresh relationship:** migrate child/metadata update workers through Source Refresh after
+   F13 eligibility, preserving F05 inserted-child flow and batch behavior.
+5. **6.6.5 — Metered-source notification policy:** move Library queue-warning resolution behind F24, remove its raw
+   `SourceManager`/`UnmeteredSource` decision, and guard generic consumers while retaining Manga downloader mechanics.
+6. **6.6.6 — Refresh/network reconciliation:** rerun the nested census, update Feature documents/projections, and close
+   every `C15`, `C16`, and applicable `C17`, `C20`, and `C22` disposition.
+
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
 - [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,
