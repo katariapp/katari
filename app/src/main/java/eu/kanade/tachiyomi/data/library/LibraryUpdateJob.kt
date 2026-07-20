@@ -36,6 +36,9 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
 import mihon.entry.interactions.EntryAutomaticDownloadFeature
+import mihon.entry.interactions.EntryLibraryUpdateRefreshFeature
+import mihon.entry.interactions.EntryLibraryUpdateRefreshRequest
+import mihon.entry.interactions.EntryLibraryUpdateRefreshResult
 import mihon.entry.interactions.EntryMergeMetadataRefreshFeature
 import mihon.entry.interactions.EntryUpdateEligibility
 import mihon.entry.interactions.EntryUpdateEligibilityFeature
@@ -47,7 +50,6 @@ import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryRepository
@@ -57,7 +59,6 @@ import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_CHARGING
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_NETWORK_NOT_METERED
 import tachiyomi.domain.library.service.LibraryPreferences.Companion.DEVICE_ONLY_ON_WIFI
-import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
@@ -82,7 +83,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     private val getLibraryEntries: GetLibraryEntries = Injekt.get()
     private val entryRepository: EntryRepository = Injekt.get()
     private val fetchInterval: FetchInterval = Injekt.get()
-    private val syncEntryWithSource: SyncEntryWithSource = Injekt.get()
+    private val entryLibraryUpdateRefreshFeature: EntryLibraryUpdateRefreshFeature = Injekt.get()
     private val mergeMetadataRefreshFeature: EntryMergeMetadataRefreshFeature = Injekt.get()
 
     private val notifier = LibraryUpdateNotifier(context)
@@ -252,7 +253,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
     /**
      * Method that updates entries in [entriesToUpdate]. It's called in a background thread, so it's safe
      * to do heavy operations or network calls here.
-     * For each entry it calls [syncEntryWithSource] and updates the notification showing the current
+     * For each entry it calls [entryLibraryUpdateRefreshFeature] and updates the notification showing the current
      * progress.
      *
      * @return an observable delivering the progress of each update.
@@ -287,42 +288,56 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                     entry,
                                 ) {
                                     try {
-                                        val result = syncEntryWithSource(
-                                            entry,
-                                            fetchDetails = libraryPreferences.autoUpdateMetadata.get(),
-                                            fetchWindow = currentFetchWindow,
-                                        )
-                                        val newChapters = result.insertedChapters
-                                            .sortedByDescending { it.sourceOrder }
+                                        when (
+                                            val result = entryLibraryUpdateRefreshFeature.refresh(
+                                                EntryLibraryUpdateRefreshRequest(
+                                                    entry = entry,
+                                                    fetchMetadata = libraryPreferences.autoUpdateMetadata.get(),
+                                                    fetchWindowLowerBound = currentFetchWindow.first,
+                                                    fetchWindowUpperBound = currentFetchWindow.second,
+                                                ),
+                                            )
+                                        ) {
+                                            is EntryLibraryUpdateRefreshResult.Updated -> {
+                                                val newChapters = result.newChildren
+                                                if (newChapters.isNotEmpty()) {
+                                                    automaticDownloads.enqueue(entry, newChapters)
 
-                                        if (newChapters.isNotEmpty()) {
-                                            automaticDownloads.enqueue(entry, newChapters)
+                                                    libraryPreferences.newUpdatesCount.getAndSet {
+                                                        it + newChapters.size
+                                                    }
 
-                                            libraryPreferences.newUpdatesCount.getAndSet { it + newChapters.size }
-
-                                            // Keep the queued entry that contains the new EntryChapters
-                                            newUpdates.add(queuedEntry to newChapters.toTypedArray())
-                                            logcat(LogPriority.INFO) {
-                                                "Library update found ${newChapters.size} new chapter(s) for ${queuedEntry.title}"
+                                                    // Keep the queued entry that contains the new EntryChapters
+                                                    newUpdates.add(queuedEntry to newChapters.toTypedArray())
+                                                    logcat(LogPriority.INFO) {
+                                                        "Library update found ${newChapters.size} new chapter(s) " +
+                                                            "for ${queuedEntry.title}"
+                                                    }
+                                                }
+                                            }
+                                            EntryLibraryUpdateRefreshResult.SourceUnavailable -> {
+                                                recordFailedUpdate(
+                                                    failedUpdates = failedUpdates,
+                                                    entry = queuedEntry,
+                                                    errorMessage = context.stringResource(
+                                                        MR.strings.loader_not_implemented_error,
+                                                    ),
+                                                )
+                                            }
+                                            EntryLibraryUpdateRefreshResult.NoChildren -> {
+                                                recordFailedUpdate(failedUpdates, queuedEntry, errorMessage = null)
+                                            }
+                                            is EntryLibraryUpdateRefreshResult.OperationalFailure -> {
+                                                recordFailedUpdate(
+                                                    failedUpdates,
+                                                    queuedEntry,
+                                                    result.error.message,
+                                                    result.error,
+                                                )
                                             }
                                         }
                                     } catch (e: Throwable) {
-                                        val errorMessage = when (e) {
-                                            // failedUpdates will already have the source, don't need to copy it into the message
-                                            is SourceNotInstalledException -> context.stringResource(
-                                                MR.strings.loader_not_implemented_error,
-                                            )
-
-                                            else -> e.message
-                                        }
-                                        failedUpdates.add(queuedEntry to errorMessage)
-                                        val sourceName = sourceManager.getDisplayInfo(queuedEntry.source).visualName()
-                                        logcat(LogPriority.ERROR, e) {
-                                            buildString {
-                                                append("Library update failed for ${queuedEntry.title} ($sourceName)")
-                                                errorMessage?.let { append(": $it") }
-                                            }
-                                        }
+                                        recordFailedUpdate(failedUpdates, queuedEntry, e.message, e)
                                     }
                                 }
                             }
@@ -349,6 +364,25 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                 failedUpdates.size,
                 errorFile.getUriCompat(context),
             )
+        }
+    }
+
+    private fun recordFailedUpdate(
+        failedUpdates: CopyOnWriteArrayList<Pair<Entry, String?>>,
+        entry: Entry,
+        errorMessage: String?,
+        error: Throwable? = null,
+    ) {
+        failedUpdates.add(entry to errorMessage)
+        val sourceName = sourceManager.getDisplayInfo(entry.source).visualName()
+        val message = buildString {
+            append("Library update failed for ${entry.title} ($sourceName)")
+            errorMessage?.let { append(": $it") }
+        }
+        if (error == null) {
+            logcat(LogPriority.ERROR) { message }
+        } else {
+            logcat(LogPriority.ERROR, error) { message }
         }
     }
 

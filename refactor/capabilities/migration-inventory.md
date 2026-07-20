@@ -258,6 +258,10 @@ selection, and mandatory pre-execution synchronization. Execution refreshes the 
 profile-pinned inspection; the application host no longer mixes source operations with persistence. The raw-sync
 boundary now identifies only F13/Library Update for 6.6.4.
 
+Phase 6.6.4 adds a provider-less Library Update Refresh Feature after F13 eligibility. It preserves run context and maps
+Source Refresh into library-specific results while passing only successful inserted children to F05 and notification
+collection. The raw-sync application boundary is now green with no migration exceptions.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

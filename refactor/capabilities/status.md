@@ -72,6 +72,7 @@ Updated: 2026-07-20
 - Phase 6.6.0 Refresh migration plan commit: `eb29f2327` (`(refactor): define source refresh migration`)
 - Phase 6.6.1 Source Refresh architecture commit: `5f580cc3b` (`(refactor): establish source refresh feature`)
 - Phase 6.6.2 Direct/source-owned consumers commit: `a6a28b222` (`(refactor): migrate direct source refresh consumers`)
+- Phase 6.6.3 Migration refresh relationship commit: `fd86a52a8` (`(refactor): move migration refresh behind feature`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -79,8 +80,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.6.3 Migration refresh relationship
-- State: Phase 6.6.3 is implemented and validating for review. Phase 6.6.4 has not started.
+- Milestone: Phase 6.6.4 Library Update refresh relationship
+- State: Phase 6.6.4 is implemented and validating for review. Phase 6.6.5 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1130,7 +1131,20 @@ Focused Phase 6.6.3 findings:
 - The raw-sync boundary now reports exactly one deferred owner: F13/Library Update. Focused F11 tests and formatting
   pass; FOSS compilation reaches only the two recorded unrelated application errors.
 
+Focused Phase 6.6.4 findings:
+
+- A provider-less Library Update Refresh Feature is selected for every runtime-contributed type and consumes Source
+  Refresh after F13 eligibility without adding a type opt-in or making F13 execute source operations.
+- The worker supplies metadata and fetch-window evidence and receives library-specific structured outcomes. Source
+  grouping, concurrency, progress, counters, notification collection, and batch completion remain application-owned.
+- Only successful inserted children reach the existing F05 batch and F24 notification collection. Source absence,
+  no-children, and operation failures retain their existing failure/reporting behavior.
+- Application production code has no raw `SyncEntryWithSource` consumer. The generic boundary is green without a
+  migration allowlist.
+- Formatting and focused Library Update Refresh behavior tests pass. FOSS compilation reaches only the two recorded
+  unrelated application errors.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.6.3 after review, then implement Phase 6.6.4 F13/Library Update refresh. Continue through Phase 6 afterward
+Commit Phase 6.6.4 after review, then implement Phase 6.6.5 metered-source notification policy. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

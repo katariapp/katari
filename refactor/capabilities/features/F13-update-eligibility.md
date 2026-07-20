@@ -57,7 +57,7 @@ feature.
 
 | Surface | Disposition |
 | --- | --- |
-| Library update | Calls F13 once per candidate and records the returned structured skip reason. Fetch-window bounds remain runtime context. |
+| Library update | Calls F13 once per candidate and records the returned structured skip reason. Eligible queued entries then use the separate provider-less Library Update Refresh Feature; F13 never performs source operations. Fetch-window bounds remain runtime context. |
 | Stats | Calls the same feature after category filtering, so its global-update count matches worker eligibility, including one-shot Entries. |
 | Smart-update settings | The existing generic settings surface writes the shared preference. F13 alone interprets those keys; settings do not gate the feature by content type. |
 | Library outside-release-period filter | Remains F14. It shares a preference concept but has a distinct, capability-dependent library-filter applicability rule. |
@@ -85,6 +85,8 @@ outcomes. It does not assert a current Manga/Anime/Book support matrix or duplic
 - No capability matrix, mandatory operation, no-op provider, support-label test, compatibility facade, or direct-type
   branch was introduced.
 - F14 filter applicability, F23 vocabulary, and F24 notification presentation remain with their owners.
+- Source Refresh execution remains with the Library Update Refresh Feature. F13 supplies the eligibility consequence
+  without becoming a worker, source coordinator, or automatic-download owner.
 
 ## Validation
 

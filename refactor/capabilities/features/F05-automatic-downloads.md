@@ -47,7 +47,7 @@ actual requirement. It must not restore a mandatory filter method or an identity
 
 | Surface | Disposition |
 | --- | --- |
-| Library update discovery | One batch applies F05 policy to each Entry's newly inserted children and queues accepted work without starting it while source refresh is active. |
+| Library update discovery | One batch receives only successful inserted-child results from the Library Update Refresh Feature, applies F05 policy, and queues accepted work without starting it while source refresh is active. |
 | Library update queue start | Batch completion starts download processing once only when that batch actually queued work; an empty batch cannot start unrelated queued work. |
 | Entry refresh | Manually fetched new children use the same F05 policy and are scheduled through the immediate-start path. |
 | Category and preference policy | The internal `EntryAutomaticDownloadPolicy` is consumed only by the F05 coordinator. It captures the active-profile values and Entry state once, produces the candidates and structured blocker, and supplies the same evidence to contextual graph resolution. |

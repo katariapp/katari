@@ -126,6 +126,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryImmersiveFeatureContributor,
                 EntryRelatedEntriesFeatureContributor,
                 EntryLibraryProgressFeatureContributor,
+                EntryLibraryUpdateRefreshFeatureContributor,
                 EntryTypePresentationFeatureContributor,
                 EntryLibraryUpdateNotificationFeatureContributor,
                 EntryViewerSettingsFeatureContributor,
@@ -286,6 +287,12 @@ fun InjektRegistrar.addEntryInteractionRuntime(
         )
     }
     addSingletonFactory<EntryLibraryProgressResolutionPort> { get<EntryLibraryProgressFeature>() }
+    addSingletonFactory<EntryLibraryUpdateRefreshFeature> {
+        DefaultEntryLibraryUpdateRefreshFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            sourceRefresh = get(),
+        )
+    }
     addSingletonFactory<EntryViewerSettingsFeature> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryViewerSettingsFeature(

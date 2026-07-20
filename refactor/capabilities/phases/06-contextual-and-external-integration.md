@@ -770,6 +770,36 @@ The application migration host is now a profile-scoped persistence and transacti
 persistence/source-operation coordinator. No replacement synchronizer, F11-specific source implementation, content-type
 gate, or caller-owned Source Refresh interpretation was introduced.
 
+#### 6.6.4 — Library Update Refresh Relationship
+
+- [x] Add one provider-less Library Update Refresh Feature selected automatically for every contributed content type.
+- [x] Keep F13 as the sole eligibility-policy owner and invoke Library Update Refresh only for its queued eligible
+  entries.
+- [x] Map Source Refresh into library-specific updated/source-unavailable/no-children/operation-failure results.
+- [x] Preserve source grouping, concurrency limits, fetch-window and metadata request context, progress, failure files,
+  notification collection, and batch completion.
+- [x] Pass only successfully inserted children to the existing F05 automatic-download batch.
+- [x] Close the raw `SyncEntryWithSource` consumer boundary with no migration allowlist.
+
+F13 remains a pure shared policy over Entry and Library state; it does not gain source execution responsibilities.
+Library Update Refresh owns the operation that follows an eligible decision and is independently unconditional for all
+runtime-contributed types. A new content type therefore participates in both eligibility and refresh without adding a
+provider, type branch, worker opt-in, or support declaration.
+
+The worker supplies only run evidence: authoritative Entry, metadata preference, and fetch-window bounds. The Feature
+always requests children, delegates the mechanics to Source Refresh, preserves strict Entry-profile persistence, and
+orders inserted children for the existing notification and automatic-download flow. It does not own Android worker
+lifecycle, source concurrency, progress notifications, update counters, or F05 policy.
+
+Structured source absence retains the existing loader message, no children remains a failed update without inventing a
+type-specific message, and operation failures retain their cause for logging and the failure report. Only a successful
+result can increment new-update counts, enter F24 notification collection, or reach F05. Batch completion still occurs
+once after every source group finishes.
+
+The generic raw-sync boundary is now green. `SyncEntryWithSource` is referenced only by its domain implementation and
+construction, the root Source Refresh implementation, and tests. Future application refresh consumers must choose and
+declare their owning Feature relationship rather than borrowing the mechanics coordinator.
+
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
 - [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,
