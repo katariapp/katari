@@ -59,6 +59,7 @@ Updated: 2026-07-20
 - Release baseline merge: `54b839168` (merged `origin/upcoming` at `131163af6`, including v1.3.2)
 - Phase 6.4.11 Migration availability context commit: `50f34a2fb` (`(refactor): resolve migration availability context`)
 - Phase 6.4.12 Migration preparation context commit: `e2424a968` (`(refactor): resolve migration preparation context`)
+- Phase 6.4.13 Migration execution context commit: `7d729ef98` (`(refactor): resolve migration execution context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -66,8 +67,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.13 Migration execution authorization context
-- State: Phase 6.4.13 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.14 Merge preparation selection and membership context
+- State: Phase 6.4.14 is implemented and validating for review. Later F12 execution context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -274,6 +275,17 @@ Focused Phase 6.4.13 findings:
   Feature-issued option snapshot. Neither becomes generic context.
 - Replay, synchronization/inspection failures, transaction conflicts, cancellation, and consequence status remain
   operation outcomes. A committed replay intentionally returns its recorded result without current-state reevaluation.
+
+Focused Phase 6.4.14 findings:
+
+- Provider-free Merge coordination remains context-free and automatic for every composed type. The unconditional
+  editor artifact is replaced by selection, authoritative-resolution, and membership contextual integrations.
+- Mixed type/profile selection, missing or changed authoritative Entries, multiple existing groups, incomplete ordered
+  membership, and insufficient expanded editor membership block only the current preparation/editor consequences.
+- Empty selection remains a structured result because it has no content-type subject. Duplicate selection/preparation
+  payloads and missing caller preparation remain request validation rather than support or applicability facts.
+- Existing public results and rejection precedence are preserved. No Merge provider, type opt-in, content-type matrix,
+  generic Selection/Membership capability, or application API is added.
 
 Focused F11.0 findings:
 
@@ -934,4 +946,4 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.13 after review, then continue F12 selection/membership context before Phase 6.5.
+Commit Phase 6.4.14 after review, then continue F12 edit and existing-group execution context before Phase 6.5.

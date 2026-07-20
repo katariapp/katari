@@ -16,13 +16,13 @@ import tachiyomi.domain.entry.model.Entry
 import java.util.UUID
 
 internal class EntryMergeWorkflowCoordinator(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val host: EntryMergeHost,
     private val consequences: EntryMergeConsequenceDelivery,
 ) : EntryMergeFeature {
     private val applicableTypes = evaluation.mergeTypes(
         ENTRY_MERGE_BASE_INTEGRATION_ID,
-        EntryMergeBaseConsequence.WORKFLOW.id,
+        EntryMergeBaseConsequence.WORKFLOW_COORDINATION.id,
     )
     private val downloadRemovalTypes = evaluation.mergeTypes(
         ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
@@ -31,10 +31,18 @@ internal class EntryMergeWorkflowCoordinator(
 
     override suspend fun prepare(intent: EntryMergePrepareIntent): EntryMergePreparationResult {
         if (intent.selectedEntries.isEmpty()) return rejected(EntryMergeRejection.EMPTY_SELECTION)
-        if (intent.selectedEntries.map(Entry::type).distinct().size != 1) {
+        val selectedTypes = intent.selectedEntries.mapTo(mutableSetOf(), Entry::type)
+        val homogeneousType = selectedTypes.size == 1
+        val homogeneousProfile = intent.selectedEntries.map(Entry::profileId).distinct().size == 1
+        evaluation.requireMergeSelectionContext(
+            selectedTypes.filterTo(mutableSetOf()) { it in applicableTypes },
+            homogeneousType,
+            homogeneousProfile,
+        )
+        if (!homogeneousType) {
             return rejected(EntryMergeRejection.MIXED_ENTRY_TYPES)
         }
-        if (intent.selectedEntries.map(Entry::profileId).distinct().size != 1) {
+        if (!homogeneousProfile) {
             return rejected(EntryMergeRejection.MIXED_PROFILES)
         }
 
@@ -42,35 +50,52 @@ internal class EntryMergeWorkflowCoordinator(
         val profileId = intent.selectedEntries.first().profileId
         check(type in applicableTypes) { "Entry type $type was not composed into the Merge feature" }
         val profile = host.profile(profileId)
-        val resolvedSelected = mutableListOf<Entry>()
-        intent.selectedEntries.forEach { selected ->
-            val resolved = if (selected.id > 0L) {
-                val authoritative = profile.entries(listOf(selected.id)).singleOrNull()
-                    ?: return rejected(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
-                if (contentIdentity(authoritative) != contentIdentity(selected)) {
-                    return rejected(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
+        val resolvedSelected = buildList {
+            intent.selectedEntries.forEach { selected ->
+                val resolved = if (selected.id > 0L) {
+                    val authoritative = profile.entries(listOf(selected.id)).singleOrNull() ?: return@buildList
+                    if (contentIdentity(authoritative) != contentIdentity(selected)) return@buildList
+                    authoritative
+                } else {
+                    profile.resolveEntryIdentity(selected) ?: selected
                 }
-                authoritative
-            } else {
-                profile.resolveEntryIdentity(selected) ?: selected
+                add(resolved)
             }
-            resolvedSelected += resolved
         }
+        val authoritativeSelectionPresent = resolvedSelected.size == intent.selectedEntries.size
+        val typeStable = authoritativeSelectionPresent && resolvedSelected.all { it.type == type }
+        val profileStable = authoritativeSelectionPresent && resolvedSelected.all { it.profileId == profileId }
+        evaluation.requireMergeAuthorityContext(type, authoritativeSelectionPresent, typeStable, profileStable)
+        if (!authoritativeSelectionPresent) return rejected(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
         if (resolvedSelected.map(::contentIdentity).distinct().size != resolvedSelected.size) {
             return rejected(EntryMergeRejection.DUPLICATE_ENTRIES)
         }
-        if (resolvedSelected.any { it.type != type }) return rejected(EntryMergeRejection.MIXED_ENTRY_TYPES)
-        if (resolvedSelected.any { it.profileId != profileId }) return rejected(EntryMergeRejection.MIXED_PROFILES)
+        if (!typeStable) return rejected(EntryMergeRejection.MIXED_ENTRY_TYPES)
+        if (!profileStable) return rejected(EntryMergeRejection.MIXED_PROFILES)
 
         val selectedMemberships = resolvedSelected.map { entry ->
             entry.takeIf { it.id > 0L }?.let { profile.membership(it.id) }
         }
         val existingGroups = selectedMemberships.filterNotNull().distinctBy { it.targetEntryId }
-        if (existingGroups.size > 1) return rejected(EntryMergeRejection.MULTIPLE_EXISTING_GROUPS)
+        if (existingGroups.size > 1) {
+            evaluation.requireMergeMembershipContext(
+                type,
+                singleExistingGroup = false,
+                completeExistingGroup = true,
+                sufficientEditorMembers = true,
+            )
+            return rejected(EntryMergeRejection.MULTIPLE_EXISTING_GROUPS)
+        }
 
         val existingGroup = existingGroups.singleOrNull()
         val existingMembers = existingGroup?.let { profile.entries(it.orderedEntryIds) }.orEmpty()
         if (existingGroup != null && existingMembers.map(Entry::id) != existingGroup.orderedEntryIds) {
+            evaluation.requireMergeMembershipContext(
+                type,
+                singleExistingGroup = true,
+                completeExistingGroup = false,
+                sufficientEditorMembers = true,
+            )
             return EntryMergePreparationResult.Rejected(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
         }
 
@@ -87,7 +112,14 @@ internal class EntryMergeWorkflowCoordinator(
                 }
             }
         }
-        if (orderedEntries.size < 2) return rejected(EntryMergeRejection.TOO_FEW_ENTRIES)
+        val sufficientEditorMembers = orderedEntries.size >= 2
+        evaluation.requireMergeMembershipContext(
+            type,
+            singleExistingGroup = true,
+            completeExistingGroup = true,
+            sufficientEditorMembers = sufficientEditorMembers,
+        )
+        if (!sufficientEditorMembers) return rejected(EntryMergeRejection.TOO_FEW_ENTRIES)
         val selectedIdentities = resolvedSelected.mapTo(mutableSetOf(), ::contentIdentity)
         val sessionId = newEntryMergeSessionId()
         val expectedEntries = mutableListOf<EntryMergeHostExpectedEntry>()

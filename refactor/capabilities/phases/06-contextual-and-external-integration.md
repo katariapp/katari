@@ -385,6 +385,21 @@ support, require another content-type contribution, or create generic Entry-Stat
 No Execution, Replay, Synchronization, Transaction, or Consequence-Delivery capability is introduced. Live
 authorization is the only execution-stage fact that changes contextual applicability.
 
+#### 6.4.14 — Merge Preparation Selection and Membership Context
+
+- [x] Keep shared Merge coordination installed context-free for every composed content type.
+- [x] Declare homogeneous selection type and profile before F12 accepts a non-empty preparation request.
+- [x] Declare authoritative selected-Entry presence and stable type/profile identity after host resolution.
+- [x] Declare single-group membership, complete ordered membership, and sufficient editor membership before producing an
+  editor projection.
+- [x] Preserve empty selection, duplicate selections/preparations, and missing preparation payloads as request results.
+- [x] Leave opaque edit validation, commit choices, existing-group mutation, transaction conflict, and consequence
+  delivery to later F12 execution-context slices.
+
+The provider-free Merge relationship remains automatic for every composed type. Selection and membership facts block
+only the current preparation/editor consequences; they do not create Merge, Selection, Membership, or Entry-State
+capabilities and do not require a type-specific Merge contribution.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

@@ -23,8 +23,7 @@ private val ENTRY_MERGE_FEATURE_OWNER = ContributionOwner("entry-merge")
 internal enum class EntryMergeBaseConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence {
-    WORKFLOW(FeatureArtifactId("entry.merge.workflow")),
-    EDITOR(FeatureArtifactId("entry.merge.editor")),
+    WORKFLOW_COORDINATION(FeatureArtifactId("entry.merge.workflow-coordination")),
     CANDIDATES(FeatureArtifactId("entry.merge.candidates")),
     NAVIGATION(FeatureArtifactId("entry.merge.navigation")),
     LIBRARY_GROUPING(FeatureArtifactId("entry.merge.library-grouping")),
@@ -73,7 +72,7 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
                         sharedConsequences = EntryMergeDownloadConsequence.entries,
                     ),
-                ),
+                ) + entryMergePreparationContextIntegrations(owner),
             ),
         )
     }

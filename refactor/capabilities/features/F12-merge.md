@@ -14,6 +14,19 @@ Bookmarking, Child List, Preview, Immersive, Library Progress, notification, or 
 feature is applicable. Absence of one of those providers omits only that consequence and never makes the content type or
 base Merge workflow invalid.
 
+## Phase 6 Context Resolution
+
+The provider-free base relationship installs shared Merge coordination for every composed content type; it does not
+unconditionally authorize an editor for every request. A non-empty preparation resolves selection type/profile
+coherence, authoritative selected-Entry identity, existing-group membership completeness, and the expanded editor
+member count through F12-owned contextual integrations. Only a contextually applicable request receives the editor
+consequence.
+
+Empty selections have no content-type subject and remain structured request results. Duplicate selection/preparation
+payloads and missing caller preparation remain request validation rather than support facts. These distinctions add no
+Merge provider, type-specific opt-in, type matrix, or generic Selection/Membership capability, and preserve the existing
+public result vocabulary.
+
 ## Non-Negotiable Boundary
 
 - Application consumers submit user intent and consume feature-owned results or projections.
@@ -302,9 +315,10 @@ Implemented result:
 - The production census was rerun from all `EntryMerge*` references and every raw authority name. Every discovered
   consumer has an owned disposition; the only remaining raw references outside the segregated host are the two F11
   Migration cooperation calls.
-- The executable F12 contribution now records every base consequence under one provider-free integration. Download
-  ownership and removal remain a separate relationship derived from the real Download provider; absence of Download
-  does not affect the validity or availability of base Merge.
+- The executable F12 contribution records context-free coordination and other request-independent base consequences
+  under one provider-free integration. Preparation and editor consequences resolve from live selection and membership
+  context. Download ownership and removal remain a separate relationship derived from the real Download provider;
+  absence of Download does not affect the validity or availability of base Merge.
 - The reconciled consequence ledger is:
 
   | Product consequence | Owned boundary and disposition |

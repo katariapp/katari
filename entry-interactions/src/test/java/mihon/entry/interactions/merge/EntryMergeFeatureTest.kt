@@ -114,6 +114,37 @@ class EntryMergeFeatureTest {
     }
 
     @Test
+    fun `preparation rejects a persisted selection that is absent from authoritative state`() = runTest {
+        val selected = entry(1L, "missing")
+        val feature = feature(FakeEntryMergeHost(emptyList()))
+
+        feature.prepare(EntryMergePrepareIntent(listOf(selected))) shouldBe
+            EntryMergePreparationResult.Rejected(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
+    }
+
+    @Test
+    fun `preparation rejects members of multiple existing groups`() = runTest {
+        val entries = listOf(entry(1L, "one"), entry(2L, "two"), entry(3L, "three"), entry(4L, "four"))
+        val memberships = listOf(
+            EntryMergeMembershipSnapshot(7L, 1L, listOf(1L, 2L)),
+            EntryMergeMembershipSnapshot(7L, 3L, listOf(3L, 4L)),
+        )
+        val feature = feature(FakeEntryMergeHost(entries, memberships))
+
+        feature.prepare(EntryMergePrepareIntent(listOf(entries[0], entries[2]))) shouldBe
+            EntryMergePreparationResult.Rejected(EntryMergeRejection.MULTIPLE_EXISTING_GROUPS)
+    }
+
+    @Test
+    fun `preparation rejects a standalone selection with no second editor member`() = runTest {
+        val selected = entry(1L, "one")
+        val feature = feature(FakeEntryMergeHost(listOf(selected)))
+
+        feature.prepare(EntryMergePrepareIntent(listOf(selected))) shouldBe
+            EntryMergePreparationResult.Rejected(EntryMergeRejection.TOO_FEW_ENTRIES)
+    }
+
+    @Test
     fun `unpersisted selection remains read only until the owned commit transition`() = runTest {
         val persisted = entry(1L, "persisted")
         val remote = entry(-1L, "remote").copy(favorite = false)
