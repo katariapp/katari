@@ -524,6 +524,37 @@ client access for a different external integration. Manga reader, downloader, an
 `EntryImageSource` mechanics inside their type-owned modules. This slice therefore removes the application leak without
 turning a consequence-specific result into a reusable raw-source facade.
 
+#### 6.5.2 — Child WebView Context
+
+- [x] Add a separate child-source contextual integration to the existing WebView Feature; ordinary `WebViewSource`
+  support does not imply `ChapterWebViewSource` support.
+- [x] Resolve canonical child URL and authoritative source identity through one structured result with distinct
+  missing, unsupported, and failed outcomes.
+- [x] Require a type-owned media-host adapter only after source context makes child WebView behavior applicable; Manga
+  contributes the current reader adapter, while unrelated types and unsupported sources remain valid.
+- [x] Migrate Manga reader WebView, browser, share, and Android Assist availability from raw source casts and separate
+  getters to the same active-child resolution.
+- [x] Clear and replace the active resolution at each child transition and reject an asynchronously completed result
+  for a child that is no longer current.
+- [x] Reject raw `ChapterWebViewSource` use outside source/local compatibility, the owning root Feature, and tests,
+  including inside type modules.
+
+The child integration and the existing Entry WebView integration remain separate relationships under one Feature.
+`ChapterWebViewSource` extends the public source contract, but a source implementing only Entry WebView remains valid and
+receives no child consequences. Runtime WebView headers continue through the existing header result; resolving a child
+URL does not eagerly require headers needed only after WebView launch.
+
+Because child controls live inside a media-specific reader/player rather than a shared application screen, the child
+integration has one specialized host requirement. Source support alone discovers the shared URL/action consequences;
+if the affected content type has not supplied its host adapter, contextual resolution reports the missing adapter rather
+than claiming those UI consequences are complete. Provider absence or a source without child WebView support remains an
+ordinary blocker and creates no adapter obligation.
+
+The Manga reader now hides all canonical-child actions until an `Available` result exists for the current child. A
+failed or unavailable transition clears the prior result, so a previous chapter URL cannot authorize actions for the
+new chapter. Browser, share, WebView navigation, and Android Assist all read the same URL snapshot, while the WebView
+launch reads its source identity from that snapshot instead of looking up the provider again.
+
 ### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
 
 - [ ] Retain `SyncEntryWithSource` as the single owner of source refresh mechanics and its source capability contracts.

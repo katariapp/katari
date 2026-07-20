@@ -138,6 +138,7 @@ class EntryInteractionBoundaryCheckTaskTest {
                 import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
                 import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
                 import eu.kanade.tachiyomi.source.entry.EntryImageSource
+                import eu.kanade.tachiyomi.source.entry.ChapterWebViewSource
 
                 class AppFeature(private val source: Any) {
                     val immersive = source.supportsImmersiveFeed
@@ -155,7 +156,29 @@ class EntryInteractionBoundaryCheckTaskTest {
         error.message shouldContain "EntryPreviewSource"
         error.message shouldContain "RelatedEntriesSource"
         error.message shouldContain "EntryImageSource"
+        error.message shouldContain "ChapterWebViewSource"
         error.message shouldContain "Immersive source opt-in must be interpreted by EntryImmersiveFeature"
+    }
+
+    @Test
+    fun `type modules cannot bypass child WebView Feature through raw source contract`() {
+        createBaseFixture(
+            mangaProcessorSource = """
+                package mihon.entry.interactions.manga
+
+                import eu.kanade.tachiyomi.source.entry.ChapterWebViewSource
+                import mihon.entry.interactions.EntryOpenProcessor
+
+                internal class MangaOpenProcessor : EntryOpenProcessor {
+                    val rawContract = ChapterWebViewSource::class
+                }
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "canonical child WebView actions must use EntryWebViewFeature"
+        error.message shouldContain "ChapterWebViewSource"
     }
 
     @Test

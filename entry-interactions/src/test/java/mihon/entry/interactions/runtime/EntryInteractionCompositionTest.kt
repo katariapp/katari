@@ -103,6 +103,28 @@ class EntryInteractionCompositionTest {
     }
 
     @Test
+    fun `plugin rejects a specialized adapter owned by another type`() {
+        val plugin = object : EntryInteractionPlugin {
+            override val type = EntryType.MANGA
+            override val owner = ContributionOwner("test.type.manga")
+            override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
+            override val specializedAdapters = listOf(
+                EntryChildWebViewHostRequirement.bind(
+                    object : EntryChildWebViewHostAdapter {
+                        override val type = EntryType.ANIME
+                    },
+                ),
+            )
+        }
+
+        val exception = assertThrows<IllegalArgumentException> {
+            createEntryInteractions(listOf(plugin), emptyList())
+        }
+
+        exception.message.orEmpty() shouldContain "cannot contribute specialized adapter"
+    }
+
+    @Test
     fun `continue facade executes the selected provider behavior`() = runTest {
         val opened = mutableListOf<Long>()
         val processor = object : EntryContinueProcessor {

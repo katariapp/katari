@@ -6,6 +6,7 @@ import mihon.entry.interactions.EntryBulkDownloadCandidateCapability
 import mihon.entry.interactions.EntryChildGroupFilterCapability
 import mihon.entry.interactions.EntryChildListCapability
 import mihon.entry.interactions.EntryChildProgressCapability
+import mihon.entry.interactions.EntryChildWebViewHostRequirement
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadArchivePackagingCapability
@@ -31,6 +32,7 @@ import mihon.entry.interactions.EntryViewerSettingsCapability
 import mihon.entry.interactions.EntryViewerSettingsProvider
 import mihon.entry.interactions.manga.download.DownloadCache
 import mihon.entry.interactions.manga.download.DownloadManager
+import mihon.entry.interactions.manga.reader.MangaChildWebViewHostAdapter
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import mihon.feature.graph.ContributionOwner
 import tachiyomi.domain.download.service.DownloadPreferences
@@ -128,6 +130,9 @@ internal fun mangaEntryInteractionPlugin(
             )
             viewerSettingsProvider?.let { add(EntryViewerSettingsCapability.bind(it)) }
         }
+        override val specializedAdapters = listOf(
+            EntryChildWebViewHostRequirement.bind(MangaChildWebViewHostAdapter),
+        )
     }
 }
 

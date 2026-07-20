@@ -65,6 +65,7 @@ Updated: 2026-07-20
 - Phase 6.4.16 Merge context audit commit: `0360453ab` (`(refactor): complete merge context audit`)
 - Phase 6.4.17 Entry Feature context closure commit: `f8653cdfd` (`(refactor): complete entry feature context migration`)
 - Phase 6.5.0 Media context migration plan commit: `3ff63d635` (`(refactor): define media context migration`)
+- Phase 6.5.1 Cover network context commit: `dfd0de181` (`(refactor): resolve cover network context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -72,8 +73,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.5.1 Cover network context
-- State: Phase 6.5.1 is implemented and validating for review. Phase 6.5.2 has not started.
+- Milestone: Phase 6.5.2 Child WebView context
+- State: Phase 6.5.2 is implemented and validating for review. Phase 6.5.3 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1019,7 +1020,24 @@ Focused Phase 6.5.1 findings:
 - Root Entry-interactions behavior tests, the boundary task, build-logic tests, formatting, and diff checks pass. FOSS
   compilation reaches only the recorded unrelated Anime debug-launch callback and More-tab coroutine errors.
 
+Focused Phase 6.5.2 findings:
+
+- Entry and child WebView support are separate contextual integrations under one Feature. A source may implement either
+  supported subset without becoming invalid or creating a content-type declaration.
+- Child controls are media-host-specific, so source applicability activates one specialized host requirement. Manga
+  supplies it through the ordinary plugin; a future applicable type without the integration receives a named
+  `entry.web-view.child-host` obligation instead of silently missing UI.
+- Child resolution returns canonical URL and source identity together, with missing, unsupported, and failed outcomes.
+  WebView headers retain their existing separately resolved consequence and are not an eager child-URL prerequisite.
+- Manga reader actions and Android Assist now follow one active-child result. Child transitions clear stale state, and
+  late asynchronous resolution cannot install a previous child's URL.
+- Raw `ChapterWebViewSource` use remains only in the public source contract, legacy compatibility adapter, and owning
+  root Feature. Boundary enforcement rejects future application or type-module bypasses.
+- Focused WebView behavior covers available, missing, unsupported, failed, and missing-host outcomes without restating
+  a type support matrix. Root tests, Manga compilation, boundary validation, build-logic tests, formatting, and diff
+  checks pass.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.5.1 after review, then implement Phase 6.5.2 Child WebView context. Continue through Phase 6 afterward
+Commit Phase 6.5.2 after review, then implement Phase 6.5.3 Type-owned media closure. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

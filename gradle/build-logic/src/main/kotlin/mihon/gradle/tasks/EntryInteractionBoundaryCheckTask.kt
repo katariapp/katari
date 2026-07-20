@@ -215,6 +215,7 @@ private class EntryInteractionBoundaryRules(
             checkLibraryProgressDomainPortReferences(file, findings)
             checkCatalogueFeatureBypass(file, findings)
             checkSourceActionFeatureBypass(file, findings)
+            checkChildWebViewFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
             checkRuntimeInternalReferences(file, findings)
@@ -511,6 +512,23 @@ private class EntryInteractionBoundaryRules(
                 relativePath = file.relativePath,
                 lineNumber = index + 1,
                 reason = "Immersive source opt-in must be interpreted by EntryImmersiveFeature",
+            )
+        }
+    }
+
+    private fun checkChildWebViewFeatureBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val ownsContract = file.relativePath.startsWith("source-compat/src/main/") ||
+            file.relativePath.startsWith("source-local/src/main/") ||
+            file.relativePath ==
+            "entry-interactions/src/main/java/mihon/entry/interactions/source/EntryWebViewFeature.kt"
+        if (ownsContract) return
+
+        file.findReference("ChapterWebViewSource")?.let { reference ->
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = reference.lineNumber,
+                reason = "canonical child WebView actions must use EntryWebViewFeature, not raw ChapterWebViewSource",
             )
         }
     }

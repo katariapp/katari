@@ -8,7 +8,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import eu.kanade.tachiyomi.data.database.models.toDomainChapter
-import eu.kanade.tachiyomi.source.entry.ChapterWebViewSource
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.ui.reader.loader.ChapterLoader
 import eu.kanade.tachiyomi.ui.reader.model.InsertPage
@@ -39,10 +38,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
+import mihon.entry.interactions.EntryChildWebViewResolution
 import mihon.entry.interactions.EntryDownloadLifecycleEvent
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
+import mihon.entry.interactions.EntryWebViewFeature
 import mihon.entry.interactions.manga.download.DownloadManager
 import mihon.entry.interactions.manga.download.DownloadProvider
 import mihon.entry.interactions.manga.download.model.MangaDownload
@@ -61,7 +62,6 @@ import tachiyomi.core.common.util.lang.launchNonCancellable
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
-import tachiyomi.domain.entry.adapter.toSEntryChapter
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
@@ -92,6 +92,7 @@ import java.util.Date
 internal class ReaderViewModel @JvmOverloads constructor(
     private val savedState: SavedStateHandle,
     private val sourceManager: SourceManager = Injekt.get(),
+    private val webViewFeature: EntryWebViewFeature = Injekt.get(),
     private val imageSaver: ReaderImageSaver = ReaderImageSaver(Injekt.get<Application>()),
     val readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
     private val readerTracking: EntryReaderTracking = Injekt.get(),
@@ -654,26 +655,11 @@ internal class ReaderViewModel @JvmOverloads constructor(
         return state.value.currentChapter
     }
 
-    private fun getChapterWebViewSource(): ChapterWebViewSource? {
-        val chapterManga = getCurrentChapter()?.manga ?: manga ?: return null
-        return sourceManager.getOrStub(chapterManga.source) as? ChapterWebViewSource
-    }
-
-    fun supportsChapterWebView(): Boolean = getChapterWebViewSource() != null
-
-    fun getChapterWebViewSourceId(): Long? = getChapterWebViewSource()?.id
-
-    fun getChapterUrl(): String? {
-        val sChapter =
-            getCurrentChapter()?.chapter?.toDomainChapter()?.toEntryChapter()?.toSEntryChapter() ?: return null
-        val source = getChapterWebViewSource() ?: return null
-
-        return try {
-            source.getChapterUrl(sChapter)
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e)
-            null
-        }
+    fun resolveChapterWebView(): EntryChildWebViewResolution? {
+        val current = getCurrentChapter() ?: return null
+        val owner = current.manga ?: manga ?: return null
+        val child = current.chapter.toDomainChapter()?.toEntryChapter() ?: return null
+        return webViewFeature.resolveChild(owner, child)
     }
 
     /**

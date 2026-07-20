@@ -1,5 +1,6 @@
 package mihon.entry.interactions
 
+import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.ApplicableFeatureContext
 import mihon.feature.graph.BlockedFeatureContext
 import mihon.feature.graph.ContextEvidence
@@ -15,10 +16,12 @@ internal fun FeatureGraphEvaluation.requireSourceContextState(
     consequence: FeatureArtifactId,
     evidence: List<ContextEvidence<*>>,
     applicable: Boolean,
+    contentType: EntryType? = null,
 ) {
     val subjects = integrations
         .map { it.subject }
         .filter { it.feature == feature && it.integration == integration }
+        .filter { contentType == null || it.contentType == contentType.toContentTypeId() }
     check(subjects.isNotEmpty()) { "Source integration $feature:$integration was not discovered" }
 
     subjects.forEach { subject ->

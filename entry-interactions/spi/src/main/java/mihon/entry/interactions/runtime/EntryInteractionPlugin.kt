@@ -13,6 +13,10 @@ import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.capabilityDefinition
 import tachiyomi.domain.entry.model.Entry
 
+interface EntryInteractionSpecializedAdapter {
+    val type: EntryType
+}
+
 interface EntryInteractionProvider {
     val type: EntryType
 }
@@ -75,6 +79,16 @@ interface EntryInteractionPlugin : FeatureGraphContributor {
             require(binding.implementation.type == type) {
                 "Entry interaction plugin $type cannot contribute ${binding.graphProvider.capability.id} for " +
                     binding.implementation.type
+            }
+        }
+        specializedAdapters.forEach { adapter ->
+            val implementation = adapter.implementation
+            require(implementation is EntryInteractionSpecializedAdapter) {
+                "Entry interaction specialized adapter ${adapter.definition.id} must expose its Entry type"
+            }
+            require(implementation.type == type) {
+                "Entry interaction plugin $type cannot contribute specialized adapter ${adapter.definition.id} for " +
+                    implementation.type
             }
         }
     }
