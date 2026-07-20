@@ -47,6 +47,7 @@ Updated: 2026-07-20
 - Phase 6.2 catalogue/source-description commit: `9685d465a` (`(refactor): migrate catalogue source description`)
 - Phase 6.3 source-action commit: `debbb1c29` (`(refactor): migrate source action features`)
 - Phase 6.4.1 Entry Feature context commit: `0d1f833f3` (`(refactor): resolve source-backed feature context`)
+- Phase 6.4.2 Download Action context commit: `756beb981` (`(refactor): resolve download action context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -54,8 +55,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.2 Download Action source and selection context
-- State: Phase 6.4.2 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.3 Automatic Download Entry and preference context
+- State: Phase 6.4.3 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -142,6 +143,17 @@ Focused Phase 6.4.2 findings:
   cancellation results, keeping UI and execution authorization on the same boundary.
 - Empty target lists remain structured request results because no Entry type exists as a contextual subject. Empty
   media-specific candidate pools remain post-provider `NoCandidates` results rather than support declarations.
+
+Focused Phase 6.4.3 findings:
+
+- F05 Download provider presence remains the sole type-wide prerequisite and selects only installed downloader dispatch.
+  A separate contextual integration owns policy, Library Update, and Entry-refresh consequences.
+- New-child selection, active-profile enabled/unread-only values, favorite state, category-policy eligibility, and
+  remaining candidates are typed contextual evidence owned by the relevant runtime concerns.
+- The shared policy returns one internally consistent decision consumed by both scheduling paths and graph resolution.
+  Contextual rejection is exposed as structured blockers instead of the former opaque `NoCandidates` result.
+- Category and prior-consumption mechanics remain inside F05 shared policy. No per-type automatic-filter provider,
+  support flag, content-type matrix, or generic Preferences/Profile capability is introduced.
 
 Focused F11.0 findings:
 
@@ -802,5 +814,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.2 after review, then continue the existing Entry Feature context migration with F05 automatic-download
-Entry state and preference/profile policy.
+Commit Phase 6.4.3 after review, then continue the remaining existing Entry Feature context audit and migration for
+Entry state, selection, preferences/profile, and platform conditions.

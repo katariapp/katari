@@ -231,6 +231,20 @@ Core Download, Bulk Candidate, and Bookmark provider presence remain the only ty
 Selection, Download, or Bookmark support matrix is introduced, and application consumers continue to depend only on
 the F04 Feature API.
 
+#### 6.4.3 — Automatic Download Entry and Preference Context
+
+- [x] Separate the context-free F05 Download provider dispatch from the contextual Automatic Download policy, Library
+  Update, and Entry-refresh consequences.
+- [x] Declare new-child selection, active-profile enabled/unread-only configuration, library membership, category-policy
+  eligibility, and filtered candidate presence as independently owned contextual evidence.
+- [x] Replace the opaque `NoCandidates` outcome with structured empty-selection, disabled, non-library,
+  category-policy, and no-unread-candidate blockers shared by both automatic-download paths.
+- [x] Keep category lookup and prior-consumption filtering inside the single shared F05 policy without restoring a
+  type-specific automatic-filter provider.
+
+Core Download provider presence remains the only type-wide prerequisite. The active profile supplies current preference
+values but is not itself a Download capability, and F07 retains ownership of the settings surface.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

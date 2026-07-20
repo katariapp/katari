@@ -32,9 +32,21 @@ interface EntryAutomaticDownloadBatch {
 }
 
 sealed interface EntryAutomaticDownloadResult {
-    data object Inapplicable : EntryAutomaticDownloadResult
+    data class Inapplicable(
+        val type: EntryType,
+    ) : EntryAutomaticDownloadResult
 
-    data object NoCandidates : EntryAutomaticDownloadResult
+    data class Blocked(
+        val blockers: Set<EntryAutomaticDownloadBlocker>,
+    ) : EntryAutomaticDownloadResult
 
     data class Scheduled(val count: Int) : EntryAutomaticDownloadResult
+}
+
+enum class EntryAutomaticDownloadBlocker {
+    EMPTY_SELECTION,
+    DISABLED,
+    ENTRY_NOT_IN_LIBRARY,
+    CATEGORY_POLICY_REJECTED,
+    NO_UNREAD_CANDIDATES,
 }
