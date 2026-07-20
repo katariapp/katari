@@ -555,6 +555,38 @@ failed or unavailable transition clears the prior result, so a previous chapter 
 new chapter. Browser, share, WebView navigation, and Android Assist all read the same URL snapshot, while the WebView
 launch reads its source identity from that snapshot instead of looking up the provider again.
 
+#### 6.5.3 — Type-owned Media Closure
+
+- [x] Keep Manga image-page resolution inside its reader, downloader, Preview, and Immersive implementations; F20
+  normalizes load and renderer failures without exposing `EntryImageSource` to generic application consumers.
+- [x] Keep Anime stream/subtitle resolution separate in Download Options, downloader execution, and player execution;
+  each retains its own request data and failure semantics instead of sharing a type-wide playback/media facade.
+- [x] Return Immersive renderer construction as an explicit available/failed Feature result and render the failure on
+  the existing retryable Immersive error surface.
+- [x] Reject future application/data/domain access to raw `SubtitleSource`, while preserving source contracts, tests,
+  and the owning Anime runtime mechanics.
+- [x] Verify Book reader and downloader processor selection use the same injected `BookProcessorRegistry`; processor
+  format support and optional Viewer Settings participation remain independent.
+
+This closure adds no media or renderer capability declaration. A Manga provider that cannot obtain image pages, an
+Anime player that cannot resolve a stream, and a Book processor that cannot open a format remain operation outcomes in
+their owning paths. The shared Features expose only consequences they own: F07 resolves download-option availability,
+F20 resolves load/render lifecycle, and F03 executes each type's download mechanics.
+
+Anime intentionally resolves external subtitles separately for options, download execution, and playback. Those calls
+have different failure policy: options may omit unavailable choices, a selected download subtitle must fail explicitly,
+and playback may continue without external subtitles. Sharing their raw resolution would erase those product
+differences. Generic application code is nevertheless prevented from creating a fourth authority.
+
+Immersive renderer construction now mirrors Immersive loading at the Feature boundary. A type-owned renderer may still
+validate its own handle shape and fail locally, but application UI receives `Available` or `Failed` and does not depend
+on an exception escaping composition. This is operation failure handling, not a support declaration or specialized
+adapter obligation.
+
+The Book registry remains a nested media authority installed once by the Book runtime and injected into both reader and
+downloader paths. Adding a processor therefore affects both mechanics through Book ownership, while contributing Viewer
+Settings remains an independent optional provider decision.
+
 ### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
 
 - [ ] Retain `SyncEntryWithSource` as the single owner of source refresh mechanics and its source capability contracts.

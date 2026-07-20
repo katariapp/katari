@@ -307,7 +307,13 @@ internal class DefaultEntryImmersiveFeature(
         }
     }
 
-    override fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRenderer = interaction.renderer(handle)
+    override fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRendererResult {
+        return runCatching { interaction.renderer(handle) }
+            .fold(
+                onSuccess = EntryImmersiveRendererResult::Available,
+                onFailure = EntryImmersiveRendererResult::Failed,
+            )
+    }
 
     override suspend fun persistProgress(handle: EntryImmersiveHandle, progress: EntryImmersiveProgress) {
         interaction.persistProgress(handle, progress)

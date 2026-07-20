@@ -859,6 +859,7 @@ private class EntryInteractionBoundaryRules(
             "EntryPreviewSource" to "eu.kanade.tachiyomi.source.entry.EntryPreviewSource",
             "RelatedEntriesSource" to "eu.kanade.tachiyomi.source.entry.RelatedEntriesSource",
             "EntryImageSource" to "eu.kanade.tachiyomi.source.entry.EntryImageSource",
+            "SubtitleSource" to "eu.kanade.tachiyomi.source.entry.SubtitleSource",
         )
 
         private val RAW_IMMERSIVE_SOURCE_OPT_IN_ACCESS = Regex("""\.\s*supportsImmersiveFeed\b""")

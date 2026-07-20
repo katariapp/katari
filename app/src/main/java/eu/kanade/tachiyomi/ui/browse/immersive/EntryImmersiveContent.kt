@@ -73,6 +73,7 @@ import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryImmersiveHandle
 import mihon.entry.interactions.EntryImmersiveOpenTargetResult
 import mihon.entry.interactions.EntryImmersivePreloadRadiusResult
+import mihon.entry.interactions.EntryImmersiveRendererResult
 import mihon.entry.interactions.EntryImmersiveUnavailableReason
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.asEntryCover
@@ -276,18 +277,26 @@ private fun EntryImmersivePage(
 
         when (itemState) {
             is EntryImmersiveScreenModel.ItemState.Ready -> {
-                val renderer = remember(itemState.handle, immersiveModel) {
-                    immersiveModel.renderer(itemState.handle)
+                when (
+                    val renderer = remember(itemState.handle, immersiveModel) {
+                        immersiveModel.renderer(itemState.handle)
+                    }
+                ) {
+                    is EntryImmersiveRendererResult.Available -> renderer.renderer.Content(
+                        modifier = Modifier.fillMaxSize(),
+                        active = isActive,
+                        controlsVisible = controlsVisible,
+                        controlsBottomInset = controlsBottomInset,
+                        onToggleControls = onToggleControls,
+                        onZoomStateChange = onZoomStateChange,
+                        onProgress = { immersiveModel.persistProgress(itemState.handle, it) },
+                    )
+                    is EntryImmersiveRendererResult.Failed -> ImmersiveError(
+                        message = renderer.error.message ?: stringResource(MR.strings.unknown_error),
+                        onRetry = onRetry,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
                 }
-                renderer.Content(
-                    modifier = Modifier.fillMaxSize(),
-                    active = isActive,
-                    controlsVisible = controlsVisible,
-                    controlsBottomInset = controlsBottomInset,
-                    onToggleControls = onToggleControls,
-                    onZoomStateChange = onZoomStateChange,
-                    onProgress = { immersiveModel.persistProgress(itemState.handle, it) },
-                )
             }
             is EntryImmersiveScreenModel.ItemState.Error -> ImmersiveError(
                 message = itemState.throwable.message ?: stringResource(MR.strings.unknown_error),

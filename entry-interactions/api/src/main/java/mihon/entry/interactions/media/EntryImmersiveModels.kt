@@ -119,6 +119,12 @@ sealed interface EntryImmersiveLoadResult {
     data class Failed(val error: Throwable) : EntryImmersiveLoadResult
 }
 
+sealed interface EntryImmersiveRendererResult {
+    data class Available(val renderer: EntryImmersiveRenderer) : EntryImmersiveRendererResult
+
+    data class Failed(val error: Throwable) : EntryImmersiveRendererResult
+}
+
 sealed interface EntryImmersiveOpenTargetResult {
     data class Available(val childId: Long) : EntryImmersiveOpenTargetResult
     data object NotOpenable : EntryImmersiveOpenTargetResult

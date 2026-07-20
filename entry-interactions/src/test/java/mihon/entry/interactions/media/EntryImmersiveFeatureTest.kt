@@ -48,7 +48,7 @@ class EntryImmersiveFeatureTest {
         feature.preloadRadius(entry.type) shouldBe EntryImmersivePreloadRadiusResult.Available(radius = 0)
         val loaded = feature.load(request()).shouldBeInstanceOf<EntryImmersiveLoadResult.Loaded>()
         loaded.child shouldBe null
-        feature.renderer(loaded.handle) shouldBe processor.renderer
+        feature.renderer(loaded.handle) shouldBe EntryImmersiveRendererResult.Available(processor.renderer)
         feature.persistProgress(loaded.handle, EntryImmersiveProgress.ImagePage(0, 1, 0L))
         feature.release(loaded.handle)
 
@@ -82,6 +82,16 @@ class EntryImmersiveFeatureTest {
 
         feature.load(request()).shouldBeInstanceOf<EntryImmersiveLoadResult.Failed>().error.message shouldBe
             "media failed"
+    }
+
+    @Test
+    fun `renderer failures remain structured inside the Immersive Feature`() = runTest {
+        val processor = RecordingImmersiveProcessor(rendererFailure = IllegalStateException("renderer failed"))
+        val feature = featureFor(EntryImmersiveCapability.bind(processor))
+        val loaded = feature.load(request()).shouldBeInstanceOf<EntryImmersiveLoadResult.Loaded>()
+
+        feature.renderer(loaded.handle).shouldBeInstanceOf<EntryImmersiveRendererResult.Failed>().error.message shouldBe
+            "renderer failed"
     }
 
     @Test
@@ -197,6 +207,7 @@ class EntryImmersiveFeatureTest {
         override val loadMode: EntryImmersiveLoadMode = EntryImmersiveLoadMode.ENTRY,
         override val preloadRadius: Int = 2,
         private val failure: Throwable? = null,
+        private val rendererFailure: Throwable? = null,
     ) : EntryImmersiveProcessor {
         override val type = EntryType.BOOK
         val renderer = mockk<EntryImmersiveRenderer>()
@@ -215,7 +226,10 @@ class EntryImmersiveFeatureTest {
             return EntryImmersiveHandle.ImagePages(type, chapter?.id, delegate = Unit)
         }
 
-        override fun renderer(handle: EntryImmersiveHandle) = renderer
+        override fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRenderer {
+            rendererFailure?.let { throw it }
+            return renderer
+        }
 
         override suspend fun persistProgress(handle: EntryImmersiveHandle, progress: EntryImmersiveProgress) {
             progressCount++

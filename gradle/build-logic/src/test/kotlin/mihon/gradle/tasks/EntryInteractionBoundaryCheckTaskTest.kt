@@ -138,6 +138,7 @@ class EntryInteractionBoundaryCheckTaskTest {
                 import eu.kanade.tachiyomi.source.entry.EntryPreviewSource
                 import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
                 import eu.kanade.tachiyomi.source.entry.EntryImageSource
+                import eu.kanade.tachiyomi.source.entry.SubtitleSource
                 import eu.kanade.tachiyomi.source.entry.ChapterWebViewSource
 
                 class AppFeature(private val source: Any) {
@@ -156,6 +157,7 @@ class EntryInteractionBoundaryCheckTaskTest {
         error.message shouldContain "EntryPreviewSource"
         error.message shouldContain "RelatedEntriesSource"
         error.message shouldContain "EntryImageSource"
+        error.message shouldContain "SubtitleSource"
         error.message shouldContain "ChapterWebViewSource"
         error.message shouldContain "Immersive source opt-in must be interpreted by EntryImmersiveFeature"
     }

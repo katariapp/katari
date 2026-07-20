@@ -14,7 +14,7 @@ interface EntryImmersiveFeature {
 
     suspend fun load(request: EntryImmersiveLoadRequest): EntryImmersiveLoadResult
 
-    fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRenderer
+    fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRendererResult
 
     suspend fun persistProgress(handle: EntryImmersiveHandle, progress: EntryImmersiveProgress)
 
