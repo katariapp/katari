@@ -311,6 +311,20 @@ tracker-declared type applicability remain assigned to their Tracking owner in P
 F18 requires no contextual integration. This is an explicit owner-based disposition, not an omission: registering
 ordinary method arguments as context would violate the Phase 6 boundary and create a generic request-state registry.
 
+#### 6.4.9 — Library Progress Request-State Disposition
+
+- [x] Audit F22 loading, merged aggregation, Continue/Bookmark composition, badges, filters, sorting, Stats, and update
+  inputs for contextual applicability or cross-feature activation.
+- [x] Keep stored children, legacy activity time, media progress evidence, concrete Continue targets, and merged
+  summaries as purpose-specific calculation inputs and results.
+- [x] Preserve Library Progress provider presence as the sole base applicability fact and Continue/Bookmark provider
+  composition as the sole cross-feature applicability facts.
+- [x] Treat empty children, no next child, absent media progress, and unknown downstream values as supported operation
+  results rather than contextual blockers.
+
+F22 requires no contextual integration. Live Library data changes computed summary values but neither activates nor
+blocks a discovered relationship, so duplicating it as graph evidence would not expose any missing integration.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

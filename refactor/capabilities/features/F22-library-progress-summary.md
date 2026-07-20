@@ -12,7 +12,7 @@ Status: complete
 - Optional consequence: a structured non-opening next-child target owned by F02
 - Optional relationship: Library Progress plus Bookmarking
 - Optional consequence: aggregate bookmark counts and bookmarked-filter applicability
-- Context: stored children, legacy last-read time, merged-member order, and concrete media progress state
+- Operation state: stored children, legacy last-read time, merged-member order, and concrete media progress state
 - Specialized requirement: the type provider exposes only genuine media progress evidence such as Manga page state,
   Anime playback state, or Book locator state
 - Behavioral contract: synthetic provider presence and absence, shared counts, Continue and Bookmark composition, merged
@@ -36,6 +36,18 @@ generic provider index.
 Providers return media evidence only. The Feature owns chapter totals, consumed counts, started state, last-read
 combination, optional bookmark counts, merged aggregation, relationship availability, and structured results. This
 prevents common policy from being copied into every type while preserving real media differences.
+
+## Context Disposition
+
+F22 requires no contextual graph relationship. Stored children, legacy last-read time, type-owned media evidence,
+concrete Continue targets, and merged summaries are calculation inputs or results. They affect summary values but do
+not decide whether the Library Progress, Continue, or Bookmark relationships apply. Provider composition already
+selects those relationships before an operation runs.
+
+An empty child list, no next child, no media progress, and unknown downstream summary values remain supported operation
+results rather than blockers. An empty merge-member list remains invalid coordinator input because there is no summary
+operation to perform; it is not a content-type support decision. Mutable Library state is recalculated by the existing
+Library loading flow instead of being duplicated as graph evidence.
 
 ## Consumer Disposition
 
@@ -71,6 +83,8 @@ Feature-owned. Type tests exercise genuine media evidence rather than restating 
 - Unknown state is not converted to zero or false by UI, policy, Stats, or update consumers.
 - No mandatory operation, type matrix, support-declaration test, no-op provider, fallback summary, compatibility facade,
   or central list was introduced.
+- The Phase 6 audit does not turn ordinary summary inputs into contextual capabilities or duplicate provider-derived
+  Continue and Bookmark relationships.
 
 ## Validation
 
