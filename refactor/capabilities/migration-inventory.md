@@ -271,6 +271,14 @@ only root boundary and has no raw application consumer. F24 and Manga F03 are th
 C20, and C22 remain consequence-specific invocation evidence with strict Entry-profile refresh. The unused legacy
 source-api metering marker is recorded for C24 compatibility reconciliation in 6.8.
 
+Phase 6.7.0 classifies the complete tracker surface before migration. `TrackerManager` and tracker implementations
+remain the external authorities, while one split Tracking Feature and one application host boundary will own all
+application consequences. Entry/session/operation, automatic synchronization, F11 preparation, F14 inputs, Library
+scores, Stats, settings, backup diagnostics, presentation, and documentation are included. Tracker implementations,
+credential storage, registry construction, the single host adapter, and tracker-specific OAuth callback parsing remain
+reviewed owner-local mechanics. The hardcoded settings service list is an explicit migration obligation rather than an
+acceptable external-system exception.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

@@ -871,6 +871,103 @@ type-specific interactions.
   and tracking documentation to the same structured results.
 - [ ] Keep tracker implementations authoritative and do not turn tracker capabilities into content-type providers.
 
+#### 6.7.0 — Tracking Ownership Census and Architecture Split
+
+- [x] Classify every production tracker registry, applicability, authentication, source-acceptance, sub-capability,
+  operation, Library, Stats, settings, backup, migration, and presentation consumer.
+- [x] Define one application-facing Tracking Feature before migrating consumers, with one application host as the only
+  bridge from root Feature policy to the existing tracker system.
+- [x] Keep tracker contracts and implementations authoritative while preventing raw tracker objects, registry access,
+  or capability casts from remaining application behavior APIs.
+- [x] Assign each cross-feature relationship to its consuming Feature consequence rather than creating a tracker
+  consumer list or copying tracker support into content-type contributions.
+- [x] Split the implementation into architecture-first milestones and record the final enforcement/reconciliation gate.
+
+The census finds one external integration system with several product consequences, not a content-type interaction
+provider. `TrackerManager` remains the authoritative runtime registry, and each `Tracker` remains authoritative for its
+supported Entry types, authentication, remote operations, statuses, scoring, dates, privacy, deletion, and enhanced
+source matching. Tracking support is never copied into Manga, Anime, Book, or a future type contribution.
+
+The target boundary is one injected `EntryTrackingFeature`. Its API is divided into cohesive Entry session, operation,
+automatic synchronization, account, Library, and Stats contracts rather than one giant source file. A root coordinator
+resolves graph relationships and returns neutral service IDs, descriptors, requests, and structured results. It never
+exports `Tracker`, `TrackerManager`, `EnhancedTracker`, `DeletableTracker`, or tracker-owned database/network models.
+
+An application-supplied `EntryTrackingHost` is the sole adapter to the current tracker system. The host is composition
+infrastructure, not an alternate consumer API: only the root Tracking Feature may call it. Its implementation may be
+split by registry, account, Entry operation, synchronization, and analytics responsibilities, but all raw tracker
+access remains inside that owned adapter or the tracker system itself. This preserves the existing module direction:
+`entry-interactions` does not depend on the app module and tracker contracts do not move merely to make the refactor
+compile.
+
+| Current consumer group | Final owner and boundary |
+| --- | --- |
+| `TrackerManager`, built-in trackers, network clients, credentials, and tracker DTO conversion | Tracker-owned external implementation. The registry is the single service-discovery authority; no second Tracking Feature service list is maintained. |
+| Entry tracking action and reactive badge state | Tracking Feature availability/session results composed from actual Entry type, registered tracker applicability, login state, source identity, and enhanced source acceptance. |
+| Tracking dialog, search, register, refresh, status/progress/score/date/private mutation, and remote deletion | Tracking Feature operations with service-ID requests and structured success, unavailable, rejected, and failed results. Presentation receives neutral descriptors and capability-specific controls. |
+| Automatic enhanced matching from Catalogue, History, Entry refresh, Merge initialization, and application callbacks | Tracking Feature automatic-binding consequence. Source matching remains host mechanics; every caller consumes one result instead of filtering raw trackers. |
+| Reader/Entry progress update, delayed retry, remote refresh, and enhanced progress reconciliation through F09 | Tracking Feature synchronization consequences. Existing track rows and child state are request evidence; F09 remains the only Consumption mutation owner. |
+| F11 tracking transfer | F11 keeps transaction ownership and consumes a Tracking Feature preparation consequence. Enhanced tracker identity transformation remains host mechanics and performs no network operation. |
+| Library tracker filters | F14 continues owning filter policy. Tracking Feature supplies the reactive logged-in service projection and tracker applicability evidence; F14 does not inspect the registry. |
+| Library score sorting | Tracking Feature supplies normalized per-Entry score evidence and whether the current logged-in integrations apply to each Entry type; Library retains sort ordering only. |
+| Stats | Tracking Feature supplies the logged-in integration count and normalized tracked/scored Entry summary; Stats does not resolve tracker identities or scoring conversions. |
+| Tracking settings and tracker preference rows | Tracking Feature account projection derives from the authoritative registry. The current hardcoded built-in service list and separate enhanced-service list are removed; login/logout requests use structured account results. |
+| Backup validation | Tracking Feature resolves referenced service IDs to missing-login names; backup parsing and missing-source validation remain backup-owned. |
+| OAuth callback activities | Tracker-owned platform adapters may parse and persist a concrete service callback. They do not decide Entry applicability or expose a second service catalogue. |
+| Tracker logos and tracking vocabulary | Tracking Feature descriptors carry tracker-owned presentation evidence; F23 continues owning Entry-type vocabulary and never authorizes tracking. |
+
+Tracker applicability is contextual external evidence. The base Tracking relationship is shared for every contributed
+content type, but an Entry consequence is applicable only when the authoritative tracker snapshot declares that exact
+type. Login state independently controls authenticated session, automatic binding, filters, sync, and Stats
+consequences; being logged out does not erase the fact that a tracker supports the Entry type. Enhanced source
+acceptance is a narrower operation blocker and never becomes a type capability.
+
+Tracker sub-capabilities are also contextual facts, not specialized obligations. A service with no scores, dates,
+privacy, remote deletion, or enhanced matching is a valid tracker. Its descriptor simply omits the corresponding
+control/consequence. Existing tracks, Library membership, child progress, profile ID, preference values, and remote
+results remain operation evidence rather than static support declarations.
+
+The current settings screen is part of this migration even though the earlier summary did not name it explicitly. It
+hardcodes individual built-in trackers and independently discovers enhanced trackers, so adding a service can require a
+follow-up UI edit. The authoritative tracker registration must carry enough account/presentation metadata for settings,
+backup diagnostics, and Entry surfaces to derive automatically. This is an owner declaration, not a central list of
+capabilities or content types.
+
+The following direct uses remain reviewed owner-local boundaries after migration:
+
+- tracker contract declarations and built-in tracker/network implementations;
+- `TrackerManager` registry construction and tracker-owned credential/preferences storage;
+- the single application `EntryTrackingHost` implementation and root composition wiring; and
+- tracker-specific OAuth callback parsing that performs the external contract operation without deciding product
+  applicability.
+
+Every other UI, worker, reader binding, Library/Stats model, backup policy, and application coordinator must consume the
+Tracking Feature. Boundary validation will derive the forbidden raw tracker surface by package/interface ownership; it
+will not maintain an allowlist of migrated consumer filenames or current tracker implementations.
+
+Implementation proceeds in architecture-first slices:
+
+1. **6.7.1 — Tracking boundary and host architecture:** add the split Feature API, host port, neutral models/results,
+   graph/context integrations, root implementation, and composition binding before migrating callers.
+2. **6.7.2 — Entry tracking session:** migrate Entry action availability, reactive logged-in/source-compatible service
+   projection, dialog rows, and tracker presentation evidence.
+3. **6.7.3 — Entry tracking operations:** migrate search/register/refresh and status, progress, score, date, privacy,
+   unregistration, and remote-deletion operations behind structured Feature results.
+4. **6.7.4 — Automatic binding and synchronization:** migrate Catalogue, History, Entry, Merge, reader, delayed update,
+   progress reconciliation, and F11 preparation relationships without moving F09 or F11 ownership.
+5. **6.7.5 — Account, settings, and backup integration:** derive account rows from authoritative registrations,
+   migrate login/logout and backup missing-login diagnostics, and retain OAuth callback parsing as owner-local mechanics.
+6. **6.7.6 — Library and Stats integration:** supply F14 tracking-filter inputs, score-sort evidence, and Stats summaries
+   from the Feature rather than the raw registry.
+7. **6.7.7 — Tracking reconciliation:** remove unused parallel adapters/helpers and declaration-restatement tests,
+   enforce the raw-tracker boundary, add unknown-type/tracker behavioral contracts, rerun the complete census, update
+   behavior/docs/projections, and close `C18`, `C19`, and assigned `C20`/`C22` rows.
+
+Manifesto comparison found no type-level Tracking provider, mandatory interaction, per-type tracker matrix, copied
+authentication fact, static consumer registry, or application-visible raw tracker facade. A future content type becomes
+trackable when a registered tracker declares it; all common Entry, sync, Library, Stats, settings, backup, and
+documentation consequences then flow through the same Feature without editing that type.
+
 ### 6.8 — Compatibility Reconciliation and Context Census
 
 - [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current
