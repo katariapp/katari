@@ -368,6 +368,23 @@ are operation evidence owned by F11 and do not become Migration or Entry-State c
 Pair and option blockers suppress only their owned preparation/option consequences. They do not redefine Migration
 support, require another content-type contribution, or create generic Entry-State and Selection capabilities.
 
+#### 6.4.13 — Migration Execution Authorization Context
+
+- [x] Keep execution coordination installed context-free from Migration provider presence.
+- [x] Declare authoritative pair presence and captured Library authorization before synchronization and after the
+  synchronized execution reload.
+- [x] Preserve missing/changed authorization as the existing execution `Conflict` while blocking only the current
+  execution consequence.
+- [x] Keep unrecognized references and invalid selected options as request-validation results; the former has no trusted
+  content-type subject and the latter is checked against Feature-issued option state.
+- [x] Keep replay, synchronization/inspection failures, transaction conflicts, cancellation, and consequence-delivery
+  status as operation outcomes.
+- [x] Preserve committed replay semantics: an already applied operation returns its recorded result without reapplying
+  current authorization policy.
+
+No Execution, Replay, Synchronization, Transaction, or Consequence-Delivery capability is introduced. Live
+authorization is the only execution-stage fact that changes contextual applicability.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

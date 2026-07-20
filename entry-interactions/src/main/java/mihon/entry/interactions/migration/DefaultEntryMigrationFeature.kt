@@ -254,15 +254,27 @@ internal class DefaultEntryMigrationFeature(
                 .inspectPair(reference.source.id, reference.target.id)
         ) {
             is EntryMigrationHostInspectionResult.Ready -> {
-                if (!inspection.source.sameMigrationAuthorization(reference.source) ||
-                    !inspection.target.sameMigrationAuthorization(reference.target)
-                ) {
+                val authorizationStable = inspection.source.sameMigrationAuthorization(reference.source) &&
+                    inspection.target.sameMigrationAuthorization(reference.target)
+                evaluation.requireMigrationExecutionContext(
+                    type = reference.source.type,
+                    pairPresent = true,
+                    authorizationStable = authorizationStable,
+                )
+                if (!authorizationStable) {
                     return EntryMigrationExecutionResult.Conflict
                 }
             }
             EntryMigrationHostInspectionResult.SourceMissing,
             EntryMigrationHostInspectionResult.TargetMissing,
-            -> return EntryMigrationExecutionResult.Conflict
+            -> {
+                evaluation.requireMigrationExecutionContext(
+                    type = reference.source.type,
+                    pairPresent = false,
+                    authorizationStable = false,
+                )
+                return EntryMigrationExecutionResult.Conflict
+            }
             is EntryMigrationHostInspectionResult.OperationalFailure -> {
                 return EntryMigrationExecutionResult.OperationalFailure(inspection.retryable)
             }
@@ -281,14 +293,26 @@ internal class DefaultEntryMigrationFeature(
             is EntryMigrationExecutionInspectionResult.Ready -> result
             EntryMigrationExecutionInspectionResult.SourceMissing,
             EntryMigrationExecutionInspectionResult.TargetMissing,
-            -> return EntryMigrationExecutionResult.Conflict
+            -> {
+                evaluation.requireMigrationExecutionContext(
+                    type = reference.source.type,
+                    pairPresent = false,
+                    authorizationStable = false,
+                )
+                return EntryMigrationExecutionResult.Conflict
+            }
             is EntryMigrationExecutionInspectionResult.OperationalFailure -> {
                 return EntryMigrationExecutionResult.OperationalFailure(result.retryable)
             }
         }
-        if (!inspected.source.sameMigrationAuthorization(reference.source) ||
-            !inspected.target.sameMigrationAuthorization(reference.target)
-        ) {
+        val authorizationStable = inspected.source.sameMigrationAuthorization(reference.source) &&
+            inspected.target.sameMigrationAuthorization(reference.target)
+        evaluation.requireMigrationExecutionContext(
+            type = reference.source.type,
+            pairPresent = true,
+            authorizationStable = authorizationStable,
+        )
+        if (!authorizationStable) {
             return EntryMigrationExecutionResult.Conflict
         }
 

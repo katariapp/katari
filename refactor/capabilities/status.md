@@ -58,6 +58,7 @@ Updated: 2026-07-20
 - Phase 6.4.10 Library Update Notification context commit: `a2beb6ed8` (`(refactor): resolve library update notification context`)
 - Release baseline merge: `54b839168` (merged `origin/upcoming` at `131163af6`, including v1.3.2)
 - Phase 6.4.11 Migration availability context commit: `50f34a2fb` (`(refactor): resolve migration availability context`)
+- Phase 6.4.12 Migration preparation context commit: `e2424a968` (`(refactor): resolve migration preparation context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -65,8 +66,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.12 Migration pair preparation and option context
-- State: Phase 6.4.12 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.13 Migration execution authorization context
+- State: Phase 6.4.13 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -263,6 +264,16 @@ Focused Phase 6.4.12 findings:
 - Download provider presence remains context-free participation; no stored downloads blocks only the removal option.
 - Host operational failures and opaque execution-reference/selected-option validation remain operation results or later
   F11 execution-context work rather than being folded into pair support.
+
+Focused Phase 6.4.13 findings:
+
+- F11 execution coordination remains context-free provider-derived participation. Live authoritative pair presence and
+  captured Library authorization now resolve the actual execution consequence before and after target synchronization.
+- Missing or changed authorization retains the existing `Conflict` result and blocks only the uncommitted operation.
+- Unrecognized references lack a trustworthy graph subject; invalid options are request validation against the
+  Feature-issued option snapshot. Neither becomes generic context.
+- Replay, synchronization/inspection failures, transaction conflicts, cancellation, and consequence status remain
+  operation outcomes. A committed replay intentionally returns its recorded result without current-state reevaluation.
 
 Focused F11.0 findings:
 
@@ -923,5 +934,4 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.12 after review, then complete F11 execution context before F12 selection/membership context and
-Phase 6.5.
+Commit Phase 6.4.13 after review, then continue F12 selection/membership context before Phase 6.5.

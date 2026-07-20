@@ -30,7 +30,7 @@ internal enum class EntryMigrationBaseConsequence(
     PROVIDER_DISPATCH(FeatureArtifactId("entry.migration.provider-dispatch")),
     TARGET_SEARCH(FeatureArtifactId("entry.migration.target-search")),
     CONFIGURATION(FeatureArtifactId("entry.migration.configuration")),
-    EXECUTION(FeatureArtifactId("entry.migration.execution")),
+    EXECUTION_COORDINATION(FeatureArtifactId("entry.migration.execution-coordination")),
     TARGET_SYNCHRONIZATION(FeatureArtifactId("entry.migration.target-synchronization")),
     ENTRY_STATE_TRANSFER(FeatureArtifactId("entry.migration.entry-state-transfer")),
     CATEGORY_TRANSFER(FeatureArtifactId("entry.migration.category-transfer")),
@@ -163,7 +163,8 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                     ),
                 ) +
                     entryMigrationPreparationContextIntegrations(owner, migration) +
-                    entryMigrationOptionContextIntegrations(owner, migration, migrationDownload),
+                    entryMigrationOptionContextIntegrations(owner, migration, migrationDownload) +
+                    listOf(entryMigrationExecutionContextIntegration(owner, migration)),
             ),
         )
     }

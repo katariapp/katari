@@ -143,7 +143,18 @@ Child-state option participation derives context-free from Migration plus either
 notes, custom-cover, and Download-removal options declare their current owner state independently. Download provider
 presence establishes only option participation; actual stored downloads activate the option through F11 context. Empty
 state blocks only that option and never blocks Migration preparation. Execution reference validity and selected-option
-validation remain assigned to the next F11 contextual slice.
+validation remain operation-payload validation.
+
+Execution coordination remains installed from provider presence. Before an uncommitted operation synchronizes its
+target, and again after synchronization reloads authoritative state, F11 resolves whether the captured source/target
+pair still exists and retains the Library authorization recorded by its Feature-issued reference. Missing or changed
+authorization blocks only execution and preserves the existing `Conflict` result.
+
+An unrecognized opaque reference has no trustworthy content-type subject, while an invalid selected-option set is an
+invalid request against the reference's captured options. Replay conflict, synchronization/inspection failure,
+transaction conflict, and durable consequence status are outcomes of an already applicable operation. None becomes a
+capability or contextual graph input. A committed replay deliberately bypasses current authorization and returns its
+recorded outcome, preserving the approved idempotency semantics.
 
 ## Sequential Milestones
 

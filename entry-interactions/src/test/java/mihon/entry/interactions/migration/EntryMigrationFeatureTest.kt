@@ -195,6 +195,22 @@ class EntryMigrationFeatureTest {
     }
 
     @Test
+    fun `changed live authorization blocks an uncommitted execution before synchronization`() = runTest {
+        val host = RecordingMigrationHost(source, target)
+        val feature = feature(host)
+        val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
+            .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
+        host.preparationSource = source.copy(favorite = false)
+
+        feature.execute(
+            EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.REPLACE, emptySet()),
+        ) shouldBe EntryMigrationExecutionResult.Conflict
+
+        host.synchronizations shouldBe 0
+        host.transitions shouldBe emptyList()
+    }
+
+    @Test
     fun `strict synchronization failure cannot be reported as applied`() = runTest {
         val host = RecordingMigrationHost(source, target).apply {
             synchronizationResult = EntryMigrationTargetSynchronizationResult.OperationalFailure(retryable = false)
