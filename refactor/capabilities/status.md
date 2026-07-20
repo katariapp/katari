@@ -50,8 +50,21 @@ Updated: 2026-07-20
 
 - Phase: Phase 6 — Contextual and External Integration
 - Milestone: Phase 6 preparation and `C01`–`C24` owner-based split
-- State: Phase 5 and F11 are complete. Phase 6 classification and sequencing are next; no contextual production
-  behavior has changed yet.
+- State: Phase 5, F11, and Phase 6.0 are complete. Decision `0022` and the `C01`–`C24` owner-based sequence are
+  approved; Phase 6.1 runtime context resolution is next.
+
+Focused Phase 6 preparation findings:
+
+- The graph discovers typed context-input definitions but production has no runtime context-resolution path. Existing
+  Features therefore own contextual policy locally without declaring those dependencies to graph evaluation.
+- Phase 6 must begin with a generic runtime-context architecture gate. Migrating source/tracker casts first would leave
+  contracts, reporting, projections, and delayed obligations unable to discover those relationships.
+- `C01`–`C24` split by consequence owner rather than context category: catalogue/description, source actions/resolution,
+  existing Entry Features, media/renderers, refresh/network policy, tracking, and compatibility reconciliation.
+- Multi-owner facts such as local/stub state, Entry state, selection, preferences, and platform support remain
+  operation-scoped evidence for each owning Feature; they do not become global support capabilities or one context
+  manager.
+- Decision `0022` is accepted. Phase 6 preparation changed planning only and introduced no production behavior.
 
 Focused F11.0 findings:
 

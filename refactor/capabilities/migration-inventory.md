@@ -195,6 +195,43 @@ them; it does not mean copying them into type-wide capability declarations.
 | `C23` | Platform and renderer | Picture-in-picture, viewer auto-scroll, WebView availability, reader format/DRM support, and runtime media resolution. |
 | `C24` | Legacy/local source integration | Legacy Manga adapter and bundled Local source advertise/produce Manga; preserve as compatibility contracts, not general type support. |
 
+### Phase 6 Owner Classification
+
+This classification controls migration order. “Feature migration” means product consequences move behind a Feature
+result after runtime context resolution exists. “Owner-local” means the direct external contract use is the reviewed
+implementation of that contract or genuine media mechanics behind a Feature; it is not an application authorization
+exception.
+
+| ID | Authoritative evidence | Consequence owner and disposition | Phase 6 milestone |
+| --- | --- | --- | --- |
+| `C01` | Concrete `EntryCatalogueSource` presence | Catalogue/discovery Feature migration for Browse, search, feed, and migration surfaces; source-manager lookup and paging remain owner-local mechanics. | 6.2 |
+| `C02` | `EntryCatalogueSource.supportsLatest` | Catalogue/discovery Feature migration; remove repeated UI/repository booleans as authorization. | 6.2 |
+| `C03` | `EntryCatalogueSource.supportsImmersiveFeed` | F20 already owns product consequences; declare its source evidence and blockers to runtime context resolution. | 6.4 |
+| `C04` | `SourceMetadata.supportedEntryTypes` | Catalogue/description projection shared by source and extension filters/badges; F20 may prune source surfaces, but actual returned Entry type remains authoritative. | 6.2 |
+| `C05` | Concrete `EntryPreviewSource` presence | F19 already owns product consequences; declare source and preference evidence to runtime context resolution. Anime media loading remains owner-local. | 6.4 |
+| `C06` | Concrete `RelatedEntriesSource` presence | F21 already owns availability, fetch, persistence, orientation, and UI; declare source evidence to runtime context resolution. | 6.4 |
+| `C07` | Concrete `EntryImageSource` and returned image-page media | Split by consequence: F03/F04 download, F20 immersive, and reader media mechanics remain type-owned; cross-feature cover network access becomes a purpose-specific Feature result. | 6.5 |
+| `C08` | Concrete `SubtitleSource`, returned streams, and selection | Anime playback and F04 Download Options own their separate consequences; provider-internal resolution remains type-owned and user-visible absence/failure becomes structured context. | 6.5 |
+| `C09` | Concrete `ConfigurableSource` presence | Source-settings Feature migration for catalogue/extension/preferences/backup surfaces; Kavita/Suwayomi use becomes an explicit tracker adapter relationship. | 6.3 |
+| `C10` | Concrete `SourceHomePage` presence and returned URL | Source-home Feature migration for catalogue/feed/migration/extension navigation; tracker use remains an explicit adapter relationship. | 6.3 |
+| `C11` | Concrete `WebViewSource` presence and headers/navigation | Entry/source WebView Feature migration shared by Entry actions and the WebView runtime. | 6.3 |
+| `C12` | Concrete `ChapterWebViewSource` and child URL | Reader-owned contextual Feature migration; the public source contract and legacy adapter remain external authorities. | 6.5 |
+| `C13` | Concrete `ResolvableSource` presence and resolution result | Deep-link resolution Feature migration; returned Entry/child type is authoritative. | 6.3 |
+| `C14` | `EntryItemOrientationProvider` with source default | Catalogue/description projection owns Browse/feed/library orientation; F21 already carries orientation in its loaded result. | 6.2 |
+| `C15` | Three source-owned child-list contracts | `SyncEntryWithSource` remains the single owner-local mechanics coordinator; invoking Features declare refresh state/results as context rather than recasting the interfaces. | 6.6 |
+| `C16` | Concrete `UnmeteredSource` presence | Downloader policy remains type-owned F03 mechanics; Library-update queue warning moves to its update Feature consequence. | 6.6 |
+| `C17` | Installed, missing, bundled Local, or stub source state | Distributed contextual evidence for F04/F14/F24 and source action/catalogue Features; every blocker is reconciled by consequence, not by a global local/stub capability. | 6.3, 6.4, 6.6 |
+| `C18` | Tracker-declared `supportedEntryTypes` | New Tracking Feature composes Entry type, tracker applicability, authentication, Entry/Library actions, sync, filters, Stats, and documentation. | 6.7 |
+| `C19` | Tracker-owned dates/privacy/status/scoring facts | Same Tracking Feature exposes purpose-specific fields/actions; tracker implementations remain authoritative. | 6.7 |
+| `C20` | Concrete Entry/library/child/progress/media state | Distributed operation context for the Feature that owns each decision; never a global Entry-State capability. | 6.4–6.7 |
+| `C21` | Concrete action selection and membership shape | F04, F11, F12, Library, and other selection Features own separate eligibility results; never a generic Selection support flag. | 6.4 |
+| `C22` | Concrete preferences, profile, and authentication state | Distributed reactive context for F05/F06/F13/F14/F19/F20/F25/F27 and tracking; preference ownership remains F27, product meaning remains feature-owned. | 6.4–6.7 |
+| `C23` | Concrete platform, renderer, format, DRM, and resolution state | Distributed media Feature context; type-owned renderers/loaders retain mechanics while Feature results authorize controls and fallbacks. | 6.4, 6.5 |
+| `C24` | Legacy Manga adapter and bundled Local source contracts | Compatibility-only: translate to current source contracts, retain explicit scope, and verify no application support authority depends on legacy identities. | 6.8 |
+
+Rows with multiple milestones are closure ledgers, not shared implementation owners. Each assigned Feature records its
+own evidence and consequence; Phase 6.8 verifies that no consumer was lost between them.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

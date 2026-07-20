@@ -2,43 +2,191 @@
 
 ## Objective
 
-Integrate source-, entry-, selection-, preference-, platform-, tracker-, and other external conditions without flattening
-them into unconditional type-wide support.
+Resolve source-, entry-, selection-, preference-, platform-, tracker-, and other external conditions through the same
+discoverable relationship architecture without flattening them into unconditional type-wide support.
 
 The complete contextual and external work register is `C01`–`C24` in
-[`../migration-inventory.md`](../migration-inventory.md). The public source and tracker contracts remain owned by their
-current systems; this phase migrates how features compose and explain them.
+[`../migration-inventory.md`](../migration-inventory.md). Public source and tracker contracts remain owned by their
+current systems. This phase changes how product features consume, explain, and react to those facts; it does not copy
+them into content-type contributions.
 
-## Candidate Areas
+## Preparation Findings
 
-- Source-dependent preview and immersive behavior
-- Related entries, latest feeds, and source-owned actions
-- Local and stub restrictions
-- Tracker applicability
-- Entry-specific download options
-- Selection-specific merge and migration
-- Platform and renderer constraints
-- Every source, tracker, entry, selection, preference, profile, local/stub, legacy, and runtime input in `C01`–`C24`
+The static graph already retains typed `ContextInputDefinition` instances and deliberately evaluates integrations with
+unresolved inputs as conditional. It does not yet have a production mechanism that supplies those inputs, records their
+evidence, resolves feature-owned contextual rules, activates consequences, or exposes blockers and delayed obligations.
 
-## Per-Group Milestone
+Existing feature migrations therefore use two different shapes:
 
-- [ ] Preserve the external owner as an authoritative input.
-- [ ] Reconcile every applicable contextual-register row and all listed consumers.
-- [ ] Declare contextual subjects, enabling evidence, and blockers in the feature contribution.
-- [ ] Migrate repeated consumer-side composition to graph evaluation.
-- [ ] Preserve reactivity as context changes.
-- [ ] Select specialized obligations only when evaluated applicability requires them.
-- [ ] Stop before the next contextual group.
+- type prerequisites and relationships are selected by the graph; and
+- source, entry, selection, preference, and runtime conditions are evaluated directly inside individual Feature
+  coordinators without being declared to the graph.
+
+Those coordinators are valid owners of their product policy, but the relationship model cannot currently discover their
+context dependencies. Migrating individual casts or booleans before closing that architectural gap would preserve the
+same developer-memory problem under Feature APIs.
+
+The contextual register also contains several different ownership shapes. It must not become one global context object
+or one source-capability facade:
+
+- source and tracker interfaces are authoritative external facts;
+- feature coordinators own the consequences and the meaning of blockers;
+- concrete entry, selection, preference, and platform state is operation-scoped evidence;
+- type-owned media implementations may consume source/media contracts internally when that is genuine implementation
+  mechanics rather than application authorization; and
+- compatibility adapters translate legacy/local contracts into current external facts but never declare product
+  support independently.
+
+## Architecture Gate — Runtime Context Resolution
+
+No `C01`–`C24` consumer migration starts until the graph can carry a contextual relationship from discovery through
+runtime resolution.
+
+The gate must establish these semantics:
+
+- A feature integration declares every contextual input it uses, with a stable identity, value type, and authoritative
+  owner. An integration cannot use undeclared context to decide applicability, blockers, or obligations.
+- Static evaluation still decides whether type-owned prerequisites are absent. A satisfied integration with context is
+  a discovered candidate, not statically applicable and not unsupported.
+- A feature-owned contextual rule consumes typed evidence for one operation subject. Generic graph code transports and
+  validates evidence but does not learn source, tracker, entry, selection, preference, or platform semantics.
+- Runtime resolution distinguishes missing evidence, a contextual blocker, an applicable relationship, and a genuinely
+  incomplete specialized requirement after context establishes applicability.
+- Enabling evidence and blockers retain their owning input and can be projected by the Feature without consumers
+  reconstructing the decision.
+- Shared coordinators are installed once. Candidate consequences are not interpreted as permission until the Feature
+  resolves the current context.
+- Context snapshots are immutable for one decision. Features that depend on changing preferences, source installation,
+  authentication, selection, or runtime state expose an explicit reevaluation or reactive result rather than caching a
+  stale answer.
+- Application consumers receive only Feature-owned requests and structured results. They do not receive the context
+  registry, graph evaluation, raw provider collections, or a generic capability-query API.
+- Context-dependent contracts and projections retain enough resolved applicability information for Phase 7 to select
+  them without introducing a production type/source/tracker matrix.
+
+The architecture proof must add an anonymous future content type, an unknown context definition, and an unknown feature
+integration through their owners. The unchanged assembly and resolution path must discover the candidate, report
+missing evidence, resolve enabling and blocking evidence, and expose a delayed specialized obligation only after the
+context makes it applicable.
+
+## Ownership Rules for Migration
+
+Each consumer is migrated according to the consequence it owns, not merely according to the kind of context it reads.
+The same source fact may legitimately feed several Features, but its extraction and meaning must not be independently
+reconstructed by their screens.
+
+Context resolution is not a registry of every method argument. Ordinary execution payload such as an Entry ID, selected
+child, URL, or persisted value remains in the purpose-specific Feature request when it does not decide whether a graph
+relationship applies. Only evidence that changes applicability, blockers, consequences, projections, contracts, or
+specialized obligations enters contextual graph resolution.
+
+A direct source/tracker contract use may remain only when it is one of these reviewed boundaries:
+
+- the SDK contract or its source/tracker implementation;
+- a legacy/local compatibility adapter that exposes the current contract;
+- a type-owned media provider performing genuine media mechanics behind a Feature; or
+- a single external-system coordinator whose responsibility is the contract operation itself and which does not decide
+  application feature availability.
+
+UI, workers, notifications, settings, and application orchestration do not qualify. If they decide whether or how a
+product behavior is available, they must consume the owning Feature result.
+
+## Milestones
+
+### 6.0 — Census and Ownership Split
+
+- [x] Approve the `C01`–`C24` classifications and the owner-based sequence below.
+- [x] Record every context that spans more than one Feature; do not assign it to a global context manager.
+- [x] Record reviewed owner-local and compatibility uses so they cannot become an expanding allowlist.
+- [x] Keep this milestone planning-only; no runtime behavior changes.
+
+### 6.1 — Context Resolution Architecture
+
+- [ ] Implement the architecture gate above in `feature-graph` before migrating production consumers.
+- [ ] Define immutable operation subjects, typed evidence, feature-owned resolution, enabling/blocking results, delayed
+  obligations, and candidate consequence semantics.
+- [ ] Extend discovery, consistency validation, evaluation, and synthetic unknown-contribution coverage without adding a
+  product identifier or central context catalog.
+- [ ] Establish the Feature-facing dependency boundary before application migrations begin.
+
+### 6.2 — Catalogue and Source Description (`C01`, `C02`, `C04`, `C14`)
+
+- [ ] Compose catalogue presence, Latest, source orientation, and descriptive entry-type metadata once for Browse,
+  search, feeds, migration source selection, extension/source presentation, repository projection, and filters.
+- [ ] Keep returned Entry type authoritative. Descriptive metadata may filter or label a source surface but may not
+  authorize Entry behavior or reject returned data.
+- [ ] Remove repeated application casts and booleans while retaining source-manager and paging mechanics behind the
+  source-owned boundary.
+
+### 6.3 — Source Actions and Resolution (`C09`, `C10`, `C11`, `C13`, applicable `C17`)
+
+- [ ] Give source settings, source-home navigation, Entry WebView actions, and deep-link resolution purpose-specific
+  Feature boundaries and structured absence/failure results.
+- [ ] Reuse those results across catalogue, feed, migration, extension details, Entry, WebView, backup, and tracker
+  consumers instead of repeating interface casts.
+- [ ] Preserve tracker-specific use of source configuration/home/image contracts as an explicit tracker adapter
+  relationship, not an unchecked cast or a claim that every source supports it.
+
+### 6.4 — Existing Entry Feature Context (`C03`, `C05`, `C06`, `C20`, `C21`, `C22`, applicable `C17`/`C23`)
+
+- [ ] Declare and resolve the contextual inputs already owned by F01–F27, starting with the completed F19 Preview, F20
+  Immersive, and F21 Related Entries boundaries.
+- [ ] Reconcile entry state, source access, selection shape, preferences/profile, and platform conditions separately in
+  every Feature that gives them meaning. Do not create Entry-State, Selection, or Preferences support capabilities.
+- [ ] Preserve the completed F04, F11, F12, F13, F14, F18–F22, F24–F27 coordinator ownership while replacing their
+  locally undiscoverable contextual dependencies with declared evidence and structured results.
+
+### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
+
+- [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,
+  picture-in-picture, auto-scroll, and renderer support in the media Feature that owns each consequence.
+- [ ] Keep Manga/Anime/Book loaders, downloaders, players, readers, and Book processor selection type-owned where the
+  behavior is genuinely media-specific.
+- [ ] Move cross-feature authorization such as cover network access, reader WebView actions, playback/download option
+  availability, and platform controls behind the appropriate Feature result.
+
+### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
+
+- [ ] Retain `SyncEntryWithSource` as the single owner of source refresh mechanics and its source capability contracts.
+- [ ] Compose refresh safety, incremental behavior, chapter-number recognition, one-shot state, local/stub access,
+  update preferences, and unmetered-source policy into their F11/F13/Library-update consequences.
+- [ ] Keep downloader use of unmetered-source behavior inside the Download provider while removing duplicated
+  application warning policy.
+
+### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
+
+- [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,
+  authentication/profile state, existing tracks, reading dates, privacy, status, and scoring.
+- [ ] Migrate Entry actions/dialogs, search/register/update guards, automatic add/sync, Library tracker filters, Stats,
+  and tracking documentation to the same structured results.
+- [ ] Keep tracker implementations authoritative and do not turn tracker capabilities into content-type providers.
+
+### 6.8 — Compatibility Reconciliation and Context Census
+
+- [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current
+  source contracts rather than a parallel support authority.
+- [ ] Reconcile every multi-owner row (`C07`, `C17`, `C20`–`C23`) against every assigned Feature consequence.
+- [ ] Re-run the inventory probes and classify every new direct source/tracker/type/context gate before Phase 7.
+- [ ] Stop with no unclassified `C01`–`C24` consumer and no broad exception that future code can silently join.
+
+Each numbered milestone is a review-and-commit stop. A later milestone does not begin until the previous milestone is
+accepted.
 
 ## Exit Gate
 
-- Contextual results explain their enabling evidence and blockers.
-- No source-specific fact is presented as unconditional type support.
-- External compatibility contracts remain authoritative.
-- Migrated screens do not reconstruct the same contextual relationship independently.
-- No contextual register row remains unclassified, and no external capability has been copied into a type-wide support
-  declaration.
+- Contextual results identify enabling evidence and blockers through their authoritative owners.
+- No source-, tracker-, entry-, selection-, preference-, profile-, local/stub-, platform-, or runtime-specific fact is
+  presented as unconditional type support.
+- Every product consequence is available only through its Feature; reviewed owner-local mechanics do not decide UI or
+  workflow availability.
+- External compatibility contracts remain authoritative and returned Entry types remain authoritative.
+- Reactive consumers do not retain stale contextual answers.
+- Every `C01`–`C24` row and every discovered consumer has a final Feature, owner-local, or compatibility disposition.
+- An unknown contextual integration participates without an edit to a context catalog, type matrix, consumer list, or
+  exception list.
 
 ## Manifesto Review
 
-Confirm that context remains first-class while common consequences and exceptional obligations still come from the graph.
+This phase is aligned only if a future type, source contract, tracker fact, or runtime context enters through its proper
+owner; the relevant Feature then discovers it, explains its blockers, activates every common consequence, and exposes
+specialized work without a developer remembering another screen, worker, setting, or integration list.
