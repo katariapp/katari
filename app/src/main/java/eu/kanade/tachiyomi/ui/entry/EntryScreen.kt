@@ -461,7 +461,6 @@ class EntryScreen(
                     screen = TrackInfoDialogHomeScreen(
                         entryId = successState.entry.id,
                         entryTitle = successState.entry.displayTitle,
-                        sourceId = successState.entry.source,
                         entryType = successState.entry.type,
                     ),
                     enableSwipeDismiss = { it.lastItem is TrackInfoDialogHomeScreen },

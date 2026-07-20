@@ -29,9 +29,7 @@ import eu.kanade.presentation.entry.components.rankMergeTargets
 import eu.kanade.presentation.entry.entryTypePresentation
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
-import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
@@ -126,6 +124,9 @@ import mihon.entry.interactions.EntrySourceRefreshFailure
 import mihon.entry.interactions.EntrySourceRefreshFeature
 import mihon.entry.interactions.EntrySourceRefreshRequest
 import mihon.entry.interactions.EntrySourceRefreshResult
+import mihon.entry.interactions.EntryTrackingAvailability
+import mihon.entry.interactions.EntryTrackingFeature
+import mihon.entry.interactions.EntryTrackingSession
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
@@ -170,7 +171,6 @@ class EntryScreenModel(
     private val duplicatePreferences: tachiyomi.domain.library.service.DuplicatePreferences = Injekt.get(),
     trackPreferences: TrackPreferences = Injekt.get(),
     readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
-    private val trackerManager: TrackerManager = Injekt.get(),
     private val trackChapter: TrackChapter = Injekt.get(),
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
@@ -201,6 +201,7 @@ class EntryScreenModel(
     private val getTracks: GetTracks = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
     private val sourceRefreshFeature: EntrySourceRefreshFeature = Injekt.get(),
+    private val entryTrackingFeature: EntryTrackingFeature = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 ) : StateScreenModel<EntryScreenModel.State>(State.Loading) {
@@ -1266,7 +1267,7 @@ class EntryScreenModel(
 
     fun supportsTracking(): Boolean {
         val entryType = successState?.entry?.type ?: return false
-        return trackerManager.trackers.any { entryType in it.supportedEntryTypes }
+        return entryTrackingFeature.availability(entryType) is EntryTrackingAvailability.Available
     }
 
     private fun cancelDownload(chapterId: Long) {
@@ -1650,32 +1651,15 @@ class EntryScreenModel(
         val entry = successState?.entry ?: return
 
         screenModelScope.launchIO {
-            combine(
-                getTracks.subscribe(entry.id).catch { logcat(LogPriority.ERROR, it) },
-                trackerManager.loggedInTrackersFlow(),
-            ) { entryTracks, loggedInTrackers ->
-                val trackingSource = source?.let {
-                    EntryTrackingSource.from(it, sourceManager.getDisplayInfo(entry.source))
-                }
-                // Show only if the service supports this entry's source
-                val supportedTrackers = loggedInTrackers.filter {
-                    entry.type in it.supportedEntryTypes &&
-                        (
-                            (it as? EnhancedTracker)?.let { tracker -> trackingSource?.let(tracker::accept) ?: false }
-                                ?: true
-                            )
-                }
-                val supportedTrackerIds = supportedTrackers.map { it.id }.toHashSet()
-                val supportedTrackerTracks = entryTracks.filter { it.trackerId in supportedTrackerIds }
-                supportedTrackerTracks.size to supportedTrackers.isNotEmpty()
-            }
+            entryTrackingFeature.observeSession(entry)
                 .flowWithLifecycle(lifecycle)
                 .distinctUntilChanged()
-                .collectLatest { (trackingCount, hasLoggedInTrackers) ->
+                .collectLatest { session ->
+                    val services = (session as? EntryTrackingSession.Available)?.services.orEmpty()
                     updateSuccessState {
                         it.copy(
-                            trackingCount = trackingCount,
-                            hasLoggedInTrackers = hasLoggedInTrackers,
+                            trackingCount = services.count { service -> service.track != null },
+                            hasLoggedInTrackers = services.isNotEmpty(),
                         )
                     }
                 }

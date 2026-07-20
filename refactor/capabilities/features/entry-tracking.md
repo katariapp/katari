@@ -1,6 +1,6 @@
 # Entry Tracking
 
-Status: architecture established; application migration in progress
+Status: architecture established; Entry session consumers migrated
 
 ## Owner and Relationships
 
@@ -29,7 +29,7 @@ The initial boundary exposes:
 
 - type-specific availability from registered tracker declarations; and
 - a reactive Entry session containing only authenticated, type-compatible, source-compatible services and their
-  existing track state.
+  existing track state, tracker-owned presentation capabilities, and formatted score evidence.
 
 Availability and authenticated session are deliberately separate. Logging out blocks a live session but does not
 claim that the tracker stopped supporting the Entry type. An enhanced tracker that rejects the Entry's source blocks
@@ -39,6 +39,12 @@ One application `EntryTrackingHost` adapts the existing tracker system to neutra
 consume this port. The app host extracts tracker facts; the Feature owns applicability, blockers, consequences, and
 product results. Tracker implementations, network clients, credentials, registry construction, and OAuth callback
 parsing remain external-system mechanics.
+
+The Entry action, badge, and tracking-dialog rows consume these results directly. Registered availability controls
+whether the action exists; the authenticated session controls whether it opens the dialog and which rows/count appear.
+The dialog no longer receives a raw tracker-bearing application model or reconstructs type, login, source, status,
+score, date, privacy, or automatic-binding presentation gates. Operation execution remains assigned to the next
+milestone and still resolves raw services internally until those commands enter the Feature.
 
 ## Discovered Consequences
 

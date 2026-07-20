@@ -77,6 +77,7 @@ Updated: 2026-07-20
 - Phase 6.6.5 Metered-source policy commit: `f73dc2232` (`(refactor): move queue warning policy behind feature`)
 - Phase 6.6.6 Refresh/network reconciliation commit: `ab0036182` (`(refactor): reconcile source refresh boundaries`)
 - Phase 6.7.0 Tracking migration plan commit: `fb96dfe4a` (`(refactor): define tracking feature migration`)
+- Phase 6.7.1 Tracking boundary commit: `62f68d30e` (`(refactor): establish tracking feature boundary`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -84,8 +85,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.1 Tracking boundary and host architecture
-- State: Phase 6.7.1 is implemented and validating for review. Existing application consumers have not migrated.
+- Milestone: Phase 6.7.2 Entry tracking session
+- State: Phase 6.7.2 is implemented and validating for review. Tracking operations have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1206,7 +1207,21 @@ Focused Phase 6.7.1 findings:
 - Source organization is split across Tracking API models, host contracts, artifacts, context declaration/resolution,
   coordinator, contributor, app host, and mirrored behavior tests; no module-root file accumulation was introduced.
 
+Focused Phase 6.7.2 findings:
+
+- Entry action availability now comes from registered tracker applicability through `EntryTrackingFeature`; the live
+  session determines whether the action opens account settings or the tracker dialog.
+- Entry badge count and dialog rows consume the same reactive authenticated, type-compatible, source-compatible
+  session, removing two independent registry/source filtering paths.
+- Dialog presentation receives neutral service identity, status labels, score formatting, date/privacy support, and
+  automatic-binding evidence. The former raw tracker-bearing `TrackItem` application model is removed.
+- The shared logo primitive accepts neutral presentation evidence. Its raw tracker overload remains temporarily for
+  account settings, which is assigned to 6.7.5.
+- Dialog operations still resolve raw tracker services and are the exact next migration scope in 6.7.3. They were not
+  hidden behind a compatibility facade or temporary boundary allowlist.
+- Focused Tracking Feature tests, Entry-interaction boundary validation, formatting, and FOSS compilation pass.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.1 after review, then implement Phase 6.7.2 Entry tracking session migration. Continue through Phase 6 afterward
+Commit Phase 6.7.2 after review, then implement Phase 6.7.3 Entry tracking operations. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

@@ -50,7 +50,6 @@ import eu.kanade.presentation.track.TrackerSearch
 import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.data.track.DeletableTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
-import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.data.track.Tracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.data.track.model.TrackSearch
@@ -60,22 +59,20 @@ import eu.kanade.tachiyomi.util.lang.toLocalDate
 import eu.kanade.tachiyomi.util.system.copyToClipboard
 import eu.kanade.tachiyomi.util.system.openInBrowser
 import eu.kanade.tachiyomi.util.system.toast
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
+import mihon.entry.interactions.EntryTrackingFeature
+import mihon.entry.interactions.EntryTrackingSession
+import mihon.entry.interactions.EntryTrackingSessionService
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.util.lang.launchNonCancellable
 import tachiyomi.core.common.util.lang.withIOContext
 import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.interactor.GetEntry
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.DeleteTrack
-import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.model.EntryTrack
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.LabeledCheckbox
@@ -91,7 +88,6 @@ import java.time.ZoneOffset
 data class TrackInfoDialogHomeScreen(
     private val entryId: Long,
     private val entryTitle: String,
-    private val sourceId: Long,
     private val entryType: EntryType,
 ) : Screen() {
 
@@ -99,7 +95,7 @@ data class TrackInfoDialogHomeScreen(
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val context = LocalContext.current
-        val screenModel = rememberScreenModel { Model(entryId, sourceId, entryType) }
+        val screenModel = rememberScreenModel { Model(entryId) }
 
         val dateFormat = remember { UiPreferences.dateFormat(Injekt.get<UiPreferences>().dateFormat.get()) }
         val state by screenModel.state.collectAsState()
@@ -111,7 +107,7 @@ data class TrackInfoDialogHomeScreen(
                 navigator.push(
                     TrackStatusSelectorScreen(
                         track = it.track!!,
-                        serviceId = it.tracker.id,
+                        serviceId = it.service.id.value,
                     ),
                 )
             },
@@ -119,7 +115,7 @@ data class TrackInfoDialogHomeScreen(
                 navigator.push(
                     TrackChapterSelectorScreen(
                         track = it.track!!,
-                        serviceId = it.tracker.id,
+                        serviceId = it.service.id.value,
                         entryType = entryType,
                     ),
                 )
@@ -128,7 +124,7 @@ data class TrackInfoDialogHomeScreen(
                 navigator.push(
                     TrackScoreSelectorScreen(
                         track = it.track!!,
-                        serviceId = it.tracker.id,
+                        serviceId = it.service.id.value,
                     ),
                 )
             },
@@ -136,7 +132,7 @@ data class TrackInfoDialogHomeScreen(
                 navigator.push(
                     TrackDateSelectorScreen(
                         track = it.track!!,
-                        serviceId = it.tracker.id,
+                        serviceId = it.service.id.value,
                         start = true,
                     ),
                 )
@@ -145,13 +141,13 @@ data class TrackInfoDialogHomeScreen(
                 navigator.push(
                     TrackDateSelectorScreen(
                         track = it.track!!,
-                        serviceId = it.tracker.id,
+                        serviceId = it.service.id.value,
                         start = false,
                     ),
                 )
             },
             onNewSearch = {
-                if (it.tracker is EnhancedTracker) {
+                if (it.service.capabilities.supportsAutomaticBinding) {
                     screenModel.registerEnhancedTracking(it)
                 } else {
                     navigator.push(
@@ -159,7 +155,7 @@ data class TrackInfoDialogHomeScreen(
                             entryId = entryId,
                             initialQuery = it.track?.title ?: entryTitle,
                             currentUrl = it.track?.remoteUrl,
-                            serviceId = it.tracker.id,
+                            serviceId = it.service.id.value,
                         ),
                     )
                 }
@@ -170,7 +166,7 @@ data class TrackInfoDialogHomeScreen(
                     TrackerRemoveScreen(
                         entryId = entryId,
                         track = it.track!!,
-                        serviceId = it.tracker.id,
+                        serviceId = it.service.id.value,
                     ),
                 )
             },
@@ -182,14 +178,14 @@ data class TrackInfoDialogHomeScreen(
     /**
      * Opens registered tracker url in browser
      */
-    private fun openTrackerInBrowser(context: Context, trackItem: TrackItem) {
+    private fun openTrackerInBrowser(context: Context, trackItem: EntryTrackingSessionService) {
         val url = trackItem.track?.remoteUrl ?: return
         if (url.isNotBlank()) {
             context.openInBrowser(url)
         }
     }
 
-    private fun Context.copyTrackerLink(trackItem: TrackItem) {
+    private fun Context.copyTrackerLink(trackItem: EntryTrackingSessionService) {
         val url = trackItem.track?.remoteUrl ?: return
         if (url.isNotBlank()) {
             copyToClipboard(url, url)
@@ -198,9 +194,8 @@ data class TrackInfoDialogHomeScreen(
 
     private class Model(
         private val entryId: Long,
-        private val sourceId: Long,
-        private val entryType: EntryType,
-        private val getTracks: GetTracks = Injekt.get(),
+        private val getEntry: GetEntry = Injekt.get(),
+        private val trackingFeature: EntryTrackingFeature = Injekt.get(),
     ) : StateScreenModel<Model.State>(State()) {
 
         init {
@@ -209,21 +204,21 @@ data class TrackInfoDialogHomeScreen(
             }
 
             screenModelScope.launch {
-                getTracks.subscribe(entryId)
-                    .catch { logcat(LogPriority.ERROR, it) }
-                    .distinctUntilChanged()
-                    .map { it.mapToTrackItem() }
-                    .collectLatest { trackItems -> mutableState.update { it.copy(trackItems = trackItems) } }
+                val entry = getEntry.await(entryId) ?: return@launch
+                trackingFeature.observeSession(entry).collectLatest { session ->
+                    val services = (session as? EntryTrackingSession.Available)?.services.orEmpty()
+                    mutableState.update { it.copy(trackItems = services) }
+                }
             }
         }
 
-        fun registerEnhancedTracking(item: TrackItem) {
-            item.tracker as EnhancedTracker
+        fun registerEnhancedTracking(item: EntryTrackingSessionService) {
+            val tracker = Injekt.get<TrackerManager>().get(item.service.id.value) as? EnhancedTracker ?: return
             screenModelScope.launchNonCancellable {
-                val entry = Injekt.get<GetEntry>().await(entryId) ?: return@launchNonCancellable
+                val entry = getEntry.await(entryId) ?: return@launchNonCancellable
                 try {
-                    val matchResult = item.tracker.match(entry) ?: throw Exception()
-                    item.tracker.register(matchResult, entryId)
+                    val matchResult = tracker.match(entry) ?: throw Exception()
+                    tracker.register(matchResult, entryId)
                 } catch (_: Exception) {
                     withUIContext { Injekt.get<Application>().toast(MR.strings.error_no_match) }
                 }
@@ -252,32 +247,16 @@ data class TrackInfoDialogHomeScreen(
                 }
         }
 
-        fun togglePrivate(item: TrackItem) {
+        fun togglePrivate(item: EntryTrackingSessionService) {
+            val tracker = Injekt.get<TrackerManager>().get(item.service.id.value) ?: return
             screenModelScope.launchNonCancellable {
-                item.tracker.setRemotePrivate(item.track!!.toDbTrack(), !item.track.private)
+                tracker.setRemotePrivate(item.track!!.toDbTrack(), !item.track.private)
             }
-        }
-
-        private fun List<EntryTrack>.mapToTrackItem(): List<TrackItem> {
-            val loggedInTrackers = Injekt.get<TrackerManager>().loggedInTrackers()
-            val sourceManager = Injekt.get<SourceManager>()
-            val source = EntryTrackingSource.from(
-                source = sourceManager.getOrStub(sourceId),
-                displayInfo = sourceManager.getDisplayInfo(sourceId),
-            )
-            return loggedInTrackers
-                .filter { entryType in it.supportedEntryTypes }
-                // Map to TrackItem
-                .map { service -> TrackItem(find { it.trackerId == service.id }, service) }
-                .filter { trackItem ->
-                    val tracker = trackItem.tracker as? EnhancedTracker ?: return@filter true
-                    tracker.accept(source)
-                }
         }
 
         @Immutable
         data class State(
-            val trackItems: List<TrackItem> = emptyList(),
+            val trackItems: List<EntryTrackingSessionService> = emptyList(),
         )
     }
 }

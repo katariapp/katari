@@ -22,6 +22,7 @@ data class EntryTrackingHostEntryService(
     val isLoggedIn: Boolean,
     val acceptsSource: Boolean,
     val track: EntryTrack?,
+    val displayScore: String?,
 )
 
 data class EntryTrackingHostService(

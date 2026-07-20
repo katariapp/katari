@@ -37,6 +37,7 @@ class AppEntryTrackingHost(
                         isLoggedIn = tracker.id in loggedInServiceIds,
                         acceptsSource = (tracker as? EnhancedTracker)?.accept(trackingSource) ?: true,
                         track = tracksByService[tracker.id],
+                        displayScore = tracksByService[tracker.id]?.let(tracker::displayScore),
                     )
                 },
             )

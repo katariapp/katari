@@ -1014,6 +1014,35 @@ Manifesto comparison found one external support authority, one application Featu
 There is no mandatory type operation, copied support declaration, type/provider matrix, second tracker registry,
 consumer allowlist, raw application facade, or test that restates current built-in declarations.
 
+#### 6.7.2 — Entry Tracking Session
+
+- [x] Derive Entry tracking-action availability from registered tracker support through the Tracking Feature.
+- [x] Derive Entry tracking count and authenticated/source-compatible session presence from the reactive Feature result.
+- [x] Build tracking-dialog rows from neutral session services and existing track state instead of the raw registry.
+- [x] Render tracker identity, status labels, formatted score, date/privacy controls, and automatic-binding choice from
+  Feature-owned presentation evidence.
+- [x] Remove the application `TrackItem` wrapper that exported a raw tracker into presentation.
+- [x] Leave mutations, search, refresh, and registration behind their existing operation owners for 6.7.3.
+
+The Entry action preserves the existing split semantics: registered type support decides whether the action exists,
+while the live session decides whether selecting it opens the tracker dialog or account settings. The Entry badge and
+dialog now share the same reactive authenticated, type-compatible, and source-compatible service projection, so those
+consumers cannot reconstruct different tracker filters.
+
+Dialog rows carry stable service identity, presentation metadata, sub-capability evidence, existing track state, and
+tracker-formatted score text. Status labels are resolved from the tracker-owned status projection. Presentation no
+longer receives `Tracker` or calls capability methods. The shared logo primitive accepts neutral name/resource evidence;
+its temporary raw-tracker overload remains only for the account settings surface assigned to 6.7.5.
+
+Search, automatic registration, refresh, status/progress/score/date/privacy mutation, unregistration, and remote
+deletion still resolve raw services inside the existing dialog operation code. This is an explicit 6.7.3 obligation,
+not a second session authority or compatibility fallback. No raw-tracker boundary allowlist is introduced before the
+complete consumer cut in 6.7.7.
+
+Manifesto comparison found no new type opt-in, type matrix, copied authentication/source gate, presentation support
+flag, consumer registry, or mandatory tracker sub-capability. A future type declared by a tracker receives the Entry
+action, badge, and dialog rows through the unchanged Feature path; absent trackers or sub-capabilities remain valid.
+
 ### 6.8 — Compatibility Reconciliation and Context Census
 
 - [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current

@@ -55,6 +55,7 @@ internal class DefaultEntryTrackingFeature(
                     EntryTrackingSessionService(
                         service = service.service.toDescriptor(),
                         track = service.track,
+                        displayScore = service.displayScore,
                     )
                 },
             )

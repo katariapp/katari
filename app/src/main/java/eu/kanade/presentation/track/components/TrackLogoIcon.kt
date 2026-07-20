@@ -16,7 +16,8 @@ import tachiyomi.presentation.core.util.clickableNoIndication
 
 @Composable
 fun TrackLogoIcon(
-    tracker: Tracker,
+    name: String,
+    logoResource: Int,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
 ) {
@@ -27,11 +28,25 @@ fun TrackLogoIcon(
     }
 
     Image(
-        painter = painterResource(tracker.getLogo()),
-        contentDescription = tracker.name,
+        painter = painterResource(logoResource),
+        contentDescription = name,
         modifier = modifier
             .size(48.dp)
             .clip(MaterialTheme.shapes.medium),
+    )
+}
+
+@Composable
+fun TrackLogoIcon(
+    tracker: Tracker,
+    onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+) {
+    TrackLogoIcon(
+        name = tracker.name,
+        logoResource = tracker.getLogo(),
+        onClick = onClick,
+        onLongClick = onLongClick,
     )
 }
 

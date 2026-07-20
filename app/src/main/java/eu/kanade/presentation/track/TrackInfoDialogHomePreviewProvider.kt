@@ -2,8 +2,11 @@ package eu.kanade.presentation.track
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import eu.kanade.tachiyomi.ui.entry.track.TrackItem
 import eu.kanade.test.DummyTracker
+import mihon.entry.interactions.EntryTrackingServiceCapabilities
+import mihon.entry.interactions.EntryTrackingServiceDescriptor
+import mihon.entry.interactions.EntryTrackingServiceId
+import mihon.entry.interactions.EntryTrackingSessionService
 import tachiyomi.domain.track.model.EntryTrack
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -28,26 +31,29 @@ internal class TrackInfoDialogHomePreviewProvider :
         private = false,
     )
     private val privateTrack = aTrack.copy(private = true)
-    private val trackItemWithoutTrack = TrackItem(
+    private val trackItemWithoutTrack = EntryTrackingSessionService(
         track = null,
-        tracker = DummyTracker(
+        service = DummyTracker(
             id = 1L,
             name = "Example Tracker",
-        ),
+        ).descriptor(),
+        displayScore = null,
     )
-    private val trackItemWithTrack = TrackItem(
+    private val trackItemWithTrack = EntryTrackingSessionService(
         track = aTrack,
-        tracker = DummyTracker(
+        service = DummyTracker(
             id = 2L,
             name = "Example Tracker 2",
-        ),
+        ).descriptor(),
+        displayScore = "2",
     )
-    private val trackItemWithPrivateTrack = TrackItem(
+    private val trackItemWithPrivateTrack = EntryTrackingSessionService(
         track = privateTrack,
-        tracker = DummyTracker(
+        service = DummyTracker(
             id = 2L,
             name = "Example Tracker 2",
-        ),
+        ).descriptor(supportsPrivateTracking = true),
+        displayScore = "2",
     )
 
     private val trackersWithAndWithoutTrack = @Composable {
@@ -111,3 +117,19 @@ internal class TrackInfoDialogHomePreviewProvider :
             trackerWithPrivateTracking,
         )
 }
+
+private fun DummyTracker.descriptor(
+    supportsPrivateTracking: Boolean = false,
+) = EntryTrackingServiceDescriptor(
+    id = EntryTrackingServiceId(id),
+    name = name,
+    logoResource = getLogo(),
+    capabilities = EntryTrackingServiceCapabilities(
+        statuses = emptyList(),
+        scores = getScoreList(),
+        supportsReadingDates = supportsReadingDates,
+        supportsPrivateTracking = supportsPrivateTracking,
+        supportsRemoteDeletion = false,
+        supportsAutomaticBinding = false,
+    ),
+)

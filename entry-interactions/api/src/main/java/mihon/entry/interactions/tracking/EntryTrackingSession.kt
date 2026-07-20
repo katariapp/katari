@@ -23,6 +23,7 @@ sealed interface EntryTrackingSession {
 data class EntryTrackingSessionService(
     val service: EntryTrackingServiceDescriptor,
     val track: EntryTrack?,
+    val displayScore: String?,
 )
 
 enum class EntryTrackingSessionUnavailableReason {

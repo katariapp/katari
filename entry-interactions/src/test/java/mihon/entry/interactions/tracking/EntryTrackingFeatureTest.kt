@@ -16,9 +16,26 @@ import mihon.feature.graph.ApplicableFeatureIntegration
 import mihon.feature.graph.ConditionalFeatureIntegration
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.track.model.EntryTrack
 
 class EntryTrackingFeatureTest {
     private val entry = Entry.create().copy(id = 11L, type = EntryType.BOOK)
+    private val track = EntryTrack(
+        id = 1L,
+        entryId = entry.id,
+        trackerId = 7L,
+        remoteId = 2L,
+        libraryId = null,
+        title = "Future Book",
+        progress = 3.0,
+        total = 12L,
+        status = 4L,
+        score = 7.5,
+        remoteUrl = "https://example.com/book",
+        startDate = 0L,
+        finishDate = 0L,
+        private = false,
+    )
     private val bookService = EntryTrackingHostService(
         id = 7L,
         name = "Future Books",
@@ -45,7 +62,8 @@ class EntryTrackingFeatureTest {
                             service = bookService,
                             isLoggedIn = true,
                             acceptsSource = true,
-                            track = null,
+                            track = track,
+                            displayScore = "7.5",
                         ),
                     ),
                 ),
@@ -57,7 +75,7 @@ class EntryTrackingFeatureTest {
         )
         feature.observeSession(entry).toList() shouldBe listOf(
             EntryTrackingSession.Available(
-                listOf(EntryTrackingSessionService(bookService.descriptor(), track = null)),
+                listOf(EntryTrackingSessionService(bookService.descriptor(), track, displayScore = "7.5")),
             ),
         )
     }
@@ -74,6 +92,7 @@ class EntryTrackingFeatureTest {
                             isLoggedIn = false,
                             acceptsSource = true,
                             track = null,
+                            displayScore = null,
                         ),
                     ),
                 ),

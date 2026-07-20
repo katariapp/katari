@@ -285,6 +285,12 @@ discovered graph consequence for provider-less contributed types. The app host i
 to root policy, and build validation derives every host declaration to prevent it from becoming a parallel consumer
 API. Existing raw tracker consumers remain visible obligations without a temporary allowlist.
 
+Phase 6.7.2 moves Entry action availability, badge/session state, dialog rows, and row presentation behind that Feature.
+The Entry screen and dialog no longer filter the tracker registry independently, and presentation receives neutral
+service identity, capabilities, track state, status labels, and tracker-formatted score evidence. The raw tracker-bearing
+`TrackItem` wrapper is removed. Dialog commands remain explicitly assigned to 6.7.3; no temporary consumer allowlist or
+parallel session adapter was added.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the
