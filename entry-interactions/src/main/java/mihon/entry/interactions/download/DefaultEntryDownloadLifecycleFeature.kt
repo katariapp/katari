@@ -13,33 +13,15 @@ import tachiyomi.domain.entry.service.sortedForReading
 
 /** Interprets media-neutral lifecycle events as shared cleanup and download-ahead policy. */
 internal class DefaultEntryDownloadLifecycleFeature(
-    evaluation: FeatureGraphEvaluation,
+    private val evaluation: FeatureGraphEvaluation,
     private val downloadPreferences: DownloadPreferences,
     private val getCategories: GetCategories,
     private val getEntryWithChapters: GetEntryWithChapters,
     entryRepository: EntryRepository,
     private val downloads: EntryDownloadInteraction,
 ) : EntryDownloadLifecycleFeature {
-    private val downloadTypes = EntryDownloadLifecycleBaseConsequence.entries
-        .map { consequence ->
-            evaluation.applicableProviderTypes<EntryDownloadProcessor>(
-                feature = ENTRY_DOWNLOAD_LIFECYCLE_FEATURE_ID,
-                integration = ENTRY_DOWNLOAD_LIFECYCLE_BASE_INTEGRATION_ID,
-                consequence = consequence.id,
-            )
-        }
-        .also { selectedTypes ->
-            check(selectedTypes.distinct().size <= 1) {
-                "Download lifecycle consequences selected different provider sets: $selectedTypes"
-            }
-        }
-        .firstOrNull()
-        .orEmpty()
-    private val bookmarkProtectedTypes = evaluation.applicableProviderTypes<EntryBookmarkProcessor>(
-        feature = ENTRY_DOWNLOAD_LIFECYCLE_FEATURE_ID,
-        integration = ENTRY_DOWNLOAD_LIFECYCLE_BOOKMARK_PROTECTION_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_LIFECYCLE_BOOKMARK_PROTECTION_CONSEQUENCE_ID,
-    )
+    private val downloadTypes = evaluation.downloadLifecycleTypes()
+    private val bookmarkProtectedTypes = evaluation.downloadLifecycleBookmarkProtectionTypes()
     private val ownerResolver = EntryDownloadOwnerResolver(entryRepository)
     private val eventMutex = Mutex()
     private val downloadAheadTriggered = mutableSetOf<EntryDownloadIdentity>()
@@ -64,14 +46,18 @@ internal class DefaultEntryDownloadLifecycleFeature(
     }
 
     private suspend fun afterMarkedConsumed(event: EntryDownloadLifecycleEvent.MarkedConsumed) {
-        if (!downloadPreferences.removeAfterMarkedAsRead.get()) return
+        val enabled = downloadPreferences.removeAfterMarkedAsRead.get()
+        evaluation.requireMarkedConsumedCleanupContext(event.visibleEntry.type, enabled)
+        if (!enabled) return
         deleteEligible(event.visibleEntry, event.children, deferUntilViewerCloses = false)
     }
 
     private suspend fun afterProgressed(event: EntryDownloadLifecycleEvent.Progressed) {
-        if (!event.fraction.isFinite() || event.fraction < DOWNLOAD_AHEAD_THRESHOLD) return
         val amount = downloadPreferences.autoDownloadWhileReading.get()
-        if (amount <= 0) return
+        val progressEligible = event.fraction.isFinite() && event.fraction >= DOWNLOAD_AHEAD_THRESHOLD
+        val enabled = amount > 0
+        evaluation.requireDownloadAheadContext(event.visibleEntry.type, progressEligible, enabled)
+        if (!progressEligible || !enabled) return
 
         val currentOwner = ownerResolver.resolve(event.visibleEntry, listOf(event.child)).singleOrNull() ?: return
         if (!isApplicable(currentOwner.entry.type)) return
@@ -122,7 +108,9 @@ internal class DefaultEntryDownloadLifecycleFeature(
         )
 
         val removeAfterReadSlots = downloadPreferences.removeAfterReadSlots.get()
-        if (removeAfterReadSlots >= 0) {
+        val cleanupEnabled = removeAfterReadSlots >= 0
+        evaluation.requireCompletionCleanupContext(event.visibleEntry.type, cleanupEnabled)
+        if (cleanupEnabled) {
             val readingOrder = readingOrder(event.visibleEntry, event.child, event.deduplicateByNumber)
             val currentIndex = readingOrder.indexOfFirst { it.id == event.child.id }
             readingOrder.getOrNull(currentIndex - removeAfterReadSlots)?.let { child ->
@@ -139,10 +127,17 @@ internal class DefaultEntryDownloadLifecycleFeature(
         deferUntilViewerCloses: Boolean,
     ) {
         ownerResolver.resolve(visibleEntry, children).forEach { owner ->
-            if (!isApplicable(owner.entry.type) || isExcluded(owner.entry)) return@forEach
+            if (!isApplicable(owner.entry.type)) return@forEach
+            val categoryAllowed = !isExcluded(owner.entry)
+            evaluation.requireCleanupOwnerContext(owner.entry.type, categoryAllowed)
+            if (!categoryAllowed) return@forEach
+            val removeBookmarked = downloadPreferences.removeBookmarkedChapters.get()
+            if (owner.entry.type in bookmarkProtectedTypes) {
+                evaluation.requireBookmarkProtectionContext(owner.entry.type, removeBookmarked)
+            }
             val eligible = if (
                 owner.entry.type !in bookmarkProtectedTypes ||
-                downloadPreferences.removeBookmarkedChapters.get()
+                removeBookmarked
             ) {
                 owner.children
             } else {

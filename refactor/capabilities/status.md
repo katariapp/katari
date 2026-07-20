@@ -49,6 +49,7 @@ Updated: 2026-07-20
 - Phase 6.4.1 Entry Feature context commit: `0d1f833f3` (`(refactor): resolve source-backed feature context`)
 - Phase 6.4.2 Download Action context commit: `756beb981` (`(refactor): resolve download action context`)
 - Phase 6.4.3 Automatic Download context commit: `381ea4e11` (`(refactor): resolve automatic download context`)
+- Phase 6.4.4 Entry state-mutation context commit: `c75c813d7` (`(refactor): resolve entry state mutation context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -56,8 +57,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.4 Consumption and Bookmark state-mutation context
-- State: Phase 6.4.4 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.5 Download Lifecycle policy context
+- State: Phase 6.4.5 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -166,6 +167,17 @@ Focused Phase 6.4.4 findings:
   changed-child state before persistence dispatch. Empty cross-Entry selections remain structured request results.
 - Provider absence remains valid and no Entry-State/Selection capability, content-type matrix, mandatory operation, or
   type-specific product-action opt-in is introduced.
+
+Focused Phase 6.4.5 findings:
+
+- F06 context-free relationships now own event acceptance, type applicability, provider dispatch, and discovery of the
+  Download-plus-Bookmark relationship without authorizing live cleanup policy.
+- Marked-consumed cleanup, completion cleanup, download-ahead, per-owner category eligibility, physical cleanup, and the
+  remove-bookmarked override resolve through separate contextual relationships.
+- Actual owner Entry types authorize cleanup and Bookmark protection. The visible Entry type does not stand in for
+  merged owners.
+- Owner resolution, reading-order membership, download continuity, deduplication, and empty candidates remain operation
+  results because they exist only during concrete event execution; no runtime-readiness capability was invented.
 
 Focused F11.0 findings:
 
@@ -826,5 +838,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.4 after review, then migrate F06 Download Lifecycle preference, category, viewer-progress, and selection
-context without turning event payloads into type capabilities.
+Commit Phase 6.4.5 after review, then continue the remaining Entry Feature context audit, beginning with F13 Update
+Eligibility policy and request state.

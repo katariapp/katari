@@ -258,6 +258,20 @@ values but is not itself a Download capability, and F07 retains ownership of the
 Consumption and Bookmark provider presence remain the only type-wide support facts. No Entry-State or Selection
 capability, type matrix, or per-type product-action opt-in is introduced.
 
+#### 6.4.5 — Download Lifecycle Policy Context
+
+- [x] Separate context-free event acceptance and provider dispatch from marked-consumed cleanup, completion cleanup,
+  download-ahead, category eligibility, physical cleanup authorization, and Bookmark-protection policy.
+- [x] Declare active-profile cleanup/download-ahead preferences, viewer-progress eligibility, per-owner category policy,
+  and the remove-bookmarked override as Feature-owned contextual inputs.
+- [x] Resolve owner-specific cleanup and Bookmark protection using each actual owner Entry type rather than the visible
+  Entry type or a global Download assumption.
+- [x] Keep owner resolution, reading-order membership, download continuity, deduplication, and concrete candidate sets as
+  operation results known only during event execution.
+
+Download and Bookmark provider presence remain the only type-wide facts. No Lifecycle, Viewer-State, Category,
+Preferences, or runtime-readiness capability is introduced.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

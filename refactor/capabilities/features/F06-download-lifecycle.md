@@ -7,12 +7,12 @@ Status: complete
 - Feature owner: `entry-download-lifecycle`
 - Base prerequisite: `EntryDownloadCapability`
 - Derived Bookmark prerequisite: `EntryDownloadCapability` and `EntryBookmarkCapability`
-- Base consequences: structured event handling, marked-consumed removal, completion/slot cleanup, progress-driven
-  download-ahead, category exclusion, and immediate-delete versus deferred-cleanup dispatch
-- Derived consequence: bookmarked downloads are protected automatically when Bookmarking is present, unless the existing
-  remove-bookmarked preference overrides that policy
-- Operation context: the actual visible Entry, owner Entries, changed children, viewer progress, reading order, merged
-  ownership, deduplication mode, preferences, and category membership
+- Context-free consequences: type applicability, structured event acceptance, Download provider dispatch, and discovery
+  of the Download-plus-Bookmark relationship
+- Contextual consequences: marked-consumed removal, completion/slot cleanup, progress-driven download-ahead, category
+  eligibility, physical cleanup authorization, and Bookmark protection unless its preference override is enabled
+- Operation data: actual visible and owner Entries, changed children, reading order, merged ownership, deduplication mode,
+  download continuity, and concrete candidate sets
 - Specialized requirement: none. Every lifecycle operation uses shared Entry/child models and the existing media-specific
   Download provider operations.
 - Presentation projection: none. F07 owns preference presentation; F06 consumes the selected values.
@@ -32,6 +32,11 @@ The sink forwards lazily to `EntryDownloadLifecycleFeature` because type plugins
 exists. That forwarding is composition wiring, not another support authority: applicability and all policy remain in the
 single graph-backed feature coordinator. The coordinator alone can access raw Download dispatch for persisted-state
 inspection, queueing, starting, physical deletion, and deferred cleanup.
+
+The context-free provider relationship authorizes event acceptance but not every possible policy consequence. Separate
+contextual relationships consume active-profile cleanup/download-ahead preferences, viewer progress eligibility,
+per-owner category policy, and the Bookmark-protection override. The feature resolves each relationship for the actual
+Entry type that owns the consequence.
 
 ## Consumer Disposition
 
@@ -60,6 +65,10 @@ coordinator emits the structured lifecycle event. F06 does not make type-specifi
   order, queues per actual owner without auto-start, then starts once. Repeated progress for the same owner/child is
   deduplicated until completion.
 
+Owner lookup, reading-order membership, already-downloaded continuity, deduplication, and empty candidate sets remain
+operation results. They are known only while handling the concrete event and do not become reusable capabilities or
+type-wide blockers.
+
 ## Automatic-Participation Proof
 
 The focused feature test composes anonymous partial content-type contributions rather than asserting production type
@@ -82,17 +91,9 @@ provider.
 - All event sources use one feature-owned boundary and cannot invoke raw Download providers or graph evaluation.
 - Preferences, categories, viewer state, merge ownership, and event payloads remain contextual rather than becoming
   type-wide support flags.
+- Stable policy inputs are declared graph context; transient owner-resolution and candidate outcomes remain operation
+  results instead of being flattened into a synthetic runtime capability.
 - A future Download provider receives cleanup, category policy, completion handling, and download-ahead without changes
   to consumers or F06; adding Bookmarking also activates protection automatically.
 - The old deleted capability report and report-driven Download policy are removed rather than restored through a shim.
 - F03, F04, F05, F07, F08, and F09 ownership is preserved.
-
-## Validation and Remaining Boundaries
-
-- Root, API, SPI, Manga, Anime, and Book main-source compilation pass for F06.
-- The focused graph-selected F06 behavioral test passes.
-- The older type-wide test suites still contain pre-existing Phase 5/7 compile obligations around calls that omit
-  `featureContributors` and one deleted raw support helper. Those failures are not hidden or repaired with compatibility
-  defaults in F06.
-- Application failures after F06 belong to the remaining F07–F27 migration queue; F06 does not re-export SPI to make
-  those consumers compile.
