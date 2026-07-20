@@ -1,0 +1,129 @@
+package mihon.entry.interactions
+
+import eu.kanade.tachiyomi.source.entry.EntryType
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.host.tracking.EntryTrackingHost
+import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
+import mihon.entry.interactions.host.tracking.EntryTrackingHostEntrySnapshot
+import mihon.entry.interactions.host.tracking.EntryTrackingHostService
+import mihon.entry.interactions.host.tracking.EntryTrackingHostServiceCapabilities
+import mihon.feature.graph.ApplicableFeatureIntegration
+import mihon.feature.graph.ConditionalFeatureIntegration
+import org.junit.jupiter.api.Test
+import tachiyomi.domain.entry.model.Entry
+
+class EntryTrackingFeatureTest {
+    private val entry = Entry.create().copy(id = 11L, type = EntryType.BOOK)
+    private val bookService = EntryTrackingHostService(
+        id = 7L,
+        name = "Future Books",
+        logoResource = 19,
+        supportedEntryTypes = setOf(EntryType.BOOK),
+        capabilities = EntryTrackingHostServiceCapabilities(
+            statuses = emptyList(),
+            scores = emptyList(),
+            supportsReadingDates = false,
+            supportsPrivateTracking = false,
+            supportsRemoteDeletion = false,
+            supportsAutomaticBinding = false,
+        ),
+    )
+
+    @Test
+    fun `external tracker support activates a contributed type without a type provider`() = runTest {
+        val feature = feature(
+            services = listOf(bookService),
+            snapshots = listOf(
+                EntryTrackingHostEntrySnapshot(
+                    listOf(
+                        EntryTrackingHostEntryService(
+                            service = bookService,
+                            isLoggedIn = true,
+                            acceptsSource = true,
+                            track = null,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        feature.availability(EntryType.BOOK) shouldBe EntryTrackingAvailability.Available(
+            listOf(bookService.descriptor()),
+        )
+        feature.observeSession(entry).toList() shouldBe listOf(
+            EntryTrackingSession.Available(
+                listOf(EntryTrackingSessionService(bookService.descriptor(), track = null)),
+            ),
+        )
+    }
+
+    @Test
+    fun `session reports the contextual blocker without changing type validity`() = runTest {
+        val feature = feature(
+            services = listOf(bookService),
+            snapshots = listOf(
+                EntryTrackingHostEntrySnapshot(
+                    listOf(
+                        EntryTrackingHostEntryService(
+                            service = bookService,
+                            isLoggedIn = false,
+                            acceptsSource = true,
+                            track = null,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        feature.availability(EntryType.BOOK).shouldBeInstanceOf<EntryTrackingAvailability.Available>()
+        feature.observeSession(entry).toList() shouldBe listOf(
+            EntryTrackingSession.Unavailable(setOf(EntryTrackingSessionUnavailableReason.NOT_LOGGED_IN)),
+        )
+    }
+
+    @Test
+    fun `every tracking relationship is discovered for a provider-less contributed type`() {
+        val evaluation = sourceFeatureEvaluation(EntryTrackingFeatureContributor)
+        val tracking = evaluation.integrations.filter { it.subject.feature == ENTRY_TRACKING_FEATURE_ID }
+
+        tracking shouldHaveSize EntryTrackingIntegration.entries.size
+        tracking.filterIsInstance<ApplicableFeatureIntegration>() shouldHaveSize 1
+        tracking.filterIsInstance<ConditionalFeatureIntegration>() shouldHaveSize
+            EntryTrackingIntegration.entries.size - 1
+        tracking.map { it.subject.contentType }.distinct() shouldHaveSize 1
+    }
+
+    private fun feature(
+        services: List<EntryTrackingHostService>,
+        snapshots: List<EntryTrackingHostEntrySnapshot>,
+    ): EntryTrackingFeature {
+        val host = object : EntryTrackingHost {
+            override fun registeredServices() = services
+
+            override fun observeEntry(entry: Entry) = flowOf(*snapshots.toTypedArray())
+        }
+        return DefaultEntryTrackingFeature(
+            evaluation = sourceFeatureEvaluation(EntryTrackingFeatureContributor),
+            host = host,
+        )
+    }
+
+    private fun EntryTrackingHostService.descriptor() = EntryTrackingServiceDescriptor(
+        id = EntryTrackingServiceId(id),
+        name = name,
+        logoResource = logoResource,
+        capabilities = EntryTrackingServiceCapabilities(
+            statuses = emptyList(),
+            scores = emptyList(),
+            supportsReadingDates = false,
+            supportsPrivateTracking = false,
+            supportsRemoteDeletion = false,
+            supportsAutomaticBinding = false,
+        ),
+    )
+}

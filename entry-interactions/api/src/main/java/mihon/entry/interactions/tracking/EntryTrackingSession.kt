@@ -1,0 +1,32 @@
+package mihon.entry.interactions
+
+import tachiyomi.domain.track.model.EntryTrack
+
+sealed interface EntryTrackingAvailability {
+    data class Available(
+        val services: List<EntryTrackingServiceDescriptor>,
+    ) : EntryTrackingAvailability
+
+    data object Unsupported : EntryTrackingAvailability
+}
+
+sealed interface EntryTrackingSession {
+    data class Available(
+        val services: List<EntryTrackingSessionService>,
+    ) : EntryTrackingSession
+
+    data class Unavailable(
+        val reasons: Set<EntryTrackingSessionUnavailableReason>,
+    ) : EntryTrackingSession
+}
+
+data class EntryTrackingSessionService(
+    val service: EntryTrackingServiceDescriptor,
+    val track: EntryTrack?,
+)
+
+enum class EntryTrackingSessionUnavailableReason {
+    UNSUPPORTED_ENTRY_TYPE,
+    NOT_LOGGED_IN,
+    SOURCE_NOT_ACCEPTED,
+}

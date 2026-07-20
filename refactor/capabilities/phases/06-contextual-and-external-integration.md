@@ -865,7 +865,7 @@ type-specific interactions.
 
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
-- [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,
+- [x] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,
   authentication/profile state, existing tracks, reading dates, privacy, status, and scoring.
 - [ ] Migrate Entry actions/dialogs, search/register/update guards, automatic add/sync, Library tracker filters, Stats,
   and tracking documentation to the same structured results.
@@ -967,6 +967,52 @@ Manifesto comparison found no type-level Tracking provider, mandatory interactio
 authentication fact, static consumer registry, or application-visible raw tracker facade. A future content type becomes
 trackable when a registered tracker declares it; all common Entry, sync, Library, Stats, settings, backup, and
 documentation consequences then flow through the same Feature without editing that type.
+
+#### 6.7.1 — Tracking Boundary and Host Architecture
+
+- [x] Add a split application `EntryTrackingFeature` API with neutral service identity, capability, availability, and
+  reactive session results.
+- [x] Add one segregated `EntryTrackingHost` and an app adapter that extracts facts from the authoritative tracker
+  registry, source context, authentication flows, and persisted tracks.
+- [x] Declare registry, Entry availability/session/operation, automatic-binding, synchronization, Library, Stats,
+  account, backup, presentation, and documentation consequences before migrating callers.
+- [x] Select the Tracking behavior contract and every relationship for a provider-less contributed type without a
+  type-level Tracking capability.
+- [x] Install the Feature and host through root runtime composition while keeping the app dependent only on the root
+  Entry-interactions module.
+- [x] Derive host-package declarations in boundary validation and reject them as application APIs outside their owned
+  host/root/composition structure.
+- [x] Leave existing raw tracker consumers visible for later milestones without a migration allowlist.
+
+The initial Feature separates registered applicability from authenticated execution. `availability(type)` evaluates
+the exact requested Entry type against authoritative tracker declarations. `observeSession(entry)` reevaluates login,
+source acceptance, and existing track state reactively, returning only authenticated applicable services or a
+structured unsupported/not-logged-in/source-rejected reason. Logging out therefore cannot erase declared support, and
+an enhanced source mismatch cannot redefine the content type.
+
+The host snapshot carries only facts: stable service identity, tracker-owned presentation, supported Entry types,
+status/score/date/privacy/deletion/automatic-binding properties, authentication, source acceptance, and an optional
+persisted track. The root coordinator alone interprets those facts through declared context inputs. Neither the Feature
+API nor graph exports `Tracker`, `TrackerManager`, `EnhancedTracker`, `DeletableTracker`, or tracker database/network
+models.
+
+All seven planned relationship groups already enter static graph discovery. The registry relationship is shared and
+applicable for every contributed type; the remaining relationships are conditional candidates until the owning Feature
+operation supplies runtime evidence. This makes later consumer work a migration into known consequences rather than a
+series of hand-added tracker integrations.
+
+The boundary rule derives all public host-package declarations from source ownership. It does not enumerate host model
+names or current consumers. Existing raw tracker references remain unguarded only until 6.7.7 because enforcing that cut
+now would require a temporary file allowlist; their complete census remains the executable migration ledger instead.
+
+The behavioral proof supplies a synthetic BOOK tracker while BOOK contributes no Tracking provider. Availability and
+session behavior activate through the unchanged Feature path, and a logged-out snapshot blocks only the session. The
+test also proves every Tracking integration is discovered for the provider-less contributed type without repeating the
+built-in tracker/type matrix.
+
+Manifesto comparison found one external support authority, one application Feature, and one non-consumer host bridge.
+There is no mandatory type operation, copied support declaration, type/provider matrix, second tracker registry,
+consumer allowlist, raw application facade, or test that restates current built-in declarations.
 
 ### 6.8 — Compatibility Reconciliation and Context Census
 

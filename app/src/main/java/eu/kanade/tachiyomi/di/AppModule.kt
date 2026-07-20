@@ -44,6 +44,7 @@ import mihon.entry.interactions.host.AppEntryMergeDuplicateCandidateHost
 import mihon.entry.interactions.host.AppEntryMergeHost
 import mihon.entry.interactions.host.AppEntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.AppEntryMigrationHost
+import mihon.entry.interactions.host.tracking.AppEntryTrackingHost
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
 import mihon.feature.profiles.core.ProfileManager
@@ -210,6 +211,7 @@ class AppModule(val app: Application) : InjektModule {
             hasCustomCover = { entryId -> get<CoverCache>().getCustomCoverFile(entryId).exists() },
         )
         val migrationCustomCoverHost = AppEntryMigrationCustomCoverHost(app, get())
+        val trackingHost = AppEntryTrackingHost(get(), get(), get())
         addEntryInteractionRuntime(
             app = app,
             dependencies = EntryInteractionRuntimeDependencies(
@@ -248,6 +250,7 @@ class AppModule(val app: Application) : InjektModule {
                 migrationExecutionHost = migrationHost,
                 migrationConsequenceHost = migrationHost,
                 migrationCustomCoverHost = migrationCustomCoverHost,
+                trackingHost = trackingHost,
             ),
         )
 

@@ -223,6 +223,37 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application consumers cannot use the tracking host`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/tracking/host/EntryTrackingHost.kt" to
+                    """
+                        package mihon.entry.interactions.host.tracking
+
+                        interface EntryTrackingHost
+                        data class EntryTrackingHostEntrySnapshot(val services: List<Any>)
+                    """.trimIndent(),
+            ),
+            appSource = """
+                package app
+
+                import mihon.entry.interactions.host.tracking.EntryTrackingHost
+                import mihon.entry.interactions.host.tracking.EntryTrackingHostEntrySnapshot
+
+                class AppFeature(
+                    private val trackingHost: EntryTrackingHost,
+                    private val snapshot: EntryTrackingHostEntrySnapshot,
+                )
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "EntryTrackingHost is root Tracking Feature composition infrastructure"
+        error.message shouldContain "EntryTrackingHostEntrySnapshot is root Tracking Feature composition infrastructure"
+    }
+
+    @Test
     fun `type modules cannot bypass child WebView Feature through raw source contract`() {
         createBaseFixture(
             mangaProcessorSource = """

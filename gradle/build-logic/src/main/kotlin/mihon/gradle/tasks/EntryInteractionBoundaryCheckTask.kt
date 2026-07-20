@@ -93,6 +93,20 @@ private class EntryInteractionBoundaryRules(
         )
         addAll(spiFiles.asSequence().flatMap(KotlinSourceFile::publicTopLevelPropertyNames))
     }
+    private val trackingHostApiNames = sourceIndex.files
+        .asSequence()
+        .filter { file ->
+            file.relativePath.startsWith(
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/tracking/host/",
+            )
+        }
+        .flatMap { file ->
+            file.topLevelDeclarations
+                .filter(KotlinDeclaration::isPublic)
+                .map(KotlinDeclaration::name)
+                .plus(file.publicTopLevelPropertyNames())
+        }
+        .toSet()
     private val processorImplementations = sourceIndex.files
         .asSequence()
         .filter { it.owningTypeModule() != null }
@@ -218,6 +232,7 @@ private class EntryInteractionBoundaryRules(
             checkSourceRefreshFeatureBypass(file, findings)
             checkSourceRefreshMechanicsBypass(file, findings)
             checkMeteredSourcePolicyBypass(file, findings)
+            checkTrackingHostBoundary(file, findings)
             checkChildWebViewFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
@@ -576,6 +591,30 @@ private class EntryInteractionBoundaryRules(
                 reason = "application Library queue warning policy must use " +
                     "EntryLibraryUpdateNotificationFeature, not raw UnmeteredSource context",
             )
+        }
+    }
+
+    private fun checkTrackingHostBoundary(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val ownsTrackingHost = file.relativePath.startsWith(
+            "entry-interactions/api/src/main/java/mihon/entry/interactions/tracking/host/",
+        ) || file.relativePath.startsWith(
+            "entry-interactions/src/main/java/mihon/entry/interactions/tracking/",
+        ) || file.relativePath.startsWith(
+            "app/src/main/java/mihon/entry/interactions/host/tracking/",
+        ) || file.relativePath ==
+            "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt" ||
+            file.relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt"
+        if (ownsTrackingHost) return
+
+        trackingHostApiNames.forEach { name ->
+            file.findReference(name)?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "$name is root Tracking Feature composition infrastructure, not an application API",
+                )
+            }
         }
     }
 

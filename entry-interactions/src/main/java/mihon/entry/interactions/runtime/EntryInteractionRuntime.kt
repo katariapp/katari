@@ -13,6 +13,7 @@ import mihon.entry.interactions.host.EntryMigrationConsequenceHost
 import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.EntryMigrationExecutionHost
 import mihon.entry.interactions.host.EntryMigrationPreparationHost
+import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
@@ -52,6 +53,7 @@ data class EntryInteractionRuntimeDependencies(
     val migrationExecutionHost: EntryMigrationExecutionHost,
     val migrationConsequenceHost: EntryMigrationConsequenceHost,
     val migrationCustomCoverHost: EntryMigrationCustomCoverHost,
+    val trackingHost: EntryTrackingHost,
 )
 
 fun interface EntryInteractionRuntimeWarmup {
@@ -141,6 +143,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
                 EntryWebViewFeatureContributor,
                 EntryDeepLinkFeatureContributor,
                 EntryTrackerSourceAdapterFeatureContributor,
+                EntryTrackingFeatureContributor,
             ),
         )
     }
@@ -195,6 +198,12 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             sourceManager = get(),
             settings = get(),
             home = get(),
+        )
+    }
+    addSingletonFactory<EntryTrackingFeature> {
+        DefaultEntryTrackingFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            host = dependencies.trackingHost,
         )
     }
     addSingletonFactory {

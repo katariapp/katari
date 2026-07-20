@@ -76,6 +76,7 @@ Updated: 2026-07-20
 - Phase 6.6.4 Library Update refresh commit: `d20cf9fba` (`(refactor): move library refresh behind feature`)
 - Phase 6.6.5 Metered-source policy commit: `f73dc2232` (`(refactor): move queue warning policy behind feature`)
 - Phase 6.6.6 Refresh/network reconciliation commit: `ab0036182` (`(refactor): reconcile source refresh boundaries`)
+- Phase 6.7.0 Tracking migration plan commit: `fb96dfe4a` (`(refactor): define tracking feature migration`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -83,8 +84,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.0 Tracking ownership census and architecture split
-- State: Phase 6.7.0 is documented and validating for review. No Tracking production consumer has migrated.
+- Milestone: Phase 6.7.1 Tracking boundary and host architecture
+- State: Phase 6.7.1 is implemented and validating for review. Existing application consumers have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1188,7 +1189,24 @@ Focused Phase 6.7.0 findings:
 - Architecture-first slices are 6.7.1 boundary/host, 6.7.2 Entry session, 6.7.3 operations, 6.7.4 automatic sync,
   6.7.5 accounts/settings/backup, 6.7.6 Library/Stats, and 6.7.7 reconciliation.
 
+Focused Phase 6.7.1 findings:
+
+- One injected `EntryTrackingFeature` now exposes registered availability and reactive authenticated Entry sessions
+  through neutral descriptors/results. It exports no tracker registry, implementation, or raw contract object.
+- One app `EntryTrackingHost` extracts registered type support, tracker presentation/sub-capabilities, login state,
+  source acceptance, and persisted tracks. Root policy alone interprets those facts.
+- Registry, availability/session/operations, automatic binding, synchronization, Library filters/scores, Stats,
+  accounts, backup diagnostics, presentation, and documentation all enter graph discovery before consumer migration.
+- A provider-less BOOK contribution becomes trackable solely from a synthetic external BOOK tracker. Logging out keeps
+  declared availability and blocks only the reactive session.
+- Boundary validation derives all public host-package declarations and rejects both the host and its snapshot models as
+  application APIs outside the owned host/root/composition structure.
+- Existing raw tracker consumers remain intentionally visible without a temporary file allowlist. The raw-tracker cut
+  is enforced only after their assigned 6.7.2–6.7.6 migrations.
+- Source organization is split across Tracking API models, host contracts, artifacts, context declaration/resolution,
+  coordinator, contributor, app host, and mirrored behavior tests; no module-root file accumulation was introduced.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.0 after review, then implement Phase 6.7.1 Tracking boundary and host architecture. Continue through Phase 6 afterward
+Commit Phase 6.7.1 after review, then implement Phase 6.7.2 Entry tracking session migration. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

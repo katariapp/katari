@@ -279,6 +279,12 @@ credential storage, registry construction, the single host adapter, and tracker-
 reviewed owner-local mechanics. The hardcoded settings service list is an explicit migration obligation rather than an
 acceptable external-system exception.
 
+Phase 6.7.1 establishes the single Tracking Feature/host boundary before migrating consumers. Registered applicability
+and authenticated Entry sessions now resolve from neutral host snapshots; every censused downstream relationship is a
+discovered graph consequence for provider-less contributed types. The app host is the only raw tracker adapter exposed
+to root policy, and build validation derives every host declaration to prevent it from becoming a parallel consumer
+API. Existing raw tracker consumers remain visible obligations without a temporary allowlist.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the
