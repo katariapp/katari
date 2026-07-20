@@ -48,6 +48,7 @@ Updated: 2026-07-20
 - Phase 6.3 source-action commit: `debbb1c29` (`(refactor): migrate source action features`)
 - Phase 6.4.1 Entry Feature context commit: `0d1f833f3` (`(refactor): resolve source-backed feature context`)
 - Phase 6.4.2 Download Action context commit: `756beb981` (`(refactor): resolve download action context`)
+- Phase 6.4.3 Automatic Download context commit: `381ea4e11` (`(refactor): resolve automatic download context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -55,8 +56,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.3 Automatic Download Entry and preference context
-- State: Phase 6.4.3 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.4 Consumption and Bookmark state-mutation context
+- State: Phase 6.4.4 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -154,6 +155,17 @@ Focused Phase 6.4.3 findings:
   Contextual rejection is exposed as structured blockers instead of the former opaque `NoCandidates` result.
 - Category and prior-consumption mechanics remain inside F05 shared policy. No per-type automatic-filter provider,
   support flag, content-type matrix, or generic Preferences/Profile capability is introduced.
+
+Focused Phase 6.4.4 findings:
+
+- F09 and F10 provider integrations now select only type applicability and media-specific dispatch. Their UI,
+  state-transition, mutation-result, and lifecycle consequences live on contextual integrations.
+- Consumption eligibility resolves current consumed/partial-progress state against the requested transition. Changed
+  mutation results and marked-consumed lifecycle emission resolve independently after provider dispatch.
+- Bookmark eligibility resolves the complete selection state, while concrete Entry mutation resolves the filtered
+  changed-child state before persistence dispatch. Empty cross-Entry selections remain structured request results.
+- Provider absence remains valid and no Entry-State/Selection capability, content-type matrix, mandatory operation, or
+  type-specific product-action opt-in is introduced.
 
 Focused F11.0 findings:
 
@@ -814,5 +826,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.3 after review, then continue the remaining existing Entry Feature context audit and migration for
-Entry state, selection, preferences/profile, and platform conditions.
+Commit Phase 6.4.4 after review, then migrate F06 Download Lifecycle preference, category, viewer-progress, and selection
+context without turning event payloads into type capabilities.

@@ -6,10 +6,11 @@ Status: complete
 
 - Feature owner: `entry-consumption`
 - Prerequisite: `EntryConsumptionCapability`
-- Shared consequences: eligibility and mutation dispatch; Entry selection, mark-previous, and swipe actions; Library and
-  Updates selection actions; notification actions; tracking synchronization; and structured F06 lifecycle emission
+- Context-free consequences: type applicability and media-specific mutation dispatch
+- Contextual consequences: Entry, Library, Updates, notification, and tracking eligibility from the requested state
+  transition; changed-mutation results; and F06 lifecycle emission only for changed consume operations
 - Operation context: the concrete Entry, selected children, current consumed/partial-progress state, merged-member
-  ownership, and requested consumed state
+  ownership, requested consumed state, and the processor's exact changed-child result
 - Specialized requirement: none beyond the media-specific Consumption provider
 - Presentation projection: F23 owns consumed/unconsumed vocabulary. F09 decides availability and behavior only.
 
@@ -25,6 +26,11 @@ providers.
 The identical consumed/unconsumed state-transition rule is defined once in provider SPI so the graph-backed coordinator
 and media providers use the same semantics. That pure predicate does not decide support: provider presence remains the
 sole support fact, and application code cannot depend on SPI.
+
+The context-free provider integration selects only type applicability and dispatch. A separate eligibility relationship
+uses the current state and requested transition to authorize product actions. Mutation results and F06 event emission
+are resolved independently after the media provider reports exact changed children; an unconsume or no-change result
+therefore cannot accidentally acquire a marked-consumed lifecycle consequence.
 
 Manga, Anime, and Book providers retain their genuine media differences when locating partial progress, persisting
 completion, resetting locators, and synchronizing child state. Each provider returns exactly the children it changed.
@@ -57,6 +63,8 @@ production types support Consumption.
 
 - Provider presence is the only support declaration; absence is ordinary unsupported behavior.
 - Shared eligibility and event orchestration are implemented once instead of repeated in app consumers or type modules.
+- Entry state and selection outcomes are declared contextual evidence with explicit no-change and unconsume blockers;
+  they are not Entry-State or Selection capabilities.
 - Media-specific persistence remains with providers and is communicated through a structured result.
 - UI, notifications, and background synchronization use one feature-owned contract.
 - F06 cleanup and F23 vocabulary stay in their own owners; F09 does not absorb them or add opt-ins.

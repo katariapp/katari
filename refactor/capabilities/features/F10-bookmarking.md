@@ -6,7 +6,9 @@ Status: complete
 
 - Feature owner: `entry-bookmarking`
 - Prerequisite: `EntryBookmarkCapability`
-- Shared consequences: applicability, mutation, and individual/selection eligibility
+- Context-free consequences: type applicability and media-specific persistence dispatch
+- Contextual consequences: individual/selection eligibility and mutation only when the requested bookmark state changes
+  at least one selected child
 - Operation context: concrete Entry type, current bookmark state, selected children, and requested bookmark state
 - Specialized requirement: none beyond the existing media-specific `EntryBookmarkProcessor`
 - Presentation projection: bookmark nouns and action labels remain F23 vocabulary; they do not authorize behavior
@@ -25,6 +27,10 @@ selected child must participate and already be bookmarked.
 Mutation filters unchanged children once in the root feature and then dispatches only the changed children to the
 selected processor. `EntryBookmarkProcessor` therefore owns only media persistence. The raw bookmark interaction is an
 internal provider dispatcher and contains no support or eligibility policy.
+
+Provider dispatch remains context-free. Separate selection and mutation relationships consume current bookmark state
+and expose explicit no-change blockers. An empty cross-Entry selection remains the existing `NoChange` request result
+because it has no Entry type that can serve as a graph subject; a concrete Entry mutation always resolves its context.
 
 ## Consumer Disposition
 
@@ -56,6 +62,7 @@ without application, downloader, or lifecycle edits.
 
 - Provider presence is the sole operational and applicability authority; absence is valid.
 - Shared eligibility and unchanged-child selection live once in the feature, not in each processor or UI surface.
+- Current bookmark state and selection shape are contextual evidence, not duplicated type capabilities.
 - Application code consumes a feature contract and cannot query provider SPI or rebuild a capability report.
 - Existing cross-feature consequences remain owned by their surrounding features instead of being duplicated in F10.
 - Filtering, persistence, and vocabulary surfaces have explicit owners, so they are not silently mistaken for completed

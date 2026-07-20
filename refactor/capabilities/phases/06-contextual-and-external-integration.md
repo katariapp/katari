@@ -245,6 +245,19 @@ the F04 Feature API.
 Core Download provider presence remains the only type-wide prerequisite. The active profile supplies current preference
 values but is not itself a Download capability, and F07 retains ownership of the settings surface.
 
+#### 6.4.4 — Consumption and Bookmark State-Mutation Context
+
+- [x] Separate F09/F10 context-free type applicability and provider dispatch from state- and selection-dependent product
+  consequences.
+- [x] Declare Consumption transition eligibility, changed-child mutation results, and marked-consumed lifecycle emission
+  as distinct contextual relationships.
+- [x] Declare Bookmark selection eligibility and changed-child mutation as distinct contextual relationships while
+  preserving the existing selection rules and unchanged-child filtering.
+- [x] Keep empty cross-Entry selections as structured request results when no Entry type exists as a contextual subject.
+
+Consumption and Bookmark provider presence remain the only type-wide support facts. No Entry-State or Selection
+capability, type matrix, or per-type product-action opt-in is introduced.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,
