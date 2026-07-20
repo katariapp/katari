@@ -493,7 +493,9 @@ private class EntryInteractionBoundaryRules(
         if (file.isTestPath()) return
         val isApplicationLayer = file.relativePath.startsWith("app/src/main/") ||
             file.relativePath.startsWith("data/src/main/") ||
-            file.relativePath.startsWith("domain/src/main/")
+            file.relativePath.startsWith("domain/src/main/") ||
+            file.relativePath.startsWith("presentation-core/src/main/") ||
+            file.relativePath.startsWith("presentation-widget/src/main/")
         if (!isApplicationLayer) return
 
         RAW_SOURCE_ACTION_IMPORTS.forEach { (simpleName, qualifiedName) ->

@@ -67,6 +67,7 @@ Updated: 2026-07-20
 - Phase 6.5.0 Media context migration plan commit: `3ff63d635` (`(refactor): define media context migration`)
 - Phase 6.5.1 Cover network context commit: `dfd0de181` (`(refactor): resolve cover network context`)
 - Phase 6.5.2 Child WebView context commit: `e0b7f7637` (`(refactor): resolve child web view context`)
+- Phase 6.5.3 Type-owned media closure commit: `9c665de83` (`(refactor): close type-owned media context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -74,8 +75,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.5.3 Type-owned media closure
-- State: Phase 6.5.3 is implemented and validating for review. Phase 6.5.4 has not started.
+- Milestone: Phase 6.5.4 Media context reconciliation
+- State: Phase 6.5.4 is implemented and validating for review. Phase 6.6 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1054,7 +1055,19 @@ Focused Phase 6.5.3 findings:
 - Root and Manga/Anime/Book interaction tests, boundary and build-logic tests, formatting, and diff checks pass. FOSS
   compilation reaches only the recorded unrelated Anime debug-launch callback and More-tab coroutine errors.
 
+Focused Phase 6.5.4 findings:
+
+- Nested production probes found every raw media contract and returned media-shape cast inside its recorded Feature,
+  type-owned runtime, external contract, or compatibility owner. No unclassified `C07`, `C08`, `C12`, `C20`, `C22`, or
+  `C23` consumer remains for Phase 6.5.
+- Generic presentation modules were missing from the raw source-action boundary despite being application-facing. They
+  contain no current bypass; the guard now includes both modules and a regression proves image/subtitle contracts are
+  rejected there.
+- F03, F07, F20, and F25 documents now record their media-context limits. The atlas and inventory record the executable
+  boundary and closure without introducing a media capability, support matrix, or completion list.
+- Boundary and build-logic tests pass after the reconciliation change.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.5.3 after review, then implement Phase 6.5.4 Media context reconciliation. Continue through Phase 6 afterward
+Commit Phase 6.5.4 after review, then begin Phase 6.6 Refresh and Network Policy. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

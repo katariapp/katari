@@ -46,7 +46,7 @@ provider choice rather than missing-provider fallback behavior.
 | Loading | The app supplies current source and child candidates; F20 selects provider/load mode and F17 reading order and returns distinct structured outcomes. |
 | Contextual absence | Provider absence, source unavailable, source opt-out, and no reading child remain distinct from provider/media load failure. |
 | Preloading | Radius comes from the selected provider. Missing providers return structured inapplicability; the app no longer hardcodes the current provider value. |
-| Rendering and progress | Strictly dispatch to the provider that owns the handle. Media-specific renderer and persistence behavior remain type-owned. |
+| Rendering and progress | Strictly dispatch to the provider that owns the handle. Renderer construction returns structured available/failed results; media-specific renderer and persistence behavior remain type-owned. |
 | Lifecycle | App screen state owns jobs, retry sync, retention, and disposal timing; F20 owns strict provider release. |
 | Open loaded child | F20 derives Immersive-plus-Open availability and target identity; F01 performs the actual Open operation. |
 | Source contracts | Public opt-in, legacy adapter, source projection, and media/source interfaces remain in their existing external owners. |
@@ -67,6 +67,10 @@ distinct no-runtime result, an entry-level provider receives all shared conseque
 opt-in, source blockers remain structured, descriptive metadata only prunes the source surface, the actual Entry type
 remains authoritative, media failure stays distinct, and handle lifecycle dispatch is strict.
 
+Renderer construction has the same Feature-owned failure boundary as media loading. Type-owned processors retain
+handle-shape and renderer validation, while application composition receives an explicit result and uses its existing
+retryable error surface instead of observing an escaping exception.
+
 Type-focused tests retain genuine Manga media/progress behavior. App tests retain concurrency, identity, pager, and
 fallback mechanics without restating the Manga/Anime/Book support matrix.
 
@@ -83,7 +87,8 @@ fallback mechanics without restating the Manga/Anime/Book support matrix.
 
 ## Validation
 
-- API/SPI and every production type/root Entry-interactions module compile; the focused F20 Feature contract passes.
+- API/SPI and every production type/root Entry-interactions module compile; the focused F20 Feature contract covers
+  load and renderer failure results.
 - FOSS application compilation reports no F20 error before stopping at the already recorded F11/F12 and unrelated
   application migration queue.
 - Application production code contains no raw `EntryImmersiveInteraction` reference.

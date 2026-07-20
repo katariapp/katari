@@ -232,6 +232,11 @@ exception.
 Rows with multiple milestones are closure ledgers, not shared implementation owners. Each assigned Feature records its
 own evidence and consequence; Phase 6.8 verifies that no consumer was lost between them.
 
+Phase 6.5 reconciliation reran the nested production census for `C07`, `C08`, `C12`, `C20`, `C22`, and `C23` and found
+no unclassified media consumer. Raw image/subtitle source contracts are rejected across app, data, domain, and both
+generic presentation modules; type-owned media mechanics, source compatibility, and purpose-specific root Features
+remain explicit owners rather than exceptions available to generic code.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

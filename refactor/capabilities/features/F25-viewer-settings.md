@@ -21,6 +21,11 @@ One optional type provider owns the Viewer Settings surfaces genuinely supplied 
 multiple viewer engines, as Book does for Readium EPUB and HTML prose. Provider absence is valid and adds no settings
 surface or projection obligation.
 
+Settings participation does not claim live platform, renderer, or format support. Anime picture-in-picture and Manga
+auto-scroll combine stored settings with runtime platform/viewer predicates inside their owning players/readers. Book
+processor selection is a separate Book-owned media authority, and a processor remains valid without a Viewer Settings
+surface.
+
 ## Feature Boundary
 
 Application consumers receive `EntryViewerSettingsFeature`. The former mutable `ViewerSettingsInteraction`, parallel

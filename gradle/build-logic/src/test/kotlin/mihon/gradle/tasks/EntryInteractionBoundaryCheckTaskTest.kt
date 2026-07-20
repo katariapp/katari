@@ -184,6 +184,32 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `generic presentation cannot bypass media Features through raw source contracts`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "presentation-core/src/main/java/presentation/Media.kt" to
+                    """
+                        package presentation
+
+                        import eu.kanade.tachiyomi.source.entry.EntryImageSource
+                        import eu.kanade.tachiyomi.source.entry.SubtitleSource
+
+                        class Media(
+                            val images: EntryImageSource,
+                            val subtitles: SubtitleSource,
+                        )
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "application source actions must use their Entry Feature boundary"
+        error.message shouldContain "EntryImageSource"
+        error.message shouldContain "SubtitleSource"
+    }
+
+    @Test
     fun `root module cannot export the provider spi`() {
         createBaseFixture(
             additionalFiles = mapOf(

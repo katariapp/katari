@@ -454,11 +454,11 @@ provider intersection without a content-type edit.
 
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
-- [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,
+- [x] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,
   picture-in-picture, auto-scroll, and renderer support in the media Feature that owns each consequence.
-- [ ] Keep Manga/Anime/Book loaders, downloaders, players, readers, and Book processor selection type-owned where the
+- [x] Keep Manga/Anime/Book loaders, downloaders, players, readers, and Book processor selection type-owned where the
   behavior is genuinely media-specific.
-- [ ] Move cross-feature authorization such as cover network access, reader WebView actions, and download-option
+- [x] Move cross-feature authorization such as cover network access, reader WebView actions, and download-option
   availability behind the appropriate Feature result; keep playback/platform controls owner-local only where their
   entire decision and UI remain inside one type-owned runtime.
 
@@ -586,6 +586,31 @@ adapter obligation.
 The Book registry remains a nested media authority installed once by the Book runtime and injected into both reader and
 downloader paths. Adding a processor therefore affects both mechanics through Book ownership, while contributing Viewer
 Settings remains an independent optional provider decision.
+
+#### 6.5.4 — Media Context Reconciliation
+
+- [x] Rerun nested production probes for source media contracts, returned media shapes, playback selection, renderer
+  construction, platform/viewer predicates, and Book processor selection.
+- [x] Verify every `C07`, `C08`, `C12`, `C20`, `C22`, and `C23` media consumer has a Feature, type-owned mechanic,
+  external/compatibility contract, or operation-data disposition.
+- [x] Extend raw source-action enforcement to generic presentation modules; no current bypass was found, but future UI
+  code can no longer create another image/subtitle/source authority.
+- [x] Update F03, F07, F20, and F25 ownership documents plus the capability atlas, migration inventory, and phase
+  continuity ledger.
+
+The repeated census found no unclassified runtime consumer. `EntryImageSource` is confined to source compatibility,
+purpose-specific root Features, and Manga media mechanics. `SubtitleSource` is confined to Anime option/downloader/player
+mechanics. `ChapterWebViewSource` is confined to source compatibility and the WebView Feature. All returned media-shape
+casts occur within Manga, Anime, or Book modules or source compatibility.
+
+Live selection, downloaded/local state, platform support, renderer shape, settings values, and processor choice remain
+invocation evidence. None became a static graph capability. Generic UI obtains cover, WebView, Download Options,
+Immersive, and Viewer Settings consequences from their Features; media-specific runtimes retain only mechanics and
+operation failure policy.
+
+The reconciliation exposed one enforcement omission: `presentation-core` and `presentation-widget` were absent from the
+raw source-action guard even though they are generic application layers. They contained no current violation. Adding
+them closes a future bypass without expanding any Feature, declaring support, or restricting type-owned modules.
 
 ### 6.6 — Refresh and Network Policy (`C15`, `C16`, applicable `C17`, `C20`, `C22`)
 

@@ -20,6 +20,10 @@ Status: complete
 Provider absence makes the runtime inapplicable to that Entry type. It does not invalidate the content type, create a
 no-op provider requirement, or prevent the shared queue coordinator from existing with an empty provider set.
 
+Media resolution remains inside each contributed downloader. Manga image pages, Anime playback streams/subtitles, and
+Book content descriptors have different execution and failure semantics; F03 coordinates their structured queue state
+and events without exposing a generic media resolver or treating a returned media shape as type support.
+
 ## Access Boundary
 
 Application code receives `EntryDownloadRuntimeFeature`. It can observe graph-selected runtime state and operate on

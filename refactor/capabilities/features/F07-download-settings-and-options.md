@@ -36,6 +36,11 @@ behavior it directly supplies.
 | Anime options provider | Resolves stream, dub, subtitle, and quality choices from the actual source/media and persists the selected values while queueing. It remains behind the feature boundary. |
 | Manga settings providers | Four independent bindings describe the preferences actually consumed by Manga archive/page download behavior. No combined settings set or empty/default provider is registered. |
 
+Anime option discovery intentionally does not share subtitle resolution with player or downloader execution. An option
+lookup may omit unavailable choices, a selected download subtitle must fail when absent, and playback may continue
+without external subtitles. These are separate owner-local operation policies over the same external source contract,
+not evidence for a type-wide playback/media capability.
+
 ## Independent Setting Semantics
 
 The four specialized preferences are not generic merely because their controls share one screen. Their current values
