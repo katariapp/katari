@@ -51,6 +51,7 @@ Updated: 2026-07-20
 - Phase 6.4.3 Automatic Download context commit: `381ea4e11` (`(refactor): resolve automatic download context`)
 - Phase 6.4.4 Entry state-mutation context commit: `c75c813d7` (`(refactor): resolve entry state mutation context`)
 - Phase 6.4.5 Download Lifecycle context commit: `ceb7af876` (`(refactor): resolve download lifecycle context`)
+- Phase 6.4.6 Update Eligibility context commit: `edc5600a9` (`(refactor): resolve update eligibility context`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -58,8 +59,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.6 Update Eligibility policy and request context
-- State: Phase 6.4.6 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
+- Milestone: Phase 6.4.7 Library Filter state and tracking context
+- State: Phase 6.4.7 is implemented and validating for review. Subsequent Phase 6.4 Feature context has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -190,6 +191,16 @@ Focused Phase 6.4.6 findings:
   position are typed contextual evidence with blockers matching the existing structured skip reasons and precedence.
 - Unknown progress evidence remains non-blocking. No Update Eligibility, Entry-State, Preferences, or release-window
   capability or type-specific opt-in is introduced.
+
+Focused Phase 6.4.7 findings:
+
+- Generic Library filtering and behavior-contract participation remain automatic for every composed type. Optional
+  controls still derive independently from Progress, Bookmark, and outside-release-period providers.
+- Filter configuration, aggregate Library state, and tracker evidence are typed contextual inputs for policy matching
+  and active-filter consequences.
+- A target failing a predicate is a normal filter result, not a blocked integration. Empty requests remain operation
+  results because they have no content-type subject.
+- Tracker authentication and declared type applicability are not absorbed into F14 and remain assigned to Phase 6.7.
 
 Focused F11.0 findings:
 
@@ -850,5 +861,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.6 after review, then continue the remaining Entry Feature context audit with F14 Library Filtering
-state and external tracker/filter inputs.
+Commit Phase 6.4.7 after review, then continue the remaining Entry Feature context audit with child filtering, Library
+progress, and other request-state consumers before Phase 6.5.

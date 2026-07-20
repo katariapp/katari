@@ -285,6 +285,19 @@ Preferences, or runtime-readiness capability is introduced.
 F13 remains provider-free and universally participates through runtime content-type composition. No Update Eligibility,
 Entry-State, Preferences, or release-window capability is introduced.
 
+#### 6.4.7 — Library Filter State and Tracking Context
+
+- [x] Keep generic filter participation, behavior-contract selection, and Progress/Bookmark/release-period control
+  availability context-free.
+- [x] Move policy interpretation, target matching, and active-filter state to one contextual relationship consuming
+  filter configuration, aggregate Library state, and tracker evidence.
+- [x] Treat item exclusion as a successful filter result rather than a blocked integration; the contextual relationship
+  remains applicable for every non-empty request containing composed types.
+- [x] Keep empty Library requests as operation results because no content type exists as a contextual graph subject.
+
+No Library-State, Filter-Preferences, Tracking, or matching-result capability is introduced. Tracker authentication and
+tracker-declared type applicability remain assigned to their Tracking owner in Phase 6.7.
+
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 
 - [ ] Compose image-page access, subtitles/playback selection, child WebView, local media formats, DRM/resolution,

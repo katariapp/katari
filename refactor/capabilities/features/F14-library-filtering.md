@@ -9,9 +9,11 @@ Status: complete
 - Derived relationship: `EntryLibraryProgressCapability` contributes progress-filter control availability
 - Derived relationship: Library Progress plus `EntryBookmarkCapability` contributes bookmarked-filter availability
 - Optional prerequisite: `EntryOutsideReleasePeriodFilterCapability` contributes outside-release-period applicability
-- Shared consequences: filter matching, active-filter state, and capability-dependent control availability
-- Context: current Library item types, aggregate progress/download/bookmark state, Entry status and fetch interval,
-  tracker records, logged-in tracker preferences, local state, and current filter preferences
+- Context-free consequences: participation in generic filtering, selection of the behavior contract, and
+  capability-dependent control availability
+- Contextual consequences: filter policy interpretation, item matching, and active-filter state
+- Context: current filter preferences, aggregate Library progress/download/bookmark/status/release state, tracker
+  records, and configured tracker filters
 - Specialized requirement: none; filtering interprets shared Library state and the outside-release-period provider is a
   compatibility marker rather than media-specific filter code
 - Behavioral contract: synthetic provider-less and partially capable content types prove generic filtering, optional
@@ -30,6 +32,12 @@ tri-state predicates, tracker inclusion/exclusion, outside-release-period applic
 The result contains matching target indices and structured control availability for the content types actually present
 in the current Library. It does not expose provider collections or a static production support matrix. The raw
 `EntryLibraryFilterInteraction` facade and its provider-backed boolean dispatch are removed.
+
+Generic filtering is context-free participation but not a context-free decision. A request supplies separately owned
+filter configuration, Library-state evidence, and tracker evidence to one always-applicable contextual relationship.
+Targets excluded by a filter are successful matching results, not blocked integrations, so F14 invents no blocker for
+ordinary predicate outcomes. An empty Library request remains an operation result because it has no content type that
+can serve as a graph subject.
 
 Progress control availability derives from F22. Bookmark control availability derives from F22 plus F10, while F14
 filters the aggregate state supplied by the Library progress owner. In a mixed Library, an unavailable summary is not
@@ -75,13 +83,8 @@ does not assert which production types support either optional capability.
 - Provider absence removes only the optional relationship and remains valid.
 - The application consumes API DTOs and structured results, not SPI dispatch, graph evaluation, or support labels.
 - Filters consume state from F03, F10, F22, trackers, and Library context without taking over those owners.
+- Filter preferences, Library aggregate state, and tracker evidence are declared context inputs; matching false is not
+  misrepresented as unsupported behavior.
 - F13 update eligibility, contextual grouping/search, and F23 vocabulary remain separate and explicitly accounted for.
 - No mandatory operation, production type matrix, no-op provider, report/catalog, compatibility facade, or duplicated
   filter-policy implementation was introduced.
-
-## Validation
-
-- `spotlessApply`, API/SPI/root compilation, and all root Entry-interactions tests pass in the isolated F14 worktree.
-- The boundary census reports seven expected later-feature violations and no raw Library-filter application reference.
-- FOSS application compilation advances through F14 and stops only at the already recorded F11/F12/F18–F20 migration
-  failures; it reports no Library-filter symbol, DTO, or consumer error.
