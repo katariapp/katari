@@ -43,8 +43,8 @@ provider choice rather than missing-provider fallback behavior.
 | Feed mode | Mode button, available modes, fallback, and navigation consume the same Feature evidence. |
 | Browse long press | Shared F19/F20 fallback policy consumes per-entry Immersive availability; mixed-type sources do not start Immersive for an inapplicable returned entry. |
 | Long-press settings | Source supporting text consumes source-level Feature evidence. Generic priority and profile persistence remain shared preference behavior. |
-| Loading | The app supplies current source and child candidates; F20 selects provider/load mode and F17 reading order and returns distinct structured outcomes. |
-| Contextual absence | Provider absence, source unavailable, source opt-out, and no reading child remain distinct from provider/media load failure. |
+| Loading | The app supplies current source and child candidates; F20 selects provider/load mode and F17 reading order and returns distinct structured outcomes. Child-backed providers request children through F20's Source Refresh relationship before the app reloads persisted candidates. |
+| Contextual absence | Provider absence, source unavailable, source opt-out, and no reading child remain distinct from provider/media or child-refresh operation failure. |
 | Preloading | Radius comes from the selected provider. Missing providers return structured inapplicability; the app no longer hardcodes the current provider value. |
 | Rendering and progress | Strictly dispatch to the provider that owns the handle. Renderer construction returns structured available/failed results; media-specific renderer and persistence behavior remain type-owned. |
 | Lifecycle | App screen state owns jobs, retry sync, retention, and disposal timing; F20 owns strict provider release. |
@@ -80,6 +80,8 @@ fallback mechanics without restating the Manga/Anime/Book support matrix.
 - An empty provider set cannot advertise a source-level Immersive surface, even when source metadata is unavailable.
 - Public source opt-in and runtime media remain contextual evidence rather than duplicate type flags.
 - Child List and Open are independent derived relationships, not mandatory operations or another per-type opt-in.
+- Source Refresh is an F20-owned relationship for child-backed loading, not an application-owned sync call or a new
+  content-type opt-in.
 - Entry-level and zero-preload providers remain valid partial contributions.
 - Every application authorization path consumes Feature evidence; raw SPI, silent release, and preload fallback are gone.
 - Descriptive source metadata only prunes a contextual source surface and never overrides returned Entry truth.

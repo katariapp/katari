@@ -106,6 +106,18 @@ data class EntryImmersiveLoadRequest(
     val memberIds: List<Long> = emptyList(),
 )
 
+sealed interface EntryImmersiveChildRefreshResult {
+    data object Refreshed : EntryImmersiveChildRefreshResult
+
+    data class ContextuallyUnavailable(
+        val reason: EntryImmersiveUnavailableReason,
+    ) : EntryImmersiveChildRefreshResult
+
+    data class Inapplicable(val type: EntryType) : EntryImmersiveChildRefreshResult
+
+    data class Failed(val error: Throwable) : EntryImmersiveChildRefreshResult
+}
+
 sealed interface EntryImmersiveLoadResult {
     data class Loaded(
         val handle: EntryImmersiveHandle,

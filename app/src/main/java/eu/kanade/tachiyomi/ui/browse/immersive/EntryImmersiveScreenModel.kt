@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mihon.entry.interactions.EntryImmersiveAvailability
+import mihon.entry.interactions.EntryImmersiveChildRefreshResult
 import mihon.entry.interactions.EntryImmersiveChildRequirement
 import mihon.entry.interactions.EntryImmersiveContext
 import mihon.entry.interactions.EntryImmersiveFeature
@@ -21,7 +22,6 @@ import mihon.entry.interactions.EntryImmersiveLoadRequest
 import mihon.entry.interactions.EntryImmersiveLoadResult
 import mihon.entry.interactions.EntryImmersiveProgress
 import mihon.entry.interactions.EntryImmersiveUnavailableReason
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
@@ -32,7 +32,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 class EntryImmersiveScreenModel(
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
-    private val syncEntryWithSource: SyncEntryWithSource = Injekt.get(),
     private val immersiveFeature: EntryImmersiveFeature = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
 ) : StateScreenModel<EntryImmersiveScreenModel.State>(State()) {
@@ -147,7 +146,14 @@ class EntryImmersiveScreenModel(
             EntryImmersiveChildRequirement.FIRST_READING_CHILD -> {
                 var current = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
                 if (forceSync || current.isEmpty()) {
-                    syncEntryWithSource(entry, fetchDetails = false, fetchChapters = true)
+                    when (val refresh = immersiveFeature.refreshChildren(entry)) {
+                        EntryImmersiveChildRefreshResult.Refreshed -> Unit
+                        is EntryImmersiveChildRefreshResult.ContextuallyUnavailable -> {
+                            return ItemState.Unavailable(entry, refresh.reason)
+                        }
+                        is EntryImmersiveChildRefreshResult.Inapplicable -> return ItemState.Inapplicable(entry)
+                        is EntryImmersiveChildRefreshResult.Failed -> return ItemState.Error(entry, refresh.error)
+                    }
                     current = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
                 }
                 current

@@ -25,7 +25,6 @@ import mihon.entry.interactions.EntryImmersiveLoadResult
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
@@ -117,7 +116,6 @@ class EntryImmersiveScreenModelTest {
             handles = handles,
             model = EntryImmersiveScreenModel(
                 entryChapterRepository = repository,
-                syncEntryWithSource = mockk<SyncEntryWithSource>(relaxed = true),
                 immersiveFeature = feature,
                 sourceManager = sourceManager,
             ),

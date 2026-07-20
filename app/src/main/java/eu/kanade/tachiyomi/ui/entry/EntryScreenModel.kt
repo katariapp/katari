@@ -122,6 +122,10 @@ import mihon.entry.interactions.EntryPreviewLoadResult
 import mihon.entry.interactions.EntryPreviewOpenTargetResult
 import mihon.entry.interactions.EntryPreviewPage
 import mihon.entry.interactions.EntryPreviewPageStatus
+import mihon.entry.interactions.EntrySourceRefreshFailure
+import mihon.entry.interactions.EntrySourceRefreshFeature
+import mihon.entry.interactions.EntrySourceRefreshRequest
+import mihon.entry.interactions.EntrySourceRefreshResult
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
@@ -133,13 +137,11 @@ import tachiyomi.core.common.util.lang.withUIContext
 import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.category.repository.CategoryRepository
-import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryChapterFlags
 import tachiyomi.domain.entry.interactor.SetEntryFavorite
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.interactor.UpdateEntry
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
@@ -149,7 +151,6 @@ import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.service.LibraryPreferences
-import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.util.applyFilter
@@ -199,7 +200,7 @@ class EntryScreenModel(
     private val categoryRepository: CategoryRepository = Injekt.get(),
     private val getTracks: GetTracks = Injekt.get(),
     private val addTracks: AddTracks = Injekt.get(),
-    private val syncEntryWithSource: SyncEntryWithSource = Injekt.get(),
+    private val sourceRefreshFeature: EntrySourceRefreshFeature = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
 ) : StateScreenModel<EntryScreenModel.State>(State.Loading) {
@@ -729,34 +730,58 @@ class EntryScreenModel(
         successState ?: return
         try {
             val membersToRefresh = getMembersToRefreshFromSource(manualFetch)
-            val results = membersToRefresh.map { memberEntry ->
-                syncEntryWithSource(
-                    entry = memberEntry,
-                    fetchDetails = fetchDetails,
-                    fetchChapters = fetchChapters,
-                    manualFetch = manualFetch,
-                )
+            val insertedChildren = mutableListOf<EntryChapter>()
+            for (memberEntry in membersToRefresh) {
+                when (
+                    val result = sourceRefreshFeature.refresh(
+                        EntrySourceRefreshRequest(
+                            entry = memberEntry,
+                            fetchDetails = fetchDetails,
+                            fetchChildren = fetchChapters,
+                            manual = manualFetch,
+                        ),
+                    )
+                ) {
+                    is EntrySourceRefreshResult.Refreshed -> insertedChildren += result.insertedChildren
+                    is EntrySourceRefreshResult.SourceUnavailable -> {
+                        showRefreshFailure(context.stringResource(MR.strings.loader_not_implemented_error))
+                        return
+                    }
+                    is EntrySourceRefreshResult.Failed -> when (val reason = result.reason) {
+                        EntrySourceRefreshFailure.NoChildren -> {
+                            val entryType = successState?.entry?.type
+                            showRefreshFailure(
+                                context.stringResource(entryType.entryTypePresentation().noChildrenFoundLabel),
+                            )
+                            return
+                        }
+                        is EntrySourceRefreshFailure.Operation -> {
+                            logcat(LogPriority.ERROR, reason.error)
+                            showRefreshFailure(with(context) { reason.error.formattedMessage })
+                            return
+                        }
+                    }
+                }
             }
 
             if (manualFetch) {
-                downloadNewEntryChapters(results.flatMap { it.insertedChapters })
+                downloadNewEntryChapters(insertedChildren)
             }
         } catch (_: CancellationException) {
             // ignore
         } catch (e: Exception) {
-            val message = if (e is NoChaptersException) {
-                val entryType = successState?.entry?.type
-                context.stringResource(entryType.entryTypePresentation().noChildrenFoundLabel)
-            } else if (e is SourceNotInstalledException) {
-                context.stringResource(MR.strings.loader_not_implemented_error)
-            } else {
-                logcat(LogPriority.ERROR, e)
-                with(context) { e.formattedMessage }
-            }
+            logcat(LogPriority.ERROR, e)
+            val message = with(context) { e.formattedMessage }
 
             screenModelScope.launch {
                 snackbarHostState.showSnackbar(message = message)
             }
+        }
+    }
+
+    private fun showRefreshFailure(message: String) {
+        screenModelScope.launch {
+            snackbarHostState.showSnackbar(message = message)
         }
     }
 

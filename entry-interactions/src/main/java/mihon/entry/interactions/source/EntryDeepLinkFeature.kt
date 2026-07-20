@@ -21,12 +21,13 @@ import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
+import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.entry.adapter.toEntry
 import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
-import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
+import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
 
 private val ENTRY_DEEP_LINK_FEATURE_ID = FeatureId("entry.deep-link")
@@ -64,6 +65,7 @@ private enum class EntryDeepLinkConsequence(
     ENTRY_RESOLUTION(FeatureArtifactId("entry.deep-link.entry-resolution")),
     PERSISTENCE(FeatureArtifactId("entry.deep-link.persistence")),
     CHILD_RESOLUTION(FeatureArtifactId("entry.deep-link.child-resolution")),
+    SOURCE_REFRESH(FeatureArtifactId("entry.deep-link.source-refresh")),
 }
 
 internal object EntryDeepLinkFeatureContributor : FeatureGraphContributor {
@@ -103,7 +105,7 @@ internal class DefaultEntryDeepLinkFeature(
     private val sourceManager: SourceManager,
     private val networkToLocalEntry: NetworkToLocalEntry,
     private val entryChapterRepository: EntryChapterRepository,
-    private val syncEntryWithSource: SyncEntryWithSource,
+    private val sourceRefresh: EntrySourceRefreshFeature,
 ) : EntryDeepLinkFeature {
 
     override suspend fun resolve(uri: String): EntryDeepLinkResolution {
@@ -166,7 +168,16 @@ internal class DefaultEntryDeepLinkFeature(
 
     private suspend fun getChapter(sourceChild: SEntryChapter, entry: Entry): EntryChapter? {
         return entryChapterRepository.getChapterByUrlAndEntryId(sourceChild.url, entry.id)
-            ?: syncEntryWithSource(entry).insertedChapters.find { it.url == sourceChild.url }
+            ?: when (val refresh = sourceRefresh.refresh(EntrySourceRefreshRequest(entry))) {
+                is EntrySourceRefreshResult.Refreshed -> {
+                    refresh.insertedChildren.find { it.url == sourceChild.url }
+                }
+                is EntrySourceRefreshResult.SourceUnavailable -> throw SourceNotInstalledException()
+                is EntrySourceRefreshResult.Failed -> when (val reason = refresh.reason) {
+                    EntrySourceRefreshFailure.NoChildren -> throw NoChaptersException()
+                    is EntrySourceRefreshFailure.Operation -> throw reason.error
+                }
+            }
     }
 
     private fun requireState(

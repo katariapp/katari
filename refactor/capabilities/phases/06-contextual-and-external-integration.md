@@ -715,6 +715,35 @@ No current consumer is migrated in this slice. Direct `SyncEntryWithSource` call
 their owning 6.6.2–6.6.4 relationships are installed; compilation is not preserved with a fallback Feature path or
 parallel refresh implementation.
 
+#### 6.6.2 — Direct and Source-owned Consumers
+
+- [x] Migrate Entry details/children refresh and details-only metadata refresh to `EntrySourceRefreshFeature`.
+- [x] Make F20 own its children-only Source Refresh relationship and expose structured retry/empty-child outcomes to
+  the Immersive screen.
+- [x] Make Deep Link own its Source Refresh relationship when resolving a missing canonical child.
+- [x] Reject raw `SyncEntryWithSource` references outside its domain implementation, root Feature implementation,
+  Domain construction, and tests.
+- [x] Leave the boundary visibly failing on the deferred F11 migration and F13/Library Update consumers rather than
+  introducing a temporary allowlist.
+
+Entry refresh retains its existing merged-member sequence: each concrete source owner is refreshed in order, the first
+failure stops the sequence, and automatic-download handoff receives inserted children only after all requested refreshes
+succeed. Source absence and no-child results retain their existing user-facing messages through structured Feature
+outcomes. Metadata refresh requests details only and retains per-entry failure isolation.
+
+F20 now owns both child selection and the decision to request children before child-backed media loading. A successful
+refresh causes the app to reload persisted children; source absence and no-reading-child remain distinct contextual
+unavailability, and operation failures use the existing retryable error state. Entry-level Immersive providers remain
+valid and never receive this refresh request.
+
+Deep Link requests a normal details-and-children refresh only when the resolved canonical child is absent locally, then
+matches against the Feature's inserted children. The Deep Link Feature continues to expose its existing resolved,
+no-match, and failed contract rather than leaking refresh-specific domain exceptions to its consumer.
+
+The boundary has no migration exception list. Its expected remaining findings are the F11 migration host/search paths
+and the F13/Library Update worker. Those findings are executable obligations for 6.6.3 and 6.6.4; the rule becomes green
+by migrating those owners, not by weakening its dependency direction.
+
 ### 6.7 — Tracking Integration (`C18`, `C19`, applicable `C20`, `C22`)
 
 - [ ] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,

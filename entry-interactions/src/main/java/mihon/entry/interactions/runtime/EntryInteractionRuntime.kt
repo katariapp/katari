@@ -185,7 +185,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             sourceManager = get(),
             networkToLocalEntry = get(),
             entryChapterRepository = get(),
-            syncEntryWithSource = get(),
+            sourceRefresh = get(),
         )
     }
     addSingletonFactory<EntryTrackerSourceAdapterFeature> {
@@ -429,6 +429,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.immersive,
             childList = get(),
+            sourceRefresh = get(),
         )
     }
     addSingletonFactory<EntryRelatedEntriesFeature> {

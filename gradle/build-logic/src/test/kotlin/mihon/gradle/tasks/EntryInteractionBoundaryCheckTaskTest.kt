@@ -163,6 +163,23 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `refresh consumers cannot bypass Source Refresh Feature through raw sync mechanics`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import tachiyomi.domain.entry.interactor.SyncEntryWithSource
+
+                class AppFeature(private val sync: SyncEntryWithSource)
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "Entry refresh consumers must use EntrySourceRefreshFeature"
+    }
+
+    @Test
     fun `type modules cannot bypass child WebView Feature through raw source contract`() {
         createBaseFixture(
             mangaProcessorSource = """

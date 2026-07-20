@@ -215,6 +215,7 @@ private class EntryInteractionBoundaryRules(
             checkLibraryProgressDomainPortReferences(file, findings)
             checkCatalogueFeatureBypass(file, findings)
             checkSourceActionFeatureBypass(file, findings)
+            checkSourceRefreshFeatureBypass(file, findings)
             checkChildWebViewFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
@@ -514,6 +515,25 @@ private class EntryInteractionBoundaryRules(
                 relativePath = file.relativePath,
                 lineNumber = index + 1,
                 reason = "Immersive source opt-in must be interpreted by EntryImmersiveFeature",
+            )
+        }
+    }
+
+    private fun checkSourceRefreshFeatureBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val allowedPaths = setOf(
+            "domain/src/main/java/tachiyomi/domain/entry/interactor/SyncEntryWithSource.kt",
+            "app/src/main/java/eu/kanade/domain/DomainModule.kt",
+            "entry-interactions/src/main/java/mihon/entry/interactions/source/EntrySourceRefreshFeature.kt",
+        )
+        if (file.relativePath in allowedPaths) return
+
+        file.findReference("SyncEntryWithSource")?.let { reference ->
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = reference.lineNumber,
+                reason = "Entry refresh consumers must use EntrySourceRefreshFeature, " +
+                    "not raw SyncEntryWithSource mechanics",
             )
         }
     }

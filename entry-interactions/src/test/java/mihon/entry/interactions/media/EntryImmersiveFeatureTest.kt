@@ -8,6 +8,7 @@ import eu.kanade.tachiyomi.source.entry.SourceMetadata
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -153,8 +154,40 @@ class EntryImmersiveFeatureTest {
         )
     }
 
+    @Test
+    fun `child backed refresh maps Source Refresh outcomes inside Immersive`() = runTest {
+        val sourceRefresh = mockk<EntrySourceRefreshFeature>()
+        val feature = featureFor(
+            EntryImmersiveCapability.bind(
+                RecordingImmersiveProcessor(loadMode = EntryImmersiveLoadMode.FIRST_READING_CHILD),
+            ),
+            EntryChildListCapability.bind(ReverseChildListProcessor()),
+            sourceRefresh = sourceRefresh,
+        )
+
+        coEvery { sourceRefresh.refresh(any()) } returns refreshed()
+        feature.refreshChildren(entry) shouldBe EntryImmersiveChildRefreshResult.Refreshed
+
+        coEvery { sourceRefresh.refresh(any()) } returns EntrySourceRefreshResult.SourceUnavailable(entry.source)
+        feature.refreshChildren(entry) shouldBe EntryImmersiveChildRefreshResult.ContextuallyUnavailable(
+            EntryImmersiveUnavailableReason.SourceUnavailable,
+        )
+
+        coEvery { sourceRefresh.refresh(any()) } returns
+            EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.NoChildren)
+        feature.refreshChildren(entry) shouldBe EntryImmersiveChildRefreshResult.ContextuallyUnavailable(
+            EntryImmersiveUnavailableReason.NoReadingChild,
+        )
+
+        val failure = IllegalStateException("refresh failed")
+        coEvery { sourceRefresh.refresh(any()) } returns
+            EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.Operation(failure))
+        feature.refreshChildren(entry) shouldBe EntryImmersiveChildRefreshResult.Failed(failure)
+    }
+
     private fun featureFor(
         vararg bindings: EntryInteractionProviderBinding<*>,
+        sourceRefresh: EntrySourceRefreshFeature = mockk(),
     ): EntryImmersiveFeature {
         val composition = createEntryInteractionComposition(
             plugins = listOf(plugin(*bindings)),
@@ -169,8 +202,17 @@ class EntryImmersiveFeatureTest {
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.immersive,
             childList = childList,
+            sourceRefresh = sourceRefresh,
         )
     }
+
+    private fun refreshed() = EntrySourceRefreshResult.Refreshed(
+        insertedChildren = emptyList(),
+        insertedChildrenTotal = 0,
+        updatedChildren = 0,
+        removedChildren = 0,
+        metadataChanged = false,
+    )
 
     private fun plugin(vararg bindings: EntryInteractionProviderBinding<*>): EntryInteractionPlugin =
         object : EntryInteractionPlugin {

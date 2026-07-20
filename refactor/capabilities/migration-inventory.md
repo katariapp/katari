@@ -248,6 +248,11 @@ failures are structured after an available snapshot. Every request uses strict E
 Feature-owned resolution of the existing title-update preference. The domain coordinator remains the sole interpreter
 of `C15` source contracts.
 
+Phase 6.6.2 moves direct Entry and metadata consumers behind Source Refresh and makes F20 and Deep Link own their
+cross-feature refresh relationships. Raw sync mechanics are now guarded at the architecture boundary. The remaining
+F11 migration and F13/Library Update findings are deliberately unresolved obligations assigned to 6.6.3 and 6.6.4;
+they are not boundary exceptions.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

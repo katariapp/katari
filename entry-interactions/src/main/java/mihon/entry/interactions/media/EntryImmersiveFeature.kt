@@ -24,6 +24,7 @@ import mihon.feature.graph.allOf
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
+import tachiyomi.domain.entry.model.Entry
 
 private val ENTRY_IMMERSIVE_FEATURE_ID = FeatureId("entry.immersive")
 private val ENTRY_IMMERSIVE_FEATURE_OWNER = ContributionOwner("entry-immersive")
@@ -93,6 +94,10 @@ private val ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE = FeatureContextBlocker(
 
 private object EntryImmersiveChildConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.immersive.first-reading-child.selection")
+}
+
+private object EntryImmersiveChildRefreshConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.immersive.first-reading-child.refresh")
 }
 
 private object EntryImmersiveOpenConsequence : SharedFeatureConsequence {
@@ -175,7 +180,10 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryImmersiveCapability.definition),
                             CapabilityExpression.Provided(EntryChildListCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryImmersiveChildConsequence),
+                        sharedConsequences = listOf(
+                            EntryImmersiveChildConsequence,
+                            EntryImmersiveChildRefreshConsequence,
+                        ),
                     ),
                     FeatureIntegration(
                         id = ENTRY_IMMERSIVE_OPEN_INTEGRATION_ID,
@@ -195,6 +203,7 @@ internal class DefaultEntryImmersiveFeature(
     private val evaluation: FeatureGraphEvaluation,
     private val interaction: EntryImmersiveInteraction,
     private val childList: EntryChildListFeature,
+    private val sourceRefresh: EntrySourceRefreshFeature,
 ) : EntryImmersiveFeature {
     private val immersiveTypes = evaluation.applicableProviderTypes<EntryImmersiveProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
@@ -205,6 +214,11 @@ internal class DefaultEntryImmersiveFeature(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
         integration = ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID,
         consequence = EntryImmersiveChildConsequence.id,
+    )
+    private val childRefreshTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
+        feature = ENTRY_IMMERSIVE_FEATURE_ID,
+        integration = ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID,
+        consequence = EntryImmersiveChildRefreshConsequence.id,
     )
     private val openTypes = evaluation.applicableProviderTypes<EntryOpenProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
@@ -219,6 +233,9 @@ internal class DefaultEntryImmersiveFeature(
         check(missingChildList.isEmpty()) {
             "Child-backed Immersive providers require the Immersive + Child List relationship; " +
                 "missing EntryChildList providers for $missingChildList"
+        }
+        check(childTypes == childRefreshTypes) {
+            "Immersive child selection and refresh selected different content types"
         }
         immersiveTypes.forEach { type ->
             val radius = requireNotNull(interaction.processor(type)).preloadRadius
@@ -262,6 +279,36 @@ internal class DefaultEntryImmersiveFeature(
         val processor = interaction.processor(type)
             ?: return EntryImmersivePreloadRadiusResult.Inapplicable(type)
         return EntryImmersivePreloadRadiusResult.Available(processor.preloadRadius)
+    }
+
+    override suspend fun refreshChildren(entry: Entry): EntryImmersiveChildRefreshResult {
+        val processor = interaction.processor(entry.type)
+            ?: return EntryImmersiveChildRefreshResult.Inapplicable(entry.type)
+        if (processor.loadMode != EntryImmersiveLoadMode.FIRST_READING_CHILD || entry.type !in childRefreshTypes) {
+            return EntryImmersiveChildRefreshResult.Inapplicable(entry.type)
+        }
+        return when (
+            val result = sourceRefresh.refresh(
+                EntrySourceRefreshRequest(
+                    entry = entry,
+                    fetchDetails = false,
+                    fetchChildren = true,
+                ),
+            )
+        ) {
+            is EntrySourceRefreshResult.Refreshed -> EntryImmersiveChildRefreshResult.Refreshed
+            is EntrySourceRefreshResult.SourceUnavailable -> {
+                EntryImmersiveChildRefreshResult.ContextuallyUnavailable(
+                    EntryImmersiveUnavailableReason.SourceUnavailable,
+                )
+            }
+            is EntrySourceRefreshResult.Failed -> when (val reason = result.reason) {
+                EntrySourceRefreshFailure.NoChildren -> EntryImmersiveChildRefreshResult.ContextuallyUnavailable(
+                    EntryImmersiveUnavailableReason.NoReadingChild,
+                )
+                is EntrySourceRefreshFailure.Operation -> EntryImmersiveChildRefreshResult.Failed(reason.error)
+            }
+        }
     }
 
     override suspend fun load(request: EntryImmersiveLoadRequest): EntryImmersiveLoadResult {

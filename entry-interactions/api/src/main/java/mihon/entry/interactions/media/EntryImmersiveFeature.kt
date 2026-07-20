@@ -12,6 +12,8 @@ interface EntryImmersiveFeature {
 
     fun preloadRadius(type: EntryType): EntryImmersivePreloadRadiusResult
 
+    suspend fun refreshChildren(entry: Entry): EntryImmersiveChildRefreshResult
+
     suspend fun load(request: EntryImmersiveLoadRequest): EntryImmersiveLoadResult
 
     fun renderer(handle: EntryImmersiveHandle): EntryImmersiveRendererResult
