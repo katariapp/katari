@@ -5,14 +5,15 @@ Status: complete
 ## Owner and Relationship
 
 - Feature owner: `entry-progress-transfer`
-- Prerequisite: `EntryProgressCapability`
-- Shared consequences: feature dispatch, backup creation, backup restoration, and migration copy
+- Base prerequisite: `EntryProgressCapability`
+- Shared consequences: feature dispatch, backup creation, and backup restoration
+- Migration relationship: migration copy requires both `EntryProgressCapability` and `EntryMigrationCapability`
 - Operation context: the concrete source and target Entries, portable progress snapshots, and source-to-target resource
   mappings
 - Specialized requirement: the media provider owns conversion between portable progress state and its persisted child,
   resource, revision, and locator identities
-- Behavioral contract: the shared contract is selected for every provider-backed type and exercises snapshot, restore,
-  copy, valid absence, and type-mismatch behavior
+- Behavioral contract: base Progress behavior covers snapshot, restore, and valid absence; focused combination behavior
+  covers migration copy and type mismatch after the Migration relationship is selected
 - Presentation projection: none. F17 owns optional per-child labels and F23 owns progress vocabulary.
 
 Progress-provider absence is valid. It makes transfer unavailable without making the content type invalid, requiring an
@@ -28,7 +29,8 @@ The feature returns structured results:
 
 - snapshot returns `Available(snapshot)` or `Inapplicable(type)`;
 - restore returns `Applied` or `Inapplicable(type)`; and
-- copy returns `Applied`, `Inapplicable(types)`, or `IncompatibleTypes(sourceType, targetType)`.
+- copy returns `Applied`, `Inapplicable(types)`, or `IncompatibleTypes(sourceType, targetType)`; it is applicable only
+  when both Progress and Migration participate.
 
 An applicable provider returning an empty snapshot is therefore distinct from provider absence. The internal dispatcher
 requires the selected provider and matching Entry types; it no longer manufactures an empty snapshot, silently ignores
@@ -52,11 +54,10 @@ target Entry.
 
 ## Automatic-Participation Proof
 
-The focused feature test composes a partial content type with one anonymous Progress provider. That single binding
-selects all four consequences and the shared behavior contract, and activates snapshot, restore, and copy without a type
-list or consumer edit. The same contributed type without the provider remains valid and returns structured
-`Inapplicable` results. The proof distinguishes an available empty snapshot from absence and rejects cross-type copy
-before provider dispatch.
+The focused feature test composes a partial content type with an anonymous Progress provider. Progress alone activates
+snapshot and backup restore without falsely activating migration copy. Adding an anonymous Migration provider activates
+copy and migration preparation through the derived relationship, without a type list or consumer edit. The same
+contributed type without Progress remains valid and returns structured `Inapplicable` results.
 
 Type tests remain focused on genuine resource mapping, portable restore, and persisted media behavior. They do not
 assert which production types carry a Progress label.
@@ -68,8 +69,8 @@ assert which production types carry a Progress label.
 - Media-specific mapping/persistence remains in the provider; shared result semantics remain in the coordinator.
 - Live playback/reading, F17 labels, F11 migration policy, F22 library summaries, and F23 vocabulary stay with their
   actual owners rather than being absorbed because they share progress data.
-- A future provider automatically enters backup and migration transfer consequences without application or root type
-  edits.
+- A future Progress provider automatically enters backup transfer. If that type also contributes Migration, migration
+  transfer follows automatically without another opt-in or application edit.
 - No mandatory operation, per-type matrix, report/catalog, no-op provider, compatibility facade, or presentation gate
   was introduced.
 

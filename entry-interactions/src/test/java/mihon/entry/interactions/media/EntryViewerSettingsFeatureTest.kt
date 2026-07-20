@@ -37,7 +37,7 @@ class EntryViewerSettingsFeatureTest {
     }
 
     @Test
-    fun `provider surfaces automatically reach projections backup migration and reset`() = runTest {
+    fun `provider surfaces reach projections backup and reset without implying Migration`() = runTest {
         val repository = mockk<ViewerSettingOverrideRepository>(relaxed = true)
         val first = surface("book.epub", ViewerSettingsCategory.READER)
         val second = surface("book.prose", ViewerSettingsCategory.READER)
@@ -58,10 +58,10 @@ class EntryViewerSettingsFeatureTest {
         feature.destinations.map { it.surfaceId } shouldContainExactly listOf("book.epub", "book.prose")
         feature.snapshot(entry) shouldBe EntryViewerSettingsSnapshotResult.Available(listOf(stored))
         feature.restore(target, listOf(stored)) shouldBe EntryViewerSettingsRestoreResult.Restored(1, emptySet())
-        feature.copy(entry, target) shouldBe EntryViewerSettingsCopyResult.Copied(1)
+        feature.copy(entry, target) shouldBe EntryViewerSettingsCopyResult.Inapplicable(entry.type, target.type)
         feature.resetProfileOverrides(9L) shouldBe EntryViewerSettingsResetResult.Reset
 
-        coVerify(exactly = 2) { repository.upsert(stored.copy(entryId = target.id)) }
+        coVerify(exactly = 1) { repository.upsert(stored.copy(entryId = target.id)) }
         coVerify { repository.deleteByProviderForProfile("book.epub", 9L) }
         coVerify { repository.deleteByProviderForProfile("book.prose", 9L) }
         legacyResetCount shouldBe 1
@@ -116,6 +116,7 @@ class EntryViewerSettingsFeatureTest {
                 storedFlags = Triple(entryId, profileId, flags)
                 true
             },
+            migration = true,
         )
         val source = entry.copy(viewerFlags = 0x7FL)
 
@@ -138,15 +139,17 @@ class EntryViewerSettingsFeatureTest {
         legacyReset: suspend () -> Boolean = { true },
         normalization: (Long) -> Long = { it },
         migrationStore: suspend (Long, Long, Long) -> Boolean = { _, _, _ -> true },
+        migration: Boolean = false,
     ): EntryViewerSettingsFeature {
-        val bindings = if (surfaces.isEmpty()) {
-            emptyList()
-        } else {
-            listOf(
-                EntryViewerSettingsCapability.bind(
-                    DefaultEntryViewerSettingsProvider(EntryType.BOOK, surfaces, normalization),
-                ),
-            )
+        val bindings = buildList {
+            if (surfaces.isNotEmpty()) {
+                add(
+                    EntryViewerSettingsCapability.bind(
+                        DefaultEntryViewerSettingsProvider(EntryType.BOOK, surfaces, normalization),
+                    ),
+                )
+            }
+            if (migration) add(EntryMigrationCapability.bind(MigrationProvider()))
         }
         val composition = createEntryInteractionComposition(
             plugins = listOf(
@@ -212,4 +215,8 @@ class EntryViewerSettingsFeatureTest {
         val overrideSetting: ViewerSettingDefinition<String>,
         val profileSetting: ViewerSettingDefinition<String>,
     )
+
+    private class MigrationProvider : EntryMigrationProvider {
+        override val type = EntryType.BOOK
+    }
 }

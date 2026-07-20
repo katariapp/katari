@@ -29,23 +29,27 @@ class EntryPlaybackPreferencesFeatureTest {
     }
 
     @Test
-    fun `one provider activates backup restore and migration consequences`() = runTest {
+    fun `playback preferences provider owns backup without implying Migration`() = runTest {
         val processor = RecordingPlaybackPreferencesProcessor(snapshot)
         val feature = featureFor(EntryPlaybackPreferencesCapability.bind(processor))
 
         feature.isApplicable(sourceEntry.type) shouldBe true
         feature.snapshot(sourceEntry) shouldBe EntryPlaybackPreferencesSnapshotResult.Captured(snapshot)
         feature.restore(targetEntry, snapshot) shouldBe EntryPlaybackPreferencesRestoreResult.Applied
-        feature.copy(sourceEntry, targetEntry) shouldBe EntryPlaybackPreferencesCopyResult.Copied
+        feature.copy(sourceEntry, targetEntry) shouldBe
+            EntryPlaybackPreferencesCopyResult.Inapplicable(setOf(sourceEntry.type))
 
         processor.restored shouldBe (targetEntry to snapshot)
-        processor.copied shouldBe (sourceEntry to targetEntry)
+        processor.copied shouldBe null
     }
 
     @Test
     fun `missing stored preferences are distinct from unsupported transfer`() = runTest {
         val processor = RecordingPlaybackPreferencesProcessor(snapshot = null, copyResult = false)
-        val feature = featureFor(EntryPlaybackPreferencesCapability.bind(processor))
+        val feature = featureFor(
+            EntryPlaybackPreferencesCapability.bind(processor),
+            EntryMigrationCapability.bind(MigrationProvider()),
+        )
 
         feature.snapshot(sourceEntry) shouldBe EntryPlaybackPreferencesSnapshotResult.NoPreferences
         feature.copy(sourceEntry, targetEntry) shouldBe EntryPlaybackPreferencesCopyResult.NoPreferences
@@ -54,7 +58,10 @@ class EntryPlaybackPreferencesFeatureTest {
     @Test
     fun `migration preparation captures preferences before durable restore`() = runTest {
         val processor = RecordingPlaybackPreferencesProcessor(snapshot)
-        val feature = featureFor(EntryPlaybackPreferencesCapability.bind(processor))
+        val feature = featureFor(
+            EntryPlaybackPreferencesCapability.bind(processor),
+            EntryMigrationCapability.bind(MigrationProvider()),
+        )
 
         val prepared = feature.prepareMigration(sourceEntry, targetEntry)
             as EntryPlaybackPreferencesMigrationPreparation.Prepared
@@ -133,5 +140,9 @@ class EntryPlaybackPreferencesFeatureTest {
 
     private fun entry(id: Long, type: EntryType): Entry {
         return Entry.create().copy(id = id, type = type)
+    }
+
+    private class MigrationProvider : EntryMigrationProvider {
+        override val type = EntryType.BOOK
     }
 }

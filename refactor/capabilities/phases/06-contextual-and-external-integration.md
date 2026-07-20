@@ -191,11 +191,11 @@ Completion state:
 
 ### 6.4 — Existing Entry Feature Context (`C03`, `C05`, `C06`, `C20`, `C21`, `C22`, applicable `C17`/`C23`)
 
-- [ ] Declare and resolve the contextual inputs already owned by F01–F27, starting with the completed F19 Preview, F20
+- [x] Declare and resolve the contextual inputs already owned by F01–F27, starting with the completed F19 Preview, F20
   Immersive, and F21 Related Entries boundaries.
-- [ ] Reconcile entry state, source access, selection shape, preferences/profile, and platform conditions separately in
+- [x] Reconcile entry state, source access, selection shape, preferences/profile, and platform conditions separately in
   every Feature that gives them meaning. Do not create Entry-State, Selection, or Preferences support capabilities.
-- [ ] Preserve the completed F04, F11, F12, F13, F14, F18–F22, F24–F27 coordinator ownership while replacing their
+- [x] Preserve the completed F04, F11, F12, F13, F14, F18–F22, F24–F27 coordinator ownership while replacing their
   locally undiscoverable contextual dependencies with declared evidence and structured results.
 
 #### 6.4.1 — Preview, Immersive, and Related Entries Context
@@ -434,6 +434,23 @@ This completes the F12 context audit. The shared projections describe Merge memb
 optional media provider; Download and Migration are the provider-dependent edges owned by F12 itself. Registering
 membership contents, candidate lists, backup rows, or status counts as context would duplicate method payloads and
 returned state without changing relationship applicability.
+
+#### 6.4.17 — Existing Entry Feature Context Closure
+
+- [x] Reconcile every F01–F27 contribution that did not require its own Phase 6.4 production slice.
+- [x] Keep Open requests, Continue target absence, Download runtime state, maintenance events/results, child lists,
+  portable snapshots, presentation vocabulary, Viewer Settings values, media-cache state, and preference ownership as
+  provider-backed behavior or purpose-specific operation state.
+- [x] Split Progress, Playback Preferences, and Viewer Settings migration consequences from their base provider
+  relationships; each now requires the independently contributed Migration provider.
+- [x] Preserve backup participation from each owning provider without making backup data presence or Migration a
+  prerequisite for ordinary feature support.
+- [x] Remove the focused Progress test assertion that restated consequence labels and verify derived migration behavior
+  through actual provider combinations instead.
+
+Phase 6.4 is complete. No Entry-State, Selection, Preferences, Runtime, Backup, or Migration meta-capability was added.
+Data absence and request outcomes remain structured Feature results, while cross-feature behavior follows from the real
+provider intersection without a content-type edit.
 
 ### 6.5 — Media and Renderer Context (`C07`, `C08`, `C12`, applicable `C20`, `C22`, `C23`)
 

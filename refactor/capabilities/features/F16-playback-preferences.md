@@ -11,15 +11,15 @@ that decides whether an Entry can be migrated.
 `EntryPlaybackPreferencesProcessor` provider presence is the sole support fact. Anime currently contributes the genuine
 repository-backed provider; Manga and Book contribute nothing for this capability and remain valid content types.
 
-The feature contribution requires that provider and names three shared consequences:
+The feature contribution requires that provider and names two base consequences:
 
 - backup snapshot;
-- backup restore; and
-- migration copy.
+- backup restore.
 
-One root coordinator derives the applicable types for all three consequences from graph evaluation and rejects internal
-selection drift. Application consumers depend only on `EntryPlaybackPreferencesFeature`; raw provider dispatch remains
-an internal composition detail.
+Migration copy is a separate derived relationship requiring both Playback Preferences and Migration providers.
+
+One root coordinator derives base and migration applicability from graph evaluation. Application consumers depend only
+on `EntryPlaybackPreferencesFeature`; raw provider dispatch remains an internal composition detail.
 
 ## Structured Semantics
 
@@ -44,18 +44,19 @@ into provider absence.
 
 ## Automatic-Participation Proof
 
-The focused feature test composes an anonymous content type with either zero providers or one synthetic
-playback-preference provider. Zero providers produce structured inapplicability without invalidating composition. The
-single provider activates snapshot, restore, and copy together, including the distinction between no stored data and no
-provider. No test restates the Manga, Anime, and Book support matrix.
+The focused feature test composes an anonymous content type with zero providers, a synthetic playback-preference
+provider, and the Playback Preferences plus Migration combination. Zero providers produce structured inapplicability;
+Playback Preferences alone activates backup without falsely activating copy; the combination activates migration and
+retains the distinction between no stored data and no provider. No test restates the production support matrix.
 
-A future content type therefore adds backup and migration transfer by contributing its provider in its own type module;
-the backup creator, restorer, and migration use case require no type-specific edit.
+A future content type adds backup transfer by contributing Playback Preferences. If it also contributes Migration,
+migration transfer follows automatically; the consumers require no type-specific edit.
 
 ## Manifesto Review
 
 - Provider presence is the only support authority and provider absence is valid.
-- The feature owns every shared transfer consequence; types do not opt into backup and migration independently.
+- The feature owns every shared transfer consequence; Migration composes from the two real providers rather than a
+  separate type opt-in.
 - Application code cannot call raw dispatch or authorize transfer through a concrete type branch.
 - Data absence and type mismatch are explicit outcomes rather than no-op support signals.
 - F15 Progress, F07 download preferences, F11 migration policy, and backup compatibility retain their distinct owners.

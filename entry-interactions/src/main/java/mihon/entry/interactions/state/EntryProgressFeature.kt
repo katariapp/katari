@@ -13,10 +13,12 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
 private val ENTRY_PROGRESS_FEATURE_ID = FeatureId("entry.progress-transfer")
 private val ENTRY_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.provider")
+private val ENTRY_PROGRESS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.migration")
 private val ENTRY_PROGRESS_FEATURE_OWNER = ContributionOwner("entry-progress-transfer")
 
 internal enum class EntryProgressConsequence(
@@ -25,7 +27,10 @@ internal enum class EntryProgressConsequence(
     DISPATCH(FeatureArtifactId("entry.progress-transfer.dispatch")),
     BACKUP_CREATE(FeatureArtifactId("entry.progress-transfer.backup-create")),
     BACKUP_RESTORE(FeatureArtifactId("entry.progress-transfer.backup-restore")),
-    MIGRATION_COPY(FeatureArtifactId("entry.progress-transfer.migration-copy")),
+}
+
+private object EntryProgressMigrationConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.progress-transfer.migration-copy")
 }
 
 private object EntryProgressBehaviorContract : FeatureBehaviorContract {
@@ -46,6 +51,14 @@ internal object EntryProgressFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Provided(EntryProgressCapability.definition),
                         sharedConsequences = EntryProgressConsequence.entries,
                         behavioralContracts = listOf(EntryProgressBehaviorContract),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_PROGRESS_MIGRATION_INTEGRATION_ID,
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryProgressCapability.definition),
+                            CapabilityExpression.Provided(EntryMigrationCapability.definition),
+                        ),
+                        sharedConsequences = listOf(EntryProgressMigrationConsequence),
                     ),
                 ),
             ),
@@ -72,6 +85,11 @@ internal class DefaultEntryProgressFeature(
         }
         .firstOrNull()
         .orEmpty()
+    private val migrationTypes = evaluation.applicableProviderTypes<EntryProgressProcessor>(
+        feature = ENTRY_PROGRESS_FEATURE_ID,
+        integration = ENTRY_PROGRESS_MIGRATION_INTEGRATION_ID,
+        consequence = EntryProgressMigrationConsequence.id,
+    )
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes
 
@@ -98,7 +116,7 @@ internal class DefaultEntryProgressFeature(
             return EntryProgressCopyResult.IncompatibleTypes(sourceEntry.type, targetEntry.type)
         }
 
-        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type).filterNotTo(mutableSetOf(), ::isApplicable)
+        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - migrationTypes
         if (inapplicableTypes.isNotEmpty()) return EntryProgressCopyResult.Inapplicable(inapplicableTypes)
 
         interaction.copy(sourceEntry, targetEntry, resourceMappings)
@@ -113,7 +131,7 @@ internal class DefaultEntryProgressFeature(
         if (sourceEntry.type != targetEntry.type) {
             return EntryProgressMigrationPreparation.IncompatibleTypes(sourceEntry.type, targetEntry.type)
         }
-        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type).filterNotTo(mutableSetOf(), ::isApplicable)
+        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - migrationTypes
         if (inapplicableTypes.isNotEmpty()) return EntryProgressMigrationPreparation.Inapplicable(inapplicableTypes)
 
         val sourceStates = interaction.snapshot(sourceEntry).states

@@ -19,11 +19,13 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
 private val ENTRY_VIEWER_SETTINGS_FEATURE_ID = FeatureId("entry.viewer-settings")
 private val ENTRY_VIEWER_SETTINGS_FEATURE_OWNER = ContributionOwner("entry-viewer-settings")
 private val ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.provider")
+private val ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.migration")
 
 private enum class EntryViewerSettingsConsequence(
     override val id: FeatureArtifactId,
@@ -36,7 +38,10 @@ private enum class EntryViewerSettingsConsequence(
     PREFERENCE_OWNERSHIP(FeatureArtifactId("entry.viewer-settings.preference-ownership")),
     RESET(FeatureArtifactId("entry.viewer-settings.reset")),
     BACKUP(FeatureArtifactId("entry.viewer-settings.backup")),
-    MIGRATION(FeatureArtifactId("entry.viewer-settings.migration")),
+}
+
+private object EntryViewerSettingsMigrationConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.viewer-settings.migration")
 }
 
 private object EntryViewerSettingsBehaviorContract : FeatureBehaviorContract {
@@ -57,6 +62,14 @@ internal object EntryViewerSettingsFeatureContributor : FeatureGraphContributor 
                         prerequisites = CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
                         sharedConsequences = EntryViewerSettingsConsequence.entries,
                         behavioralContracts = listOf(EntryViewerSettingsBehaviorContract),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID,
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
+                            CapabilityExpression.Provided(EntryMigrationCapability.definition),
+                        ),
+                        sharedConsequences = listOf(EntryViewerSettingsMigrationConsequence),
                     ),
                 ),
             ),
@@ -95,6 +108,11 @@ internal class DefaultEntryViewerSettingsFeature(
         }
         .firstOrNull()
         .orEmpty()
+    private val migrationTypes = evaluation.applicableProviderTypes<EntryViewerSettingsProvider>(
+        feature = ENTRY_VIEWER_SETTINGS_FEATURE_ID,
+        integration = ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID,
+        consequence = EntryViewerSettingsMigrationConsequence.id,
+    )
 
     private val providersByType = applicableTypes.associateWith { type ->
         requireNotNull(interaction.provider(type)) {
@@ -169,6 +187,9 @@ internal class DefaultEntryViewerSettingsFeature(
     }
 
     override suspend fun copy(source: Entry, target: Entry): EntryViewerSettingsCopyResult {
+        if (source.type !in migrationTypes || target.type !in migrationTypes) {
+            return EntryViewerSettingsCopyResult.Inapplicable(source.type, target.type)
+        }
         val sourceDefinitions = overrideDefinitions(source.type)
             ?: return EntryViewerSettingsCopyResult.Inapplicable(source.type, target.type)
         val targetDefinitions = overrideDefinitions(target.type)
@@ -192,6 +213,10 @@ internal class DefaultEntryViewerSettingsFeature(
     ): EntryViewerSettingsMigrationPreparation {
         if (source.type != target.type) {
             return EntryViewerSettingsMigrationPreparation.TypeMismatch(source.type, target.type)
+        }
+        val migrationInapplicableTypes = setOf(source.type, target.type) - migrationTypes
+        if (migrationInapplicableTypes.isNotEmpty()) {
+            return EntryViewerSettingsMigrationPreparation.Inapplicable(migrationInapplicableTypes)
         }
         val sourceDefinitions = overrideDefinitions(source.type)
         val targetDefinitions = overrideDefinitions(target.type)

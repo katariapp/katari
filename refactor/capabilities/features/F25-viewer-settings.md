@@ -7,14 +7,15 @@ Status: complete
 - Feature owner: `entry-viewer-settings`
 - Fundamental prerequisite: `EntryViewerSettingsCapability`
 - Shared consequences: provider discovery, Reader/Player settings hubs, provider-to-screen projection, settings search,
-  entry overrides, override reset, backup restore, and migration copy
+  entry overrides, override reset, and backup restore
+- Migration relationship: copy requires both Viewer Settings and Migration providers
 - Context: active profile, stored per-entry overrides, and app-owned Compose settings screens
 - Specialized obligation: every surface declared by a Viewer Settings provider must have exactly one app-owned screen
   projection; the Feature fails with the surface ID when it is missing, duplicated, or orphaned
 - Compatibility adapter: reset and backup restoration of the legacy Manga viewer bitfield; the bitfield is not current
   support evidence
 - Behavioral contract: provider absence, multi-surface discovery, exact projection matching, override validation,
-  snapshot/restore/copy, and reset
+  snapshot/restore and reset; focused combination behavior covers Migration copy
 
 One optional type provider owns the Viewer Settings surfaces genuinely supplied by that type. The provider may expose
 multiple viewer engines, as Book does for Readium EPUB and HTML prose. Provider absence is valid and adds no settings
@@ -47,15 +48,15 @@ is persistence compatibility only and is resolved by F27 from the same installed
 | Profile ownership | F27 discovers every installed provider preference owner from the same runtime construction statement. |
 | Legacy preference migration | A named F27 owner group drives the version-11 profile-key correction without a provider-specific key list or a current Feature support artifact. |
 | Backup | Backup snapshots only definitions applicable to the Entry type. Restore validates provider, setting ID, override scope, codec, and value. |
-| Migration | Copy derives the shared override definitions of the source and target providers. No raw repository copy bypass remains. |
+| Migration | When Migration also participates, copy derives the shared override definitions of the source and target Viewer Settings providers. No raw repository copy bypass remains. |
 | Reset | The Feature clears every contributed provider's per-entry overrides and invokes the named legacy Manga viewer-flags reset adapter. Profile preference reset remains a separate profile concern. |
 
 ## Automatic-Participation Proof
 
-The focused Feature contract composes a partial type with no provider and a synthetic provider with two surfaces. It
-proves absence is valid, both surfaces reach destinations, their screens are required exactly, and backup, migration,
-and reset share the same discovered definitions. Separate behavior covers
-unknown/non-override value rejection rather than restating current content-type support labels.
+The focused Feature behavior composes a partial type with no provider, a synthetic provider with two surfaces, and the
+Viewer Settings plus Migration combination. It proves absence is valid, surfaces reach destinations, screens are
+required exactly, Viewer Settings alone does not imply migration, and the combination reuses the same definitions.
+Separate behavior covers unknown/non-override value rejection rather than restating support labels.
 
 ## Manifesto Review
 
@@ -64,7 +65,8 @@ unknown/non-override value rejection rather than restating current content-type 
   inside that provider rather than duplicate capabilities or runtime lists.
 - Hub, navigation, and search consume one exact provider-to-projection result; the provider-ID `when` map is gone.
 - Profile preference construction enters F27 ownership discovery at the same ordinary provider installation boundary;
-  entry overrides, reset, backup, and migration continue to derive from provider definitions.
+  entry overrides, reset, and backup derive from provider definitions; migration additionally derives from the real
+  Migration provider.
 - A future provider cannot be silently omitted from UI: its missing real screen projection fails with its surface ID.
 - No mandatory operation, type matrix, availability flag, central support allowlist, no-op provider, silent fallback,
   or capability-label test was introduced.

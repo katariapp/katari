@@ -12,19 +12,25 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
 private val ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID = FeatureId("entry.playback-preferences-transfer")
 private val ENTRY_PLAYBACK_PREFERENCES_FEATURE_OWNER = ContributionOwner("entry-playback-preferences-transfer")
 private val ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID =
     FeatureIntegrationId("entry.playback-preferences-transfer.provider")
+private val ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID =
+    FeatureIntegrationId("entry.playback-preferences-transfer.migration")
 
 internal enum class EntryPlaybackPreferencesConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence {
     BACKUP_SNAPSHOT(FeatureArtifactId("entry.playback-preferences-transfer.backup-snapshot")),
     BACKUP_RESTORE(FeatureArtifactId("entry.playback-preferences-transfer.backup-restore")),
-    MIGRATION_COPY(FeatureArtifactId("entry.playback-preferences-transfer.migration-copy")),
+}
+
+private object EntryPlaybackPreferencesMigrationConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.playback-preferences-transfer.migration-copy")
 }
 
 internal object EntryPlaybackPreferencesFeatureContributor : FeatureGraphContributor {
@@ -40,6 +46,14 @@ internal object EntryPlaybackPreferencesFeatureContributor : FeatureGraphContrib
                         id = ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
                         sharedConsequences = EntryPlaybackPreferencesConsequence.entries,
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID,
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
+                            CapabilityExpression.Provided(EntryMigrationCapability.definition),
+                        ),
+                        sharedConsequences = listOf(EntryPlaybackPreferencesMigrationConsequence),
                     ),
                 ),
             ),
@@ -68,6 +82,11 @@ internal class DefaultEntryPlaybackPreferencesFeature(
         }
         .firstOrNull()
         .orEmpty()
+    private val migrationTypes = evaluation.applicableProviderTypes<EntryPlaybackPreferencesProcessor>(
+        feature = ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID,
+        integration = ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID,
+        consequence = EntryPlaybackPreferencesMigrationConsequence.id,
+    )
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes
 
@@ -94,7 +113,7 @@ internal class DefaultEntryPlaybackPreferencesFeature(
         if (sourceEntry.type != targetEntry.type) {
             return EntryPlaybackPreferencesCopyResult.TypeMismatch(sourceEntry.type, targetEntry.type)
         }
-        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - applicableTypes
+        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - migrationTypes
         if (inapplicableTypes.isNotEmpty()) {
             return EntryPlaybackPreferencesCopyResult.Inapplicable(inapplicableTypes)
         }
@@ -112,7 +131,7 @@ internal class DefaultEntryPlaybackPreferencesFeature(
         if (sourceEntry.type != targetEntry.type) {
             return EntryPlaybackPreferencesMigrationPreparation.TypeMismatch(sourceEntry.type, targetEntry.type)
         }
-        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - applicableTypes
+        val inapplicableTypes = setOf(sourceEntry.type, targetEntry.type) - migrationTypes
         if (inapplicableTypes.isNotEmpty()) {
             return EntryPlaybackPreferencesMigrationPreparation.Inapplicable(inapplicableTypes)
         }

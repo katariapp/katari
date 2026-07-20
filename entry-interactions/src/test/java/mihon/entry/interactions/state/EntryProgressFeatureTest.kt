@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import mihon.feature.graph.ContributionOwner
@@ -44,39 +43,30 @@ class EntryProgressFeatureTest {
     }
 
     @Test
-    fun `one provider activates every shared consequence and transfer operation`() = runTest {
+    fun `progress provider owns backup operations without implying Migration`() = runTest {
         val processor = RecordingProgressProcessor(snapshot)
         val composition = compositionFor(EntryProgressCapability.bind(processor))
         val feature = featureFor(composition)
 
-        composition.featureGraphEvaluation.sharedConsequences
-            .filter { it.subject.feature.value == "entry.progress-transfer" }
-            .map { it.consequence.id.value }
-            .shouldContainExactly(
-                "entry.progress-transfer.backup-create",
-                "entry.progress-transfer.backup-restore",
-                "entry.progress-transfer.dispatch",
-                "entry.progress-transfer.migration-copy",
-            )
-        composition.featureArtifacts.behavioralContracts
-            .filter { it.subject.feature.value == "entry.progress-transfer" }
-            .map { it.contract.id.value }
-            .shouldContainExactly("entry.progress-transfer.behavior")
-
         feature.isApplicable(source.type) shouldBe true
         feature.snapshot(source) shouldBe EntryProgressSnapshotResult.Available(snapshot)
         feature.restore(source, snapshot) shouldBe EntryProgressRestoreResult.Applied
-        feature.copy(source, target, mappings) shouldBe EntryProgressCopyResult.Applied
+        feature.copy(source, target, mappings) shouldBe EntryProgressCopyResult.Inapplicable(setOf(source.type))
 
         processor.snapshottedEntries shouldBe listOf(source)
         processor.restored shouldBe listOf(source to snapshot)
-        processor.copied shouldBe listOf(Triple(source, target, mappings))
+        processor.copied shouldBe emptyList()
     }
 
     @Test
     fun `copy rejects mismatched entry types before provider dispatch`() = runTest {
         val processor = RecordingProgressProcessor(snapshot)
-        val feature = featureFor(compositionFor(EntryProgressCapability.bind(processor)))
+        val feature = featureFor(
+            compositionFor(
+                EntryProgressCapability.bind(processor),
+                EntryMigrationCapability.bind(MigrationProvider()),
+            ),
+        )
         val animeTarget = target.copy(type = EntryType.ANIME)
 
         feature.copy(source, animeTarget, mappings) shouldBe
@@ -87,7 +77,12 @@ class EntryProgressFeatureTest {
     @Test
     fun `migration preparation captures target-ready progress without invoking copy`() = runTest {
         val processor = RecordingProgressProcessor(snapshot)
-        val feature = featureFor(compositionFor(EntryProgressCapability.bind(processor)))
+        val feature = featureFor(
+            compositionFor(
+                EntryProgressCapability.bind(processor),
+                EntryMigrationCapability.bind(MigrationProvider()),
+            ),
+        )
 
         val prepared = feature.prepareMigration(source, target, mappings)
             as EntryProgressMigrationPreparation.Prepared
@@ -154,5 +149,9 @@ class EntryProgressFeatureTest {
         ) {
             copied += Triple(sourceEntry, targetEntry, resourceMappings)
         }
+    }
+
+    private class MigrationProvider : EntryMigrationProvider {
+        override val type = EntryType.BOOK
     }
 }

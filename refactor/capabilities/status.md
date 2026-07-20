@@ -62,6 +62,7 @@ Updated: 2026-07-20
 - Phase 6.4.13 Migration execution context commit: `7d729ef98` (`(refactor): resolve migration execution context`)
 - Phase 6.4.14 Merge preparation context commit: `02fd4c20f` (`(refactor): resolve merge preparation context`)
 - Phase 6.4.15 Merge execution context commit: `6418180b7` (`(refactor): resolve merge execution context`)
+- Phase 6.4.16 Merge context audit commit: `0360453ab` (`(refactor): complete merge context audit`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -69,8 +70,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.4.16 Remaining Merge coordinator context audit
-- State: Phase 6.4.16 is implemented and validating for review. Phase 6.4 closure reconciliation has not started.
+- Milestone: Phase 6.4.17 Existing Entry Feature context closure
+- State: Phase 6.4.17 is implemented and validating for review. Phase 6.5 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -312,6 +313,18 @@ Focused Phase 6.4.16 findings:
   not activate or block another relationship.
 - Download and Migration remain independent provider-derived edges. No content-type list, type-specific Merge opt-in,
   generic runtime-state capability, or public API is added.
+
+Focused Phase 6.4.17 findings:
+
+- Every F01–F27 contribution without a dedicated Phase 6.4 slice was re-audited for unconditional state-dependent or
+  cross-feature artifacts. Ordinary request/data outcomes remain purpose-specific Feature results.
+- Progress, Playback Preferences, and Viewer Settings had the same false Migration implication found in F12: their own
+  providers alone advertised migration copy. Each relationship now derives from its provider plus Migration.
+- A type with Progress, Playback Preferences, or Viewer Settings but no Migration retains its backup/runtime behavior
+  and reports migration transfer as inapplicable. Adding Migration activates the relationship automatically.
+- The Progress test that enumerated declared consequence labels is removed. Focused tests now exercise base-provider and
+  provider-plus-Migration behavior rather than restating capability truth.
+- Phase 6.4 is complete without a type matrix, mandatory interaction, cross-feature opt-in, or global state capability.
 
 Focused F11.0 findings:
 
@@ -972,5 +985,5 @@ Approved on 2026-07-18:
 
 ## Exact Next Action After Review
 
-Commit Phase 6.4.16 after review, then perform the Phase 6.4 closure reconciliation. Continue through Phase 6 afterward;
+Commit Phase 6.4.17 after review, then begin Phase 6.5 Media and Renderer Context. Continue through Phase 6 afterward and
 explicitly notify the user when Phase 7 is reached.
