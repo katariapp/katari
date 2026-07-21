@@ -11,6 +11,7 @@ interface EntryTrackingHost {
     val operations: EntryTrackingOperationHost
     val automation: EntryTrackingAutomationHost
     val accounts: EntryTrackingAccountHost
+    val collection: EntryTrackingCollectionHost
 
     fun registeredServices(): List<EntryTrackingHostService>
 

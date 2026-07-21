@@ -16,11 +16,13 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.DeleteTrack
 import tachiyomi.domain.track.interactor.GetTracks
+import tachiyomi.domain.track.interactor.GetTracksPerEntry
 
 class AppEntryTrackingHost(
     private val trackerManager: TrackerManager,
     private val sourceManager: SourceManager,
     private val getTracks: GetTracks,
+    getTracksPerEntry: GetTracksPerEntry,
     refreshTracks: RefreshTracks,
     deleteTrack: DeleteTrack,
     app: Application,
@@ -46,6 +48,10 @@ class AppEntryTrackingHost(
     override val accounts: EntryTrackingAccountHost = AppEntryTrackingAccountHost(
         trackerManager = trackerManager,
         sourceManager = sourceManager,
+    )
+    override val collection: EntryTrackingCollectionHost = AppEntryTrackingCollectionHost(
+        trackerManager = trackerManager,
+        getTracksPerEntry = getTracksPerEntry,
     )
 
     override fun registeredServices(): List<EntryTrackingHostService> {

@@ -1,6 +1,6 @@
 # Capability Refactor Status
 
-Updated: 2026-07-20
+Updated: 2026-07-21
 
 ## Repository Snapshot
 
@@ -81,6 +81,7 @@ Updated: 2026-07-20
 - Phase 6.7.2 Entry tracking session commit: `bf3507b53` (`(refactor): migrate entry tracking session`)
 - Phase 6.7.3 Entry tracking operations commit: `3a26ce996` (`(refactor): migrate entry tracking operations`)
 - Phase 6.7.4 Tracking automation commit: `bba933301` (`(refactor): migrate tracking automation`)
+- Phase 6.7.5 Tracking accounts commit: `5322276d9` (`(refactor): migrate tracking accounts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -88,8 +89,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.5 Account, settings, and backup integration
-- State: Phase 6.7.5 is implemented and validating for review. Library/Stats integration has not migrated.
+- Milestone: Phase 6.7.6 Library and Stats integration
+- State: Phase 6.7.6 is implemented and validating for review. Tracking reconciliation has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1273,7 +1274,22 @@ Focused Phase 6.7.5 findings:
 - Focused Tracking tests, all Entry-interactions tests, formatting, and boundary validation pass. FOSS compilation still
   reaches only the unrelated unchanged `HEAD` issues in the anime debug launcher and profile shortcut UI.
 
+Focused Phase 6.7.6 findings:
+
+- One collection facet on `EntryTrackingFeature` exposes reactive authenticated services, per-Entry service membership,
+  normalized scores, scored-state evidence, and score-applicable Entry types; it is not separately injected.
+- The app host combines the authoritative logged-in registry with persisted tracks. Logged-out and removed services are
+  excluded before neutral evidence reaches consumers.
+- Library settings derive tracker filter rows from Feature accounts. `LibraryScreenModel` supplies membership to F14
+  and uses normalized evidence for ordering without importing trackers, raw tracks, or score conversion.
+- Stats supplies current library Entry IDs and receives one summary preserving tracked-title count, per-Entry mean score,
+  overall mean score, and authenticated-service count semantics.
+- Synthetic behavior tests cover projection and aggregation without asserting the built-in tracker/type declaration
+  matrix.
+- Focused Tracking tests, all Entry-interactions tests, formatting, and boundary validation pass. FOSS compilation still
+  reaches only the unrelated unchanged `HEAD` issues in the anime debug launcher and profile shortcut UI.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.5 after review, then implement Phase 6.7.6 Library and Stats integration. Continue through Phase 6 afterward
+Commit Phase 6.7.6 after review, then implement Phase 6.7.7 Tracking reconciliation. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

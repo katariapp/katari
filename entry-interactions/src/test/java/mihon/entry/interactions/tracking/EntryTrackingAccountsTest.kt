@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.host.tracking.EntryTrackingAccountHost
 import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
+import mihon.entry.interactions.host.tracking.EntryTrackingCollectionHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostAccount
 import mihon.entry.interactions.host.tracking.EntryTrackingHostCredentialIdentity
@@ -111,6 +112,7 @@ class EntryTrackingAccountsTest {
             override val operations: EntryTrackingOperationHost = mockk(relaxed = true)
             override val automation: EntryTrackingAutomationHost = mockk(relaxed = true)
             override val accounts = accountHost
+            override val collection: EntryTrackingCollectionHost = mockk(relaxed = true)
 
             override fun registeredServices() = accountHost.currentAccounts().map(EntryTrackingHostAccount::service)
 

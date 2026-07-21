@@ -144,28 +144,32 @@ private fun FilterPage(
         )
     }
 
-    val trackers by screenModel.trackersFlow.collectAsState()
-    when (trackers.size) {
+    val trackingServices by screenModel.trackingServicesFlow.collectAsState()
+    when (trackingServices.size) {
         0 -> {
             // No trackers
         }
         1 -> {
-            val service = trackers[0]
-            val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsState()
+            val service = trackingServices[0]
+            val filterTracker by screenModel.libraryPreferences
+                .filterTracking(service.id.value.toInt())
+                .collectAsState()
             TriStateItem(
                 label = stringResource(MR.strings.action_filter_tracked),
                 state = filterTracker,
-                onClick = { screenModel.toggleTracker(service.id.toInt()) },
+                onClick = { screenModel.toggleTracker(service.id.value.toInt()) },
             )
         }
         else -> {
             HeadingItem(MR.strings.action_filter_tracked)
-            trackers.map { service ->
-                val filterTracker by screenModel.libraryPreferences.filterTracking(service.id.toInt()).collectAsState()
+            trackingServices.map { service ->
+                val filterTracker by screenModel.libraryPreferences
+                    .filterTracking(service.id.value.toInt())
+                    .collectAsState()
                 TriStateItem(
                     label = service.name,
                     state = filterTracker,
-                    onClick = { screenModel.toggleTracker(service.id.toInt()) },
+                    onClick = { screenModel.toggleTracker(service.id.value.toInt()) },
                 )
             }
         }
@@ -178,14 +182,14 @@ private fun SortPage(
     screenModel: LibrarySettingsScreenModel,
     progressSummaryAvailable: Boolean,
 ) {
-    val trackers by screenModel.trackersFlow.collectAsState()
+    val trackingServices by screenModel.trackingServicesFlow.collectAsState()
     val globalSort by screenModel.libraryPreferences.sortingMode.collectAsState()
     val currentSort = category.effectiveLibrarySort(globalSort)
     val sortingMode = currentSort.type
     val sortDescending = !currentSort.isAscending
 
-    val options = remember(trackers.isEmpty(), progressSummaryAvailable) {
-        val trackerMeanPair = if (trackers.isNotEmpty()) {
+    val options = remember(trackingServices.isEmpty(), progressSummaryAvailable) {
+        val trackerMeanPair = if (trackingServices.isNotEmpty()) {
             MR.strings.action_sort_tracker_score to LibrarySort.Type.TrackerMean
         } else {
             null

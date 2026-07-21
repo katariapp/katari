@@ -1149,6 +1149,34 @@ account metadata, one Feature boundary, and no hardcoded service catalogue, cont
 backup registry query, or second login authority. Tracker-specific OAuth implementation remains explicit external work,
 not a forgotten application integration.
 
+#### 6.7.6 — Library and Stats Integration
+
+- [x] Add a collection-evidence facet to the single `EntryTrackingFeature`; do not expose raw tracks, trackers, or the
+  host to Library and Stats consumers.
+- [x] Project reactive logged-in service descriptors, per-Entry service membership, normalized score evidence, and
+  score-applicable Entry types from authoritative tracker and track state.
+- [x] Keep F14 responsible for Library filter policy and Library responsible for sort ordering while removing their
+  registry lookup, tracker casts, and score conversion.
+- [x] Derive Library filter/settings rows from reactive Feature account/service projections.
+- [x] Supply Stats with one Tracking-owned summary of logged-in service count, tracked Entry count, and mean normalized
+  score.
+
+The collection facet exposes only facts that collection consumers need. Its host combines persisted tracks with the
+current logged-in registry, drops tracks belonging to logged-out or removed services, and converts tracker-specific
+scores to the shared ten-point scale. The root Feature projects stable service IDs and derives the union of Entry types
+supported by the authenticated services. Library passes service membership to F14, retains preference and tri-state
+filter policy, and retains comparator/sort-direction ownership.
+
+Stats submits the current library Entry IDs and receives an aggregate result. Tracking counts only Entries with an
+authenticated persisted track, averages scored services within each Entry before averaging across Entries, preserves
+the existing no-score result, and reports the authenticated service count. Stats no longer resolves services or knows
+how their score scales work.
+
+Manifesto comparison found one authoritative registry, one Feature projection shared by Library and Stats, automatic
+participation for any future tracker/type declaration, and no copied login state, type matrix, tracker consumer list,
+raw track model, or presentation support flag. Missing tracker support remains ordinary absence; F14 and Stats do not
+opt content types into Tracking.
+
 ### 6.8 — Compatibility Reconciliation and Context Census
 
 - [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current

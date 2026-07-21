@@ -16,7 +16,8 @@ internal class DefaultEntryTrackingFeature(
 ) : EntryTrackingFeature,
     EntryTrackingOperations by DefaultEntryTrackingOperations(evaluation, host, automation),
     EntryTrackingAutomation by automation,
-    EntryTrackingAccounts by DefaultEntryTrackingAccounts(host) {
+    EntryTrackingAccounts by DefaultEntryTrackingAccounts(host),
+    EntryTrackingCollection by DefaultEntryTrackingCollection(host) {
 
     override fun availability(entryType: EntryType): EntryTrackingAvailability {
         val services = host.registeredServices().filter { entryType in it.supportedEntryTypes }

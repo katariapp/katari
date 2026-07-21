@@ -1,6 +1,6 @@
 # Entry Tracking
 
-Status: architecture established; Entry, automation, accounts, settings, and backup consumers migrated
+Status: architecture established; Entry, automation, accounts, Library, Stats, settings, and backup consumers migrated
 
 ## Owner and Relationships
 
@@ -73,6 +73,11 @@ Concrete OAuth callback parsing remains tracker-owned platform mechanics. It may
 service-specific protocol state, but it does not decide Entry applicability, create settings rows, or expose another
 application account API.
 
+The collection facet exposes reactive authenticated services and neutral per-Entry tracking evidence. The host owns
+persisted-track lookup, login filtering, and tracker-specific score normalization. Library retains F14 filtering and
+sort ordering, while Stats receives a derived tracked/scored summary. Neither consumer resolves tracker identities,
+interprets supported Entry types, or converts score scales.
+
 ## Discovered Consequences
 
 The graph declares every censused relationship before consumer migration:
@@ -88,8 +93,9 @@ The graph declares every censused relationship before consumer migration:
 | Authenticated Library integration | F14 tracker-filter evidence and score-sort evidence |
 | Authenticated Stats integration | Tracker and normalized score evidence |
 
-Later Phase 6.7 milestones resolve the remaining Library and Stats relationships through this
-same boundary. They do not add another tracker facade, consumer registry, type provider, or settings service list.
+All censused application consequences now enter through this same boundary. Reconciliation removes obsolete raw
+helpers and enforces that no future consumer adds another tracker facade, consumer registry, type provider, or service
+list.
 
 ## Boundary Enforcement
 
@@ -118,6 +124,7 @@ The proof tests behavior and architecture. It does not assert which Entry types 
 - Tracker absence and sub-capability absence are valid, not incomplete type contributions.
 - Common consequences are declared by the Tracking Feature rather than opted into by types or consumers.
 - Settings and backup derive from authoritative account registrations; adding a tracker does not require a UI list edit.
+- Library and Stats receive authenticated membership and normalized score evidence without resolving trackers.
 - Application code cannot use the host as an alternate behavior boundary.
 - No production type matrix, tracker consumer list, copied authentication flag, compatibility facade, or
   declaration-restatement test was introduced.

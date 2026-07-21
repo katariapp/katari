@@ -308,6 +308,11 @@ presentation, and backup missing-login diagnostics behind the same Feature. Trac
 mechanics and presentation order, so settings contains no built-in service list or enhanced-tracker cast. OAuth callback
 decoding remains reviewed tracker-owned platform mechanics. Library/Stats consumers remain assigned to 6.7.6.
 
+Phase 6.7.6 moves authenticated Library filter services, per-Entry tracking membership, normalized score-sort evidence,
+and Stats aggregation behind the same Feature. Library retains F14 filter policy and ordering; Stats consumes one
+summary. Neither consumer imports raw trackers, the registry, persisted track models, or tracker score conversion. All
+censused application consumers are now migrated, leaving raw-surface cleanup and enforcement to 6.7.7.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the
