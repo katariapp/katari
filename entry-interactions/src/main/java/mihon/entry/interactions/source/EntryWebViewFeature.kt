@@ -7,6 +7,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -26,14 +27,22 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.source.service.SourceManager
 
-private val ENTRY_WEB_VIEW_FEATURE_ID = FeatureId("entry.web-view")
+internal val ENTRY_WEB_VIEW_FEATURE_ID = FeatureId("entry.web-view")
 private val ENTRY_WEB_VIEW_OWNER = ContributionOwner("entry-web-view")
-private val ENTRY_WEB_VIEW_INTEGRATION_ID = FeatureIntegrationId("entry.web-view.source")
-private val ENTRY_CHILD_WEB_VIEW_INTEGRATION_ID = FeatureIntegrationId("entry.web-view.child-source")
+internal val ENTRY_WEB_VIEW_INTEGRATION_ID = FeatureIntegrationId("entry.web-view.source")
+internal val ENTRY_CHILD_WEB_VIEW_INTEGRATION_ID = FeatureIntegrationId("entry.web-view.child-source")
 
-private data class EntryWebViewContext(val installed: Boolean, val supported: Boolean)
+internal object EntryWebViewBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.web-view.behavior")
+}
 
-private val ENTRY_WEB_VIEW_CONTEXT = contextInputDefinition<EntryWebViewContext>(
+internal object EntryChildWebViewBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.web-view.child-behavior")
+}
+
+internal data class EntryWebViewContext(val installed: Boolean, val supported: Boolean)
+
+internal val ENTRY_WEB_VIEW_CONTEXT = contextInputDefinition<EntryWebViewContext>(
     ContextInputId("entry.web-view.source-context"),
     ContributionOwner("entry-source"),
 )
@@ -45,9 +54,9 @@ private val ENTRY_WEB_VIEW_UNSUPPORTED = FeatureContextBlocker(
     FeatureArtifactId("entry.web-view.unsupported"),
     listOf(ENTRY_WEB_VIEW_CONTEXT),
 )
-private data class EntryChildWebViewContext(val installed: Boolean, val supported: Boolean)
+internal data class EntryChildWebViewContext(val installed: Boolean, val supported: Boolean)
 
-private val ENTRY_CHILD_WEB_VIEW_CONTEXT = contextInputDefinition<EntryChildWebViewContext>(
+internal val ENTRY_CHILD_WEB_VIEW_CONTEXT = contextInputDefinition<EntryChildWebViewContext>(
     ContextInputId("entry.web-view.child-source-context"),
     ContributionOwner("entry-source"),
 )
@@ -103,6 +112,7 @@ internal object EntryWebViewFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(ENTRY_WEB_VIEW_MISSING, ENTRY_WEB_VIEW_UNSUPPORTED),
                         sharedConsequences = EntryWebViewConsequence.entries,
+                        behavioralContracts = listOf(EntryWebViewBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_CHILD_WEB_VIEW_INTEGRATION_ID,
@@ -124,6 +134,7 @@ internal object EntryWebViewFeatureContributor : FeatureGraphContributor {
                         ),
                         specializedRequirements = listOf(EntryChildWebViewHostRequirement.definition),
                         sharedConsequences = EntryChildWebViewConsequence.entries,
+                        behavioralContracts = listOf(EntryChildWebViewBehaviorContract),
                     ),
                 ),
             ),

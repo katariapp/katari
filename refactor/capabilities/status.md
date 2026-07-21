@@ -92,6 +92,7 @@ Updated: 2026-07-21
 - Phase 7.1.0 production validation host commit: `4af26ba57` (`(feat): validate production interaction contracts`)
 - Phase 7.1.1 fundamental contract commit: `5a02a90e2` (`(test): execute fundamental feature contracts`)
 - Phase 7.1.2 Download contract commit: `bef5f374e` (`(test): execute download feature contracts`)
+- Phase 7.1.3 Library and Media contract commit: `ad53083b0` (`(test): execute library and media contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -99,10 +100,10 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.3 Library, Settings, and Media contracts
-- State: Library Filtering, Progress, Update Notifications/Refresh, Preview, Immersive, Viewer Settings, and Media Cache
-  contracts are implemented and validated for review. Source and External-Context contracts have not started;
-  reporting and documentation projection have not migrated.
+- Milestone: Phase 7.1.4 Source and External-Context contracts
+- State: Catalogue, Related Entries, Cover Network, Source Settings/Home/Refresh, Entry/child WebView, Deep Link, and
+  Tracker Source Adapter contracts are implemented and validated for review. Workflow and Tracking contracts have not
+  started; reporting and documentation projection have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1472,7 +1473,22 @@ Focused Phase 7.1.3 Library, Settings, and Media contract findings:
 - Preview, Immersive, and Viewer Settings now separate graph contributions from coordinator implementations instead of
   accumulating both responsibilities in oversized Feature files.
 
+Focused Phase 7.1.4 Source and External-Context contract findings:
+
+- The production graph now declares 89 exact contracts across 36 Features. Eighty-one definitions have executable
+  verifiers, including 35 applicable contextual scenario groups.
+- Catalogue description, catalogue availability, and Latest availability are independently contracted projections of
+  source evidence. They do not become Entry-type capabilities or require a source to implement every public contract.
+- Related Entries, Cover Network, Source Settings, Source Home, Source Refresh, Deep Link, and Tracker Source Adapter
+  execute their shared coordinators from applicable external context without enumerating content types.
+- Entry and child WebView are separate contracts. Child WebView validation supplies the specialized host adapter only
+  for the applicable relationship, preserving the delayed adapter obligation instead of making it universal.
+- Source SDK compatibility, source implementations, network/media failures after applicability, and legacy adapter ABI
+  remain in their existing owner tests. No media fixture or source-support matrix was introduced.
+- Validation contributors mirror their production catalogue, child, and source ownership; no combined external-context
+  verifier or central type fixture was introduced.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1.3 Library, Settings, and Media contracts after review. Then migrate only Source and
-External-Context contracts in Phase 7.1.4 and stop before beginning Workflow and Tracking contracts.
+Commit the Phase 7.1.4 Source and External-Context contracts after review. Then migrate only Workflow and Tracking
+contracts in Phase 7.1.5 and stop before beginning final contract reconciliation.

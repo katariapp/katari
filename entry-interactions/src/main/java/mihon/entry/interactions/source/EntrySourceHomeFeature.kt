@@ -5,6 +5,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,23 +21,27 @@ import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 import tachiyomi.domain.source.service.SourceManager
 
-private val SOURCE_HOME_FEATURE_ID = FeatureId("entry.source-home")
+internal val SOURCE_HOME_FEATURE_ID = FeatureId("entry.source-home")
 private val SOURCE_HOME_OWNER = ContributionOwner("entry-source-home")
-private val SOURCE_HOME_INTEGRATION_ID = FeatureIntegrationId("entry.source-home.navigation")
+internal val SOURCE_HOME_INTEGRATION_ID = FeatureIntegrationId("entry.source-home.navigation")
 
-private enum class SourceHomeUrlState {
+internal object EntrySourceHomeBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.source-home.behavior")
+}
+
+internal enum class SourceHomeUrlState {
     AVAILABLE,
     ABSENT,
     FAILED,
 }
 
-private data class SourceHomeContext(
+internal data class SourceHomeContext(
     val installed: Boolean,
     val supported: Boolean,
     val urlState: SourceHomeUrlState,
 )
 
-private val SOURCE_HOME_CONTEXT = contextInputDefinition<SourceHomeContext>(
+internal val SOURCE_HOME_CONTEXT = contextInputDefinition<SourceHomeContext>(
     ContextInputId("entry.source-home.context"),
     ContributionOwner("entry-source"),
 )
@@ -86,6 +91,7 @@ internal object EntrySourceHomeFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(SOURCE_HOME_MISSING, SOURCE_HOME_UNSUPPORTED, SOURCE_HOME_NO_URL),
                         sharedConsequences = SourceHomeConsequence.entries,
+                        behavioralContracts = listOf(EntrySourceHomeBehaviorContract),
                     ),
                 ),
             ),

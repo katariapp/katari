@@ -23,11 +23,11 @@ import tachiyomi.domain.chapter.model.NoChaptersException
 import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.source.service.SourceManager
 
-private val ENTRY_SOURCE_REFRESH_FEATURE_ID = FeatureId("entry.source-refresh")
+internal val ENTRY_SOURCE_REFRESH_FEATURE_ID = FeatureId("entry.source-refresh")
 private val ENTRY_SOURCE_REFRESH_OWNER = ContributionOwner("entry-source-refresh")
-private val ENTRY_SOURCE_REFRESH_INTEGRATION_ID = FeatureIntegrationId("entry.source-refresh.execution")
+internal val ENTRY_SOURCE_REFRESH_INTEGRATION_ID = FeatureIntegrationId("entry.source-refresh.execution")
 
-private val ENTRY_SOURCE_REFRESH_SOURCE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_SOURCE_REFRESH_SOURCE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.source-refresh.source-state"),
     ContributionOwner("entry-source"),
 )
@@ -45,7 +45,7 @@ private enum class EntrySourceRefreshConsequence(
     RESULT(FeatureArtifactId("entry.source-refresh.result")),
 }
 
-private object EntrySourceRefreshBehaviorContract : FeatureBehaviorContract {
+internal object EntrySourceRefreshBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.source-refresh.behavior")
 }
 

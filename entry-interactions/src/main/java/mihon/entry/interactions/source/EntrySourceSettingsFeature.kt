@@ -5,6 +5,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,13 +21,17 @@ import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 import tachiyomi.domain.source.service.SourceManager
 
-private val SOURCE_SETTINGS_FEATURE_ID = FeatureId("entry.source-settings")
+internal val SOURCE_SETTINGS_FEATURE_ID = FeatureId("entry.source-settings")
 private val SOURCE_SETTINGS_OWNER = ContributionOwner("entry-source-settings")
-private val SOURCE_SETTINGS_INTEGRATION_ID = FeatureIntegrationId("entry.source-settings.access")
+internal val SOURCE_SETTINGS_INTEGRATION_ID = FeatureIntegrationId("entry.source-settings.access")
 
-private data class SourceSettingsContext(val installed: Boolean, val configurable: Boolean)
+internal object EntrySourceSettingsBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.source-settings.behavior")
+}
 
-private val SOURCE_SETTINGS_CONTEXT = contextInputDefinition<SourceSettingsContext>(
+internal data class SourceSettingsContext(val installed: Boolean, val configurable: Boolean)
+
+internal val SOURCE_SETTINGS_CONTEXT = contextInputDefinition<SourceSettingsContext>(
     ContextInputId("entry.source-settings.context"),
     ContributionOwner("entry-source"),
 )
@@ -71,6 +76,7 @@ internal object EntrySourceSettingsFeatureContributor : FeatureGraphContributor 
                         },
                         contextBlockers = listOf(SOURCE_SETTINGS_MISSING, SOURCE_SETTINGS_UNSUPPORTED),
                         sharedConsequences = SourceSettingsConsequence.entries,
+                        behavioralContracts = listOf(EntrySourceSettingsBehaviorContract),
                     ),
                 ),
             ),

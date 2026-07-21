@@ -57,6 +57,13 @@ contracts cover Filtering, Progress, Update Notifications and Refresh, Preview, 
 Cache. Preview and Immersive execute their universal coordinators through recording processors and receive Child List
 only on the relationship that selects it, so neither Feature needs a per-type media fixture.
 
+Phase 7.1.4 raises the production graph to 89 exact contract definitions across 36 Features. Eighty-one definitions now
+have executable verifiers, including 35 applicable contextual scenario groups. The twelve Source and External-Context
+contracts cover Catalogue description/catalogue/latest projection, Related Entries, Cover Network, Source Settings,
+Source Home, Source Refresh, Entry/child WebView, Deep Link, and Tracker Source Adapter. Each verifier executes its
+shared coordinator from feature-owned applicable evidence; public source contracts remain the external facts that
+produce that evidence.
+
 ## Validation Host Gate
 
 Production verifier migration must not begin by rebuilding Manga, Anime, Book, or the Feature contributor list in a
@@ -210,8 +217,8 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.4 — Source and External-Context Contracts
 
-- Catalogue, Related Entries, Cover Network, Settings, Home, Refresh, WebView, Deep Link, and Tracker Source Adapter.
-- Preserve public source contracts as external context authority.
+- [x] Catalogue, Related Entries, Cover Network, Settings, Home, Refresh, WebView, Deep Link, and Tracker Source Adapter.
+- [x] Preserve public source contracts as external context authority.
 
 ### 7.1.5 — Workflow and Tracking Contracts
 

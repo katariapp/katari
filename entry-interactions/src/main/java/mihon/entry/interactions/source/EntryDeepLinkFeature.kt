@@ -8,6 +8,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -30,22 +31,26 @@ import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.source.model.SourceNotInstalledException
 import tachiyomi.domain.source.service.SourceManager
 
-private val ENTRY_DEEP_LINK_FEATURE_ID = FeatureId("entry.deep-link")
+internal val ENTRY_DEEP_LINK_FEATURE_ID = FeatureId("entry.deep-link")
 private val ENTRY_DEEP_LINK_OWNER = ContributionOwner("entry-deep-link")
-private val ENTRY_DEEP_LINK_INTEGRATION_ID = FeatureIntegrationId("entry.deep-link.resolution")
+internal val ENTRY_DEEP_LINK_INTEGRATION_ID = FeatureIntegrationId("entry.deep-link.resolution")
 
-private enum class EntryDeepLinkMatchState {
+internal object EntryDeepLinkBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.deep-link.behavior")
+}
+
+internal enum class EntryDeepLinkMatchState {
     MATCHED,
     NOT_MATCHED,
     FAILED,
 }
 
-private data class EntryDeepLinkContext(
+internal data class EntryDeepLinkContext(
     val hasResolver: Boolean,
     val matchState: EntryDeepLinkMatchState,
 )
 
-private val ENTRY_DEEP_LINK_CONTEXT = contextInputDefinition<EntryDeepLinkContext>(
+internal val ENTRY_DEEP_LINK_CONTEXT = contextInputDefinition<EntryDeepLinkContext>(
     ContextInputId("entry.deep-link.context"),
     ContributionOwner("entry-source"),
 )
@@ -93,6 +98,7 @@ internal object EntryDeepLinkFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(ENTRY_DEEP_LINK_NO_RESOLVER, ENTRY_DEEP_LINK_NO_MATCH),
                         sharedConsequences = EntryDeepLinkConsequence.entries,
+                        behavioralContracts = listOf(EntryDeepLinkBehaviorContract),
                     ),
                 ),
             ),

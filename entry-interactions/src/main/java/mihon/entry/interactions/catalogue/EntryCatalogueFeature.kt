@@ -10,6 +10,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -28,19 +29,31 @@ import tachiyomi.domain.source.model.EntryCatalogueDescription
 import tachiyomi.domain.source.model.EntrySourceDescription
 import tachiyomi.domain.source.model.UnifiedStubSource
 
-private val ENTRY_CATALOGUE_FEATURE_ID = FeatureId("entry.catalogue")
+internal val ENTRY_CATALOGUE_FEATURE_ID = FeatureId("entry.catalogue")
 private val ENTRY_CATALOGUE_FEATURE_OWNER = ContributionOwner("entry-catalogue")
 private val SOURCE_CONTRACT_OWNER = ContributionOwner("entry-source")
 
-private val SOURCE_DESCRIPTION_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.source-description")
-private val CATALOGUE_AVAILABILITY_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.availability")
-private val LATEST_AVAILABILITY_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.latest")
+internal val SOURCE_DESCRIPTION_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.source-description")
+internal val CATALOGUE_AVAILABILITY_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.availability")
+internal val LATEST_AVAILABILITY_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.latest")
 
-private data class SourceDescriptionEvidence(
+internal object EntrySourceDescriptionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.catalogue.source-description.behavior")
+}
+
+internal object EntryCatalogueAvailabilityBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.catalogue.availability.behavior")
+}
+
+internal object EntryLatestAvailabilityBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.catalogue.latest.behavior")
+}
+
+internal data class SourceDescriptionEvidence(
     val description: EntrySourceDescription,
 )
 
-private val SOURCE_DESCRIPTION_CONTEXT = contextInputDefinition<SourceDescriptionEvidence>(
+internal val SOURCE_DESCRIPTION_CONTEXT = contextInputDefinition<SourceDescriptionEvidence>(
     id = ContextInputId("entry.source.description"),
     owner = SOURCE_CONTRACT_OWNER,
 )
@@ -77,6 +90,7 @@ internal object EntryCatalogueFeatureContributor : FeatureGraphContributor {
                         contextInputs = listOf(SOURCE_DESCRIPTION_CONTEXT),
                         contextRule = featureContextRule(owner) { FeatureContextDecision.Applicable },
                         sharedConsequences = listOf(EntryCatalogueConsequence.SOURCE_DESCRIPTION),
+                        behavioralContracts = listOf(EntrySourceDescriptionBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = CATALOGUE_AVAILABILITY_INTEGRATION_ID,
@@ -91,6 +105,7 @@ internal object EntryCatalogueFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(CATALOGUE_UNAVAILABLE_BLOCKER),
                         sharedConsequences = listOf(EntryCatalogueConsequence.CATALOGUE_AVAILABILITY),
+                        behavioralContracts = listOf(EntryCatalogueAvailabilityBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = LATEST_AVAILABILITY_INTEGRATION_ID,
@@ -107,6 +122,7 @@ internal object EntryCatalogueFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(LATEST_UNAVAILABLE_BLOCKER),
                         sharedConsequences = listOf(EntryCatalogueConsequence.LATEST_AVAILABILITY),
+                        behavioralContracts = listOf(EntryLatestAvailabilityBehaviorContract),
                     ),
                 ),
             ),

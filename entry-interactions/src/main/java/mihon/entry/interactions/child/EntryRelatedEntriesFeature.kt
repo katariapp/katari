@@ -33,8 +33,8 @@ import tachiyomi.domain.entry.model.identity
 import tachiyomi.domain.source.service.EntrySourceDescriptionResolutionPort
 import tachiyomi.domain.source.service.SourceManager
 
-private val ENTRY_RELATED_ENTRIES_FEATURE_ID = FeatureId("entry.related-entries")
-private val ENTRY_RELATED_ENTRIES_INTEGRATION_ID = FeatureIntegrationId("entry.related-entries.source-context")
+internal val ENTRY_RELATED_ENTRIES_FEATURE_ID = FeatureId("entry.related-entries")
+internal val ENTRY_RELATED_ENTRIES_INTEGRATION_ID = FeatureIntegrationId("entry.related-entries.source-context")
 private val ENTRY_RELATED_ENTRIES_FEATURE_OWNER = ContributionOwner("entry-related-entries")
 
 private enum class EntryRelatedEntriesConsequence(
@@ -49,15 +49,15 @@ private enum class EntryRelatedEntriesConsequence(
     DETAILS_NAVIGATION(FeatureArtifactId("entry.related-entries.details-navigation")),
 }
 
-private object EntryRelatedEntriesBehaviorContract : FeatureBehaviorContract {
+internal object EntryRelatedEntriesBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.related-entries.behavior")
 }
 
-private val ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.related-entries.source-installed"),
     ContributionOwner("entry-source"),
 )
-private val ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.related-entries.source-support"),
     ContributionOwner("entry-source"),
 )

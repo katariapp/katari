@@ -5,6 +5,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,13 +21,17 @@ import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 import tachiyomi.domain.source.service.SourceManager
 
-private val ENTRY_COVER_NETWORK_FEATURE_ID = FeatureId("entry.cover-network")
+internal val ENTRY_COVER_NETWORK_FEATURE_ID = FeatureId("entry.cover-network")
 private val ENTRY_COVER_NETWORK_OWNER = ContributionOwner("entry-cover-network")
-private val ENTRY_COVER_NETWORK_INTEGRATION_ID = FeatureIntegrationId("entry.cover-network.source")
+internal val ENTRY_COVER_NETWORK_INTEGRATION_ID = FeatureIntegrationId("entry.cover-network.source")
 
-private data class EntryCoverNetworkContext(val installed: Boolean, val supported: Boolean)
+internal object EntryCoverNetworkBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.cover-network.behavior")
+}
 
-private val ENTRY_COVER_NETWORK_CONTEXT = contextInputDefinition<EntryCoverNetworkContext>(
+internal data class EntryCoverNetworkContext(val installed: Boolean, val supported: Boolean)
+
+internal val ENTRY_COVER_NETWORK_CONTEXT = contextInputDefinition<EntryCoverNetworkContext>(
     ContextInputId("entry.cover-network.source-context"),
     ContributionOwner("entry-source"),
 )
@@ -73,6 +78,7 @@ internal object EntryCoverNetworkFeatureContributor : FeatureGraphContributor {
                             ENTRY_COVER_NETWORK_UNSUPPORTED,
                         ),
                         sharedConsequences = EntryCoverNetworkConsequence.entries,
+                        behavioralContracts = listOf(EntryCoverNetworkBehaviorContract),
                     ),
                 ),
             ),

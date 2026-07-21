@@ -5,6 +5,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,19 +21,23 @@ import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 import tachiyomi.domain.source.service.SourceManager
 
-private val TRACKER_SOURCE_ADAPTER_FEATURE_ID = FeatureId("entry.tracker-source-adapter")
+internal val TRACKER_SOURCE_ADAPTER_FEATURE_ID = FeatureId("entry.tracker-source-adapter")
 private val TRACKER_SOURCE_ADAPTER_OWNER = ContributionOwner("entry-tracker-source-adapter")
-private val TRACKER_SOURCE_ADAPTER_INTEGRATION_ID = FeatureIntegrationId("entry.tracker-source-adapter.connection")
+internal val TRACKER_SOURCE_ADAPTER_INTEGRATION_ID = FeatureIntegrationId("entry.tracker-source-adapter.connection")
 
-private val TRACKER_SOURCE_SETTINGS_CONTEXT = contextInputDefinition<Boolean>(
+internal object EntryTrackerSourceAdapterBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.tracker-source-adapter.behavior")
+}
+
+internal val TRACKER_SOURCE_SETTINGS_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.tracker-source-adapter.settings"),
     ContributionOwner("entry-source-settings"),
 )
-private val TRACKER_SOURCE_HOME_CONTEXT = contextInputDefinition<Boolean>(
+internal val TRACKER_SOURCE_HOME_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.tracker-source-adapter.home"),
     ContributionOwner("entry-source-home"),
 )
-private val TRACKER_SOURCE_IMAGE_CLIENT_CONTEXT = contextInputDefinition<Boolean>(
+internal val TRACKER_SOURCE_IMAGE_CLIENT_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.tracker-source-adapter.image-client"),
     ContributionOwner("entry-source"),
 )
@@ -93,6 +98,7 @@ internal object EntryTrackerSourceAdapterFeatureContributor : FeatureGraphContri
                             TRACKER_SOURCE_IMAGE_CLIENT_UNAVAILABLE,
                         ),
                         sharedConsequences = listOf(TrackerSourceAdapterConsequence),
+                        behavioralContracts = listOf(EntryTrackerSourceAdapterBehaviorContract),
                     ),
                 ),
             ),

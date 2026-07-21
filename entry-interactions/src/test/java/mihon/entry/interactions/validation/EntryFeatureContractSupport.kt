@@ -7,6 +7,7 @@ import mihon.entry.interactions.createEntryInteractionComposition
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
+import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.validation.FeatureContractFailure
 import mihon.feature.graph.validation.FeatureContractVerificationResult
 
@@ -41,11 +42,13 @@ internal fun productionSubjectEvaluation(
 internal fun productionSubjectEvaluation(
     type: EntryType,
     feature: FeatureGraphContributor,
+    specializedAdapters: List<SpecializedAdapter<*>> = emptyList(),
 ): FeatureGraphEvaluation {
     val plugin = object : EntryInteractionPlugin {
         override val type = type
         override val owner = ContributionOwner("contract-subject.${type.name.lowercase()}")
         override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
+        override val specializedAdapters = specializedAdapters
     }
     return createEntryInteractionComposition(listOf(plugin), listOf(feature)).featureGraphEvaluation
 }
