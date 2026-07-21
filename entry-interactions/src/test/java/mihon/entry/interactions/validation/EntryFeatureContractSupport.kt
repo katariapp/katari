@@ -17,12 +17,22 @@ import mihon.feature.graph.validation.FeatureContractVerificationResult
 internal fun productionSubjectEvaluation(
     binding: EntryInteractionProviderBinding<*>,
     feature: FeatureGraphContributor,
+): FeatureGraphEvaluation = productionSubjectEvaluation(listOf(binding), feature)
+
+/** Multi-provider equivalent for a selected integration whose prerequisite expression joins capabilities. */
+internal fun productionSubjectEvaluation(
+    bindings: List<EntryInteractionProviderBinding<*>>,
+    feature: FeatureGraphContributor,
 ): FeatureGraphEvaluation {
-    val provider = binding.implementation
+    require(bindings.isNotEmpty()) { "A provider-backed contract subject needs at least one binding" }
+    val type = bindings.first().implementation.type
+    require(bindings.all { it.implementation.type == type }) {
+        "A contract subject cannot combine providers from different entry types"
+    }
     val plugin = object : EntryInteractionPlugin {
-        override val type = provider.type
-        override val owner = ContributionOwner("contract-subject.${provider.type.name.lowercase()}")
-        override val providerBindings = listOf(binding)
+        override val type = type
+        override val owner = ContributionOwner("contract-subject.${type.name.lowercase()}")
+        override val providerBindings = bindings
     }
     return createEntryInteractionComposition(listOf(plugin), listOf(feature)).featureGraphEvaluation
 }

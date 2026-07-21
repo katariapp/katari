@@ -5,6 +5,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -19,10 +20,19 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val FEATURE_ID = FeatureId("entry.download.automatic")
+internal val ENTRY_AUTOMATIC_DOWNLOAD_FEATURE_ID = FeatureId("entry.download.automatic")
 private val FEATURE_OWNER = ContributionOwner("entry-automatic-download")
-private val PROVIDER_INTEGRATION = FeatureIntegrationId("entry.download.automatic.provider")
-private val CONTEXT_INTEGRATION = FeatureIntegrationId("entry.download.automatic.context")
+internal val ENTRY_AUTOMATIC_DOWNLOAD_PROVIDER_INTEGRATION =
+    FeatureIntegrationId("entry.download.automatic.provider")
+internal val ENTRY_AUTOMATIC_DOWNLOAD_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.download.automatic.context")
+
+internal object EntryAutomaticDownloadProviderBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.automatic.provider-behavior")
+}
+
+internal object EntryAutomaticDownloadContextBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.automatic.context-behavior")
+}
 
 private object EntryAutomaticDownloadProviderConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.download.automatic.provider-dispatch")
@@ -36,50 +46,50 @@ private enum class EntryAutomaticDownloadConsequence(
     ENTRY_REFRESH(FeatureArtifactId("entry.download.automatic.entry-refresh")),
 }
 
-private val NEW_CHILDREN_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_AUTOMATIC_DOWNLOAD_NEW_CHILDREN_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.download.automatic.new-children"),
     ContributionOwner("entry-selection"),
 )
-private val ENABLED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_AUTOMATIC_DOWNLOAD_ENABLED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.download.automatic.enabled"),
     ContributionOwner("entry-download-configuration"),
 )
-private val FAVORITE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_AUTOMATIC_DOWNLOAD_FAVORITE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.download.automatic.library-membership"),
     ContributionOwner("entry-state"),
 )
-private val CATEGORY_ALLOWED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_AUTOMATIC_DOWNLOAD_CATEGORY_ALLOWED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.download.automatic.category-policy"),
     ContributionOwner("entry-category-policy"),
 )
-private val UNREAD_ONLY_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_AUTOMATIC_DOWNLOAD_UNREAD_ONLY_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.download.automatic.unread-only"),
     ContributionOwner("entry-download-configuration"),
 )
-private val CANDIDATES_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_AUTOMATIC_DOWNLOAD_CANDIDATES_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.download.automatic.eligible-candidates"),
     ContributionOwner("entry-selection"),
 )
 
 private val EMPTY_SELECTION_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.download.automatic.empty-selection"),
-    listOf(NEW_CHILDREN_CONTEXT),
+    listOf(ENTRY_AUTOMATIC_DOWNLOAD_NEW_CHILDREN_CONTEXT),
 )
 private val DISABLED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.download.automatic.disabled"),
-    listOf(ENABLED_CONTEXT),
+    listOf(ENTRY_AUTOMATIC_DOWNLOAD_ENABLED_CONTEXT),
 )
 private val NOT_IN_LIBRARY_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.download.automatic.not-in-library"),
-    listOf(FAVORITE_CONTEXT),
+    listOf(ENTRY_AUTOMATIC_DOWNLOAD_FAVORITE_CONTEXT),
 )
 private val CATEGORY_POLICY_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.download.automatic.category-policy-rejected"),
-    listOf(CATEGORY_ALLOWED_CONTEXT),
+    listOf(ENTRY_AUTOMATIC_DOWNLOAD_CATEGORY_ALLOWED_CONTEXT),
 )
 private val NO_UNREAD_CANDIDATES_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.download.automatic.no-unread-candidates"),
-    listOf(UNREAD_ONLY_CONTEXT, CANDIDATES_CONTEXT),
+    listOf(ENTRY_AUTOMATIC_DOWNLOAD_UNREAD_ONLY_CONTEXT, ENTRY_AUTOMATIC_DOWNLOAD_CANDIDATES_CONTEXT),
 )
 
 internal object EntryAutomaticDownloadFeatureContributor : FeatureGraphContributor {
@@ -89,36 +99,38 @@ internal object EntryAutomaticDownloadFeatureContributor : FeatureGraphContribut
         val download = CapabilityExpression.Provided(EntryDownloadCapability.definition)
         sink.add(
             FeatureContribution(
-                feature = FEATURE_ID,
+                feature = ENTRY_AUTOMATIC_DOWNLOAD_FEATURE_ID,
                 owner = owner,
                 integrations = listOf(
                     FeatureIntegration(
-                        id = PROVIDER_INTEGRATION,
+                        id = ENTRY_AUTOMATIC_DOWNLOAD_PROVIDER_INTEGRATION,
                         prerequisites = download,
                         sharedConsequences = listOf(EntryAutomaticDownloadProviderConsequence),
+                        behavioralContracts = listOf(EntryAutomaticDownloadProviderBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = CONTEXT_INTEGRATION,
+                        id = ENTRY_AUTOMATIC_DOWNLOAD_CONTEXT_INTEGRATION,
                         prerequisites = download,
                         contextInputs = listOf(
-                            NEW_CHILDREN_CONTEXT,
-                            ENABLED_CONTEXT,
-                            FAVORITE_CONTEXT,
-                            CATEGORY_ALLOWED_CONTEXT,
-                            UNREAD_ONLY_CONTEXT,
-                            CANDIDATES_CONTEXT,
+                            ENTRY_AUTOMATIC_DOWNLOAD_NEW_CHILDREN_CONTEXT,
+                            ENTRY_AUTOMATIC_DOWNLOAD_ENABLED_CONTEXT,
+                            ENTRY_AUTOMATIC_DOWNLOAD_FAVORITE_CONTEXT,
+                            ENTRY_AUTOMATIC_DOWNLOAD_CATEGORY_ALLOWED_CONTEXT,
+                            ENTRY_AUTOMATIC_DOWNLOAD_UNREAD_ONLY_CONTEXT,
+                            ENTRY_AUTOMATIC_DOWNLOAD_CANDIDATES_CONTEXT,
                         ),
                         contextRule = featureContextRule(owner) { evidence ->
                             when {
-                                !evidence.value(NEW_CHILDREN_CONTEXT) ->
+                                !evidence.value(ENTRY_AUTOMATIC_DOWNLOAD_NEW_CHILDREN_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(EMPTY_SELECTION_BLOCKER))
-                                !evidence.value(ENABLED_CONTEXT) ->
+                                !evidence.value(ENTRY_AUTOMATIC_DOWNLOAD_ENABLED_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(DISABLED_BLOCKER))
-                                !evidence.value(FAVORITE_CONTEXT) ->
+                                !evidence.value(ENTRY_AUTOMATIC_DOWNLOAD_FAVORITE_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(NOT_IN_LIBRARY_BLOCKER))
-                                !evidence.value(CATEGORY_ALLOWED_CONTEXT) ->
+                                !evidence.value(ENTRY_AUTOMATIC_DOWNLOAD_CATEGORY_ALLOWED_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(CATEGORY_POLICY_BLOCKER))
-                                evidence.value(UNREAD_ONLY_CONTEXT) && !evidence.value(CANDIDATES_CONTEXT) ->
+                                evidence.value(ENTRY_AUTOMATIC_DOWNLOAD_UNREAD_ONLY_CONTEXT) &&
+                                    !evidence.value(ENTRY_AUTOMATIC_DOWNLOAD_CANDIDATES_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(NO_UNREAD_CANDIDATES_BLOCKER))
                                 else -> FeatureContextDecision.Applicable
                             }
@@ -131,6 +143,7 @@ internal object EntryAutomaticDownloadFeatureContributor : FeatureGraphContribut
                             NO_UNREAD_CANDIDATES_BLOCKER,
                         ),
                         sharedConsequences = EntryAutomaticDownloadConsequence.entries,
+                        behavioralContracts = listOf(EntryAutomaticDownloadContextBehaviorContract),
                     ),
                 ),
             ),
@@ -140,8 +153,8 @@ internal object EntryAutomaticDownloadFeatureContributor : FeatureGraphContribut
 
 internal fun FeatureGraphEvaluation.automaticDownloadTypes(): Set<EntryType> =
     applicableProviderTypes<EntryDownloadProcessor>(
-        feature = FEATURE_ID,
-        integration = PROVIDER_INTEGRATION,
+        feature = ENTRY_AUTOMATIC_DOWNLOAD_FEATURE_ID,
+        integration = ENTRY_AUTOMATIC_DOWNLOAD_PROVIDER_INTEGRATION,
         consequence = EntryAutomaticDownloadProviderConsequence.id,
     )
 
@@ -151,16 +164,16 @@ internal fun FeatureGraphEvaluation.requireAutomaticDownloadContext(
 ) {
     requireEntryContextState(
         type = type,
-        feature = FEATURE_ID,
-        integration = CONTEXT_INTEGRATION,
+        feature = ENTRY_AUTOMATIC_DOWNLOAD_FEATURE_ID,
+        integration = ENTRY_AUTOMATIC_DOWNLOAD_CONTEXT_INTEGRATION,
         consequences = EntryAutomaticDownloadConsequence.entries.map(EntryAutomaticDownloadConsequence::id),
         evidence = listOf(
-            contextEvidence(NEW_CHILDREN_CONTEXT, decision.hasNewChapters),
-            contextEvidence(ENABLED_CONTEXT, decision.enabled),
-            contextEvidence(FAVORITE_CONTEXT, decision.favorite),
-            contextEvidence(CATEGORY_ALLOWED_CONTEXT, decision.categoryAllowed),
-            contextEvidence(UNREAD_ONLY_CONTEXT, decision.unreadOnly),
-            contextEvidence(CANDIDATES_CONTEXT, decision.candidates.isNotEmpty()),
+            contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_NEW_CHILDREN_CONTEXT, decision.hasNewChapters),
+            contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_ENABLED_CONTEXT, decision.enabled),
+            contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_FAVORITE_CONTEXT, decision.favorite),
+            contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_CATEGORY_ALLOWED_CONTEXT, decision.categoryAllowed),
+            contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_UNREAD_ONLY_CONTEXT, decision.unreadOnly),
+            contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_CANDIDATES_CONTEXT, decision.candidates.isNotEmpty()),
         ),
         applicable = decision.blocker == null,
     )

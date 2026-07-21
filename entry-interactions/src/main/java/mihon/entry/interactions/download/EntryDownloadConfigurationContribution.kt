@@ -3,6 +3,7 @@ package mihon.entry.interactions
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -37,6 +38,26 @@ internal val ENTRY_DOWNLOAD_PARALLEL_ITEM_TRANSFERS_INTEGRATION_ID =
 internal val ENTRY_DOWNLOAD_PARALLEL_ITEM_TRANSFERS_CONSEQUENCE_ID =
     FeatureArtifactId("entry.download.configuration.setting.parallel-item-transfers.visibility")
 
+internal object EntryDownloadOptionsBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.configuration.options-behavior")
+}
+
+internal object EntryDownloadArchivePackagingBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.configuration.setting.archive-packaging-behavior")
+}
+
+internal object EntryDownloadTallImageSplittingBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.configuration.setting.tall-image-splitting-behavior")
+}
+
+internal object EntryDownloadParallelSourceTransfersBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.configuration.setting.parallel-source-transfers-behavior")
+}
+
+internal object EntryDownloadParallelItemTransfersBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.configuration.setting.parallel-item-transfers-behavior")
+}
+
 private class EntryDownloadConfigurationConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence
@@ -54,26 +75,31 @@ internal object EntryDownloadConfigurationFeatureContributor : FeatureGraphContr
                         ENTRY_DOWNLOAD_OPTIONS_INTEGRATION_ID,
                         EntryDownloadOptionsCapability,
                         ENTRY_DOWNLOAD_OPTIONS_CONSEQUENCE_ID,
+                        EntryDownloadOptionsBehaviorContract,
                     ),
                     integration(
                         ENTRY_DOWNLOAD_ARCHIVE_PACKAGING_INTEGRATION_ID,
                         EntryDownloadArchivePackagingCapability,
                         ENTRY_DOWNLOAD_ARCHIVE_PACKAGING_CONSEQUENCE_ID,
+                        EntryDownloadArchivePackagingBehaviorContract,
                     ),
                     integration(
                         ENTRY_DOWNLOAD_TALL_IMAGE_SPLITTING_INTEGRATION_ID,
                         EntryDownloadTallImageSplittingCapability,
                         ENTRY_DOWNLOAD_TALL_IMAGE_SPLITTING_CONSEQUENCE_ID,
+                        EntryDownloadTallImageSplittingBehaviorContract,
                     ),
                     integration(
                         ENTRY_DOWNLOAD_PARALLEL_SOURCE_TRANSFERS_INTEGRATION_ID,
                         EntryDownloadParallelSourceTransfersCapability,
                         ENTRY_DOWNLOAD_PARALLEL_SOURCE_TRANSFERS_CONSEQUENCE_ID,
+                        EntryDownloadParallelSourceTransfersBehaviorContract,
                     ),
                     integration(
                         ENTRY_DOWNLOAD_PARALLEL_ITEM_TRANSFERS_INTEGRATION_ID,
                         EntryDownloadParallelItemTransfersCapability,
                         ENTRY_DOWNLOAD_PARALLEL_ITEM_TRANSFERS_CONSEQUENCE_ID,
+                        EntryDownloadParallelItemTransfersBehaviorContract,
                     ),
                 ),
             ),
@@ -84,11 +110,13 @@ internal object EntryDownloadConfigurationFeatureContributor : FeatureGraphContr
         id: FeatureIntegrationId,
         capability: EntryInteractionCapability<*>,
         consequence: FeatureArtifactId,
+        contract: FeatureBehaviorContract,
     ): FeatureIntegration {
         return FeatureIntegration(
             id = id,
             prerequisites = CapabilityExpression.Provided(capability.definition),
             sharedConsequences = listOf(EntryDownloadConfigurationConsequence(consequence)),
+            behavioralContracts = listOf(contract),
         )
     }
 }

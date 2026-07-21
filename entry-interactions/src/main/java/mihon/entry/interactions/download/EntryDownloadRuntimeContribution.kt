@@ -3,6 +3,7 @@ package mihon.entry.interactions
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -14,6 +15,10 @@ import mihon.feature.graph.SharedFeatureConsequence
 internal val ENTRY_DOWNLOAD_RUNTIME_FEATURE_ID = FeatureId("entry.download.runtime")
 internal val ENTRY_DOWNLOAD_RUNTIME_INTEGRATION_ID = FeatureIntegrationId("entry.download.runtime.provider")
 private val ENTRY_DOWNLOAD_RUNTIME_FEATURE_OWNER = ContributionOwner("entry-download-runtime")
+
+internal object EntryDownloadRuntimeBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.runtime.provider-behavior")
+}
 
 internal enum class EntryDownloadRuntimeConsequence(
     override val id: FeatureArtifactId,
@@ -39,6 +44,7 @@ internal object EntryDownloadRuntimeFeatureContributor : FeatureGraphContributor
                         id = ENTRY_DOWNLOAD_RUNTIME_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
                         sharedConsequences = EntryDownloadRuntimeConsequence.entries,
+                        behavioralContracts = listOf(EntryDownloadRuntimeBehaviorContract),
                     ),
                 ),
             ),

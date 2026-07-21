@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -15,10 +16,14 @@ import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 import tachiyomi.domain.entry.model.Entry
 
-private val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID = FeatureId("entry.download.maintenance")
+internal val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID = FeatureId("entry.download.maintenance")
 private val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER = ContributionOwner("entry-download-maintenance")
-private val ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID =
+internal val ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID =
     FeatureIntegrationId("entry.download.maintenance.provider")
+
+internal object EntryDownloadMaintenanceBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.maintenance.provider-behavior")
+}
 
 private val ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID =
     FeatureArtifactId("entry.download.maintenance.cache")
@@ -63,6 +68,7 @@ internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContrib
                             EntryDownloadTitleMaintenanceConsequence,
                             EntryDownloadRemovalMaintenanceConsequence,
                         ),
+                        behavioralContracts = listOf(EntryDownloadMaintenanceBehaviorContract),
                     ),
                 ),
             ),

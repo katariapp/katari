@@ -90,6 +90,7 @@ Updated: 2026-07-21
 - Phase 7.0 contract-execution architecture commit: `d7b363bff` (`(feat): execute selected feature contracts`)
 - Phase 7.1 production contract census commit: `6be1cec52` (`(docs): census production feature contracts`)
 - Phase 7.1.0 production validation host commit: `4af26ba57` (`(feat): validate production interaction contracts`)
+- Phase 7.1.1 fundamental contract commit: `5a02a90e2` (`(test): execute fundamental feature contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -97,9 +98,10 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.1 Fundamental provider contracts
-- State: Fundamental navigation, state, child, presentation, and eligibility contracts are implemented and validated
-  for review. Download contracts have not started; reporting and documentation projection have not migrated.
+- Milestone: Phase 7.1.2 Download contracts
+- State: Download Runtime, Actions, Automatic Downloads, Lifecycle, Configuration, and Maintenance contracts are
+  implemented and validated for review. Library, Settings, and Media contracts have not started; reporting and
+  documentation projection have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1434,7 +1436,24 @@ Focused Phase 7.1.1 fundamental-contract findings:
 - Formatting, Feature Graph tests, Feature Validation tests, Entry Interactions tests, and FOSS application compilation
   pass.
 
+Focused Phase 7.1.2 Download-contract findings:
+
+- The production graph now declares 56 exact contracts across 29 Features. All 24 Download-owned definitions have
+  discovered executable verifiers, including eleven applicable contextual scenario groups.
+- Download Runtime, Actions, Automatic Downloads, Lifecycle, Configuration, and Maintenance execute their shared
+  coordinators against graph-selected production subjects and recording operational boundaries.
+- Download Actions derives individual, bulk, bookmarked-bulk, and notification availability from the exact provider
+  combinations and operation context already owned by the Feature. No type list or action-support matrix was added.
+- Download Lifecycle owns cleanup, completion, download-ahead, category policy, and Bookmark protection. Download
+  Maintenance remains a Download-provider relationship; it does not duplicate Bookmark cooperation.
+- Download Configuration validates options and each independently provided setting through the shared configuration
+  Features. A type may provide any subset without becoming invalid.
+- Notification rendering/job behavior and media-specific downloader, store, cache, and transfer mechanics remain in
+  their focused owner suites. Contract execution does not absorb or simulate those implementation details.
+- Validation contributors and support files mirror the Download production boundaries; no combined Download verifier
+  or central content-type fixture was introduced.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1.1 fundamental contracts after review. Then migrate only Download contracts in Phase 7.1.2 and stop
-before beginning Library, Settings, and Media contracts.
+Commit the Phase 7.1.2 Download contracts after review. Then migrate only Library, Settings, and Media contracts in
+Phase 7.1.3 and stop before beginning Source and External-Context contracts.

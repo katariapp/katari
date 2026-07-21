@@ -44,6 +44,13 @@ media-specific processor mechanics. Context contracts execute the same shared co
 applicable scenarios resolve. The declaration-only Update Eligibility assertion was removed; its policy behavior remains
 covered by executable contracts and focused policy tests.
 
+Phase 7.1.2 raises the production graph to 56 exact contract definitions across 29 Features. All 24 Download-owned
+definitions now have executable verifiers, including eleven applicable contextual scenario groups. Runtime, Actions,
+Automatic Downloads, Lifecycle, Configuration, and Maintenance execute their shared coordinators for every applicable
+production subject. Bookmark protection is owned by Download Lifecycle; notification action availability is owned by
+Download Actions. Notification event rendering and type-owned downloader, store, cache, and transfer mechanics remain
+in their focused owner suites.
+
 ## Validation Host Gate
 
 Production verifier migration must not begin by rebuilding Manga, Anime, Book, or the Feature contributor list in a
@@ -93,10 +100,10 @@ still become an executable verifier.
 | --- | --- | --- | --- | --- |
 | Download Runtime | None | Download provider | Add state, queue, dispatch, and structured absence contract | `EntryDownloadRuntimeFeatureTest` |
 | Download Actions | None | Download/bulk/bookmark providers plus five action contexts | Add independent provider-combination and applicable-action scenario contracts | `EntryDownloadActionFeatureTest` |
-| Automatic Downloads | None | Download provider plus policy/selection context | Add applicable policy and blocker contracts | `EntryAutomaticDownloadFeatureTest` |
+| Automatic Downloads | None | Download provider plus policy/selection context | Add provider and applicable policy-coordination contracts; retain focused blocker tests | `EntryAutomaticDownloadFeatureTest` |
 | Download Lifecycle | None | Download provider plus cleanup/protection contexts | Add event acceptance, provider dispatch, cleanup, and Bookmark cooperation contracts | `EntryDownloadLifecycleFeatureTest` |
 | Download Configuration | None | Download-options providers and configuration relationships | Add settings/options contract | `EntryDownloadConfigurationFeatureTest` |
-| Download Maintenance | None | Download provider plus Bookmark cooperation | Add maintenance and protected-download contracts | `EntryDownloadMaintenanceFeatureTest` |
+| Download Maintenance | None | Download provider | Add shared maintenance contract; Bookmark protection remains owned by Download Lifecycle | `EntryDownloadMaintenanceFeatureTest` |
 
 Download notification manager/job tests remain coordinator behavior tests. Downloader, store, cache, and media transfer
 tests remain type-owned mechanics unless a shared contract later declares a genuine media fixture requirement.
@@ -185,9 +192,9 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.2 — Download Contracts
 
-- Runtime, Actions, Automatic Downloads, Lifecycle, Configuration, Maintenance, and their Bookmark/notification
+- [x] Runtime, Actions, Automatic Downloads, Lifecycle, Configuration, Maintenance, and their Bookmark/notification
   cooperation.
-- Keep notification manager and type-owned downloader mechanics separate.
+- [x] Keep notification manager and type-owned downloader mechanics separate.
 
 ### 7.1.3 — Library, Settings, and Media Contracts
 
