@@ -21,6 +21,10 @@ internal val ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID = FeatureIntegrationId("ent
 internal val ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID =
     FeatureIntegrationId("entry.migration.child-state-option")
 internal val ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.migration.downloads")
+internal val ENTRY_MIGRATION_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.migration.progress")
+internal val ENTRY_MIGRATION_PLAYBACK_PREFERENCES_INTEGRATION_ID =
+    FeatureIntegrationId("entry.migration.playback-preferences")
+internal val ENTRY_MIGRATION_VIEWER_SETTINGS_INTEGRATION_ID = FeatureIntegrationId("entry.migration.viewer-settings")
 
 private val ENTRY_MIGRATION_FEATURE_OWNER = ContributionOwner("entry-migration")
 
@@ -76,20 +80,26 @@ internal enum class EntryMigrationDownloadConsequence(
     CLEANUP(FeatureArtifactId("entry.migration.download-cleanup")),
 }
 
-private object EntryMigrationBehaviorContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.migration.behavior")
-}
-
-private object EntryMigrationProgressCooperationContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.migration.progress-cooperation")
-}
-
-private object EntryMigrationViewerSettingsCooperationContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.migration.viewer-settings-cooperation")
-}
-
-private object EntryMigrationDownloadCooperationContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.migration.download-cooperation")
+internal enum class EntryMigrationBehaviorContract(
+    override val id: FeatureArtifactId,
+) : FeatureBehaviorContract {
+    PROVIDER(FeatureArtifactId("entry.migration.behavior")),
+    SOURCE_CONTEXT(FeatureArtifactId("entry.migration.source-context.behavior")),
+    SELECTION_CONTEXT(FeatureArtifactId("entry.migration.selection-context.behavior")),
+    CONSUMPTION(FeatureArtifactId("entry.migration.consumption-cooperation")),
+    BOOKMARK(FeatureArtifactId("entry.migration.bookmark-cooperation")),
+    CHILD_STATE_OPTION(FeatureArtifactId("entry.migration.child-state-option.behavior")),
+    PROGRESS(FeatureArtifactId("entry.migration.progress-cooperation")),
+    PLAYBACK_PREFERENCES(FeatureArtifactId("entry.migration.playback-preferences-cooperation")),
+    VIEWER_SETTINGS(FeatureArtifactId("entry.migration.viewer-settings-cooperation")),
+    DOWNLOAD(FeatureArtifactId("entry.migration.download-cooperation")),
+    PAIR_CONTEXT(FeatureArtifactId("entry.migration.pair-context.behavior")),
+    INSPECTION_CONTEXT(FeatureArtifactId("entry.migration.inspection-context.behavior")),
+    CATEGORIES_OPTION(FeatureArtifactId("entry.migration.categories-option.behavior")),
+    NOTES_OPTION(FeatureArtifactId("entry.migration.notes-option.behavior")),
+    CUSTOM_COVER_OPTION(FeatureArtifactId("entry.migration.custom-cover-option.behavior")),
+    DOWNLOAD_OPTION(FeatureArtifactId("entry.migration.download-option.behavior")),
+    EXECUTION_CONTEXT(FeatureArtifactId("entry.migration.execution-context.behavior")),
 }
 
 internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
@@ -110,7 +120,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         id = ENTRY_MIGRATION_BASE_INTEGRATION_ID,
                         prerequisites = migration,
                         sharedConsequences = EntryMigrationBaseConsequence.entries,
-                        behavioralContracts = listOf(EntryMigrationBehaviorContract),
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.PROVIDER),
                     ),
                     entryMigrationSourceContextIntegration(owner, migration),
                     entryMigrationSelectionContextIntegration(owner, migration),
@@ -118,48 +128,52 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         id = ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID,
                         prerequisites = allOf(migration, consumption),
                         sharedConsequences = EntryMigrationConsumptionConsequence.entries,
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.CONSUMPTION),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID,
                         prerequisites = allOf(migration, bookmark),
                         sharedConsequences = EntryMigrationBookmarkConsequence.entries,
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.BOOKMARK),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID,
                         prerequisites = allOf(migration, anyOf(consumption, bookmark)),
                         sharedConsequences = listOf(EntryMigrationChildStateOptionConsequence),
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.CHILD_STATE_OPTION),
                     ),
                     FeatureIntegration(
-                        id = FeatureIntegrationId("entry.migration.progress"),
+                        id = ENTRY_MIGRATION_PROGRESS_INTEGRATION_ID,
                         prerequisites = allOf(
                             migration,
                             CapabilityExpression.Provided(EntryProgressCapability.definition),
                         ),
                         sharedConsequences = EntryMigrationProgressConsequence.entries,
-                        behavioralContracts = listOf(EntryMigrationProgressCooperationContract),
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.PROGRESS),
                     ),
                     FeatureIntegration(
-                        id = FeatureIntegrationId("entry.migration.playback-preferences"),
+                        id = ENTRY_MIGRATION_PLAYBACK_PREFERENCES_INTEGRATION_ID,
                         prerequisites = allOf(
                             migration,
                             CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
                         ),
                         sharedConsequences = EntryMigrationPlaybackPreferencesConsequence.entries,
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.PLAYBACK_PREFERENCES),
                     ),
                     FeatureIntegration(
-                        id = FeatureIntegrationId("entry.migration.viewer-settings"),
+                        id = ENTRY_MIGRATION_VIEWER_SETTINGS_INTEGRATION_ID,
                         prerequisites = allOf(
                             migration,
                             CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
                         ),
                         sharedConsequences = EntryMigrationViewerSettingsConsequence.entries,
-                        behavioralContracts = listOf(EntryMigrationViewerSettingsCooperationContract),
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.VIEWER_SETTINGS),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID,
                         prerequisites = migrationDownload,
                         sharedConsequences = EntryMigrationDownloadConsequence.entries,
-                        behavioralContracts = listOf(EntryMigrationDownloadCooperationContract),
+                        behavioralContracts = listOf(EntryMigrationBehaviorContract.DOWNLOAD),
                     ),
                 ) +
                     entryMigrationPreparationContextIntegrations(owner, migration) +

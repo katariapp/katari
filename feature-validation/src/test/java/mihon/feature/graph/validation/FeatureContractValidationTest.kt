@@ -30,6 +30,7 @@ import mihon.feature.graph.MissingContractFixtureObligation
 import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.SpecializedAdapterId
 import mihon.feature.graph.SpecializedFeatureObligation
+import mihon.feature.graph.anyOf
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.capabilityDefinition
 import mihon.feature.graph.contextEvidence
@@ -79,6 +80,40 @@ class FeatureContractValidationTest {
             CompletedFeatureContractExecution::class,
         )
         executed shouldContainExactly listOf(ContentTypeId("future-alpha"), ContentTypeId("future-beta"))
+    }
+
+    @Test
+    fun `verifier can inspect a selected optional provider without requiring an absent alternative`() = runSuspend {
+        val alternativeDefinition = capabilityDefinition<ExampleProvider>(
+            CapabilityId("example.alternative-provider"),
+            capabilityOwner,
+        )
+        val contract = contract()
+        val contribution = ContentTypeContribution(
+            contentType = ContentTypeId("partial-future"),
+            owner = ContributionOwner("partial-future.type"),
+            providers = listOf(CapabilityProvider(providerDefinition, ExampleProvider("ready"))),
+        )
+        val graph = graph(
+            contentTypes = listOf(contribution),
+            integration = FeatureIntegration(
+                integration,
+                anyOf(
+                    CapabilityExpression.Provided(providerDefinition),
+                    CapabilityExpression.Provided(alternativeDefinition),
+                ),
+                behavioralContracts = listOf(contract),
+            ),
+        )
+        val contributor = verifierContributor(contract) { input ->
+            input.providerOrNull(providerDefinition)?.state shouldBe "ready"
+            input.providerOrNull(alternativeDefinition) shouldBe null
+            FeatureContractVerificationResult.Passed
+        }
+
+        validateFeatureContracts(
+            planFeatureContractValidation(graph, evaluateFeatureGraph(graph), listOf(contributor)),
+        ).isSuccessful shouldBe true
     }
 
     @Test

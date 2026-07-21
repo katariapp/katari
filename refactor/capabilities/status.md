@@ -93,6 +93,7 @@ Updated: 2026-07-21
 - Phase 7.1.1 fundamental contract commit: `5a02a90e2` (`(test): execute fundamental feature contracts`)
 - Phase 7.1.2 Download contract commit: `bef5f374e` (`(test): execute download feature contracts`)
 - Phase 7.1.3 Library and Media contract commit: `ad53083b0` (`(test): execute library and media contracts`)
+- Phase 7.1.4 Source context contract commit: `e14affa81` (`(test): execute source context contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -100,10 +101,10 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.4 Source and External-Context contracts
-- State: Catalogue, Related Entries, Cover Network, Source Settings/Home/Refresh, Entry/child WebView, Deep Link, and
-  Tracker Source Adapter contracts are implemented and validated for review. Workflow and Tracking contracts have not
-  started; reporting and documentation projection have not migrated.
+- Milestone: Phase 7.1.5 Workflow and Tracking contracts
+- State: Merge, Migration, and Tracking base/cooperation/context contracts are implemented and validated for review.
+  Every production contract definition has an executable verifier and scenario where contextual. Final contract
+  reconciliation, reporting, and documentation projection have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1475,7 +1476,7 @@ Focused Phase 7.1.3 Library, Settings, and Media contract findings:
 
 Focused Phase 7.1.4 Source and External-Context contract findings:
 
-- The production graph now declares 89 exact contracts across 36 Features. Eighty-one definitions have executable
+- The production graph now declares 87 exact contracts across 36 Features. Eighty-one definitions have executable
   verifiers, including 35 applicable contextual scenario groups.
 - Catalogue description, catalogue availability, and Latest availability are independently contracted projections of
   source evidence. They do not become Entry-type capabilities or require a source to implement every public contract.
@@ -1488,7 +1489,25 @@ Focused Phase 7.1.4 Source and External-Context contract findings:
 - Validation contributors mirror their production catalogue, child, and source ownership; no combined external-context
   verifier or central type fixture was introduced.
 
+Focused Phase 7.1.5 Workflow and Tracking contract findings:
+
+- The production graph now declares 116 exact contracts across 36 Features. All 116 definitions have discovered
+  executable verifiers, including 57 applicable contextual scenario groups.
+- Merge independently contracts its universal workflow, Download ownership, Migration replacement, preparation
+  authority/membership, existing-group mutation, and conditional initialization/cleanup consequences.
+- Migration independently contracts provider participation, source/selection/pair/execution context, every optional
+  state projection, and its Consumption, Bookmark, Progress, Playback Preferences, Viewer Settings, and Download
+  relationships. An `anyOf` relationship can inspect whichever optional providers graph selection supplied without
+  requiring an absent alternative.
+- Tracking contracts its external registry, availability/session context, automatic binding, synchronization,
+  migration preparation, and Library/Stats evidence. External tracker registration remains the authority; no tracking
+  capability was added to content-type plugins.
+- Declaration-only Merge, Migration, and Tracking assertions were removed. Durable transactions, consequence replay,
+  backup conversion, source operations, and storage compatibility remain in focused owner tests.
+- The production plan has no missing verifier or scenario. Its only remaining issues are the previously exposed
+  child-WebView specialized host obligations for Anime and Book, which Phase 7.1.6 must reconcile explicitly.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1.4 Source and External-Context contracts after review. Then migrate only Workflow and Tracking
-contracts in Phase 7.1.5 and stop before beginning final contract reconciliation.
+Commit the Phase 7.1.5 Workflow and Tracking contracts after review. Then begin Phase 7.1.6 contract reconciliation,
+including resolution of the child-WebView host obligations, and stop before developer reporting.

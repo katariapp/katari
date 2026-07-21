@@ -15,8 +15,8 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val SOURCE_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.source-context")
-private val SELECTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.selection-context")
+internal val ENTRY_MIGRATION_SOURCE_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.source-context")
+internal val ENTRY_MIGRATION_SELECTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.selection-context")
 
 private enum class EntryMigrationSourceConsequence(
     override val id: FeatureArtifactId,
@@ -39,7 +39,7 @@ internal val ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT = contextInputDefinition
     ContextInputId("entry.migration.library-membership"),
     ContributionOwner("entry-library-state"),
 )
-private val SINGLE_PROFILE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_SINGLE_PROFILE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.single-profile-selection"),
     ContributionOwner("entry-selection"),
 )
@@ -54,14 +54,14 @@ private val NOT_IN_LIBRARY_BLOCKER = FeatureContextBlocker(
 )
 private val MIXED_PROFILES_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.mixed-selection-profiles"),
-    listOf(SINGLE_PROFILE_CONTEXT),
+    listOf(ENTRY_MIGRATION_SINGLE_PROFILE_CONTEXT),
 )
 
 internal fun entryMigrationSourceContextIntegration(
     owner: ContributionOwner,
     migration: CapabilityExpression,
 ) = FeatureIntegration(
-    id = SOURCE_CONTEXT_INTEGRATION,
+    id = ENTRY_MIGRATION_SOURCE_CONTEXT_INTEGRATION,
     prerequisites = migration,
     contextInputs = listOf(ENTRY_MIGRATION_PERSISTED_CONTEXT, ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT),
     contextRule = featureContextRule(owner) { evidence ->
@@ -76,22 +76,24 @@ internal fun entryMigrationSourceContextIntegration(
     },
     contextBlockers = listOf(UNPERSISTED_BLOCKER, NOT_IN_LIBRARY_BLOCKER),
     sharedConsequences = EntryMigrationSourceConsequence.entries,
+    behavioralContracts = listOf(EntryMigrationBehaviorContract.SOURCE_CONTEXT),
 )
 
 internal fun entryMigrationSelectionContextIntegration(
     owner: ContributionOwner,
     migration: CapabilityExpression,
 ) = FeatureIntegration(
-    id = SELECTION_CONTEXT_INTEGRATION,
+    id = ENTRY_MIGRATION_SELECTION_CONTEXT_INTEGRATION,
     prerequisites = migration,
     contextInputs = listOf(
         ENTRY_MIGRATION_PERSISTED_CONTEXT,
         ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT,
-        SINGLE_PROFILE_CONTEXT,
+        ENTRY_MIGRATION_SINGLE_PROFILE_CONTEXT,
     ),
     contextRule = featureContextRule(owner) { evidence ->
         when {
-            !evidence.value(SINGLE_PROFILE_CONTEXT) -> FeatureContextDecision.Blocked(listOf(MIXED_PROFILES_BLOCKER))
+            !evidence.value(ENTRY_MIGRATION_SINGLE_PROFILE_CONTEXT) ->
+                FeatureContextDecision.Blocked(listOf(MIXED_PROFILES_BLOCKER))
             !evidence.value(ENTRY_MIGRATION_PERSISTED_CONTEXT) ->
                 FeatureContextDecision.Blocked(listOf(UNPERSISTED_BLOCKER))
             !evidence.value(
@@ -102,6 +104,7 @@ internal fun entryMigrationSelectionContextIntegration(
     },
     contextBlockers = listOf(MIXED_PROFILES_BLOCKER, UNPERSISTED_BLOCKER, NOT_IN_LIBRARY_BLOCKER),
     sharedConsequences = listOf(EntryMigrationSelectionConsequence),
+    behavioralContracts = listOf(EntryMigrationBehaviorContract.SELECTION_CONTEXT),
 )
 
 internal fun FeatureGraphEvaluation.requireMigrationSourceContext(
@@ -112,7 +115,7 @@ internal fun FeatureGraphEvaluation.requireMigrationSourceContext(
     requireEntryContextState(
         type = type,
         feature = ENTRY_MIGRATION_FEATURE_ID,
-        integration = SOURCE_CONTEXT_INTEGRATION,
+        integration = ENTRY_MIGRATION_SOURCE_CONTEXT_INTEGRATION,
         consequences = EntryMigrationSourceConsequence.entries.map(EntryMigrationSourceConsequence::id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_PERSISTED_CONTEXT, persisted),
@@ -131,12 +134,12 @@ internal fun FeatureGraphEvaluation.requireMigrationSelectionContext(
     requireEntryContextState(
         type = type,
         feature = ENTRY_MIGRATION_FEATURE_ID,
-        integration = SELECTION_CONTEXT_INTEGRATION,
+        integration = ENTRY_MIGRATION_SELECTION_CONTEXT_INTEGRATION,
         consequences = listOf(EntryMigrationSelectionConsequence.id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_PERSISTED_CONTEXT, persisted),
             contextEvidence(ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT, inLibrary),
-            contextEvidence(SINGLE_PROFILE_CONTEXT, singleProfile),
+            contextEvidence(ENTRY_MIGRATION_SINGLE_PROFILE_CONTEXT, singleProfile),
         ),
         applicable = singleProfile && persisted && inLibrary,
     )

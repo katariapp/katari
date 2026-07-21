@@ -57,12 +57,19 @@ contracts cover Filtering, Progress, Update Notifications and Refresh, Preview, 
 Cache. Preview and Immersive execute their universal coordinators through recording processors and receive Child List
 only on the relationship that selects it, so neither Feature needs a per-type media fixture.
 
-Phase 7.1.4 raises the production graph to 89 exact contract definitions across 36 Features. Eighty-one definitions now
+Phase 7.1.4 raises the production graph to 87 exact contract definitions across 36 Features. Eighty-one definitions now
 have executable verifiers, including 35 applicable contextual scenario groups. The twelve Source and External-Context
 contracts cover Catalogue description/catalogue/latest projection, Related Entries, Cover Network, Source Settings,
 Source Home, Source Refresh, Entry/child WebView, Deep Link, and Tracker Source Adapter. Each verifier executes its
 shared coordinator from feature-owned applicable evidence; public source contracts remain the external facts that
 produce that evidence.
+
+Phase 7.1.5 raises the production graph to 116 exact contract definitions across 36 Features. Every definition now has
+a discovered executable verifier, including 57 applicable contextual scenario groups. Merge validates its universal
+workflow, optional Download/Migration relationships, preparation authority, membership, and consequence selection.
+Migration validates independently selected providers, state-derived options, preparation/execution authority, and
+cooperation with Progress, Playback Preferences, Viewer Settings, and Downloads. Tracking validates its external
+registry, session, automation, synchronization, migration, Library, and Stats projections without a type provider.
 
 ## Validation Host Gate
 
@@ -222,8 +229,8 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.5 — Workflow and Tracking Contracts
 
-- Merge, Migration, and Tracking base/cooperation/context relationships.
-- Keep wire/storage/transaction compatibility suites outside shared contracts.
+- [x] Merge, Migration, and Tracking base/cooperation/context relationships.
+- [x] Keep wire/storage/transaction compatibility suites outside shared contracts.
 
 ### 7.1.6 — Contract Reconciliation
 

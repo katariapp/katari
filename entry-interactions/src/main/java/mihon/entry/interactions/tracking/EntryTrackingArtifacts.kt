@@ -42,6 +42,15 @@ internal enum class EntryTrackingConsequence(
     STATS_EVIDENCE(FeatureArtifactId("entry.tracking.stats-evidence")),
 }
 
-internal object EntryTrackingBehaviorContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.tracking.behavior")
+internal enum class EntryTrackingBehaviorContract(
+    override val id: FeatureArtifactId,
+) : FeatureBehaviorContract {
+    REGISTRY(FeatureArtifactId("entry.tracking.behavior")),
+    AVAILABILITY(FeatureArtifactId("entry.tracking.availability.behavior")),
+    SESSION(FeatureArtifactId("entry.tracking.session.behavior")),
+    AUTOMATIC_BINDING(FeatureArtifactId("entry.tracking.automatic-binding.behavior")),
+    SYNCHRONIZATION(FeatureArtifactId("entry.tracking.synchronization.behavior")),
+    MIGRATION_PREPARATION(FeatureArtifactId("entry.tracking.migration-preparation.behavior")),
+    LIBRARY(FeatureArtifactId("entry.tracking.library.behavior")),
+    STATS(FeatureArtifactId("entry.tracking.stats.behavior")),
 }

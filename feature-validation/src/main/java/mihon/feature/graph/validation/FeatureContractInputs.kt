@@ -21,6 +21,8 @@ class FeatureContractScenarioInput internal constructor(
 
     fun <P : Any> provider(definition: CapabilityDefinition<P>): P = inputs.provider(definition)
 
+    fun <P : Any> providerOrNull(definition: CapabilityDefinition<P>): P? = inputs.providerOrNull(definition)
+
     fun <A : Any> adapter(definition: SpecializedAdapterDefinition<A>): A = inputs.adapter(definition)
 
     fun <F : Any> fixture(definition: ContractFixtureDefinition<F>): F = inputs.fixture(definition)
@@ -39,6 +41,8 @@ class FeatureContractExecutionInput internal constructor(
     )
 
     fun <P : Any> provider(definition: CapabilityDefinition<P>): P = inputs.provider(definition)
+
+    fun <P : Any> providerOrNull(definition: CapabilityDefinition<P>): P? = inputs.providerOrNull(definition)
 
     fun <A : Any> adapter(definition: SpecializedAdapterDefinition<A>): A = inputs.adapter(definition)
 
@@ -59,9 +63,13 @@ private class FeatureContractInputs(
     private val evidenceById = evidence.associateBy { it.input.id }
 
     fun <P : Any> provider(definition: CapabilityDefinition<P>): P {
-        val selected = requireNotNull(providersById[definition.id]) {
+        return requireNotNull(providerOrNull(definition)) {
             "Contract requested unselected provider ${definition.id}"
         }
+    }
+
+    fun <P : Any> providerOrNull(definition: CapabilityDefinition<P>): P? {
+        val selected = providersById[definition.id] ?: return null
         require(selected.capability == definition) {
             "Contract requested contradictory provider definition ${definition.id}"
         }

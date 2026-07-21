@@ -17,7 +17,7 @@ import mihon.feature.graph.SharedFeatureConsequence
 internal val ENTRY_MERGE_FEATURE_ID = FeatureId("entry.merge")
 internal val ENTRY_MERGE_BASE_INTEGRATION_ID = FeatureIntegrationId("entry.merge.shared-workflow")
 internal val ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.merge.download")
-private val ENTRY_MERGE_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.merge.migration")
+internal val ENTRY_MERGE_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.merge.migration")
 
 private val ENTRY_MERGE_FEATURE_OWNER = ContributionOwner("entry-merge")
 
@@ -49,8 +49,19 @@ private object EntryMergeMigrationReplacementConsequence : SharedFeatureConseque
     override val id = FeatureArtifactId("entry.merge.migration-replacement")
 }
 
-private object EntryMergeBehaviorContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.merge.behavior")
+internal enum class EntryMergeBehaviorContract(
+    override val id: FeatureArtifactId,
+) : FeatureBehaviorContract {
+    WORKFLOW(FeatureArtifactId("entry.merge.behavior")),
+    DOWNLOAD_OWNERSHIP(FeatureArtifactId("entry.merge.download-ownership.behavior")),
+    MIGRATION_REPLACEMENT(FeatureArtifactId("entry.merge.migration-replacement.behavior")),
+    PREPARATION_SELECTION(FeatureArtifactId("entry.merge.preparation-selection.behavior")),
+    PREPARATION_AUTHORITY(FeatureArtifactId("entry.merge.preparation-authority.behavior")),
+    PREPARATION_MEMBERSHIP(FeatureArtifactId("entry.merge.preparation-membership.behavior")),
+    EXISTING_GROUP(FeatureArtifactId("entry.merge.existing-group.behavior")),
+    LIBRARY_INITIALIZATION(FeatureArtifactId("entry.merge.library-initialization.behavior")),
+    COVER_CLEANUP(FeatureArtifactId("entry.merge.cover-cleanup.behavior")),
+    DOWNLOAD_REMOVAL(FeatureArtifactId("entry.merge.download-removal.behavior")),
 }
 
 internal object EntryMergeFeatureContributor : FeatureGraphContributor {
@@ -66,17 +77,19 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                         id = ENTRY_MERGE_BASE_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = EntryMergeBaseConsequence.entries,
-                        behavioralContracts = listOf(EntryMergeBehaviorContract),
+                        behavioralContracts = listOf(EntryMergeBehaviorContract.WORKFLOW),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
                         sharedConsequences = EntryMergeDownloadConsequence.entries,
+                        behavioralContracts = listOf(EntryMergeBehaviorContract.DOWNLOAD_OWNERSHIP),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MERGE_MIGRATION_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryMigrationCapability.definition),
                         sharedConsequences = listOf(EntryMergeMigrationReplacementConsequence),
+                        behavioralContracts = listOf(EntryMergeBehaviorContract.MIGRATION_REPLACEMENT),
                     ),
                 ) + entryMergePreparationContextIntegrations(owner) + entryMergeExecutionContextIntegrations(owner),
             ),

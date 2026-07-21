@@ -25,6 +25,7 @@ internal enum class EntryMigrationContextualOption(
     val consequence: FeatureArtifactId,
     val input: ContextInputDefinition<Boolean>,
     val blockerId: FeatureArtifactId,
+    val contract: EntryMigrationBehaviorContract,
 ) {
     CATEGORIES(
         integration = FeatureIntegrationId("entry.migration.categories-option-context"),
@@ -34,6 +35,7 @@ internal enum class EntryMigrationContextualOption(
             ContributionOwner("entry-category-state"),
         ),
         blockerId = FeatureArtifactId("entry.migration.no-categories"),
+        contract = EntryMigrationBehaviorContract.CATEGORIES_OPTION,
     ),
     NOTES(
         integration = FeatureIntegrationId("entry.migration.notes-option-context"),
@@ -43,6 +45,7 @@ internal enum class EntryMigrationContextualOption(
             ContributionOwner("entry-state"),
         ),
         blockerId = FeatureArtifactId("entry.migration.no-notes"),
+        contract = EntryMigrationBehaviorContract.NOTES_OPTION,
     ),
     CUSTOM_COVER(
         integration = FeatureIntegrationId("entry.migration.custom-cover-option-context"),
@@ -52,6 +55,7 @@ internal enum class EntryMigrationContextualOption(
             ContributionOwner("entry-cover-state"),
         ),
         blockerId = FeatureArtifactId("entry.migration.no-custom-cover"),
+        contract = EntryMigrationBehaviorContract.CUSTOM_COVER_OPTION,
     ),
     DOWNLOADS(
         integration = FeatureIntegrationId("entry.migration.download-option-context"),
@@ -61,6 +65,7 @@ internal enum class EntryMigrationContextualOption(
             ContributionOwner("entry-download-state"),
         ),
         blockerId = FeatureArtifactId("entry.migration.no-downloads"),
+        contract = EntryMigrationBehaviorContract.DOWNLOAD_OPTION,
     ),
 }
 
@@ -100,6 +105,7 @@ internal fun entryMigrationOptionContextIntegrations(
                 override val id = option.consequence
             },
         ),
+        behavioralContracts = listOf(option.contract),
     )
 }
 

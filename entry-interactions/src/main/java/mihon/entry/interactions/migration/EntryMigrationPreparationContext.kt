@@ -15,8 +15,8 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val PAIR_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.pair-context")
-private val INSPECTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.inspection-context")
+internal val ENTRY_MIGRATION_PAIR_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.pair-context")
+internal val ENTRY_MIGRATION_INSPECTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.inspection-context")
 
 private object EntryMigrationPairConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.migration.target-acceptance")
@@ -26,27 +26,27 @@ private object EntryMigrationInspectionConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.migration.preparation")
 }
 
-private val TARGET_PERSISTED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_TARGET_PERSISTED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.target-persisted"),
     ContributionOwner("entry-state"),
 )
-private val SAME_PROFILE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_SAME_PROFILE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.same-profile"),
     ContributionOwner("entry-selection"),
 )
-private val SAME_TYPE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_SAME_TYPE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.same-type"),
     ContributionOwner("entry-selection"),
 )
-private val DISTINCT_ENTRY_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_DISTINCT_ENTRY_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.distinct-entry"),
     ContributionOwner("entry-selection"),
 )
-private val INSPECTED_PAIR_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_INSPECTED_PAIR_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.inspected-pair-present"),
     ContributionOwner("entry-migration-host"),
 )
-private val IDENTITY_STABLE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MIGRATION_IDENTITY_STABLE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.migration.identity-stable"),
     ContributionOwner("entry-migration-host"),
 )
@@ -61,27 +61,27 @@ private val SOURCE_NOT_IN_LIBRARY_BLOCKER = FeatureContextBlocker(
 )
 private val TARGET_UNPERSISTED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.pair-target-unpersisted"),
-    listOf(TARGET_PERSISTED_CONTEXT),
+    listOf(ENTRY_MIGRATION_TARGET_PERSISTED_CONTEXT),
 )
 private val PROFILE_MISMATCH_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.pair-profile-mismatch"),
-    listOf(SAME_PROFILE_CONTEXT),
+    listOf(ENTRY_MIGRATION_SAME_PROFILE_CONTEXT),
 )
 private val TYPE_MISMATCH_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.pair-type-mismatch"),
-    listOf(SAME_TYPE_CONTEXT),
+    listOf(ENTRY_MIGRATION_SAME_TYPE_CONTEXT),
 )
 private val SAME_ENTRY_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.pair-same-entry"),
-    listOf(DISTINCT_ENTRY_CONTEXT),
+    listOf(ENTRY_MIGRATION_DISTINCT_ENTRY_CONTEXT),
 )
 private val PAIR_MISSING_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.inspected-pair-missing"),
-    listOf(INSPECTED_PAIR_CONTEXT),
+    listOf(ENTRY_MIGRATION_INSPECTED_PAIR_CONTEXT),
 )
 private val IDENTITY_CHANGED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.migration.identity-changed"),
-    listOf(IDENTITY_STABLE_CONTEXT),
+    listOf(ENTRY_MIGRATION_IDENTITY_STABLE_CONTEXT),
 )
 
 internal fun entryMigrationPreparationContextIntegrations(
@@ -89,15 +89,15 @@ internal fun entryMigrationPreparationContextIntegrations(
     migration: CapabilityExpression,
 ): List<FeatureIntegration> = listOf(
     FeatureIntegration(
-        id = PAIR_CONTEXT_INTEGRATION,
+        id = ENTRY_MIGRATION_PAIR_CONTEXT_INTEGRATION,
         prerequisites = migration,
         contextInputs = listOf(
             ENTRY_MIGRATION_PERSISTED_CONTEXT,
             ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT,
-            TARGET_PERSISTED_CONTEXT,
-            SAME_PROFILE_CONTEXT,
-            SAME_TYPE_CONTEXT,
-            DISTINCT_ENTRY_CONTEXT,
+            ENTRY_MIGRATION_TARGET_PERSISTED_CONTEXT,
+            ENTRY_MIGRATION_SAME_PROFILE_CONTEXT,
+            ENTRY_MIGRATION_SAME_TYPE_CONTEXT,
+            ENTRY_MIGRATION_DISTINCT_ENTRY_CONTEXT,
         ),
         contextRule = featureContextRule(owner) { evidence ->
             when {
@@ -105,13 +105,13 @@ internal fun entryMigrationPreparationContextIntegrations(
                     FeatureContextDecision.Blocked(listOf(SOURCE_UNPERSISTED_BLOCKER))
                 !evidence.value(ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(SOURCE_NOT_IN_LIBRARY_BLOCKER))
-                !evidence.value(TARGET_PERSISTED_CONTEXT) ->
+                !evidence.value(ENTRY_MIGRATION_TARGET_PERSISTED_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(TARGET_UNPERSISTED_BLOCKER))
-                !evidence.value(SAME_PROFILE_CONTEXT) ->
+                !evidence.value(ENTRY_MIGRATION_SAME_PROFILE_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(PROFILE_MISMATCH_BLOCKER))
-                !evidence.value(SAME_TYPE_CONTEXT) ->
+                !evidence.value(ENTRY_MIGRATION_SAME_TYPE_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(TYPE_MISMATCH_BLOCKER))
-                !evidence.value(DISTINCT_ENTRY_CONTEXT) ->
+                !evidence.value(ENTRY_MIGRATION_DISTINCT_ENTRY_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(SAME_ENTRY_BLOCKER))
                 else -> FeatureContextDecision.Applicable
             }
@@ -125,22 +125,24 @@ internal fun entryMigrationPreparationContextIntegrations(
             SAME_ENTRY_BLOCKER,
         ),
         sharedConsequences = listOf(EntryMigrationPairConsequence),
+        behavioralContracts = listOf(EntryMigrationBehaviorContract.PAIR_CONTEXT),
     ),
     FeatureIntegration(
-        id = INSPECTION_CONTEXT_INTEGRATION,
+        id = ENTRY_MIGRATION_INSPECTION_CONTEXT_INTEGRATION,
         prerequisites = migration,
-        contextInputs = listOf(INSPECTED_PAIR_CONTEXT, IDENTITY_STABLE_CONTEXT),
+        contextInputs = listOf(ENTRY_MIGRATION_INSPECTED_PAIR_CONTEXT, ENTRY_MIGRATION_IDENTITY_STABLE_CONTEXT),
         contextRule = featureContextRule(owner) { evidence ->
             when {
-                !evidence.value(INSPECTED_PAIR_CONTEXT) ->
+                !evidence.value(ENTRY_MIGRATION_INSPECTED_PAIR_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(PAIR_MISSING_BLOCKER))
-                !evidence.value(IDENTITY_STABLE_CONTEXT) ->
+                !evidence.value(ENTRY_MIGRATION_IDENTITY_STABLE_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(IDENTITY_CHANGED_BLOCKER))
                 else -> FeatureContextDecision.Applicable
             }
         },
         contextBlockers = listOf(PAIR_MISSING_BLOCKER, IDENTITY_CHANGED_BLOCKER),
         sharedConsequences = listOf(EntryMigrationInspectionConsequence),
+        behavioralContracts = listOf(EntryMigrationBehaviorContract.INSPECTION_CONTEXT),
     ),
 )
 
@@ -156,15 +158,15 @@ internal fun FeatureGraphEvaluation.requireMigrationPairContext(
     requireEntryContextState(
         type = sourceType,
         feature = ENTRY_MIGRATION_FEATURE_ID,
-        integration = PAIR_CONTEXT_INTEGRATION,
+        integration = ENTRY_MIGRATION_PAIR_CONTEXT_INTEGRATION,
         consequences = listOf(EntryMigrationPairConsequence.id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_PERSISTED_CONTEXT, sourcePersisted),
             contextEvidence(ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT, sourceInLibrary),
-            contextEvidence(TARGET_PERSISTED_CONTEXT, targetPersisted),
-            contextEvidence(SAME_PROFILE_CONTEXT, sameProfile),
-            contextEvidence(SAME_TYPE_CONTEXT, sameType),
-            contextEvidence(DISTINCT_ENTRY_CONTEXT, distinctEntry),
+            contextEvidence(ENTRY_MIGRATION_TARGET_PERSISTED_CONTEXT, targetPersisted),
+            contextEvidence(ENTRY_MIGRATION_SAME_PROFILE_CONTEXT, sameProfile),
+            contextEvidence(ENTRY_MIGRATION_SAME_TYPE_CONTEXT, sameType),
+            contextEvidence(ENTRY_MIGRATION_DISTINCT_ENTRY_CONTEXT, distinctEntry),
         ),
         applicable = sourcePersisted && sourceInLibrary && targetPersisted && sameProfile && sameType && distinctEntry,
     )
@@ -178,11 +180,11 @@ internal fun FeatureGraphEvaluation.requireMigrationInspectionContext(
     requireEntryContextState(
         type = sourceType,
         feature = ENTRY_MIGRATION_FEATURE_ID,
-        integration = INSPECTION_CONTEXT_INTEGRATION,
+        integration = ENTRY_MIGRATION_INSPECTION_CONTEXT_INTEGRATION,
         consequences = listOf(EntryMigrationInspectionConsequence.id),
         evidence = listOf(
-            contextEvidence(INSPECTED_PAIR_CONTEXT, pairPresent),
-            contextEvidence(IDENTITY_STABLE_CONTEXT, identityStable),
+            contextEvidence(ENTRY_MIGRATION_INSPECTED_PAIR_CONTEXT, pairPresent),
+            contextEvidence(ENTRY_MIGRATION_IDENTITY_STABLE_CONTEXT, identityStable),
         ),
         applicable = pairPresent && identityStable,
     )

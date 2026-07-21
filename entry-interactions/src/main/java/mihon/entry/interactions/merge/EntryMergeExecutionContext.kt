@@ -16,11 +16,12 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val EXISTING_GROUP_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.merge.existing-group-context")
-private val LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION =
+internal val ENTRY_MERGE_EXISTING_GROUP_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.merge.existing-group-context")
+internal val ENTRY_MERGE_LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION =
     FeatureIntegrationId("entry.merge.library-initialization-context")
-private val COVER_CLEANUP_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.merge.cover-cleanup-context")
-private val DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.merge.download-removal-context")
+internal val ENTRY_MERGE_COVER_CLEANUP_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.merge.cover-cleanup-context")
+internal val ENTRY_MERGE_DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION =
+    FeatureIntegrationId("entry.merge.download-removal-context")
 
 private object EntryMergeExistingGroupConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.merge.existing-group-mutation")
@@ -38,88 +39,95 @@ internal object EntryMergeDownloadRemovalConsequence : SharedFeatureConsequence 
     override val id = FeatureArtifactId("entry.merge.download-removal")
 }
 
-private val COMPLETE_ORDERED_MEMBERSHIP_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MERGE_COMPLETE_ORDERED_MEMBERSHIP_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.merge.complete-ordered-membership"),
     ContributionOwner("entry-merge-membership"),
 )
-private val HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MERGE_HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.merge.homogeneous-membership-type"),
     ContributionOwner("entry-merge-membership"),
 )
-private val LIBRARY_INITIALIZATION_REQUIRED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MERGE_LIBRARY_INITIALIZATION_REQUIRED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.merge.library-initialization-required"),
     ContributionOwner("entry-merge-workflow"),
 )
-private val COVER_CLEANUP_REQUIRED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MERGE_COVER_CLEANUP_REQUIRED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.merge.cover-cleanup-required"),
     ContributionOwner("entry-merge-workflow"),
 )
-private val DOWNLOAD_REMOVAL_REQUIRED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_MERGE_DOWNLOAD_REMOVAL_REQUIRED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.merge.download-removal-required"),
     ContributionOwner("entry-merge-workflow"),
 )
 
 private val INCOMPLETE_ORDERED_MEMBERSHIP_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.merge.execution-membership-incomplete"),
-    listOf(COMPLETE_ORDERED_MEMBERSHIP_CONTEXT),
+    listOf(ENTRY_MERGE_COMPLETE_ORDERED_MEMBERSHIP_CONTEXT),
 )
 private val MIXED_MEMBERSHIP_TYPES_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.merge.execution-membership-types-mixed"),
-    listOf(HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT),
+    listOf(ENTRY_MERGE_HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT),
 )
 private val LIBRARY_INITIALIZATION_NOT_REQUIRED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.merge.library-initialization-not-required"),
-    listOf(LIBRARY_INITIALIZATION_REQUIRED_CONTEXT),
+    listOf(ENTRY_MERGE_LIBRARY_INITIALIZATION_REQUIRED_CONTEXT),
 )
 private val COVER_CLEANUP_NOT_REQUIRED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.merge.cover-cleanup-not-required"),
-    listOf(COVER_CLEANUP_REQUIRED_CONTEXT),
+    listOf(ENTRY_MERGE_COVER_CLEANUP_REQUIRED_CONTEXT),
 )
 private val DOWNLOAD_REMOVAL_NOT_REQUIRED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.merge.download-removal-not-required"),
-    listOf(DOWNLOAD_REMOVAL_REQUIRED_CONTEXT),
+    listOf(ENTRY_MERGE_DOWNLOAD_REMOVAL_REQUIRED_CONTEXT),
 )
 
 internal fun entryMergeExecutionContextIntegrations(owner: ContributionOwner): List<FeatureIntegration> = listOf(
     FeatureIntegration(
-        id = EXISTING_GROUP_CONTEXT_INTEGRATION,
+        id = ENTRY_MERGE_EXISTING_GROUP_CONTEXT_INTEGRATION,
         prerequisites = CapabilityExpression.Always,
-        contextInputs = listOf(COMPLETE_ORDERED_MEMBERSHIP_CONTEXT, HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT),
+        contextInputs = listOf(
+            ENTRY_MERGE_COMPLETE_ORDERED_MEMBERSHIP_CONTEXT,
+            ENTRY_MERGE_HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT,
+        ),
         contextRule = featureContextRule(owner) { evidence ->
             when {
-                !evidence.value(COMPLETE_ORDERED_MEMBERSHIP_CONTEXT) ->
+                !evidence.value(ENTRY_MERGE_COMPLETE_ORDERED_MEMBERSHIP_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(INCOMPLETE_ORDERED_MEMBERSHIP_BLOCKER))
-                !evidence.value(HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT) ->
+                !evidence.value(ENTRY_MERGE_HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT) ->
                     FeatureContextDecision.Blocked(listOf(MIXED_MEMBERSHIP_TYPES_BLOCKER))
                 else -> FeatureContextDecision.Applicable
             }
         },
         contextBlockers = listOf(INCOMPLETE_ORDERED_MEMBERSHIP_BLOCKER, MIXED_MEMBERSHIP_TYPES_BLOCKER),
         sharedConsequences = listOf(EntryMergeExistingGroupConsequence),
+        behavioralContracts = listOf(EntryMergeBehaviorContract.EXISTING_GROUP),
     ),
     requiredConsequenceIntegration(
-        id = LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION,
+        id = ENTRY_MERGE_LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION,
         owner = owner,
         prerequisites = CapabilityExpression.Always,
-        input = LIBRARY_INITIALIZATION_REQUIRED_CONTEXT,
+        input = ENTRY_MERGE_LIBRARY_INITIALIZATION_REQUIRED_CONTEXT,
         blocker = LIBRARY_INITIALIZATION_NOT_REQUIRED_BLOCKER,
         consequence = EntryMergeLibraryInitializationConsequence,
+        contract = EntryMergeBehaviorContract.LIBRARY_INITIALIZATION,
     ),
     requiredConsequenceIntegration(
-        id = COVER_CLEANUP_CONTEXT_INTEGRATION,
+        id = ENTRY_MERGE_COVER_CLEANUP_CONTEXT_INTEGRATION,
         owner = owner,
         prerequisites = CapabilityExpression.Always,
-        input = COVER_CLEANUP_REQUIRED_CONTEXT,
+        input = ENTRY_MERGE_COVER_CLEANUP_REQUIRED_CONTEXT,
         blocker = COVER_CLEANUP_NOT_REQUIRED_BLOCKER,
         consequence = EntryMergeCoverCleanupConsequence,
+        contract = EntryMergeBehaviorContract.COVER_CLEANUP,
     ),
     requiredConsequenceIntegration(
-        id = DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION,
+        id = ENTRY_MERGE_DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION,
         owner = owner,
         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
-        input = DOWNLOAD_REMOVAL_REQUIRED_CONTEXT,
+        input = ENTRY_MERGE_DOWNLOAD_REMOVAL_REQUIRED_CONTEXT,
         blocker = DOWNLOAD_REMOVAL_NOT_REQUIRED_BLOCKER,
         consequence = EntryMergeDownloadRemovalConsequence,
+        contract = EntryMergeBehaviorContract.DOWNLOAD_REMOVAL,
     ),
 )
 
@@ -130,6 +138,7 @@ private fun requiredConsequenceIntegration(
     input: ContextInputDefinition<Boolean>,
     blocker: FeatureContextBlocker,
     consequence: SharedFeatureConsequence,
+    contract: EntryMergeBehaviorContract,
 ) = FeatureIntegration(
     id = id,
     prerequisites = prerequisites,
@@ -143,6 +152,7 @@ private fun requiredConsequenceIntegration(
     },
     contextBlockers = listOf(blocker),
     sharedConsequences = listOf(consequence),
+    behavioralContracts = listOf(contract),
 )
 
 internal fun FeatureGraphEvaluation.requireMergeExistingGroupContext(
@@ -154,11 +164,11 @@ internal fun FeatureGraphEvaluation.requireMergeExistingGroupContext(
         requireEntryContextState(
             type = type,
             feature = ENTRY_MERGE_FEATURE_ID,
-            integration = EXISTING_GROUP_CONTEXT_INTEGRATION,
+            integration = ENTRY_MERGE_EXISTING_GROUP_CONTEXT_INTEGRATION,
             consequences = listOf(EntryMergeExistingGroupConsequence.id),
             evidence = listOf(
-                contextEvidence(COMPLETE_ORDERED_MEMBERSHIP_CONTEXT, completeOrderedMembership),
-                contextEvidence(HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT, homogeneousMembershipType),
+                contextEvidence(ENTRY_MERGE_COMPLETE_ORDERED_MEMBERSHIP_CONTEXT, completeOrderedMembership),
+                contextEvidence(ENTRY_MERGE_HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT, homogeneousMembershipType),
             ),
             applicable = completeOrderedMembership && homogeneousMembershipType,
         )
@@ -173,24 +183,24 @@ internal fun FeatureGraphEvaluation.requireMergeExecutionConsequenceContext(
 ) {
     requireMergeConsequenceContext(
         type,
-        LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION,
+        ENTRY_MERGE_LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION,
         EntryMergeLibraryInitializationConsequence.id,
-        LIBRARY_INITIALIZATION_REQUIRED_CONTEXT,
+        ENTRY_MERGE_LIBRARY_INITIALIZATION_REQUIRED_CONTEXT,
         libraryInitializationRequired,
     )
     requireMergeConsequenceContext(
         type,
-        COVER_CLEANUP_CONTEXT_INTEGRATION,
+        ENTRY_MERGE_COVER_CLEANUP_CONTEXT_INTEGRATION,
         EntryMergeCoverCleanupConsequence.id,
-        COVER_CLEANUP_REQUIRED_CONTEXT,
+        ENTRY_MERGE_COVER_CLEANUP_REQUIRED_CONTEXT,
         coverCleanupRequired,
     )
     downloadRemovalRequired?.let { required ->
         requireMergeConsequenceContext(
             type,
-            DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION,
+            ENTRY_MERGE_DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION,
             EntryMergeDownloadRemovalConsequence.id,
-            DOWNLOAD_REMOVAL_REQUIRED_CONTEXT,
+            ENTRY_MERGE_DOWNLOAD_REMOVAL_REQUIRED_CONTEXT,
             required,
         )
     }

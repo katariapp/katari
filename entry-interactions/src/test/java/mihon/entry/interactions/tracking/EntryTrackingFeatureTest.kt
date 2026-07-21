@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.mockk
@@ -17,8 +16,6 @@ import mihon.entry.interactions.host.tracking.EntryTrackingHostEntrySnapshot
 import mihon.entry.interactions.host.tracking.EntryTrackingHostService
 import mihon.entry.interactions.host.tracking.EntryTrackingHostServiceCapabilities
 import mihon.entry.interactions.host.tracking.EntryTrackingOperationHost
-import mihon.feature.graph.ApplicableFeatureIntegration
-import mihon.feature.graph.ConditionalFeatureIntegration
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.track.model.EntryTrack
@@ -114,18 +111,6 @@ class EntryTrackingFeatureTest {
         feature.observeSession(entry).toList() shouldBe listOf(
             EntryTrackingSession.Unavailable(setOf(EntryTrackingSessionUnavailableReason.NOT_LOGGED_IN)),
         )
-    }
-
-    @Test
-    fun `every tracking relationship is discovered for a provider-less contributed type`() {
-        val evaluation = sourceFeatureEvaluation(EntryTrackingFeatureContributor)
-        val tracking = evaluation.integrations.filter { it.subject.feature == ENTRY_TRACKING_FEATURE_ID }
-
-        tracking shouldHaveSize EntryTrackingIntegration.entries.size
-        tracking.filterIsInstance<ApplicableFeatureIntegration>() shouldHaveSize 2
-        tracking.filterIsInstance<ConditionalFeatureIntegration>() shouldHaveSize
-            EntryTrackingIntegration.entries.size - 2
-        tracking.map { it.subject.contentType }.distinct() shouldHaveSize 1
     }
 
     private fun feature(
