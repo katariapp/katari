@@ -15,8 +15,9 @@ Before doing capability-refactor work, read:
 5. [`migration-inventory.md`](migration-inventory.md)
 6. [`legacy-artifacts.md`](legacy-artifacts.md)
 7. [`migration-obligations.md`](migration-obligations.md)
-8. The active file under [`phases/`](phases/)
-9. Relevant records under [`decisions/`](decisions/)
+8. [`contract-migration-census.md`](contract-migration-census.md) during Phase 7 contract work
+9. The active file under [`phases/`](phases/)
+10. Relevant records under [`decisions/`](decisions/)
 
 Then inspect the current branch, recent commits, working tree, and tests rather than assuming this workspace is newer than Git.
 
@@ -86,5 +87,6 @@ A future continuation can use:
 - `legacy-artifacts.md`: committed prototype artifacts to retain, retire, or rehome
 - `migration-obligations.md`: compile failures exposed by the architecture cut; a narrower ledger than the migration
   inventory
+- `contract-migration-census.md`: temporary Phase 7 ownership and disposition map for behavioral validation migration
 - `phases/`: bounded phase checklists and validation requirements
 - `decisions/`: accepted architectural decisions with consequences

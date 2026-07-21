@@ -58,7 +58,9 @@ contributions:
 
 ### 7.1 — Production Contract Migration
 
-- [ ] Census every declared production contract and every behavioral suite in the test register.
+- [x] Census every production Feature, declared contract, undeclared shared expectation, and behavioral suite in the
+  test register in [`../contract-migration-census.md`](../contract-migration-census.md).
+- [ ] Establish the production validation host and exact-definition binding before adding a production verifier.
 - [ ] Implement each feature-owned verifier once and execute it for every statically or contextually applicable
   production contribution.
 - [ ] Request content-type fixtures only for genuine media-specific validation input.
