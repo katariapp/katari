@@ -92,6 +92,7 @@ class AnimePlayerLauncherScreen : Screen() {
                                         entry = item.entry,
                                         chapter = item.chapter,
                                     )
+                                    Unit
                                 }.takeIf { entryOpenFeature.isApplicable(item.entry.type) },
                             )
                         }

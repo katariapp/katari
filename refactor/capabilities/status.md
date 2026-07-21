@@ -85,6 +85,7 @@ Updated: 2026-07-21
 - Phase 6.7.6 Tracking collection commit: `a3524f04c` (`(refactor): migrate tracking collection consumers`)
 - Phase 6.7.7 Tracking reconciliation commit: `ac5db98eb` (`(refactor): reconcile tracking boundaries`)
 - Phase 6.8 Compatibility reconciliation commit: `555d409b6` (`(refactor): reconcile contextual integration boundaries`)
+- Phase 7 planning commit: `b3dc60105` (`(docs): define contract validation phase`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -93,7 +94,8 @@ Updated: 2026-07-21
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
 - Milestone: Restore the application compilation baseline before Phase 7.0 implementation
-- State: Decision `0023` and the Phase 7 sequence are approved. The planning milestone is ready to commit.
+- State: The two known compilation failures are corrected and the FOSS Kotlin application compilation passes for
+  review. Phase 7.0 implementation has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1345,7 +1347,16 @@ Focused Phase 7.0 preparation findings:
   documentation projection, and repository-validation reconciliation. No product migration starts before the generic
   unknown-contribution proof passes.
 
+Focused application compilation-baseline findings:
+
+- The Anime debug launcher now explicitly discards the Boolean result returned by the Open Feature when adapting it to
+  a `Unit` UI callback. Applicability and dispatch remain owned by the Feature.
+- The More-tab profile shortcut again imports the coroutine `launch` extension that its suspend profile operation
+  requires. No download or profile behavior changed.
+- Formatting and `:app:compileFossKotlin` pass. The previously recorded compilation exceptions are closed before
+  contract-execution architecture work begins.
+
 ## Exact Next Action After Review
 
-Commit the approved Phase 7 planning milestone. Then restore the two known application compilation failures and stop
-before implementing the generic Phase 7.0 execution/projection mechanism.
+Commit the application compilation-baseline corrections after review. Then implement only the generic Phase 7.0
+contract-definition, verifier-discovery, selection-input, and execution-result architecture with anonymous proofs.

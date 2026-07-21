@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.feature.profiles.core.ProfileManager
 import mihon.feature.profiles.ui.ProfilePickerScreen
