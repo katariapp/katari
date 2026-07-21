@@ -72,30 +72,6 @@ class AnimeEntryInteractionPluginTest {
     private val context = mockk<Context>(relaxed = true)
 
     @Test
-    fun `plugin registers anime processors`() = runTest {
-        val dependencies = dependencies(
-            chapters = listOf(chapter(id = 10L, read = false)),
-            episodeDownloaded = true,
-        )
-        val interactions = createEntryInteractions(listOf(animeEntryInteractionPlugin(dependencies)))
-        val entry = entry(EntryType.ANIME, id = 1L)
-
-        val continued = interactions.continueEntry.findNext(entry)
-        val status = interactions.download.getStatus(
-            entryType = EntryType.ANIME,
-            chapterId = 10L,
-            chapterName = "Episode",
-            chapterScanlator = null,
-            chapterUrl = "/episode",
-            entryTitle = "Entry",
-            sourceId = 1L,
-        )
-
-        continued?.id shouldBe 10L
-        status.state shouldBe EntryDownloadState.DOWNLOADED
-    }
-
-    @Test
     fun `anime download options use Entry playback models and selected preferences are persisted`() = runTest {
         val anime = entry(EntryType.ANIME)
         val episode = chapter(id = 2L)

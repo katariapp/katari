@@ -17,7 +17,14 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
         val root = repositoryRoot.get().asFile
         val typeModules = TypeModule.discover(root)
         val sourceIndex = KotlinSourceIndex.create(root, sourceFiles(root, typeModules))
-        val findings = EntryInteractionBoundaryRules(root, sourceIndex, typeModules).check()
+        val findings = EntryInteractionBoundaryRules(root, sourceIndex, typeModules).check().toMutableList()
+        findings += checkEntryContractValidationBoundaries(contractValidationSources(root)).map { finding ->
+            Finding(
+                relativePath = finding.relativePath,
+                lineNumber = finding.lineNumber,
+                reason = finding.reason,
+            )
+        }
 
         if (findings.isNotEmpty()) {
             val maxFindings = 80
@@ -51,6 +58,22 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
                     .filterNot { it.invariantSeparatorsPath.contains("/build/") }
                     .toList()
             }
+    }
+
+    private fun contractValidationSources(root: File): List<EntryContractValidationBoundarySource> {
+        val entryInteractions = root.resolve("entry-interactions")
+        if (!entryInteractions.isDirectory) return emptyList()
+        return entryInteractions.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .filter { it.invariantSeparatorsPath.contains("/src/test/") }
+            .filterNot { it.invariantSeparatorsPath.contains("/build/") }
+            .map { file ->
+                EntryContractValidationBoundarySource(
+                    relativePath = file.relativeTo(root).invariantSeparatorsPath,
+                    content = file.readText(),
+                )
+            }
+            .toList()
     }
 
     companion object {

@@ -54,30 +54,6 @@ class MangaEntryInteractionPluginTest {
     private val context = mockk<Context>(relaxed = true)
 
     @Test
-    fun `plugin registers manga processors`() = runTest {
-        val dependencies = dependencies(
-            chapters = listOf(chapter(id = 10L, read = false)),
-            chapterDownloaded = true,
-        )
-        val interactions = createEntryInteractions(listOf(mangaEntryInteractionPlugin(dependencies)))
-        val entry = entry(EntryType.MANGA, id = 1L)
-
-        val continued = interactions.continueEntry.findNext(entry)
-        val status = interactions.download.getStatus(
-            entryType = EntryType.MANGA,
-            chapterId = 10L,
-            chapterName = "Chapter",
-            chapterScanlator = null,
-            chapterUrl = "/chapter",
-            entryTitle = "Entry",
-            sourceId = 1L,
-        )
-
-        continued?.id shouldBe 10L
-        status.state shouldBe EntryDownloadState.DOWNLOADED
-    }
-
-    @Test
     fun `manga library progress provider exposes partial page evidence`() = runTest {
         val evidence = MangaLibraryProgressProvider(
             FakeEntryProgressRepository(

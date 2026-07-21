@@ -95,6 +95,7 @@ Updated: 2026-07-21
 - Phase 7.1.3 Library and Media contract commit: `ad53083b0` (`(test): execute library and media contracts`)
 - Phase 7.1.4 Source context contract commit: `e14affa81` (`(test): execute source context contracts`)
 - Phase 7.1.5 Workflow and Tracking contract commit: `26b44c8d3` (`(test): execute workflow and tracking contracts`)
+- Phase 7.1.6 Contract Reconciliation commit: `f4b4382f9` (`(test): reconcile production feature contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -102,10 +103,9 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.6 Contract Reconciliation
-- State: Production contract migration is complete and validated for review. Every selected production relationship
-  executes its discovered verifier successfully, contextual scenarios cover every statically compatible subject, and
-  synthetic provider-support Feature graphs have been removed. Reporting and documentation projection have not
+- Milestone: Phase 7.2 Declaration-Test Removal and Boundary Enforcement
+- State: Declaration-only registration tests are removed and the executable-contract boundary is enforced for review.
+  Production contract migration remains successful. Developer reporting and documentation projection have not
   migrated.
 
 Focused Phase 6 preparation findings:
@@ -1530,7 +1530,23 @@ Focused Phase 7.1.6 Contract Reconciliation findings:
   feature-validation, root/Anime/Manga interaction tests, boundary enforcement, build-logic tests, formatting, and FOSS
   application compilation pass.
 
+Focused Phase 7.2 Declaration-Test Removal and Boundary Enforcement findings:
+
+- The remaining Manga and Anime tests that only asserted current Continue and Download plugin registration are
+  removed. Provider absence remains valid; type-owned media, progress, child-list, compatibility, failure, and
+  coordinator behavior tests remain.
+- Validation contributors must operate on graph-selected subjects and cannot name Manga, Anime, or Book. This prevents
+  the validation layer from becoming a current-type support matrix while leaving concrete types available to genuine
+  owner behavior and compatibility tests.
+- Ordinary Entry-interaction tests cannot inspect contract declarations or invoke artifact selection as a substitute
+  for behavior. Central contract-suite maps and validation-host feature/contract switches are rejected.
+- The production validation test must execute the single evaluated validation host; direct planning, selection, or
+  runner calls are rejected there. Feature-owned contributors and service installation remain discovery mechanisms,
+  not completeness lists.
+- Formatting, Feature Graph, Feature Validation, root/Anime/Manga interaction tests, build-logic tests, repository
+  boundary validation, and FOSS application compilation pass.
+
 ## Exact Next Action After Review
 
-Commit Phase 7.1.6 after review. Then begin Phase 7.2 declaration-test removal and boundary enforcement; do not begin
-developer reporting until that milestone is complete.
+Commit Phase 7.2 after review. Then begin Phase 7.3 developer reporting; do not begin documentation projection until
+that milestone is complete.

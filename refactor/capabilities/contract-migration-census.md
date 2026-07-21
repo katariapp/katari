@@ -202,6 +202,17 @@ The Manga/Anime provider-behavior test helpers currently create synthetic test F
 Replace those helpers with the production validation host where shared contract execution covers them; retain only
 genuine media behavior assertions in the type modules.
 
+Phase 7.2 removes the remaining Manga and Anime plugin-registration assertions. Those assertions proved only that the
+current plugin happened to expose Continue and Download; absence of either provider is valid and therefore is not a
+type-completeness failure. Type-owned tests continue to cover media selection, progress, child-list behavior, structured
+failures, compatibility, and other observable runtime semantics.
+
+Boundary validation now protects the executable-contract architecture instead of encoding the current support matrix.
+Feature-owned validation cannot name the current content types, ordinary tests cannot inspect selected contract
+declarations, central contract-suite maps and validation-host switches are rejected, and the production gate cannot
+bypass the evaluated validation host. Concrete types remain valid in owner tests that exercise real type-specific
+behavior.
+
 ## Migration Sequence
 
 ### 7.1.0 — Production Validation Host and Exact Binding

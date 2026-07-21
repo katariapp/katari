@@ -68,9 +68,9 @@ contributions:
 
 ### 7.2 — Declaration-Test Removal and Boundary Enforcement
 
-- [ ] Remove tests that merely restate provider registration, contract identifiers, or the current type matrix.
-- [ ] Retain infrastructure tests only for generic graph/runner semantics and owner tests for genuine behavior.
-- [ ] Extend boundary validation to reject central contract-suite maps, per-type support expectations, and validation
+- [x] Remove tests that merely restate provider registration, contract identifiers, or the current type matrix.
+- [x] Retain infrastructure tests only for generic graph/runner semantics and owner tests for genuine behavior.
+- [x] Extend boundary validation to reject central contract-suite maps, per-type support expectations, and validation
   paths that bypass evaluated selection.
 
 ### 7.3 — Developer Reporting

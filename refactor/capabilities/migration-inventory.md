@@ -392,6 +392,12 @@ The following validation surfaces must migrate after their production owners:
 Tests that exist solely for legacy serialization, backup protobuf compatibility, database mapping, legacy source ABI,
 or media internals remain ordinary compatibility tests and are not selected as feature-completeness contracts.
 
+Phase 7.2 closes the test-boundary portion of this register. The remaining declaration-only Manga and Anime plugin
+registration assertions are removed, while genuine provider, media, compatibility, coordinator, and structured-result
+tests remain. Build validation rejects central contract suites, concrete current-type expectations inside graph-selected
+contract validation, direct declaration inspection from ordinary tests, and production validation that bypasses the
+single evaluated host. It deliberately does not ban concrete types from type-owned behavioral or compatibility tests.
+
 ## Audited Non-Migration Boundaries
 
 The following are not capability authorities by themselves and should not be forced into the graph:
