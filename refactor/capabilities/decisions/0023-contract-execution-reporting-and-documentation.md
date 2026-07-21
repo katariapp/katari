@@ -44,6 +44,8 @@ contribution.
   only an applicable relationship can create validation obligations.
 - Validation results are structured and framework-neutral. The normal repository test/build integration translates
   failures into its test or task reporting; runtime modules do not ship JUnit/Kotest code or test doubles.
+- Verifier discovery, scenario planning, and execution live in a validation-only module that depends on the runtime
+  graph. Runtime application modules do not depend on that module.
 
 ### Contextual relationships
 
@@ -75,6 +77,9 @@ contribution.
 - Normal repository validation discovers the production graph and validation contributions, rejects unresolved
   obligations, executes every selected contract, renders/verifies projections, and fails on undiscovered or duplicate
   validation bindings.
+- Runtime graph obligations and validation-only obligations retain distinct categories and ownership, but enter one
+  validation issue collection and one success result. A validation gate cannot pass by checking only one category or
+  only the executions that were ready to run.
 - Infrastructure tests verify generic discovery, selection, execution, ownership, ordering, and failure semantics with
   anonymous contributions. They do not repeat the Manga/Anime/Book support matrix.
 - Type-owned tests remain for media algorithms, compatibility, serialization, storage, and specialized adapters. They

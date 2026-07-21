@@ -4,7 +4,10 @@ package mihon.feature.graph
 data class BehavioralContractSelection(
     val subject: FeatureIntegrationSubject,
     val contract: FeatureBehaviorContract,
+    val matchedProviders: List<CapabilityProvider<*>>,
+    val suppliedAdapters: List<SpecializedAdapter<*>>,
     val fixtures: List<ContractFixture<*>>,
+    val contextEvidence: List<ContextEvidence<*>>,
 )
 
 /** One feature-owned projection selected for an applicable content type. */
@@ -50,8 +53,59 @@ fun selectFeatureArtifacts(
     evaluation: FeatureGraphEvaluation,
 ): FeatureArtifactSelection {
     validateEvaluationCoverage(graph, evaluation)
+    val applicable = evaluation.integrations
+        .filterIsInstance<ApplicableFeatureIntegration>()
+        .map {
+            ArtifactApplicability(
+                subject = it.subject,
+                integration = it.integration,
+                matchedProviders = it.matchedProviders,
+                suppliedAdapters = it.suppliedAdapters,
+                contextEvidence = emptyList(),
+            )
+        }
+    return selectApplicableArtifacts(graph, applicable)
+}
+
+/** Selects artifacts activated by one exact runtime context snapshot without treating it as type-wide support. */
+fun selectContextualFeatureArtifacts(
+    graph: FeatureGraph,
+    evaluation: FeatureGraphEvaluation,
+    contextEvaluation: FeatureContextEvaluation,
+): FeatureArtifactSelection {
+    validateEvaluationCoverage(graph, evaluation)
+    val resolved = contextEvaluation.integration
+    val candidate = evaluation.integrations
+        .filterIsInstance<ConditionalFeatureIntegration>()
+        .singleOrNull { it.subject == resolved.subject }
+        ?: error("Context evaluation ${resolved.subject.describe()} has no matching conditional graph evaluation")
+    check(candidate.integration === resolved.integration) {
+        "Context evaluation ${resolved.subject.describe()} does not belong to the supplied feature graph"
+    }
+    val applicable = resolved as? ApplicableFeatureContext ?: return FeatureArtifactSelection(
+        behavioralContracts = emptyList(),
+        projections = emptyList(),
+        obligations = emptyList(),
+    )
+    return selectApplicableArtifacts(
+        graph = graph,
+        applicable = listOf(
+            ArtifactApplicability(
+                subject = applicable.subject,
+                integration = applicable.integration,
+                matchedProviders = applicable.matchedProviders,
+                suppliedAdapters = applicable.suppliedAdapters,
+                contextEvidence = applicable.evidence,
+            ),
+        ),
+    )
+}
+
+private fun selectApplicableArtifacts(
+    graph: FeatureGraph,
+    applicable: List<ArtifactApplicability>,
+): FeatureArtifactSelection {
     val contentTypesById = graph.contentTypes.associateBy { it.contentType }
-    val applicable = evaluation.integrations.filterIsInstance<ApplicableFeatureIntegration>()
 
     val contractSelections = applicable.flatMap { evaluated ->
         val contentType = contentTypesById.getValue(evaluated.subject.contentType)
@@ -62,9 +116,12 @@ fun selectFeatureArtifacts(
                 BehavioralContractSelection(
                     subject = evaluated.subject,
                     contract = contract,
+                    matchedProviders = evaluated.matchedProviders,
+                    suppliedAdapters = evaluated.suppliedAdapters,
                     fixtures = contract.fixtureRequirements
                         .sortedBy { it.id.value }
                         .mapNotNull { fixturesById[it.id] },
+                    contextEvidence = evaluated.contextEvidence,
                 )
             }
     }
@@ -142,6 +199,14 @@ fun selectFeatureArtifacts(
         obligations = missingFixtureObligations + missingProjectionObligations,
     )
 }
+
+private data class ArtifactApplicability(
+    val subject: FeatureIntegrationSubject,
+    val integration: FeatureIntegration,
+    val matchedProviders: List<CapabilityProvider<*>>,
+    val suppliedAdapters: List<SpecializedAdapter<*>>,
+    val contextEvidence: List<ContextEvidence<*>>,
+)
 
 private fun validateEvaluationCoverage(
     graph: FeatureGraph,

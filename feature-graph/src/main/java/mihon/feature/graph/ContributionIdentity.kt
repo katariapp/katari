@@ -92,6 +92,16 @@ value class ContractFixtureId(val value: String) {
     override fun toString(): String = value
 }
 
+/** Stable identity of one feature-owned contextual validation scenario. */
+@JvmInline
+value class FeatureContractScenarioId(val value: String) {
+    init {
+        validateStableId("Feature contract scenario id", value)
+    }
+
+    override fun toString(): String = value
+}
+
 private fun validateStableId(label: String, value: String) {
     require(STABLE_ID_PATTERN.matches(value)) {
         "$label must be a stable lowercase identifier: $value"

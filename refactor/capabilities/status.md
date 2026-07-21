@@ -86,6 +86,7 @@ Updated: 2026-07-21
 - Phase 6.7.7 Tracking reconciliation commit: `ac5db98eb` (`(refactor): reconcile tracking boundaries`)
 - Phase 6.8 Compatibility reconciliation commit: `555d409b6` (`(refactor): reconcile contextual integration boundaries`)
 - Phase 7 planning commit: `b3dc60105` (`(docs): define contract validation phase`)
+- Application compilation-baseline commit: `d25aacc27` (`(fix): restore application compilation`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -93,9 +94,9 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Restore the application compilation baseline before Phase 7.0 implementation
-- State: The two known compilation failures are corrected and the FOSS Kotlin application compilation passes for
-  review. Phase 7.0 implementation has not started.
+- Milestone: Phase 7.0 Generic contract execution architecture
+- State: The generic contract execution architecture is implemented and validated for review. No production feature
+  contract, developer report, or documentation projection has migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1356,7 +1357,25 @@ Focused application compilation-baseline findings:
 - Formatting and `:app:compileFossKotlin` pass. The previously recorded compilation exceptions are closed before
   contract-execution architecture work begins.
 
+Focused Phase 7.0 contract-execution findings:
+
+- Runtime `feature-graph` selections now retain matched providers, supplied specialized adapters, selected fixtures, and
+  resolved context evidence. Contextual artifacts can be selected only from an exact applicable context evaluation.
+- The new `feature-validation` module owns verifier/scenario discovery, planning, and execution. Runtime application
+  modules do not depend on it, and validators contain no JUnit/Kotest coupling.
+- Feature-owned verifiers and applicable-context scenarios are discovered through the validation classpath. Duplicate,
+  foreign-owner, and unreachable bindings fail generically; there is no contract, Feature, or content-type suite list.
+- Missing verifiers and applicable-context scenarios are Feature-owner obligations. Missing declared media fixtures and
+  delayed specialized adapters remain obligations of the affected content-type owner. Both categories enter one plan
+  issue collection and one validation success result; provider absence creates neither.
+- A verifier receives typed access only to graph-selected providers, adapters, fixtures, and evidence. Execution returns
+  structured pass, failure, or crash results rather than relying on a particular test framework.
+- Anonymous proofs cover unknown future types, automatic multi-type enrollment, ordinary unsupported types, contextual
+  applicability, delayed media obligations, classpath discovery, ownership rejection, and deterministic execution.
+- Formatting, Feature Graph tests, Feature Validation tests, Entry Interactions tests, and FOSS application compilation
+  pass.
+
 ## Exact Next Action After Review
 
-Commit the application compilation-baseline corrections after review. Then implement only the generic Phase 7.0
-contract-definition, verifier-discovery, selection-input, and execution-result architecture with anonymous proofs.
+Commit the generic Phase 7.0 contract-execution architecture after review. Then census declared production contracts
+against existing behavioral suites and plan the bounded Phase 7.1 migration sequence before migrating the first suite.

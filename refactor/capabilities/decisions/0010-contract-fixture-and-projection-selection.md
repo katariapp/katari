@@ -1,6 +1,10 @@
 # Contract, Fixture, and Projection Selection
 
-Status: Accepted
+Status: Accepted; contract execution shape superseded by decision `0023`
+
+Decision [`0023`](0023-contract-execution-reporting-and-documentation.md) preserves this record's selection, ownership,
+fixture, projection, and optionality rules, but replaces the executable production contract object with a production
+definition bound to a separately discovered validation-only verifier.
 
 ## Context
 

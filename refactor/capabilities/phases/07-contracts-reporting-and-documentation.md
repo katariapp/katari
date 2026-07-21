@@ -29,32 +29,32 @@ renderer exists.
 
 ## Architecture Gate
 
-Decision [`0023`](../decisions/0023-contract-execution-reporting-and-documentation.md) defines the proposed gate. No
-production feature contract, report, or documentation migration begins until it is accepted and the generic mechanism
-proves all of these properties with anonymous contributions:
+Decision [`0023`](../decisions/0023-contract-execution-reporting-and-documentation.md) defines the gate. Each migration
+stream begins only after its corresponding generic mechanism proves the relevant properties with anonymous
+contributions:
 
 - production contract definitions and validation-only verifiers are separate but bind by exact discovered identity;
 - a verifier receives the evaluated subject, matched providers, specialized adapters, and only its declared fixtures;
 - every applicable production relationship executes automatically, including an unknown future content type;
 - missing verifiers, contextual scenarios, fixtures, or projections become owned obligations rather than omissions;
 - contextual artifacts are selected only from resolved evidence and never become unconditional type support;
-- reporting and documentation render a neutral evaluated model instead of querying providers or enumerating current
-  types/features; and
-- normal validation discovers both product and validation contributions without a central suite list.
+- contract validation discovers validation contributions without a central suite list; and
+- reporting and documentation later render a neutral evaluated model instead of querying providers or enumerating
+  current types/features.
 
 ## Milestones
 
 ### 7.0 — Execution and Projection Architecture
 
 - [x] Approve decision `0023` and the Phase 7 sequence.
-- [ ] Define production contract/projection definitions, validation contribution discovery, structured execution
+- [x] Define production contract definitions, validation contribution discovery, structured execution
   results, and owned missing-artifact obligations.
-- [ ] Preserve the accepted optionality rule: a contract or projection is required only when its owning feature declares
+- [x] Preserve the accepted optionality rule: a contract or projection is required only when its owning feature declares
   it; partial content-type support remains valid.
-- [ ] Carry matched providers, specialized adapters, fixtures, and resolved context through selection without exposing a
+- [x] Carry matched providers, specialized adapters, fixtures, and resolved context through selection without exposing a
   generic capability-query API to application consumers.
-- [ ] Prove the entire mechanism with anonymous future types, features, providers, context, fixtures, verifiers, and
-  projections before migrating product suites.
+- [x] Prove contract discovery and execution with anonymous future types, features, providers, context, fixtures, and
+  verifiers before migrating product suites.
 
 ### 7.1 — Production Contract Migration
 
