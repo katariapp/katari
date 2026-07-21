@@ -245,9 +245,6 @@ class FeatureContractValidationTest {
     fun `validation classpath discovers an unknown feature verifier without a suite list`() {
         val serviceOwner = ContributionOwner("service.feature")
         val serviceFeature = FeatureId("service.feature")
-        val serviceContract = object : FeatureBehaviorContract {
-            override val id = FeatureArtifactId("service.behavior")
-        }
         val graph = assembleFeatureGraph(
             DiscoveredFeatureGraphContributions(
                 contentTypes = listOf(
@@ -261,7 +258,7 @@ class FeatureContractValidationTest {
                             FeatureIntegration(
                                 id = FeatureIntegrationId("service.integration"),
                                 prerequisites = CapabilityExpression.Always,
-                                behavioralContracts = listOf(serviceContract),
+                                behavioralContracts = listOf(ServiceLoadedValidationContract),
                             ),
                         ),
                     ),
@@ -274,7 +271,7 @@ class FeatureContractValidationTest {
         plan.isComplete shouldBe true
         plan.executions.single().verifier.verifier.contract shouldBe FeatureContractReference(
             serviceFeature,
-            serviceContract.id,
+            ServiceLoadedValidationContract,
         )
     }
 
@@ -297,14 +294,29 @@ class FeatureContractValidationTest {
         }
 
         val unknown = featureValidationContributor(featureOwner) {
+            val unknownContract = object : FeatureBehaviorContract {
+                override val id = FeatureArtifactId("unknown.behavior")
+            }
             add(
                 FeatureContractVerifier(
-                    FeatureContractReference(feature, FeatureArtifactId("unknown.behavior")),
+                    FeatureContractReference(feature, unknownContract),
                 ) { FeatureContractVerificationResult.Passed },
             )
         }
         shouldThrow<IllegalArgumentException> {
             planFeatureContractValidation(graph, evaluation, listOf(unknown))
+        }
+
+        val copiedDefinition = contract()
+        val copied = featureValidationContributor(featureOwner) {
+            add(
+                FeatureContractVerifier(
+                    FeatureContractReference(feature, copiedDefinition),
+                ) { FeatureContractVerificationResult.Passed },
+            )
+        }
+        shouldThrow<IllegalArgumentException> {
+            planFeatureContractValidation(graph, evaluation, listOf(copied))
         }
     }
 
@@ -315,7 +327,7 @@ class FeatureContractValidationTest {
         add(FeatureContractVerifier(reference(contract), FeatureContractVerification(verify)))
     }
 
-    private fun reference(contract: FeatureBehaviorContract) = FeatureContractReference(feature, contract.id)
+    private fun reference(contract: FeatureBehaviorContract) = FeatureContractReference(feature, contract)
 
     private fun contract(
         fixtures: List<mihon.feature.graph.ContractFixtureDefinition<*>> = emptyList(),
@@ -361,6 +373,10 @@ class FeatureContractValidationTest {
     private data class ExampleFixture(val state: String)
     private data class ExampleContext(val enabled: Boolean)
     private data class ExampleAdapter(val state: String)
+}
+
+internal data object ServiceLoadedValidationContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("service.behavior")
 }
 
 private inline fun <reified O : FeatureObligation> FeatureContractValidationPlan.graphIssues(): List<O> {

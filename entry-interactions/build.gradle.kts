@@ -24,6 +24,9 @@ dependencies {
     implementation(libs.bundles.coil)
 
     testImplementation(libs.bundles.test)
+    testImplementation(libs.bundles.serialization)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.unifile)
+    testImplementation(projects.featureValidation)
     testRuntimeOnly(libs.junit.platform.launcher)
 }

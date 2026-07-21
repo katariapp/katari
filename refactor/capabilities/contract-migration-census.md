@@ -48,9 +48,9 @@ test. The validation host must consume the same `EntryInteractionComposition` in
 - Expose one validation success result covering graph issues, validation issues, verifier failures, and verifier
   crashes.
 
-The current `FeatureContractReference(feature, contractId)` shape does not satisfy the exact-definition rule. A copied
-identifier could bind a verifier that never referenced the declaration it claims to implement. The first implementation
-milestone must change this binding before adding production verifiers.
+Phase 7.1.0 replaced `FeatureContractReference(feature, contractId)` with an identity reference to the exact definition.
+A copied definition carrying the same identifier is rejected because it never referenced the production declaration it
+claims to implement.
 
 ## Feature Disposition
 
@@ -158,10 +158,10 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.0 — Production Validation Host and Exact Binding
 
-- Bind verifiers/scenarios to exact production definitions.
-- Reuse the runtime Feature contributor installation and actual type-module contributions.
-- Establish module-local validation contributor discovery and one normal validation entry point.
-- Prove the unmodified production graph reports all currently missing verifier/scenario obligations before adding the
+- [x] Bind verifiers/scenarios to exact production definitions.
+- [x] Reuse the runtime Feature contributor installation and actual type-module contributions.
+- [x] Establish module-local validation contributor discovery and one normal validation entry point.
+- [x] Prove the unmodified production graph reports all currently missing verifier/scenario obligations before adding the
   first implementation.
 
 ### 7.1.1 — Fundamental Provider Contracts

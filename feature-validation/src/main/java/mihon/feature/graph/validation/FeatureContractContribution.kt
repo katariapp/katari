@@ -2,17 +2,27 @@ package mihon.feature.graph.validation
 
 import mihon.feature.graph.ContextEvidence
 import mihon.feature.graph.ContributionOwner
-import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContractScenarioId
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegrationId
 import java.util.ServiceLoader
 
-/** Stable reference to one behavioral contract declared by a production feature contribution. */
-data class FeatureContractReference(
+/** Identity reference to one exact behavioral contract definition declared by a production feature contribution. */
+class FeatureContractReference(
     val feature: FeatureId,
-    val contract: FeatureArtifactId,
-)
+    val contract: FeatureBehaviorContract,
+) {
+    override fun equals(other: Any?): Boolean {
+        return other is FeatureContractReference &&
+            feature == other.feature &&
+            contract === other.contract
+    }
+
+    override fun hashCode(): Int = 31 * feature.hashCode() + System.identityHashCode(contract)
+
+    override fun toString(): String = "FeatureContractReference(feature=$feature, contract=${contract.id})"
+}
 
 /** Framework-neutral executable validation owned by the feature that declared [contract]. */
 data class FeatureContractVerifier(

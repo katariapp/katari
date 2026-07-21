@@ -1,7 +1,6 @@
 package mihon.feature.graph.validation
 
 import mihon.feature.graph.ContributionOwner
-import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureId
 
 class ServiceLoadedValidationContributor : FeatureValidationContributor {
@@ -12,7 +11,7 @@ class ServiceLoadedValidationContributor : FeatureValidationContributor {
             FeatureContractVerifier(
                 contract = FeatureContractReference(
                     FeatureId("service.feature"),
-                    FeatureArtifactId("service.behavior"),
+                    ServiceLoadedValidationContract,
                 ),
                 verification = FeatureContractVerification { FeatureContractVerificationResult.Passed },
             ),

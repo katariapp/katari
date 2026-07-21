@@ -232,7 +232,7 @@ private data class DeclaredContract(
 )
 
 private fun FeatureGraph.declaredContracts(): Map<FeatureContractReference, DeclaredContract> {
-    return features
+    val declarations = features
         .flatMap { feature ->
             feature.integrations.flatMap { integration ->
                 integration.behavioralContracts.map { contract ->
@@ -240,16 +240,15 @@ private fun FeatureGraph.declaredContracts(): Map<FeatureContractReference, Decl
                 }
             }
         }
-        .groupBy({ it.first }, { it.second })
-        .mapValues { (reference, declarations) ->
-            val fixtureDefinitions = declarations.map { declaration ->
-                declaration.definition.fixtureRequirements.sortedBy { it.id.value }
-            }.distinct()
-            check(fixtureDefinitions.size == 1) {
-                "Contradictory behavioral contract definition $reference"
+    declarations
+        .groupBy { (reference) -> reference.feature to reference.contract.id }
+        .forEach { (identity, matchingDeclarations) ->
+            val first = matchingDeclarations.first().first.contract
+            check(matchingDeclarations.all { (reference) -> reference.contract === first }) {
+                "Behavioral contract $identity must reuse one exact definition"
             }
-            declarations.first()
         }
+    return declarations.associate { it }
 }
 
 private fun validateContributions(
@@ -289,7 +288,7 @@ private fun validateContributions(
         require(integration.contextInputs.isNotEmpty()) {
             "Scenario ${owned.scenario.id} targets context-free integration ${integration.id}"
         }
-        require(integration.behavioralContracts.any { it.id == owned.scenario.contract.contract }) {
+        require(integration.behavioralContracts.any { it === owned.scenario.contract.contract }) {
             "Scenario ${owned.scenario.id} targets a contract not declared by integration ${integration.id}"
         }
     }
@@ -302,7 +301,7 @@ private fun FeatureBehaviorContract.reference(subject: FeatureIntegrationSubject
     reference(subject.feature)
 
 private fun FeatureBehaviorContract.reference(feature: mihon.feature.graph.FeatureId): FeatureContractReference =
-    FeatureContractReference(feature, id)
+    FeatureContractReference(feature, this)
 
 private fun BehavioralContractSelection.hasEveryFixture(): Boolean {
     val supplied = fixtures.mapTo(mutableSetOf()) { it.definition.id }

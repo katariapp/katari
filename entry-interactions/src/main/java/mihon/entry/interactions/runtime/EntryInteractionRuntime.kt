@@ -6,15 +6,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import mihon.entry.interactions.anime.animeEntryTypeRuntimeModule
-import mihon.entry.interactions.book.bookEntryTypeRuntimeModule
 import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.host.EntryMigrationConsequenceHost
 import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.EntryMigrationExecutionHost
 import mihon.entry.interactions.host.EntryMigrationPreparationHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
-import mihon.entry.interactions.manga.mangaEntryTypeRuntimeModule
 import mihon.entry.interactions.reader.settings.ReaderBasePreferences
 import mihon.entry.interactions.settings.DefaultViewerSettingBinder
 import mihon.entry.interactions.settings.EntryInteractionPreferences
@@ -89,10 +86,8 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             scope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
         )
     }
-    val typeRuntimeContributions = listOf(
-        mangaEntryTypeRuntimeModule(dependencies.profilePreferenceOwners),
-        animeEntryTypeRuntimeModule(dependencies.profilePreferenceOwners),
-        bookEntryTypeRuntimeModule(dependencies.profilePreferenceOwners),
+    val typeRuntimeContributions = productionEntryTypeRuntimeModules(
+        dependencies.profilePreferenceOwners,
     ).map { module ->
         module.install(this, app).also { it.validate(module.type) }
     }
@@ -106,44 +101,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryInteractionComposition> {
         createEntryInteractionComposition(
             plugins = typeRuntimeContributions.map(EntryTypeRuntimeContribution::plugin),
-            featureContributors = listOf(
-                EntryOpenFeatureContributor,
-                EntryContinueFeatureContributor,
-                EntryDownloadRuntimeFeatureContributor,
-                EntryDownloadActionFeatureContributor,
-                EntryAutomaticDownloadFeatureContributor,
-                EntryDownloadLifecycleFeatureContributor,
-                EntryDownloadConfigurationFeatureContributor,
-                EntryDownloadMaintenanceFeatureContributor,
-                EntryConsumptionFeatureContributor,
-                EntryBookmarkFeatureContributor,
-                EntryUpdateEligibilityFeatureContributor,
-                EntryProgressFeatureContributor,
-                EntryPlaybackPreferencesFeatureContributor,
-                EntryChildListFeatureContributor,
-                EntryLibraryFilterFeatureContributor,
-                EntryChildGroupFilterFeatureContributor,
-                EntryPreviewFeatureContributor,
-                EntryImmersiveFeatureContributor,
-                EntryRelatedEntriesFeatureContributor,
-                EntryLibraryProgressFeatureContributor,
-                EntryLibraryUpdateRefreshFeatureContributor,
-                EntryTypePresentationFeatureContributor,
-                EntryLibraryUpdateNotificationFeatureContributor,
-                EntryViewerSettingsFeatureContributor,
-                EntryMediaCacheFeatureContributor,
-                EntryMergeFeatureContributor,
-                EntryMigrationFeatureContributor,
-                EntryCatalogueFeatureContributor,
-                EntrySourceSettingsFeatureContributor,
-                EntrySourceHomeFeatureContributor,
-                EntryCoverNetworkFeatureContributor,
-                EntrySourceRefreshFeatureContributor,
-                EntryWebViewFeatureContributor,
-                EntryDeepLinkFeatureContributor,
-                EntryTrackerSourceAdapterFeatureContributor,
-                EntryTrackingFeatureContributor,
-            ),
+            featureContributors = productionEntryFeatureContributors(),
         )
     }
     addSingletonFactory<EntryCatalogueFeature> {

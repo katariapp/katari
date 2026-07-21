@@ -88,6 +88,7 @@ Updated: 2026-07-21
 - Phase 7 planning commit: `b3dc60105` (`(docs): define contract validation phase`)
 - Application compilation-baseline commit: `d25aacc27` (`(fix): restore application compilation`)
 - Phase 7.0 contract-execution architecture commit: `d7b363bff` (`(feat): execute selected feature contracts`)
+- Phase 7.1 production contract census commit: `6be1cec52` (`(docs): census production feature contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -95,9 +96,9 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1 Production contract census and migration split
-- State: The exhaustive production contract census and bounded migration sequence are documented for review. No
-  production verifier, report, or documentation projection has migrated.
+- Milestone: Phase 7.1.0 Production validation host and exact-definition binding
+- State: The production-backed validation gate is implemented and validated for review. No production verifier,
+  report, or documentation projection has migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1396,7 +1397,22 @@ Focused Phase 7.1 census findings:
 - Contract migration is split into the validation host, fundamental providers, Downloads, Library/media, Source/context,
   workflows/tracking, and final reconciliation. Reporting and documentation remain later sequential workstreams.
 
+Focused Phase 7.1.0 validation-host findings:
+
+- Contract verifier and scenario references now retain the exact `FeatureBehaviorContract` object. Equality is
+  identity-based, so recreating a definition with the same Feature and artifact identifiers cannot satisfy the binding.
+- Runtime installation and validation now share one production type-module boundary and one production Feature
+  contributor boundary. These lists compose owners; they do not encode type support or contract applicability.
+- The validation-only host builds Manga, Anime, and Book through their production runtime modules with controlled host
+  services, then validates the resulting `EntryInteractionComposition`. It does not synthesize provider lists.
+- The unmodified production composition exposes every currently declared definition as a missing-verifier obligation,
+  exposes missing contextual scenarios, schedules no execution, and returns one unsuccessful aggregate result.
+- `feature-validation` is a test-only dependency of `entry-interactions`; it remains absent from application runtime
+  dependencies. No production verifier or fixture was added.
+- Formatting, Feature Graph tests, Feature Validation tests, Entry Interactions tests, and FOSS application compilation
+  pass.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1 census after review. Then implement only the production validation host and exact-definition binding
-gate; stop before adding the first production verifier.
+Commit the Phase 7.1.0 validation host after review. Then migrate only the fundamental provider contracts in Phase 7.1.1
+and stop before beginning Download contracts.
