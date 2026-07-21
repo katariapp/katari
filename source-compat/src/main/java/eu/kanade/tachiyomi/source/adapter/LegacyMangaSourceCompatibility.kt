@@ -1,23 +1,9 @@
-package eu.kanade.tachiyomi.source
+package eu.kanade.tachiyomi.source.adapter
 
-import eu.kanade.tachiyomi.source.adapter.LegacyMangaSourceAdapter
+import eu.kanade.tachiyomi.source.AsyncCatalogueFilterSource
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-
-// Compatibility overloads for already-installed legacy manga catalogue sources.
-suspend fun CatalogueSource.resolveFilterList(): EntryFilterList {
-    return when (this) {
-        is AsyncCatalogueFilterSource -> getFilterListAsync().toEntryFilterList()
-        else -> getFilterList().toEntryFilterList()
-    }
-}
-
-fun CatalogueSource.defaultBackgroundFilterList(): EntryFilterList {
-    return when (this) {
-        is AsyncCatalogueFilterSource -> EntryFilterList()
-        else -> getFilterList().toEntryFilterList()
-    }
-}
+import eu.kanade.tachiyomi.source.toEntryFilterList
 
 fun UnifiedSource.hasAsyncFilters(): Boolean {
     return (this as? LegacyMangaSourceAdapter)?.source is AsyncCatalogueFilterSource
@@ -32,4 +18,9 @@ suspend fun UnifiedSource.resolveFilterList(): EntryFilterList {
 
 fun UnifiedSource.defaultBackgroundFilterList(): EntryFilterList {
     return if (hasAsyncFilters()) EntryFilterList() else getFilterList()
+}
+
+/** Returns legacy implementation identity without exposing the wrapped source as an application API. */
+fun UnifiedSource.legacySourceClassName(): String? {
+    return (this as? LegacyMangaSourceAdapter)?.source?.let { it::class.qualifiedName }
 }

@@ -83,6 +83,7 @@ Updated: 2026-07-21
 - Phase 6.7.4 Tracking automation commit: `bba933301` (`(refactor): migrate tracking automation`)
 - Phase 6.7.5 Tracking accounts commit: `5322276d9` (`(refactor): migrate tracking accounts`)
 - Phase 6.7.6 Tracking collection commit: `a3524f04c` (`(refactor): migrate tracking collection consumers`)
+- Phase 6.7.7 Tracking reconciliation commit: `ac5db98eb` (`(refactor): reconcile tracking boundaries`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -90,8 +91,8 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.7 Tracking reconciliation
-- State: Phase 6.7.7 is implemented and validating for review. Phase 6.8 has not started.
+- Milestone: Phase 6.8 Compatibility reconciliation and context census
+- State: Phase 6.8 is implemented and validating for review. Phase 7 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1306,7 +1307,28 @@ Focused Phase 6.7.7 findings:
   type matrix. Tracking operation, automation, account, collection, and graph tests remain behavioral.
 - `C18`, `C19`, and Tracking's assigned `C20`/`C22` relationships are closed with no unclassified production consumer.
 
+Focused Phase 6.8 findings:
+
+- Bundled Local now advertises Manga through current descriptive `SourceMetadata`; its returned Entry type remains the
+  runtime authority.
+- The legacy Manga adapter translates the old unmetered marker into the current source contract while preserving its
+  exact catalogue, preferences, WebView, image, home, and related-entry interface shape.
+- Legacy adapter inspection and async-filter compatibility operations live in `source-compat`. Application code cannot
+  import the concrete adapter or interpret the legacy metering marker.
+- Backup tracking restore and download-option selection backup/restore no longer contain Manga/Anime authorization
+  gates. They follow actual stored data, so future tracker and F07 provider participation requires no backup edit.
+- Manga viewer-bit and page-progress conversion remains named wire compatibility. Raw image/subtitle resolution,
+  Local/stub state, Entry/selection/preferences, and platform/renderer conditions retain their already assigned Feature,
+  compatibility, or type-owned mechanics disposition.
+- Boundary validation replaces directory-wide exemptions with exact reviewed composition/compatibility files. New
+  source, backup, migration, tracking, or presentation files cannot silently inherit type-gate authority.
+- The repeated inventory probes find no deleted capability authority and no unclassified `C01`–`C24` production
+  consumer.
+- Formatting, compatibility tests, the Local build, Entry-interactions tests, build-logic boundary tests, and boundary
+  validation pass. Focused app testing reaches only the same unchanged Anime debug-launcher and `MoreTab` compile
+  failures recorded before this milestone.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.7 after review, then begin Phase 6.8 compatibility reconciliation and the final Phase 6 context census.
-Explicitly notify the user when Phase 7 is reached.
+Commit Phase 6.8 after review. Then explicitly notify the user that Phase 7 is beginning before starting its first
+milestone.

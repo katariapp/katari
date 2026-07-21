@@ -70,6 +70,10 @@ enhanced availability semantics, and presentation order. Settings derives ordina
 instead of naming built-in trackers. Stored credentials are retrieved only for a selected credential account and are
 not part of the observable snapshot. Backup supplies referenced service IDs and receives logged-out service names.
 
+Tracking-record serialization and restoration remain backup-owned data transport. A record present in the backup is
+restored for its Entry without a Manga gate; tracker registration still owns current application behavior, while the
+backup path does not silently discard future-type data.
+
 Concrete OAuth callback parsing remains tracker-owned platform mechanics. It may access the tracker registry to finish
 service-specific protocol state, but it does not decide Entry applicability, create settings rows, or expose another
 application account API.

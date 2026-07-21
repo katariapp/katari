@@ -74,7 +74,7 @@ class EntryBackupCreatorTest {
 
     @ParameterizedTest(name = "serializes {0} backup with chapters={1}")
     @MethodSource("backupCases")
-    fun `playback preferences follow the feature independently from chapters`(
+    fun `portable preferences are serialized without current type gates`(
         type: EntryType,
         chaptersEnabled: Boolean,
     ) = runTest {
@@ -118,7 +118,7 @@ class EntryBackupCreatorTest {
         decoded.playbackPreferences?.playerQualityMode shouldBe "specific_height"
         decoded.playbackPreferences?.playerQualityHeight shouldBe 1080
 
-        if (type == EntryType.ANIME && chaptersEnabled) {
+        if (chaptersEnabled) {
             decoded.downloadPreferences?.dubKey shouldBe "download-dub"
             decoded.downloadPreferences?.qualityMode shouldBe "data_saving"
         } else {
@@ -128,7 +128,7 @@ class EntryBackupCreatorTest {
         coVerify(exactly = if (chaptersEnabled) 1 else 0) {
             fixture.entryChapterRepository.getChaptersByEntryIdAwait(entry.id, applyScanlatorFilter = false)
         }
-        coVerify(exactly = if (type == EntryType.ANIME && chaptersEnabled) 1 else 0) {
+        coVerify(exactly = if (chaptersEnabled) 1 else 0) {
             fixture.downloadPreferencesRepository.getByEntryId(entry.id)
         }
         coVerify(exactly = 1) {

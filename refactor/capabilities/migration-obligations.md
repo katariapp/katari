@@ -241,7 +241,8 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F06 owns structured lifecycle events, cleanup policy, download-ahead, category exclusions, physical cleanup dispatch,
   and Bookmark protection derived from Download plus Bookmarking.
 - F07 owns contextual options and global specialized-setting visibility through independent provider relationships; it
-  contains no per-type settings map or Manga presentation gate.
+  contains no per-type settings map or Manga presentation gate. Persisted option selections are backed up by data
+  presence rather than an Anime gate, so a future option provider receives the same portable-data consequence.
 - F08 owns cache invalidation, source/title rename, whole-Entry inspection/removal, migration cleanup, and cleanup before
   source/database purge.
 - Application production code has no raw `EntryDownloadInteraction` reference. The boundary census now reports 25
@@ -311,8 +312,9 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F16 owns provider-derived backup snapshot, backup restore, and migration-copy consequences.
 - Backup creation no longer uses `EntryType.ANIME` to authorize playback-preference serialization; application backup
   and migration consumers depend only on the structured Feature boundary.
-- Supported data absence, provider absence, and cross-type copy are distinct outcomes. Anime download preferences and
-  legacy wire conversion remain separate compatibility concerns.
+- Supported data absence, provider absence, and cross-type copy are distinct outcomes. Download option selections use
+  their independent F07 storage and no longer require a current-type backup gate; legacy wire conversion remains a
+  separate compatibility concern.
 - A synthetic provider activates every shared consequence without a concrete type list, while a partial type with no
   provider remains valid and returns structured inapplicability.
 

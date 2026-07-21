@@ -1,8 +1,8 @@
 package eu.kanade.tachiyomi.ui.browse.catalog
 
+import eu.kanade.tachiyomi.source.adapter.hasAsyncFilters
+import eu.kanade.tachiyomi.source.adapter.resolveFilterList
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
-import eu.kanade.tachiyomi.source.hasAsyncFilters
-import eu.kanade.tachiyomi.source.resolveFilterList
 import tachiyomi.domain.source.service.SourceManager
 
 /**

@@ -140,7 +140,8 @@ Keep authentication values out of logs and public error messages. Removing a pre
 
 Implement `eu.kanade.tachiyomi.source.entry.UnmeteredSource` to affect Katari's warning policy during library updates
 and type-owned download queue processing. The legacy `eu.kanade.tachiyomi.source.UnmeteredSource` contract is retained
-for source ABI compatibility but is not the current runtime capability. Neither contract alters Android network
-accounting, forces an unmetered transport, or guarantees that the provider transfers little data.
+for source ABI compatibility; the compatibility adapter translates that legacy marker into the current contract. New
+extensions should implement only the Entry API contract. Neither contract alters Android network accounting, forces an
+unmetered transport, or guarantees that the provider transfers little data.
 
 Only opt in when the source's update traffic should intentionally be excluded from that warning.

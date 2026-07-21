@@ -126,6 +126,49 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `new files under application source package cannot silently become description owners`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/eu/kanade/tachiyomi/source/NewSourcePolicy.kt" to
+                    """
+                        package eu.kanade.tachiyomi.source
+
+                        import eu.kanade.tachiyomi.source.entry.SourceMetadata
+
+                        class NewSourcePolicy(private val metadata: SourceMetadata)
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "application source availability and description must use EntryCatalogueFeature"
+        error.message shouldContain "SourceMetadata"
+    }
+
+    @Test
+    fun `legacy adapter identity and metering marker cannot escape source compatibility`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.source.UnmeteredSource
+                import eu.kanade.tachiyomi.source.adapter.LegacyMangaSourceAdapter
+
+                class AppFeature(
+                    private val adapter: LegacyMangaSourceAdapter,
+                    private val legacyPolicy: UnmeteredSource,
+                )
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "legacy Manga adapter identity is confined to source-compat"
+        error.message shouldContain "legacy UnmeteredSource is source-compat input"
+    }
+
+    @Test
     fun `application consumers cannot bypass source action Features through raw contracts`() {
         createBaseFixture(
             appSource = """
@@ -697,6 +740,26 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `new domain source files cannot silently become legacy media owners`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "domain/src/main/java/tachiyomi/domain/source/NewLegacyMediaPolicy.kt" to
+                    """
+                        package tachiyomi.domain.source
+
+                        import eu.kanade.tachiyomi.source.model.Page
+
+                        class NewLegacyMediaPolicy(private val page: Page)
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "not legacy Page"
+    }
+
+    @Test
     fun `generic code cannot reference anime player resolver internals directly`() {
         createBaseFixture(
             additionalFiles = mapOf(
@@ -880,6 +943,30 @@ class EntryInteractionBoundaryCheckTaskTest {
                                 EntryType.MANGA -> EntryTypePresentation()
                                 EntryType.ANIME -> EntryTypePresentation()
                             }
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "generic EntryType MANGA/ANIME mapping must use EntryTypePresentationFeature"
+    }
+
+    @Test
+    fun `backup package cannot silently add a new current type mapping`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/eu/kanade/tachiyomi/data/backup/NewTypePolicy.kt" to
+                    """
+                        package eu.kanade.tachiyomi.data.backup
+
+                        import eu.kanade.tachiyomi.source.entry.EntryType
+
+                        fun label(type: EntryType): String = when (type) {
+                            EntryType.MANGA -> "Manga"
+                            EntryType.ANIME -> "Anime"
+                            else -> "Other"
                         }
                     """.trimIndent(),
             ),

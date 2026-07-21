@@ -62,6 +62,8 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
             "presentation-widget/src/main/java",
             "source-local/src/main/java",
             "source-compat/src/main/java",
+            "source-api/src/commonMain/kotlin",
+            "entry-source-api/src/commonMain/kotlin",
             "entry-interactions/src/main/java",
             "entry-interactions/api/src/main/java",
             "entry-interactions/spi/src/main/java",
@@ -228,6 +230,7 @@ private class EntryInteractionBoundaryRules(
             checkInternalApiReferences(file, findings)
             checkLibraryProgressDomainPortReferences(file, findings)
             checkCatalogueFeatureBypass(file, findings)
+            checkLegacySourceCompatibilityBoundary(file, findings)
             checkSourceActionFeatureBypass(file, findings)
             checkSourceRefreshFeatureBypass(file, findings)
             checkSourceRefreshMechanicsBypass(file, findings)
@@ -481,21 +484,25 @@ private class EntryInteractionBoundaryRules(
     }
 
     private fun checkCatalogueFeatureBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
-        if (file.isTestPath() || !file.relativePath.startsWith("app/src/main/")) return
+        if (file.isTestPath()) return
+        val isApplicationLayer = file.relativePath.startsWith("app/src/main/") ||
+            file.relativePath.startsWith("data/src/main/") ||
+            file.relativePath.startsWith("domain/src/main/") ||
+            file.relativePath.startsWith("presentation-core/src/main/") ||
+            file.relativePath.startsWith("presentation-widget/src/main/")
+        if (!isApplicationLayer) return
 
-        file.findReference("EntrySourceDescriptionResolutionPort")?.let { reference ->
-            findings += Finding(
-                relativePath = file.relativePath,
-                lineNumber = reference.lineNumber,
-                reason = "application consumers must use EntryCatalogueFeature, not its Domain assembly port",
-            )
+        if (file.relativePath !in SOURCE_DESCRIPTION_PORT_FILES) {
+            file.findReference("EntrySourceDescriptionResolutionPort")?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "application consumers must use EntryCatalogueFeature, not its Domain assembly port",
+                )
+            }
         }
 
-        val ownsSourceComposition = file.relativePath.startsWith(
-            "app/src/main/java/eu/kanade/tachiyomi/source/",
-        ) || file.relativePath ==
-            "app/src/main/java/eu/kanade/tachiyomi/extension/util/ExtensionLoader.kt"
-        if (ownsSourceComposition) return
+        if (file.relativePath in SOURCE_DESCRIPTION_COMPOSITION_FILES) return
 
         file.imports
             .filter { it.importedFqName in RAW_SOURCE_DESCRIPTION_IMPORTS }
@@ -505,6 +512,31 @@ private class EntryInteractionBoundaryRules(
                     lineNumber = import.lineNumber,
                     reason = "application source availability and description must use EntryCatalogueFeature, not " +
                         "raw source contract ${import.importedFqName}",
+                )
+            }
+    }
+
+    private fun checkLegacySourceCompatibilityBoundary(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath() || file.relativePath.startsWith("source-compat/src/main/")) return
+
+        file.imports
+            .filter { it.importedFqName == LEGACY_MANGA_SOURCE_ADAPTER }
+            .forEach { import ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = import.lineNumber,
+                    reason = "legacy Manga adapter identity is confined to source-compat; consumers must use " +
+                        "current source contracts or a compatibility operation",
+                )
+            }
+
+        file.imports
+            .filter { it.importedFqName == LEGACY_UNMETERED_SOURCE }
+            .forEach { import ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = import.lineNumber,
+                    reason = "legacy UnmeteredSource is source-compat input, not a current runtime policy contract",
                 )
             }
     }
@@ -669,6 +701,7 @@ private class EntryInteractionBoundaryRules(
         if (file.isTestPath()) return
         val ownsContract = file.relativePath.startsWith("source-compat/src/main/") ||
             file.relativePath.startsWith("source-local/src/main/") ||
+            file.relativePath.startsWith("entry-source-api/src/") ||
             file.relativePath ==
             "entry-interactions/src/main/java/mihon/entry/interactions/source/EntryWebViewFeature.kt"
         if (ownsContract) return
@@ -919,8 +952,7 @@ private class EntryInteractionBoundaryRules(
     private fun KotlinSourceFile.isSourceMediaResolutionGuardedPath(): Boolean {
         if (isRootOrTypeModuleOrTestPath()) return false
         if (!SOURCE_MEDIA_RESOLUTION_GUARDED_ROOTS.any { relativePath.startsWith(it) }) return false
-        if (relativePath in SOURCE_MEDIA_RESOLUTION_ALLOWED_FILES) return false
-        return SOURCE_MEDIA_RESOLUTION_ALLOWED_PREFIXES.none { relativePath.startsWith(it) }
+        return relativePath !in SOURCE_MEDIA_RESOLUTION_ALLOWED_FILES
     }
 
     private fun KotlinSourceFile.isMediaCacheMaintenanceGuardedPath(): Boolean {
@@ -929,17 +961,7 @@ private class EntryInteractionBoundaryRules(
     }
 
     private fun KotlinSourceFile.isExhaustiveEntryTypeMappingAllowedPath(): Boolean {
-        return relativePath.startsWith("entry-interactions/") ||
-            isTestPath() ||
-            relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt" ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/data/backup/") ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/data/track/") ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/source/") ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/domain/source/") ||
-            relativePath.startsWith("app/src/main/java/mihon/core/migration/") ||
-            relativePath.startsWith("app/src/main/java/mihon/feature/migration/") ||
-            relativePath.startsWith("source-local/") ||
-            relativePath.startsWith("source-compat/")
+        return isTestPath() || relativePath in EXHAUSTIVE_ENTRY_TYPE_MAPPING_ALLOWED_FILES
     }
 
     private fun KotlinSourceFile.isStrictImportCheckedPath(): Boolean {
@@ -957,14 +979,8 @@ private class EntryInteractionBoundaryRules(
     }
 
     private fun KotlinSourceFile.isTypeBranchAllowedPath(): Boolean {
-        return relativePath.startsWith("entry-interactions/") ||
-            isTestPath() ||
-            relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt" ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/presentation/") ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/data/backup/") ||
-            relativePath.startsWith("app/src/main/java/eu/kanade/tachiyomi/source/") ||
-            relativePath.startsWith("app/src/main/java/mihon/core/migration/") ||
-            relativePath.startsWith("app/src/main/java/mihon/feature/migration/")
+        return isRootOrTypeModuleOrTestPath() ||
+            relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt"
     }
 
     private fun KotlinSourceFile.isPublicTypeModuleApiPath(): Boolean {
@@ -1003,6 +1019,25 @@ private class EntryInteractionBoundaryRules(
         )
 
         private const val LEGACY_MANGA_PAGE_FQ_NAME = "eu.kanade.tachiyomi.source.model.Page"
+        private const val LEGACY_MANGA_SOURCE_ADAPTER =
+            "eu.kanade.tachiyomi.source.adapter.LegacyMangaSourceAdapter"
+        private const val LEGACY_UNMETERED_SOURCE = "eu.kanade.tachiyomi.source.UnmeteredSource"
+
+        private val SOURCE_DESCRIPTION_COMPOSITION_FILES = setOf(
+            "app/src/main/java/eu/kanade/tachiyomi/extension/util/ExtensionLoader.kt",
+            "app/src/main/java/eu/kanade/tachiyomi/source/AndroidSourceManager.kt",
+            "app/src/main/java/eu/kanade/tachiyomi/source/SourceExtensions.kt",
+            "data/src/main/java/tachiyomi/data/source/CatalogPagingSource.kt",
+            "domain/src/main/java/tachiyomi/domain/source/service/CatalogSource.kt",
+            "domain/src/main/java/tachiyomi/domain/source/service/SourceManager.kt",
+        )
+
+        private val SOURCE_DESCRIPTION_PORT_FILES = setOf(
+            "data/src/main/java/tachiyomi/data/source/CatalogSourceRepositoryImpl.kt",
+            "data/src/main/java/tachiyomi/data/source/SourceRepositoryImpl.kt",
+            "domain/src/main/java/tachiyomi/domain/entry/interactor/GetLibraryEntries.kt",
+            "domain/src/main/java/tachiyomi/domain/source/service/EntrySourceDescriptionResolutionPort.kt",
+        )
 
         private val RAW_SOURCE_DESCRIPTION_IMPORTS = setOf(
             "eu.kanade.tachiyomi.source.entry.EntryCatalogueSource",
@@ -1049,13 +1084,14 @@ private class EntryInteractionBoundaryRules(
             "presentation-widget/src/main/java/",
         )
 
-        private val SOURCE_MEDIA_RESOLUTION_ALLOWED_PREFIXES = listOf(
-            "app/src/main/java/eu/kanade/tachiyomi/source/",
-            "domain/src/main/java/tachiyomi/domain/source/",
-        )
-
         private val SOURCE_MEDIA_RESOLUTION_ALLOWED_FILES = setOf(
             "app/src/main/java/eu/kanade/tachiyomi/data/cache/MangaPageCache.kt",
+            "domain/src/main/java/tachiyomi/domain/source/model/StubSource.kt",
+        )
+
+        private val EXHAUSTIVE_ENTRY_TYPE_MAPPING_ALLOWED_FILES = setOf(
+            "entry-interactions/src/main/java/mihon/entry/interactions/library/" +
+                "EntryLibraryUpdateNotificationRouting.kt",
         )
 
         private val MEDIA_CACHE_MAINTENANCE_FORBIDDEN_TYPES = setOf(

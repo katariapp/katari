@@ -1214,11 +1214,44 @@ or declaration-restatement test remains.
 
 ### 6.8 — Compatibility Reconciliation and Context Census
 
-- [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current
+- [x] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current
   source contracts rather than a parallel support authority.
-- [ ] Reconcile every multi-owner row (`C07`, `C17`, `C20`–`C23`) against every assigned Feature consequence.
-- [ ] Re-run the inventory probes and classify every new direct source/tracker/type/context gate before Phase 7.
-- [ ] Stop with no unclassified `C01`–`C24` consumer and no broad exception that future code can silently join.
+- [x] Reconcile every multi-owner row (`C07`, `C17`, `C20`–`C23`) against every assigned Feature consequence.
+- [x] Re-run the inventory probes and classify every new direct source/tracker/type/context gate before Phase 7.
+- [x] Stop with no unclassified `C01`–`C24` consumer and no broad exception that future code can silently join.
+
+The compatibility pass found two translations that were recorded but not executable. Bundled Local produced Manga
+Entries without advertising that fact through current `SourceMetadata`, and the legacy adapter discarded the old
+`UnmeteredSource` marker while wrapping a source. Local now advertises Manga descriptively, while legacy metering is
+translated into the current marker without changing any other optional source contract. Returned Entry types remain
+authoritative in both cases.
+
+Concrete legacy-adapter inspection and async-filter compatibility operations now live in `source-compat`. Application
+consumers can invoke the narrow compatibility operations but cannot import the adapter identity or interpret the legacy
+metering marker. Exact boundary sets replace directory-wide exemptions for source description assembly, legacy media
+resolution, and current-type mappings, so placing a future file under `source`, `backup`, `migration`, or presentation
+does not silently grant authority.
+
+The multi-owner pass found two application gates that were not compatibility facts. Backup creation already persisted
+tracking rows for every Entry type but restoration admitted Manga only. Download option selections used entry-generic
+storage but backup and restore admitted Anime only. Both now follow the presence of actual persisted data, allowing a
+future tracker or F07 option provider to receive the shared backup consequence without another type edit. Manga-only
+legacy viewer-bit and page-progress conversion remains explicitly compatibility-owned.
+
+The repeated `C01`–`C24` probes found no other unclassified production consumer. `C07` raw image-page access remains in
+current/legacy source contracts, purpose-specific root Features, and type-owned media mechanics. `C17` local/stub facts
+remain operation evidence for their individual source, Download, Library, and presentation consequences. `C20`–`C23`
+state, selection, preferences, platform, renderer, format, and protection facts remain either Feature request evidence,
+named wire compatibility, or type-owned live mechanics; none is an unconditional type-support declaration.
+
+Manifesto comparison found owner declarations, automatic shared consequences, valid partial support, explicit
+compatibility translation, and structural checks that require classification instead of a growing consumer allowlist.
+No capability catalogue, mandatory operation, current-type support matrix, generic context manager, or parallel legacy
+authority was introduced.
+
+Formatting, source-compat tests, the Local-source build, all Entry-interactions tests, focused build-logic tests, and
+boundary validation pass. The focused backup test reaches only the unchanged application compile failures in the Anime
+debug launcher and `MoreTab`; neither file is part of this milestone.
 
 Each numbered milestone is a review-and-commit stop. A later milestone does not begin until the previous milestone is
 accepted.

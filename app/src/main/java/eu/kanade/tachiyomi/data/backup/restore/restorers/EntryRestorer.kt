@@ -226,9 +226,7 @@ class EntryRestorer(
         restoreCategories(entry, backupEntry.categories, backupCategories)
         restoreChapters(entry, backupEntry.chapters)
         restoreHistory(entry, backupEntry.history)
-        if (entry.type == EntryType.MANGA) {
-            restoreTracking(entry, backupEntry.tracking)
-        }
+        restoreTracking(entry, backupEntry.tracking)
         childGroupFilterFeature.restore(entry, backupEntry.excludedScanlators.toSet())
         restorePlaybackPreferences(entry, backupEntry.playbackPreferences)
         val normalizedEntry = restoreViewerSettingOverrides(entry, backupEntry)
@@ -239,9 +237,7 @@ class EntryRestorer(
             legacyPlaybackStates = backupEntry.playbackStates,
             states = backupEntry.progressStates,
         )
-        if (entry.type == EntryType.ANIME) {
-            restoreDownloadPreferences(normalizedEntry, backupEntry.downloadPreferences)
-        }
+        restoreDownloadPreferences(normalizedEntry, backupEntry.downloadPreferences)
         val withInterval = FetchInterval(
             entryChapterRepository,
         ).update(normalizedEntry, now, currentFetchWindow)

@@ -8,7 +8,7 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.util.ioCoroutineScope
 import eu.kanade.tachiyomi.extension.ExtensionManager
-import eu.kanade.tachiyomi.source.defaultBackgroundFilterList
+import eu.kanade.tachiyomi.source.adapter.defaultBackgroundFilterList
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher

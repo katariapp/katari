@@ -34,6 +34,7 @@ behavior it directly supplies.
 | Contextual option absence | A present provider may resolve no choices for the current source/media. The screen falls back to the ordinary F04 download path instead of inventing a negative type declaration. |
 | Selected option dispatch | Entry invokes `EntryDownloadOptionsFeature`; application code no longer calls raw download-option dispatch. |
 | Anime options provider | Resolves stream, dub, subtitle, and quality choices from the actual source/media and persists the selected values while queueing. It remains behind the feature boundary. |
+| Backup and restore | Persisted option selections are portable entry data. Backup includes/restores them when present rather than using Anime as a second authorization gate. |
 | Manga settings providers | Four independent bindings describe the preferences actually consumed by Manga archive/page download behavior. No combined settings set or empty/default provider is registered. |
 
 Anime option discovery intentionally does not share subtitle resolution with player or downloader execution. An option

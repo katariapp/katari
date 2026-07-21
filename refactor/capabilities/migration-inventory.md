@@ -320,6 +320,17 @@ ownership, neutral previews no longer construct trackers, and package-derived va
 persisted-record leakage without consumer, implementation, or content-type allowlists. `C18`, `C19`, and Tracking's
 assigned `C20`/`C22` consequences are closed.
 
+Phase 6.8 translates both C24 boundaries into current contracts: bundled Local advertises Manga through descriptive
+`SourceMetadata`, and legacy sources carrying the old unmetered marker retain the current metering contract after
+adaptation. Concrete adapter inspection and async-filter compatibility live in `source-compat`; application code sees
+only narrow compatibility operations. The final multi-owner census also removes Manga-only tracking restore and
+Anime-only download-option backup/restore gates. Both now follow actual stored data, while Manga viewer/page conversion
+remains named wire compatibility. `C07`, `C17`, and `C20`–`C23` have no other unclassified consumer.
+
+Boundary validation now uses exact reviewed files for Domain source-description assembly, legacy media access, and the
+frozen notification-route mapping. Previous directory-wide source, backup, tracking, migration, and presentation
+exemptions are removed, so a new file must use its Feature or receive an explicit reviewed classification.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

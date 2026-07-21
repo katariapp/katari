@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.data.backup.models.toBackupChapter
 import eu.kanade.tachiyomi.data.backup.models.toBackupEntry
 import eu.kanade.tachiyomi.data.backup.models.toBackupEntryProgressState
 import eu.kanade.tachiyomi.data.backup.models.toBackupViewerSettingOverride
-import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.EntryChildGroupFilterFeature
 import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
 import mihon.entry.interactions.EntryMergeBackupFeature
@@ -96,7 +95,7 @@ class EntryBackupCreator(
             entryObject.progressStates = progressSnapshot?.states.orEmpty().map { it.toBackupEntryProgressState() }
         }
 
-        if (entry.type == EntryType.ANIME && options.chapters) {
+        if (options.chapters) {
             val downloadPreferences = downloadPreferencesRepository.getByEntryId(entry.id)
             if (downloadPreferences != null) {
                 entryObject.downloadPreferences = BackupDownloadPreferences(
