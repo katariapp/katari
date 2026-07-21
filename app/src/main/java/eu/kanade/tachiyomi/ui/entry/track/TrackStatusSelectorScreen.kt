@@ -15,16 +15,16 @@ import eu.kanade.presentation.util.Screen
 import kotlinx.coroutines.flow.update
 import mihon.entry.interactions.EntryTrackingFeature
 import mihon.entry.interactions.EntryTrackingMutation
+import mihon.entry.interactions.EntryTrackingRecord
 import mihon.entry.interactions.EntryTrackingServiceDescriptor
 import tachiyomi.core.common.util.lang.launchNonCancellable
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.track.model.EntryTrack
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 internal data class TrackStatusSelectorScreen(
     private val entry: Entry,
-    private val track: EntryTrack,
+    private val track: EntryTrackingRecord,
     private val service: EntryTrackingServiceDescriptor,
 ) : Screen() {
 
@@ -47,7 +47,7 @@ internal data class TrackStatusSelectorScreen(
 
     private class Model(
         private val entry: Entry,
-        track: EntryTrack,
+        track: EntryTrackingRecord,
         private val service: EntryTrackingServiceDescriptor,
         private val trackingFeature: EntryTrackingFeature = Injekt.get(),
     ) : StateScreenModel<Model.State>(State(track.status)) {

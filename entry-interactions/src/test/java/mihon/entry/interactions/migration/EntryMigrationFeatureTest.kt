@@ -377,7 +377,7 @@ class EntryMigrationFeatureTest {
                 val target = args[1] as Entry
 
                 @Suppress("UNCHECKED_CAST")
-                val tracks = args[2] as List<tachiyomi.domain.track.model.EntryTrack>
+                val tracks = args[2] as List<EntryTrackingRecord>
                 EntryTrackingMigrationPreparationResult.Prepared(
                     tracks.map { track ->
                         track.copy(entryId = target.id)

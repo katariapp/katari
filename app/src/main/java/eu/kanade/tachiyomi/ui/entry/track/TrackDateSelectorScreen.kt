@@ -31,10 +31,10 @@ import eu.kanade.tachiyomi.util.lang.convertEpochMillisZone
 import eu.kanade.tachiyomi.util.lang.toLocalDate
 import mihon.entry.interactions.EntryTrackingFeature
 import mihon.entry.interactions.EntryTrackingMutation
+import mihon.entry.interactions.EntryTrackingRecord
 import mihon.entry.interactions.EntryTrackingServiceDescriptor
 import tachiyomi.core.common.util.lang.launchNonCancellable
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.track.model.EntryTrack
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.AlertDialogContent
 import tachiyomi.presentation.core.components.material.padding
@@ -47,7 +47,7 @@ import java.time.ZoneOffset
 
 internal data class TrackDateSelectorScreen(
     private val entry: Entry,
-    private val track: EntryTrack,
+    private val track: EntryTrackingRecord,
     private val service: EntryTrackingServiceDescriptor,
     private val start: Boolean,
 ) : Screen() {
@@ -104,7 +104,7 @@ internal data class TrackDateSelectorScreen(
 
     private class Model(
         private val entry: Entry,
-        private val track: EntryTrack,
+        private val track: EntryTrackingRecord,
         private val service: EntryTrackingServiceDescriptor,
         private val start: Boolean,
         private val trackingFeature: EntryTrackingFeature = Injekt.get(),

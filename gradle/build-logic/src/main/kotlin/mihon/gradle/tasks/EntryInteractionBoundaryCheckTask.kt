@@ -233,6 +233,8 @@ private class EntryInteractionBoundaryRules(
             checkSourceRefreshMechanicsBypass(file, findings)
             checkMeteredSourcePolicyBypass(file, findings)
             checkTrackingHostBoundary(file, findings)
+            checkRawTrackerBoundary(file, findings)
+            checkTrackingFeatureModelBoundary(file, findings)
             checkChildWebViewFeatureBypass(file, findings)
             checkProcessorImplementationReferences(file, findings)
             checkRuntimeEntryPointReferences(file, findings)
@@ -618,6 +620,51 @@ private class EntryInteractionBoundaryRules(
         }
     }
 
+    private fun checkRawTrackerBoundary(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath() || file.ownsRawTrackerContracts()) return
+
+        file.imports
+            .filter { it.startsWith(RAW_TRACKER_PACKAGE) }
+            .forEach { import ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = import.lineNumber,
+                    reason = "application consumers must use EntryTrackingFeature, not raw tracker contracts",
+                )
+            }
+
+        file.content.lineSequence().forEachIndexed { index, line ->
+            val code = line.trim()
+            if (code.startsWith("import ") || code.startsWith("package ")) return@forEachIndexed
+            if ("$RAW_TRACKER_PACKAGE." !in code) return@forEachIndexed
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = index + 1,
+                reason = "application consumers must use EntryTrackingFeature, " +
+                    "not fully qualified raw tracker contracts",
+            )
+        }
+    }
+
+    private fun checkTrackingFeatureModelBoundary(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        val isPublicTrackingApi = file.relativePath.startsWith(
+            "entry-interactions/api/src/main/java/mihon/entry/interactions/tracking/",
+        ) && !file.relativePath.startsWith(
+            "entry-interactions/api/src/main/java/mihon/entry/interactions/tracking/host/",
+        )
+        if (!isPublicTrackingApi) return
+
+        file.imports
+            .firstOrNull { it.importedFqName == DOMAIN_TRACKING_RECORD }
+            ?.let { import ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = import.lineNumber,
+                    reason = "EntryTrackingFeature must expose EntryTrackingRecord, not persisted EntryTrack",
+                )
+            }
+    }
+
     private fun checkChildWebViewFeatureBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
         if (file.isTestPath()) return
         val ownsContract = file.relativePath.startsWith("source-compat/src/main/") ||
@@ -900,6 +947,15 @@ private class EntryInteractionBoundaryRules(
         return STRICT_IMPORT_CHECKED_ROOTS.any { relativePath.startsWith(it) }
     }
 
+    private fun KotlinSourceFile.ownsRawTrackerContracts(): Boolean {
+        return packageName == RAW_TRACKER_PACKAGE ||
+            packageName.startsWith("$RAW_TRACKER_PACKAGE.") ||
+            packageName == DOMAIN_TRACKER_PACKAGE ||
+            packageName.startsWith("$DOMAIN_TRACKER_PACKAGE.") ||
+            relativePath.startsWith("app/src/main/java/mihon/entry/interactions/host/tracking/") ||
+            relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt"
+    }
+
     private fun KotlinSourceFile.isTypeBranchAllowedPath(): Boolean {
         return relativePath.startsWith("entry-interactions/") ||
             isTestPath() ||
@@ -925,6 +981,10 @@ private class EntryInteractionBoundaryRules(
     }
 
     companion object {
+        private const val RAW_TRACKER_PACKAGE = "eu.kanade.tachiyomi.data.track"
+        private const val DOMAIN_TRACKER_PACKAGE = "eu.kanade.domain.track"
+        private const val DOMAIN_TRACKING_RECORD = "tachiyomi.domain.track.model.EntryTrack"
+
         private val STRICT_IMPORT_CHECKED_ROOTS = listOf(
             "app/src/main/",
             "data/src/main/",

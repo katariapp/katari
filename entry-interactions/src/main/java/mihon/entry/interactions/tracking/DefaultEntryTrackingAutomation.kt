@@ -88,11 +88,12 @@ internal class DefaultEntryTrackingAutomation(
     override suspend fun prepareMigrationTracks(
         source: Entry,
         target: Entry,
-        tracks: List<EntryTrack>,
+        tracks: List<EntryTrackingRecord>,
     ): EntryTrackingMigrationPreparationResult {
         return try {
             EntryTrackingMigrationPreparationResult.Prepared(
-                host.automation.prepareMigrationTracks(source, target, tracks),
+                host.automation.prepareMigrationTracks(source, target, tracks.map(EntryTrackingRecord::toDomainTrack))
+                    .map { it.toTrackingRecord() },
             )
         } catch (error: Throwable) {
             if (error is CancellationException) throw error

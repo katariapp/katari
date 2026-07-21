@@ -1,7 +1,5 @@
 package mihon.entry.interactions
 
-import tachiyomi.domain.track.model.EntryTrack
-
 sealed interface EntryTrackingAvailability {
     data class Available(
         val services: List<EntryTrackingServiceDescriptor>,
@@ -22,7 +20,7 @@ sealed interface EntryTrackingSession {
 
 data class EntryTrackingSessionService(
     val service: EntryTrackingServiceDescriptor,
-    val track: EntryTrack?,
+    val track: EntryTrackingRecord?,
     val displayScore: String?,
 )
 

@@ -22,8 +22,9 @@ or source state; it does not copy them into type plugins or maintain a Manga/Ani
 ## Feature Boundary
 
 Application consumers receive one `EntryTrackingFeature`. Its API and implementation are split into cohesive tracking
-files, but its facets are not separately registered behavior authorities. Neutral service IDs, descriptors, sessions,
-requests, and structured outcomes cross the boundary; raw tracker objects and registry types do not.
+files, but its facets are not separately registered behavior authorities. Neutral service IDs, descriptors, records,
+sessions, requests, and structured outcomes cross the boundary; raw tracker objects, registry types, persisted track
+records, and tracker-owned search models do not.
 
 The initial boundary exposes:
 
@@ -104,8 +105,10 @@ declaration, root Tracking implementation/runtime composition, app host implemen
 This prevents a neutral host snapshot from becoming a parallel application API just as strongly as it prevents direct
 host invocation.
 
-Raw tracker consumer enforcement remains deliberately deferred until the migration is complete. Existing consumers
-stay visible as migration work; they are not placed in a temporary allowlist.
+The build also rejects raw tracker contracts outside the tracker subsystem, lower-level tracker mechanics, the single
+application Tracking host, and root composition. Ownership is package-derived: there is no list of current tracker
+implementations or migrated consumers. The public Feature API is separately prevented from exporting persisted
+`EntryTrack` records in place of its neutral record.
 
 ## Behavioral Proof
 
@@ -126,5 +129,6 @@ The proof tests behavior and architecture. It does not assert which Entry types 
 - Settings and backup derive from authoritative account registrations; adding a tracker does not require a UI list edit.
 - Library and Stats receive authenticated membership and normalized score evidence without resolving trackers.
 - Application code cannot use the host as an alternate behavior boundary.
+- Application consumers cannot import raw tracker contracts or receive persisted track records from the Feature.
 - No production type matrix, tracker consumer list, copied authentication flag, compatibility facade, or
   declaration-restatement test was introduced.

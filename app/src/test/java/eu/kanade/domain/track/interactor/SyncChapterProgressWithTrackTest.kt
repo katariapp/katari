@@ -1,10 +1,10 @@
 package eu.kanade.domain.track.interactor
 
 import eu.kanade.tachiyomi.data.database.models.Track
+import eu.kanade.tachiyomi.data.track.DummyTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.Tracker
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.test.DummyTracker
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just

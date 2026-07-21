@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.track.model.EntryTrack
 
 interface EntryTrackingAutomation {
     suspend fun bindAutomatically(entry: Entry): EntryTrackingAutomaticBindingResult
@@ -20,7 +19,7 @@ interface EntryTrackingAutomation {
     suspend fun prepareMigrationTracks(
         source: Entry,
         target: Entry,
-        tracks: List<EntryTrack>,
+        tracks: List<EntryTrackingRecord>,
     ): EntryTrackingMigrationPreparationResult
 }
 
@@ -58,7 +57,7 @@ sealed interface EntryTrackingProgressSynchronizationResult {
 
 sealed interface EntryTrackingMigrationPreparationResult {
     data class Prepared(
-        val tracks: List<EntryTrack>,
+        val tracks: List<EntryTrackingRecord>,
     ) : EntryTrackingMigrationPreparationResult
 
     data class Failed(

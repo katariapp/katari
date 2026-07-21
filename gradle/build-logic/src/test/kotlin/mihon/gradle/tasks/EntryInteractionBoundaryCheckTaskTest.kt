@@ -254,6 +254,83 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application consumers cannot use raw tracker contracts`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.data.track.TrackerManager
+                import eu.kanade.tachiyomi.data.track.EnhancedTracker
+                import eu.kanade.tachiyomi.data.track.model.TrackSearch
+
+                class AppFeature(
+                    private val manager: TrackerManager,
+                    private val enhanced: EnhancedTracker,
+                    private val search: TrackSearch,
+                )
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "application consumers must use EntryTrackingFeature"
+        error.message shouldContain "raw tracker contracts"
+    }
+
+    @Test
+    fun `tracker subsystem and Tracking host own raw tracker contracts`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/eu/kanade/tachiyomi/data/track/Tracker.kt" to
+                    """
+                        package eu.kanade.tachiyomi.data.track
+
+                        interface Tracker
+                    """.trimIndent(),
+                "app/src/main/java/eu/kanade/domain/track/TrackerMechanic.kt" to
+                    """
+                        package eu.kanade.domain.track
+
+                        import eu.kanade.tachiyomi.data.track.Tracker
+
+                        class TrackerMechanic(private val tracker: Tracker)
+                    """.trimIndent(),
+                "app/src/main/java/mihon/entry/interactions/host/tracking/AppTrackingHost.kt" to
+                    """
+                        package mihon.entry.interactions.host.tracking
+
+                        import eu.kanade.tachiyomi.data.track.Tracker
+
+                        class AppTrackingHost(private val tracker: Tracker)
+                    """.trimIndent(),
+            ),
+        )
+
+        runBoundaryCheck()
+    }
+
+    @Test
+    fun `public Tracking Feature cannot export persisted track records`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/api/src/main/java/mihon/entry/interactions/tracking/EntryTrackingSession.kt" to
+                    """
+                        package mihon.entry.interactions
+
+                        import tachiyomi.domain.track.model.EntryTrack
+
+                        data class EntryTrackingSession(val track: EntryTrack)
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "EntryTrackingFeature must expose EntryTrackingRecord"
+        error.message shouldContain "persisted EntryTrack"
+    }
+
+    @Test
     fun `type modules cannot bypass child WebView Feature through raw source contract`() {
         createBaseFixture(
             mangaProcessorSource = """

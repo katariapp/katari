@@ -335,10 +335,10 @@ internal class DefaultEntryMigrationFeature(
             val result = tracking.prepareMigrationTracks(
                 source = inspected.source,
                 target = inspected.target,
-                tracks = inspected.sourceTracks,
+                tracks = inspected.sourceTracks.map { it.toTrackingRecord() },
             )
         ) {
-            is EntryTrackingMigrationPreparationResult.Prepared -> result.tracks
+            is EntryTrackingMigrationPreparationResult.Prepared -> result.tracks.map { it.toDomainTrack() }
             is EntryTrackingMigrationPreparationResult.Failed -> {
                 return EntryMigrationExecutionResult.OperationalFailure(retryable = true)
             }

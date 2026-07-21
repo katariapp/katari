@@ -59,7 +59,7 @@ internal class DefaultEntryTrackingFeature(
                 accepted.map { service ->
                     EntryTrackingSessionService(
                         service = service.service.toDescriptor(),
-                        track = service.track,
+                        track = service.track?.toTrackingRecord(),
                         displayScore = service.displayScore,
                     )
                 },

@@ -313,6 +313,13 @@ and Stats aggregation behind the same Feature. Library retains F14 filter policy
 summary. Neither consumer imports raw trackers, the registry, persisted track models, or tracker score conversion. All
 censused application consumers are now migrated, leaving raw-surface cleanup and enforcement to 6.7.7.
 
+Phase 6.7.7 removes the unused parallel tracker/search adapter, legacy media enum, unused aggregate helper, and built-in
+type-declaration assertions. The public Feature now exposes a neutral tracking record rather than persisted
+`EntryTrack`; root/host conversion preserves Migration persistence ownership. OAuth callbacks move under tracker
+ownership, neutral previews no longer construct trackers, and package-derived validation rejects raw tracker access or
+persisted-record leakage without consumer, implementation, or content-type allowlists. `C18`, `C19`, and Tracking's
+assigned `C20`/`C22` consequences are closed.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

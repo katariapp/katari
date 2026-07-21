@@ -104,8 +104,8 @@ class EntryTrackingAutomationTest {
         coEvery { automation.prepareMigrationTracks(entry, target, listOf(track)) } returns listOf(prepared)
         val feature = feature(automation, snapshot())
 
-        feature.prepareMigrationTracks(entry, target, listOf(track)) shouldBe
-            EntryTrackingMigrationPreparationResult.Prepared(listOf(prepared))
+        feature.prepareMigrationTracks(entry, target, listOf(track.toTrackingRecord())) shouldBe
+            EntryTrackingMigrationPreparationResult.Prepared(listOf(prepared.toTrackingRecord()))
         coVerify(exactly = 1) { automation.prepareMigrationTracks(entry, target, listOf(track)) }
     }
 

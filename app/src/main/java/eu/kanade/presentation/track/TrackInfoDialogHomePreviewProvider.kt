@@ -2,22 +2,22 @@ package eu.kanade.presentation.track
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import eu.kanade.test.DummyTracker
+import eu.kanade.tachiyomi.R
+import mihon.entry.interactions.EntryTrackingRecord
 import mihon.entry.interactions.EntryTrackingServiceCapabilities
 import mihon.entry.interactions.EntryTrackingServiceDescriptor
 import mihon.entry.interactions.EntryTrackingServiceId
 import mihon.entry.interactions.EntryTrackingSessionService
-import tachiyomi.domain.track.model.EntryTrack
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 internal class TrackInfoDialogHomePreviewProvider :
     PreviewParameterProvider<@Composable () -> Unit> {
 
-    private val aTrack = EntryTrack(
+    private val aTrack = EntryTrackingRecord(
         id = 1L,
         entryId = 2L,
-        trackerId = 3L,
+        serviceId = EntryTrackingServiceId(3L),
         remoteId = 4L,
         libraryId = null,
         title = "Manage Name On Tracker Site",
@@ -33,26 +33,17 @@ internal class TrackInfoDialogHomePreviewProvider :
     private val privateTrack = aTrack.copy(private = true)
     private val trackItemWithoutTrack = EntryTrackingSessionService(
         track = null,
-        service = DummyTracker(
-            id = 1L,
-            name = "Example Tracker",
-        ).descriptor(),
+        service = descriptor(id = 1L, name = "Example Tracker"),
         displayScore = null,
     )
     private val trackItemWithTrack = EntryTrackingSessionService(
         track = aTrack,
-        service = DummyTracker(
-            id = 2L,
-            name = "Example Tracker 2",
-        ).descriptor(),
+        service = descriptor(id = 2L, name = "Example Tracker 2"),
         displayScore = "2",
     )
     private val trackItemWithPrivateTrack = EntryTrackingSessionService(
         track = privateTrack,
-        service = DummyTracker(
-            id = 2L,
-            name = "Example Tracker 2",
-        ).descriptor(supportsPrivateTracking = true),
+        service = descriptor(id = 2L, name = "Example Tracker 2", supportsPrivateTracking = true),
         displayScore = "2",
     )
 
@@ -118,16 +109,18 @@ internal class TrackInfoDialogHomePreviewProvider :
         )
 }
 
-private fun DummyTracker.descriptor(
+private fun descriptor(
+    id: Long,
+    name: String,
     supportsPrivateTracking: Boolean = false,
 ) = EntryTrackingServiceDescriptor(
     id = EntryTrackingServiceId(id),
     name = name,
-    logoResource = getLogo(),
+    logoResource = R.drawable.brand_anilist,
     capabilities = EntryTrackingServiceCapabilities(
         statuses = emptyList(),
-        scores = getScoreList(),
-        supportsReadingDates = supportsReadingDates,
+        scores = (0..10).map(Int::toString),
+        supportsReadingDates = false,
         supportsPrivateTracking = supportsPrivateTracking,
         supportsRemoteDeletion = false,
         supportsAutomaticBinding = false,

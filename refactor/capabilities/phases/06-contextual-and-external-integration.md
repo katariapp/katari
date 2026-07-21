@@ -867,9 +867,9 @@ type-specific interactions.
 
 - [x] Add one Tracking Feature boundary that composes actual Entry type, tracker-declared applicability,
   authentication/profile state, existing tracks, reading dates, privacy, status, and scoring.
-- [ ] Migrate Entry actions/dialogs, search/register/update guards, automatic add/sync, Library tracker filters, Stats,
+- [x] Migrate Entry actions/dialogs, search/register/update guards, automatic add/sync, Library tracker filters, Stats,
   and tracking documentation to the same structured results.
-- [ ] Keep tracker implementations authoritative and do not turn tracker capabilities into content-type providers.
+- [x] Keep tracker implementations authoritative and do not turn tracker capabilities into content-type providers.
 
 #### 6.7.0 — Tracking Ownership Census and Architecture Split
 
@@ -1176,6 +1176,41 @@ Manifesto comparison found one authoritative registry, one Feature projection sh
 participation for any future tracker/type declaration, and no copied login state, type matrix, tracker consumer list,
 raw track model, or presentation support flag. Missing tracker support remains ordinary absence; F14 and Stats do not
 opt content types into Tracking.
+
+#### 6.7.7 — Tracking Reconciliation
+
+- [x] Remove unused `EntryTracker`, `LegacyEntryTrackerAdapter`, `EntryTrackSearch`, `TrackMediaType`, and the unused
+  iterable supported-type helper rather than retaining parallel compatibility surfaces.
+- [x] Remove built-in tracker type-declaration assertions while retaining stable service-ID and genuine synchronization
+  behavior coverage.
+- [x] Replace the persisted `EntryTrack` exposed by the public Tracking Feature with a neutral
+  `EntryTrackingRecord`; conversion remains root/host mechanics and Migration retains persistence ownership.
+- [x] Make previews construct neutral Feature models and move the dummy tracker to mirrored test ownership.
+- [x] Relocate OAuth callback activities under the tracker subsystem so their reviewed protocol access is structurally
+  owner-local rather than a UI exception.
+- [x] Enforce raw tracker imports and fully qualified references by owner package, with no migrated-consumer or tracker
+  implementation allowlist. Separately reject persisted track records from the public Tracking Feature API.
+- [x] Re-run the complete tracker census and close `C18`, `C19`, and the Tracking portions of `C20` and `C22`.
+
+Production application consumers now import only `EntryTrackingFeature` contracts. Raw tracker contracts are confined
+to the tracker subsystem, its lower-level tracker mechanics, the application Tracking host, and root composition.
+OAuth callbacks live inside tracker ownership and remain the only platform adapter completing concrete service
+protocols. The boundary checker guards these package relationships and discovers violations from imports/references;
+it does not enumerate current consumers, tracker implementations, or content types.
+
+The public Feature carries neutral service, account, search, record, collection, and structured operation models.
+Persisted `EntryTrack` values may cross the private host port and Migration persistence boundary, but are converted at
+the root coordinator before reaching application presentation or another Feature request. The former compatibility
+adapter and its parallel search model had no production consumer and are removed instead of becoming a second API.
+
+Synthetic future-service behavior proves that a tracker with an arbitrary stable ID and a type unsupported by current
+built-ins automatically receives availability, session, account, collection, automation, and graph consequences.
+These tests exercise behavior and contextual blockers; they do not restate the built-in tracker/type matrix.
+
+Manifesto comparison found one authoritative external registry, one application Feature, derived participation for
+future trackers and content types, valid missing sub-capabilities, neutral consumer models, and structural enforcement.
+No capability catalogue, mandatory tracker operation, current-type matrix, consumer allowlist, compatibility facade,
+or declaration-restatement test remains.
 
 ### 6.8 — Compatibility Reconciliation and Context Census
 

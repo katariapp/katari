@@ -82,6 +82,7 @@ Updated: 2026-07-21
 - Phase 6.7.3 Entry tracking operations commit: `3a26ce996` (`(refactor): migrate entry tracking operations`)
 - Phase 6.7.4 Tracking automation commit: `bba933301` (`(refactor): migrate tracking automation`)
 - Phase 6.7.5 Tracking accounts commit: `5322276d9` (`(refactor): migrate tracking accounts`)
+- Phase 6.7.6 Tracking collection commit: `a3524f04c` (`(refactor): migrate tracking collection consumers`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -89,8 +90,8 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.6 Library and Stats integration
-- State: Phase 6.7.6 is implemented and validating for review. Tracking reconciliation has not started.
+- Milestone: Phase 6.7.7 Tracking reconciliation
+- State: Phase 6.7.7 is implemented and validating for review. Phase 6.8 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1289,7 +1290,23 @@ Focused Phase 6.7.6 findings:
 - Focused Tracking tests, all Entry-interactions tests, formatting, and boundary validation pass. FOSS compilation still
   reaches only the unrelated unchanged `HEAD` issues in the anime debug launcher and profile shortcut UI.
 
+Focused Phase 6.7.7 findings:
+
+- The complete production census finds no raw tracker import outside tracker ownership, lower-level tracker mechanics,
+  the single application Tracking host, or root composition.
+- Package-derived boundary validation rejects raw tracker imports and fully qualified access without naming consumers,
+  implementations, or content types. Host declarations remain separately inaccessible to application consumers.
+- The public Feature now projects `EntryTrackingRecord`; persisted `EntryTrack` remains private host/Migration evidence
+  and cannot leak back into the public Tracking API.
+- Unused `EntryTracker`, `LegacyEntryTrackerAdapter`, `EntryTrackSearch`, `TrackMediaType`, and aggregate support helper
+  are removed. Stable service-ID coverage remains, while duplicated built-in type assertions are removed.
+- Neutral previews no longer instantiate tracker implementations. `DummyTracker` now lives beside tracker tests, and
+  OAuth callback activities live under tracker-owned protocol structure instead of requiring a UI exception.
+- Existing synthetic BOOK/future-service tests cover automatic participation and contextual absence without a current
+  type matrix. Tracking operation, automation, account, collection, and graph tests remain behavioral.
+- `C18`, `C19`, and Tracking's assigned `C20`/`C22` relationships are closed with no unclassified production consumer.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.6 after review, then implement Phase 6.7.7 Tracking reconciliation. Continue through Phase 6 afterward
-and explicitly notify the user when Phase 7 is reached.
+Commit Phase 6.7.7 after review, then begin Phase 6.8 compatibility reconciliation and the final Phase 6 context census.
+Explicitly notify the user when Phase 7 is reached.

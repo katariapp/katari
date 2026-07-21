@@ -80,7 +80,13 @@ class EntryTrackingFeatureTest {
         )
         feature.observeSession(entry).toList() shouldBe listOf(
             EntryTrackingSession.Available(
-                listOf(EntryTrackingSessionService(bookService.descriptor(), track, displayScore = "7.5")),
+                listOf(
+                    EntryTrackingSessionService(
+                        bookService.descriptor(),
+                        track.toTrackingRecord(),
+                        displayScore = "7.5",
+                    ),
+                ),
             ),
         )
     }
