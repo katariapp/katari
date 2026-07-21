@@ -1,6 +1,6 @@
 # Entry Tracking
 
-Status: architecture established; Entry session and operations migrated
+Status: architecture established; Entry session, operations, automatic binding, and synchronization migrated
 
 ## Owner and Relationships
 
@@ -8,8 +8,8 @@ Status: architecture established; Entry session and operations migrated
 - Shared prerequisite: unconditional participation for every contributed content type
 - External evidence: registered tracker declarations, exact Entry type, authentication, source acceptance, existing
   track state, and tracker-owned status/score/date/privacy/deletion/automatic-binding facts
-- Context-free consequences: service discovery/presentation, account settings, backup diagnostics, and behavioral
-  contract selection
+- Context-free consequences: service discovery/presentation, account settings, backup diagnostics, Migration
+  preparation, and behavioral contract selection
 - Contextual consequences: Entry action/session/operations, automatic binding, progress synchronization, Library
   filter/score evidence, Stats evidence, and documentation applicability
 - Specialized requirement: none; missing tracker sub-capabilities are valid external integration differences
@@ -54,8 +54,14 @@ and mutations use the current persisted track rather than a UI-supplied tracker 
 The host alone converts neutral search candidates to and from tracker-owned models and invokes the raw registry,
 tracker methods, refresh coordinator, and local deletion interactor. UI operation screens consume neutral descriptors,
 candidates, mutation intents, and structured results. Candidates remain bound to their originating service, preventing
-one service's result from being registered through another. Automatic background binding/synchronization remains
-separate work because it owns different consequences despite sharing the same external tracker system.
+one service's result from being registered through another.
+
+The automatic-behavior facet covers enhanced binding, progress inspection/update, remote-progress reconciliation, and
+Migration track preparation without becoming a separately injected Feature. Catalogue, History, Entry, Merge, reader,
+and delayed-retry consumers submit Entries and structured requests; they do not select trackers. The Feature selects
+services from current type/authentication/source/track evidence, while the host retains enhanced matching, remote
+mechanics, and tracker-specific local Migration transformations. F09 still owns Consumption mutation, and F11 still
+owns the optimistic transaction that persists prepared track rows.
 
 ## Discovered Consequences
 
@@ -68,10 +74,11 @@ The graph declares every censused relationship before consumer migration:
 | Authenticated Entry session | Session rows and Entry operations |
 | Automatic source match | Enhanced automatic binding |
 | Existing authenticated track | Progress synchronization |
+| Migration preparation | Tracker-specific local identity transformation for target track rows |
 | Authenticated Library integration | F14 tracker-filter evidence and score-sort evidence |
 | Authenticated Stats integration | Tracker and normalized score evidence |
 
-Later Phase 6.7 milestones resolve the remaining background, account, Library, and Stats relationships through this
+Later Phase 6.7 milestones resolve the remaining account, Library, and Stats relationships through this
 same boundary. They do not add another tracker facade, consumer registry, type provider, or settings service list.
 
 ## Boundary Enforcement
@@ -87,9 +94,10 @@ stay visible as migration work; they are not placed in a temporary allowlist.
 ## Behavioral Proof
 
 The focused contract contributes BOOK with no Tracking provider and supplies a synthetic external tracker that declares
-BOOK support. The unchanged graph and Feature expose availability and an authenticated session. Changing only login
-state preserves availability while returning a structured unavailable session. The same provider-less type discovers
-the unconditional registry relationship and every conditional Tracking relationship.
+BOOK support. The unchanged graph and Feature expose availability, an authenticated session, automatic binding, and
+progress synchronization. Changing only login state preserves availability while returning structured unavailability
+without invoking host mechanics. The same provider-less type discovers every Tracking relationship, and Migration
+preparation works without a type opt-in.
 
 The proof tests behavior and architecture. It does not assert which Entry types a built-in tracker currently declares.
 

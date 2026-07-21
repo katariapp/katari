@@ -44,7 +44,7 @@ class EntryMergeLifecycleFeatureTest {
             entries = emptyList(),
             initialStatus = EntryMergeConsequenceStatusSnapshot(3, 2, "disk unavailable"),
         )
-        val delivery = EntryMergeConsequenceDelivery(host, {}, {}, { mockk(relaxed = true) })
+        val delivery = EntryMergeConsequenceDelivery(host, { mockk(relaxed = true) }, {}, { mockk(relaxed = true) })
         val feature = EntryMergeConsequenceStatusCoordinator(host, delivery)
 
         feature.observeStatus().first() shouldBe EntryMergeConsequenceStatus(3, 2, "disk unavailable")

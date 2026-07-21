@@ -50,7 +50,7 @@ internal class EntryTrackingOperationResolver(
             accepted.isEmpty() -> ResolvedTrackingServices.Unavailable(
                 EntryTrackingOperationUnavailableReason.SOURCE_NOT_ACCEPTED,
             )
-            else -> ResolvedTrackingServices.Available
+            else -> ResolvedTrackingServices.Available(accepted)
         }
     }
 
@@ -97,7 +97,9 @@ internal sealed interface ResolvedTrackingService {
 }
 
 internal sealed interface ResolvedTrackingServices {
-    data object Available : ResolvedTrackingServices
+    data class Available(
+        val services: List<EntryTrackingHostEntryService>,
+    ) : ResolvedTrackingServices
 
     data class Unavailable(val reason: EntryTrackingOperationUnavailableReason) : ResolvedTrackingServices
 }

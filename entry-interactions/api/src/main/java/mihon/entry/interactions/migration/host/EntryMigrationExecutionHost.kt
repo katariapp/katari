@@ -55,7 +55,6 @@ sealed interface EntryMigrationExecutionInspectionResult {
         val targetChildren: List<EntryChapter>,
         val sourceCategoryIds: List<Long>,
         val sourceTracks: List<EntryTrack>,
-        val preparedTracks: List<EntryTrack>,
     ) : EntryMigrationExecutionInspectionResult
 
     data object SourceMissing : EntryMigrationExecutionInspectionResult

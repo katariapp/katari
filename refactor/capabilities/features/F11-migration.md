@@ -73,7 +73,7 @@ also includes code that still compiles because it never consulted the former cap
 | Playback preferences | F11 invokes F16 without an Anime gate. The owning Feature decides applicability. |
 | Viewer settings | F11 invokes F25. Deleting the legacy use case removed its Manga bitfield branch; F11.4 must restore the required normalization behind F25 rather than recreating that type branch. |
 | Categories, notes, and Entry state | Selected categories/notes plus favorite, added-date, child flags, and replacement/copy state are part of the owned primary transition. Callers do not update these independently. |
-| Tracking | Enhanced and ordinary track transfer remains tracker-owned external behavior invoked through an F11 host consequence with explicit source and target identity. |
+| Tracking | F11 consumes a Tracking Feature preparation consequence with explicit source and target identity. Enhanced and ordinary transformation remains tracker-owned external mechanics; F11 retains transaction ownership. |
 | Downloads | The selected cleanup option invokes F08 only after F11 applicability. Unsupported Download behavior is a structured skipped relationship, not a Migration failure. |
 | Custom cover | Contextual cover availability is inspected by the app host; selected copy is an explicit external consequence with a reported outcome. |
 | Merge cooperation | Replace mode invokes `EntryMergeMigrationFeature`; F11 never reads or rewrites membership. F11.3 removed the two legacy raw Merge calls and made the narrow Feature participate in the primary transaction. |
@@ -281,9 +281,10 @@ Implementation record:
 - Execution is profile-pinned from the Feature-issued reference. The strict synchronization path uses an explicit
   profile for Entry writes and verifies Entry update counts, chapter removals, updates, and insertions instead of
   accepting the existing repositories' best-effort failure suppression.
-- One purpose-specific application host prepares tracking rows and commits Entry/Library/category/child/tracking state,
-  the stable operation record, and any prepared consequence records in one optimistic database transaction. It does not
-  expose general Entry or child mutation APIs.
+- The Tracking Feature prepares neutral target tracking rows through its purpose-specific application host. The F11
+  application host commits Entry/Library/category/child/tracking state, the stable operation record, and any prepared
+  consequence records in one optimistic database transaction. It does not interpret trackers or expose general Entry
+  or child mutation APIs.
 - Replace mode calls the narrow F12 Migration cooperation Feature inside that transaction. The production composition
   gives F11 and F12 the same `DatabaseHandler`; nested participant work uses SQLDelight savepoint semantics and rolls
   back with the outer transaction. F11 never reads or writes Merge membership.
@@ -480,8 +481,9 @@ Manifesto comparison:
   refresh. It validates candidate pairs before refresh and maps shared refresh outcomes into F11-specific results.
 - Execution refresh uses the target returned by the profile-pinned live inspection, preserving strict target-profile
   persistence. Replay and changed authorization still bypass refresh; cancellation still propagates.
-- `EntryMigrationExecutionProfileHost` no longer exposes target synchronization. The application host is limited to
-  profile-scoped inspection, transition persistence, transaction participation, and external tracking preparation.
+- `EntryMigrationExecutionProfileHost` no longer exposes target synchronization or tracking transformation. The F11
+  application host is limited to profile-scoped inspection, transition persistence, and transaction participation;
+  Tracking preparation enters through `EntryTrackingFeature`.
 - Raw `SyncEntryWithSource` migration references are gone. The generic boundary now reports only the later
   F13/Library Update obligation.
 

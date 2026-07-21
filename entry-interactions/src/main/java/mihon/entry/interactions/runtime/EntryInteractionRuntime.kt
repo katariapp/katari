@@ -47,7 +47,6 @@ data class EntryInteractionRuntimeDependencies(
     val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
     val sourceRefreshUpdateLibraryTitles: (profileId: Long) -> Boolean,
     val mergeHost: EntryMergeHost,
-    val mergeLibraryEntryInitializer: suspend (Entry) -> Unit,
     val mergeCoverCleanup: suspend (Entry) -> Unit,
     val migrationPreparationHost: EntryMigrationPreparationHost,
     val migrationExecutionHost: EntryMigrationExecutionHost,
@@ -209,7 +208,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory {
         EntryMergeConsequenceDelivery(
             host = dependencies.mergeHost,
-            libraryEntryInitializer = dependencies.mergeLibraryEntryInitializer,
+            tracking = { get() },
             coverCleanup = dependencies.mergeCoverCleanup,
             downloadMaintenance = { get() },
         )
@@ -262,6 +261,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             playbackPreferences = get(),
             viewerSettings = get(),
             downloads = get(),
+            tracking = get(),
             customCover = dependencies.migrationCustomCoverHost,
             consequences = get(),
         )

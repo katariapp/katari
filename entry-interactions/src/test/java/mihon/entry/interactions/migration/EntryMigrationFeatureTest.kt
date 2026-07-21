@@ -232,6 +232,23 @@ class EntryMigrationFeatureTest {
     }
 
     @Test
+    fun `tracking preparation failure cannot enter the migration transaction`() = runTest {
+        val host = RecordingMigrationHost(source, target)
+        val tracking = mockk<EntryTrackingFeature> {
+            coEvery { prepareMigrationTracks(any(), any(), any()) } returns
+                EntryTrackingMigrationPreparationResult.Failed(IllegalStateException("tracking unavailable"))
+        }
+        val feature = feature(host, tracking = tracking)
+        val preparation = feature.prepare(EntryMigrationPrepareIntent(source, target))
+            .shouldBeInstanceOf<EntryMigrationPreparationResult.Ready>()
+
+        feature.execute(
+            EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.COPY, emptySet()),
+        ) shouldBe EntryMigrationExecutionResult.OperationalFailure(retryable = true)
+        host.transitions shouldBe emptyList()
+    }
+
+    @Test
     fun `execution cancellation propagates`() = runTest {
         val host = RecordingMigrationHost(source, target)
         val sourceRefresh = mockk<EntrySourceRefreshFeature> {
@@ -324,6 +341,7 @@ class EntryMigrationFeatureTest {
         downloads: EntryDownloadMaintenanceFeature? = null,
         consequenceDelivery: EntryMigrationConsequenceDelivery? = null,
         sourceRefresh: EntrySourceRefreshFeature = refreshedSourceRefresh(),
+        tracking: EntryTrackingFeature? = null,
     ): EntryMigrationFeature {
         val composition = createEntryInteractionComposition(
             plugins = listOf(
@@ -354,6 +372,19 @@ class EntryMigrationFeatureTest {
         val delivery = consequenceDelivery ?: mockk<EntryMigrationConsequenceDelivery>().also {
             coEvery { it.deliverOperation(any()) } returns EntryMigrationFollowUp.INCOMPLETE
         }
+        val trackingFeature = tracking ?: mockk<EntryTrackingFeature>().also {
+            coEvery { it.prepareMigrationTracks(any(), any(), any()) } answers {
+                val target = args[1] as Entry
+
+                @Suppress("UNCHECKED_CAST")
+                val tracks = args[2] as List<tachiyomi.domain.track.model.EntryTrack>
+                EntryTrackingMigrationPreparationResult.Prepared(
+                    tracks.map { track ->
+                        track.copy(entryId = target.id)
+                    },
+                )
+            }
+        }
         return DefaultEntryMigrationFeature(
             evaluation = composition.featureGraphEvaluation,
             preparationHost = host,
@@ -364,6 +395,7 @@ class EntryMigrationFeatureTest {
             playbackPreferences = playback,
             viewerSettings = viewerSettings,
             downloads = downloadFeature,
+            tracking = trackingFeature,
             customCover = mockk(relaxed = true),
             consequences = delivery,
             clockMillis = { 999 },
@@ -501,7 +533,6 @@ private class RecordingMigrationHost(
                 targetChildren = targetChildren,
                 sourceCategoryIds = categories,
                 sourceTracks = emptyList(),
-                preparedTracks = emptyList(),
             )
         }
 

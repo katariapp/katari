@@ -103,6 +103,11 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
         contextBlockers = listOf(NO_REGISTERED_TRACKER, NO_AUTHENTICATED_TRACKER, NO_AUTHENTICATED_TRACK),
         sharedConsequences = listOf(EntryTrackingConsequence.PROGRESS_SYNCHRONIZATION),
     ),
+    FeatureIntegration(
+        id = EntryTrackingIntegration.MIGRATION_PREPARATION.id,
+        prerequisites = CapabilityExpression.Always,
+        sharedConsequences = listOf(EntryTrackingConsequence.MIGRATION_PREPARATION),
+    ),
     authenticatedTypeIntegration(
         integration = EntryTrackingIntegration.LIBRARY,
         consequences = listOf(

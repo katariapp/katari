@@ -25,6 +25,7 @@ internal class DefaultEntryMigrationFeature(
     private val playbackPreferences: EntryPlaybackPreferencesFeature,
     private val viewerSettings: EntryViewerSettingsFeature,
     private val downloads: EntryDownloadMaintenanceFeature,
+    private val tracking: EntryTrackingFeature,
     private val customCover: EntryMigrationCustomCoverHost,
     private val consequences: EntryMigrationConsequenceDelivery,
     private val consequenceCodec: EntryMigrationConsequenceCodec = EntryMigrationConsequenceCodec(),
@@ -330,6 +331,19 @@ internal class DefaultEntryMigrationFeature(
             return EntryMigrationExecutionResult.Conflict
         }
 
+        val preparedTracks = when (
+            val result = tracking.prepareMigrationTracks(
+                source = inspected.source,
+                target = inspected.target,
+                tracks = inspected.sourceTracks,
+            )
+        ) {
+            is EntryTrackingMigrationPreparationResult.Prepared -> result.tracks
+            is EntryTrackingMigrationPreparationResult.Failed -> {
+                return EntryMigrationExecutionResult.OperationalFailure(retryable = true)
+            }
+        }
+
         val transferChildren = EntryMigrationOption.CHILD_STATE in intent.selectedOptions
         val childUpdates = if (transferChildren) {
             prepareMigrationChildUpdates(
@@ -434,7 +448,7 @@ internal class DefaultEntryMigrationFeature(
                 .takeIf { EntryMigrationOption.CATEGORIES in intent.selectedOptions },
             childUpdates = childUpdates,
             expectedSourceTracks = inspected.sourceTracks,
-            preparedTracks = inspected.preparedTracks,
+            preparedTracks = preparedTracks,
             consequenceRequests = consequenceRequests,
         )
         val mergeReplacement = if (replace) {

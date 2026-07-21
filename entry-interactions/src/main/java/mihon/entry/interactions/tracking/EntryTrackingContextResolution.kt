@@ -45,6 +45,46 @@ internal fun FeatureGraphEvaluation.requireTrackingSession(
     )
 }
 
+internal fun FeatureGraphEvaluation.requireTrackingAutomaticBinding(
+    entryType: EntryType,
+    registered: Boolean,
+    authenticated: Boolean,
+    sourceAccepted: Boolean,
+) {
+    requireEntryContextState(
+        type = entryType,
+        feature = ENTRY_TRACKING_FEATURE_ID,
+        integration = EntryTrackingIntegration.AUTOMATIC_BINDING.id,
+        consequences = listOf(EntryTrackingConsequence.AUTOMATIC_BINDING.id),
+        evidence = listOf(
+            contextEvidence(ENTRY_TRACKING_REGISTERED_SUPPORT, registered),
+            contextEvidence(ENTRY_TRACKING_AUTHENTICATED_SUPPORT, authenticated),
+            contextEvidence(ENTRY_TRACKING_AUTOMATIC_SOURCE_ACCEPTED, sourceAccepted),
+        ),
+        applicable = registered && authenticated && sourceAccepted,
+    )
+}
+
+internal fun FeatureGraphEvaluation.requireTrackingSynchronization(
+    entryType: EntryType,
+    registered: Boolean,
+    authenticated: Boolean,
+    existingTrack: Boolean,
+) {
+    requireEntryContextState(
+        type = entryType,
+        feature = ENTRY_TRACKING_FEATURE_ID,
+        integration = EntryTrackingIntegration.SYNCHRONIZATION.id,
+        consequences = listOf(EntryTrackingConsequence.PROGRESS_SYNCHRONIZATION.id),
+        evidence = listOf(
+            contextEvidence(ENTRY_TRACKING_REGISTERED_SUPPORT, registered),
+            contextEvidence(ENTRY_TRACKING_AUTHENTICATED_SUPPORT, authenticated),
+            contextEvidence(ENTRY_TRACKING_AUTHENTICATED_TRACK, existingTrack),
+        ),
+        applicable = registered && authenticated && existingTrack,
+    )
+}
+
 internal fun EntryTrackingHostService.toDescriptor(): EntryTrackingServiceDescriptor {
     return EntryTrackingServiceDescriptor(
         id = EntryTrackingServiceId(id),

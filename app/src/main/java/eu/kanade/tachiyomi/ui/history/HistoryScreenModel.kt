@@ -5,10 +5,8 @@ import androidx.compose.runtime.Immutable
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.util.insertSeparators
-import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.presentation.history.HistoryUiItem
 import eu.kanade.presentation.history.HistoryUiModel
-import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.ui.collapseByVisibleEntry
 import eu.kanade.tachiyomi.util.lang.toLocalDate
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +24,7 @@ import logcat.LogPriority
 import mihon.entry.interactions.EntryMergeCandidateFeature
 import mihon.entry.interactions.EntryMergeNavigationFeature
 import mihon.entry.interactions.EntryMergeSubject
+import mihon.entry.interactions.EntryTrackingFeature
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.launchIO
@@ -51,7 +50,7 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
 class HistoryScreenModel(
-    private val addTracks: AddTracks = Injekt.get(),
+    private val entryTrackingFeature: EntryTrackingFeature = Injekt.get(),
     private val categoryRepository: CategoryRepository = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val entryMergeCandidateFeature: EntryMergeCandidateFeature = Injekt.get(),
@@ -244,11 +243,7 @@ class HistoryScreenModel(
                 else -> showChangeCategoryDialog(entry)
             }
 
-            val source = sourceManager.getOrStub(entry.source)
-            addTracks.bindEnhancedTrackers(
-                entry = entry,
-                source = EntryTrackingSource.from(source, sourceManager.getDisplayInfo(entry.source)),
-            )
+            entryTrackingFeature.bindAutomatically(entry)
         }
     }
 

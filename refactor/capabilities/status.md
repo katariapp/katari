@@ -79,6 +79,7 @@ Updated: 2026-07-20
 - Phase 6.7.0 Tracking migration plan commit: `fb96dfe4a` (`(refactor): define tracking feature migration`)
 - Phase 6.7.1 Tracking boundary commit: `62f68d30e` (`(refactor): establish tracking feature boundary`)
 - Phase 6.7.2 Entry tracking session commit: `bf3507b53` (`(refactor): migrate entry tracking session`)
+- Phase 6.7.3 Entry tracking operations commit: `3a26ce996` (`(refactor): migrate entry tracking operations`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -86,8 +87,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.3 Entry tracking operations
-- State: Phase 6.7.3 is implemented and validating for review. Background binding/synchronization has not migrated.
+- Milestone: Phase 6.7.4 Automatic binding and synchronization
+- State: Phase 6.7.4 is implemented and validating for review. Account/settings/backup has not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1239,7 +1240,23 @@ Focused Phase 6.7.3 findings:
 - Focused Feature/operation behavior tests, formatting, boundary validation, build-logic tests, and FOSS compilation
   pass.
 
+Focused Phase 6.7.4 findings:
+
+- One automatic-behavior facet on `EntryTrackingFeature` owns enhanced binding, progress inspection/synchronization,
+  remote-progress reconciliation, and Migration track preparation; it is not separately injected or registered.
+- Catalogue, History, Entry, Merge, reader, and delayed worker paths submit Entries to the Feature instead of selecting
+  trackers or invoking raw synchronization interactors.
+- Registration and refresh return bound/refreshed track facts to the root Feature, which explicitly invokes
+  reconciliation. Lower-level interactors no longer trigger that cross-feature consequence implicitly.
+- F11 asks Tracking to prepare target rows after live authorization and persists them in its existing optimistic
+  transaction. Tracker-specific local transformation moved out of the Migration host and composition callback.
+- The 6.7.1 census documented F11 preparation but omitted it from executable Tracking integrations. This milestone adds
+  that unconditional relationship and updates discovery proof from seven to eight relationship groups.
+- Focused Tracking, Migration, and Merge behavior tests and formatting pass. FOSS compilation reaches only two
+  unrelated `HEAD` source issues in the anime debug launcher and profile shortcut UI; this milestone introduces no
+  remaining compiler diagnostics.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.3 after review, then implement Phase 6.7.4 automatic binding and synchronization. Continue through Phase 6 afterward
+Commit Phase 6.7.4 after review, then implement Phase 6.7.5 account, settings, and backup integration. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

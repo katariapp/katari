@@ -14,9 +14,6 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.preference.asState
 import eu.kanade.core.util.addOrRemove
 import eu.kanade.domain.entry.model.chaptersFiltered
-import eu.kanade.domain.track.interactor.AddTracks
-import eu.kanade.domain.track.interactor.RefreshTracks
-import eu.kanade.domain.track.interactor.TrackChapter
 import eu.kanade.domain.track.model.AutoTrackState
 import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.presentation.entry.DownloadAction
@@ -29,7 +26,6 @@ import eu.kanade.presentation.entry.components.rankMergeTargets
 import eu.kanade.presentation.entry.entryTypePresentation
 import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
@@ -126,6 +122,9 @@ import mihon.entry.interactions.EntrySourceRefreshRequest
 import mihon.entry.interactions.EntrySourceRefreshResult
 import mihon.entry.interactions.EntryTrackingAvailability
 import mihon.entry.interactions.EntryTrackingFeature
+import mihon.entry.interactions.EntryTrackingProgressInspection
+import mihon.entry.interactions.EntryTrackingProgressSynchronizationResult
+import mihon.entry.interactions.EntryTrackingRefreshResult
 import mihon.entry.interactions.EntryTrackingSession
 import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import tachiyomi.core.common.i18n.stringResource
@@ -153,7 +152,6 @@ import tachiyomi.domain.entry.service.EntryLibraryProgressResolution
 import tachiyomi.domain.library.model.LibraryItem
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
-import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.util.applyFilter
 import tachiyomi.i18n.MR
 import tachiyomi.source.local.LocalSource
@@ -171,7 +169,6 @@ class EntryScreenModel(
     private val duplicatePreferences: tachiyomi.domain.library.service.DuplicatePreferences = Injekt.get(),
     trackPreferences: TrackPreferences = Injekt.get(),
     readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
-    private val trackChapter: TrackChapter = Injekt.get(),
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryDownloadOptionsFeature: EntryDownloadOptionsFeature = Injekt.get(),
@@ -198,8 +195,6 @@ class EntryScreenModel(
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
     private val categoryRepository: CategoryRepository = Injekt.get(),
-    private val getTracks: GetTracks = Injekt.get(),
-    private val addTracks: AddTracks = Injekt.get(),
     private val sourceRefreshFeature: EntrySourceRefreshFeature = Injekt.get(),
     private val entryTrackingFeature: EntryTrackingFeature = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
@@ -866,12 +861,7 @@ class EntryScreenModel(
                     else -> showChangeCategoryDialog()
                 }
 
-                state.source?.let { source ->
-                    addTracks.bindEnhancedTrackers(
-                        entry = entry,
-                        source = EntryTrackingSource.from(source, sourceManager.getDisplayInfo(entry.source)),
-                    )
-                }
+                entryTrackingFeature.bindAutomatically(entry)
             }
         }
     }
@@ -1302,13 +1292,18 @@ class EntryScreenModel(
 
             refreshTrackers()
 
-            val tracks = getTracks.await(entryId)
             val maxChapterNumber = chapters.maxOf { it.chapterNumber }
-            val shouldPromptTrackingUpdate = tracks.any { track -> maxChapterNumber > track.progress }
-
-            if (!shouldPromptTrackingUpdate) return@launchIO
+            if (
+                entryTrackingFeature.inspectProgressSynchronization(
+                    successState?.entry ?: return@launchIO,
+                    maxChapterNumber,
+                ) !is
+                    EntryTrackingProgressInspection.UpdateRequired
+            ) {
+                return@launchIO
+            }
             if (autoTrackState == AutoTrackState.ALWAYS) {
-                trackChapter.await(context, entryId, maxChapterNumber)
+                synchronizeTrackingProgress(maxChapterNumber)
                 withUIContext {
                     context.toast(context.stringResource(MR.strings.trackers_updated_summary, maxChapterNumber.toInt()))
                 }
@@ -1323,7 +1318,7 @@ class EntryScreenModel(
             )
 
             if (result == SnackbarResult.ActionPerformed) {
-                trackChapter.await(context, entryId, maxChapterNumber)
+                synchronizeTrackingProgress(maxChapterNumber)
             }
         }
     }
@@ -1335,25 +1330,32 @@ class EntryScreenModel(
         }
     }
 
-    private suspend fun refreshTrackers(
-        refreshTracks: RefreshTracks = Injekt.get(),
-    ) {
-        refreshTracks.await(entryId)
-            .filter { it.first != null }
-            .forEach { (track, e) ->
-                logcat(LogPriority.ERROR, e) {
-                    "Failed to refresh track data entryId=$entryId for service ${track!!.id}"
+    private suspend fun refreshTrackers() {
+        val entry = successState?.entry ?: return
+        val result = entryTrackingFeature.refresh(entry)
+        (result as? EntryTrackingRefreshResult.Completed)?.failures.orEmpty()
+            .forEach { failure ->
+                logcat(LogPriority.ERROR, failure.cause) {
+                    "Failed to refresh track data entryId=$entryId for service ${failure.serviceId.value}"
                 }
                 withUIContext {
                     context.toast(
                         context.stringResource(
                             MR.strings.track_error,
-                            track!!.name,
-                            e.message ?: "",
+                            failure.serviceName,
+                            failure.cause.message ?: "",
                         ),
                     )
                 }
             }
+    }
+
+    private suspend fun synchronizeTrackingProgress(progress: Double) {
+        val entry = successState?.entry ?: return
+        val result = entryTrackingFeature.synchronizeProgress(entry, progress)
+        if (result is EntryTrackingProgressSynchronizationResult.Completed) {
+            result.failures.forEach { failure -> logcat(LogPriority.WARN, failure.cause) }
+        }
     }
 
     /**

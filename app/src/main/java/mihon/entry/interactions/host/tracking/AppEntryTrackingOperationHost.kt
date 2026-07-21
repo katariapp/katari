@@ -11,24 +11,28 @@ import mihon.entry.interactions.EntryTrackingSearchCandidate
 import mihon.entry.interactions.EntryTrackingServiceId
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.track.interactor.DeleteTrack
+import tachiyomi.domain.track.interactor.GetTracks
 import tachiyomi.domain.track.model.EntryTrack
 
 internal class AppEntryTrackingOperationHost(
     private val trackerManager: TrackerManager,
     private val refreshTracks: RefreshTracks,
     private val deleteTrack: DeleteTrack,
+    private val getTracks: GetTracks,
 ) : EntryTrackingOperationHost {
 
-    override suspend fun refresh(entryId: Long): List<EntryTrackingHostRefreshFailure> {
-        return refreshTracks.await(entryId).mapNotNull { (tracker, cause) ->
-            tracker?.let {
+    override suspend fun refresh(entryId: Long, serviceIds: Set<Long>): EntryTrackingHostRefreshResult {
+        val result = refreshTracks.await(entryId, serviceIds)
+        return EntryTrackingHostRefreshResult(
+            refreshedTracks = result.refreshedTracks,
+            failures = result.failures.map { (tracker, cause) ->
                 EntryTrackingHostRefreshFailure(
-                    serviceId = it.id,
-                    serviceName = it.name,
+                    serviceId = tracker.id,
+                    serviceName = tracker.name,
                     cause = cause,
                 )
-            }
-        }
+            },
+        )
     }
 
     override suspend fun search(serviceId: Long, query: String): List<EntryTrackingSearchCandidate> {
@@ -40,16 +44,17 @@ internal class AppEntryTrackingOperationHost(
         candidate: EntryTrackingSearchCandidate,
         entryId: Long,
         private: Boolean,
-    ) {
+    ): EntryTrack? {
         requireService(serviceId).register(candidate.toTrackSearch(serviceId, private), entryId)
+        return getTracks.await(entryId).firstOrNull { it.trackerId == serviceId }
     }
 
-    override suspend fun registerAutomatically(serviceId: Long, entry: Entry): Boolean {
+    override suspend fun registerAutomatically(serviceId: Long, entry: Entry): EntryTrack? {
         val tracker = requireService(serviceId)
-        val enhancedTracker = tracker as? EnhancedTracker ?: return false
-        val match = enhancedTracker.match(entry) ?: return false
+        val enhancedTracker = tracker as? EnhancedTracker ?: return null
+        val match = enhancedTracker.match(entry) ?: return null
         tracker.register(match, entry.id)
-        return true
+        return getTracks.await(entry.id).firstOrNull { it.trackerId == serviceId }
     }
 
     override suspend fun mutate(serviceId: Long, track: EntryTrack, mutation: EntryTrackingMutation) {

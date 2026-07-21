@@ -87,19 +87,20 @@ fun TrackInfoDialogHome(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         trackItems.forEach { item ->
-            if (item.track != null) {
+            val track = item.track
+            if (track != null) {
                 val supportsScoring = item.service.capabilities.scores.isNotEmpty()
                 val supportsReadingDates = item.service.capabilities.supportsReadingDates
                 val supportsPrivate = item.service.capabilities.supportsPrivateTracking
                 TrackInfoItem(
-                    title = item.track.title,
+                    title = track.title,
                     service = item.service,
                     status = item.service.capabilities.statuses
-                        .firstOrNull { status -> status.value == item.track.status }
+                        .firstOrNull { status -> status.value == track.status }
                         ?.label,
                     onStatusClick = { onStatusClick(item) },
-                    chapters = "${item.track.progress.toInt()}".let {
-                        val total = item.track.total
+                    chapters = "${track.progress.toInt()}".let {
+                        val total = track.total
                         if (total > 0) {
                             // Add known total chapter count
                             "$it / $total"
@@ -109,22 +110,22 @@ fun TrackInfoDialogHome(
                     },
                     onChaptersClick = { onChapterClick(item) },
                     score = item.displayScore
-                        .takeIf { supportsScoring && item.track.score != 0.0 },
+                        .takeIf { supportsScoring && track.score != 0.0 },
                     onScoreClick = { onScoreClick(item) }
                         .takeIf { supportsScoring },
-                    startDate = remember(item.track.startDate) { dateFormat.format(item.track.startDate.toLocalDate()) }
-                        .takeIf { supportsReadingDates && item.track.startDate != 0L },
+                    startDate = remember(track.startDate) { dateFormat.format(track.startDate.toLocalDate()) }
+                        .takeIf { supportsReadingDates && track.startDate != 0L },
                     onStartDateClick = { onStartDateEdit(item) } // TODO
                         .takeIf { supportsReadingDates },
-                    endDate = dateFormat.format(item.track.finishDate.toLocalDate())
-                        .takeIf { supportsReadingDates && item.track.finishDate != 0L },
+                    endDate = dateFormat.format(track.finishDate.toLocalDate())
+                        .takeIf { supportsReadingDates && track.finishDate != 0L },
                     onEndDateClick = { onEndDateEdit(item) }
                         .takeIf { supportsReadingDates },
                     onNewSearch = { onNewSearch(item) },
                     onOpenInBrowser = { onOpenInBrowser(item) },
                     onRemoved = { onRemoved(item) },
                     onCopyLink = { onCopyLink(item) },
-                    private = item.track.private,
+                    private = track.private,
                     onTogglePrivate = { onTogglePrivate(item) }
                         .takeIf { supportsPrivate },
                 )

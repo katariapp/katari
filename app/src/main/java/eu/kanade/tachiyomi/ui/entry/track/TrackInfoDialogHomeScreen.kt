@@ -138,7 +138,9 @@ data class TrackInfoDialogHomeScreen(
 
         private suspend fun refreshTrackers() {
             when (val result = trackingFeature.refresh(entry)) {
-                is EntryTrackingRefreshResult.Completed -> result.failures.forEach(::reportRefreshFailure)
+                is EntryTrackingRefreshResult.Completed -> {
+                    result.failures.forEach { failure -> reportRefreshFailure(failure) }
+                }
                 is EntryTrackingRefreshResult.Failed -> logcat(LogPriority.ERROR, result.cause) {
                     "Failed to refresh track data entryId=${entry.id}"
                 }

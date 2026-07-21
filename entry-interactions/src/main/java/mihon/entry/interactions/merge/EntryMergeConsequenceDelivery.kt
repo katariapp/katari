@@ -10,7 +10,7 @@ import tachiyomi.domain.entry.model.Entry
 
 internal class EntryMergeConsequenceDelivery(
     private val host: EntryMergeHost,
-    private val libraryEntryInitializer: suspend (Entry) -> Unit,
+    private val tracking: () -> EntryTrackingFeature,
     private val coverCleanup: suspend (Entry) -> Unit,
     private val downloadMaintenance: () -> EntryDownloadMaintenanceFeature,
     private val clockMillis: () -> Long = System::currentTimeMillis,
@@ -58,7 +58,7 @@ internal class EntryMergeConsequenceDelivery(
         val entry = host.profile(consequence.profileId).entries(listOf(consequence.entryId)).singleOrNull()
             ?: return
         when (consequence.artifactId) {
-            EntryMergeLibraryInitializationConsequence.id.value -> libraryEntryInitializer(entry)
+            EntryMergeLibraryInitializationConsequence.id.value -> tracking().bindAutomatically(entry)
             EntryMergeCoverCleanupConsequence.id.value -> coverCleanup(entry)
             EntryMergeDownloadRemovalConsequence.id.value -> {
                 check(

@@ -297,6 +297,12 @@ raw tracker objects or tracker search records. The app host is the only raw oper
 by unconditional local removal is now coordinated with a structured partial-failure result. Background synchronization,
 account/settings/backup, and Library/Stats consumers remain assigned to 6.7.4–6.7.6 rather than hidden in an allowlist.
 
+Phase 6.7.4 moves automatic enhanced binding, progress synchronization/retry, remote-progress reconciliation, and F11
+track preparation behind the same Feature. Catalogue, History, Entry, Merge, reader, and worker consumers no longer
+select raw trackers or call synchronization interactors. F11 retains transaction ownership and persists neutral rows
+prepared by Tracking. The executable graph now includes the previously documented but omitted unconditional Migration
+preparation relationship; account/settings/backup and Library/Stats remain assigned to 6.7.5–6.7.6.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

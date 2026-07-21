@@ -8,7 +8,6 @@ import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteConfiguration
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDatabaseType
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDriver
 import com.eygraber.sqldelight.androidx.driver.FileProvider
-import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.store.DelayedTrackingStore
 import eu.kanade.presentation.more.settings.screen.SettingsAnimePlayerScreen
 import eu.kanade.presentation.more.settings.screen.SettingsHtmlProseReaderScreen
@@ -18,8 +17,6 @@ import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
 import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
 import eu.kanade.tachiyomi.data.saver.ImageSaver
-import eu.kanade.tachiyomi.data.track.EnhancedTracker
-import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
 import eu.kanade.tachiyomi.entry.AppEntryMetadataUpdateHooks
@@ -76,6 +73,7 @@ import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.storage.service.StorageManager
 import tachiyomi.source.local.image.LocalCoverManager
 import tachiyomi.source.local.io.LocalSourceFileSystem
+import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.InjektModule
 import uy.kohesive.injekt.api.InjektRegistrar
 import uy.kohesive.injekt.api.addSingleton
@@ -186,32 +184,20 @@ class AppModule(val app: Application) : InjektModule {
         )
         val migrationHost = AppEntryMigrationHost(
             handler = get(),
-            prepareTracks = { source, target, tracks ->
-                val sourceManager = get<SourceManager>()
-                val trackerManager = get<TrackerManager>()
-                val sourceTracking = sourceManager.get(source.source)?.let {
-                    EntryTrackingSource.from(it, sourceManager.getDisplayInfo(source.source))
-                }
-                val targetTracking = sourceManager.get(target.source)?.let {
-                    EntryTrackingSource.from(it, sourceManager.getDisplayInfo(target.source))
-                }
-                val enhancedServices = trackerManager.trackers.filterIsInstance<EnhancedTracker>()
-                tracks.mapNotNull { track ->
-                    val targetTrack = track.copy(entryId = target.id)
-                    val service = enhancedServices.firstOrNull {
-                        it.isTrackFrom(targetTrack, source, sourceTracking)
-                    }
-                    if (service != null && targetTracking != null) {
-                        service.migrateTrack(targetTrack, target, targetTracking)
-                    } else {
-                        targetTrack
-                    }
-                }
-            },
             hasCustomCover = { entryId -> get<CoverCache>().getCustomCoverFile(entryId).exists() },
         )
         val migrationCustomCoverHost = AppEntryMigrationCustomCoverHost(app, get())
-        val trackingHost = AppEntryTrackingHost(get(), get(), get(), get(), get())
+        val trackingHost = AppEntryTrackingHost(
+            trackerManager = get(),
+            sourceManager = get(),
+            getTracks = get(),
+            refreshTracks = get(),
+            deleteTrack = get(),
+            app = app,
+            addTracks = get(),
+            trackChapter = get(),
+            syncChapterProgress = get(),
+        )
         addEntryInteractionRuntime(
             app = app,
             dependencies = EntryInteractionRuntimeDependencies(
@@ -220,7 +206,7 @@ class AppModule(val app: Application) : InjektModule {
                 pageImageCache = mangaPageImageCache,
                 childGroupFilterDataSource = AppEntryChildGroupFilterDataSource(get(), get(), get()),
                 readerIncognitoState = AppReaderIncognitoState(get()),
-                readerTracking = AppReaderTracking(get(), get()),
+                readerTracking = AppReaderTracking(get(), get()) { Injekt.get() },
                 basePreferenceStore = get<ProfileStore>().basePreferenceStore(),
                 profilePreferenceOwners = ProfilePreferenceOwnerInstaller(get()) {
                     get<ProfileStore>().profileStore()
@@ -235,14 +221,6 @@ class AppModule(val app: Application) : InjektModule {
                     LibraryPreferences(get<ProfileStore>().profileStore(profileId)).updateMangaTitles.get()
                 },
                 mergeHost = mergeHost,
-                mergeLibraryEntryInitializer = { entry ->
-                    val sourceManager = get<SourceManager>()
-                    val source = sourceManager.getOrStub(entry.source)
-                    get<AddTracks>().bindEnhancedTrackers(
-                        entry = entry,
-                        source = EntryTrackingSource.from(source, sourceManager.getDisplayInfo(entry.source)),
-                    )
-                },
                 mergeCoverCleanup = { entry ->
                     get<EntryRemovalCleanupInteraction>().cleanupAfterLibraryRemoval(entry)
                 },

@@ -277,7 +277,7 @@ class EntryMergeFeatureTest {
         )
         val delivery = EntryMergeConsequenceDelivery(
             host = host,
-            libraryEntryInitializer = {},
+            tracking = { mockk(relaxed = true) },
             coverCleanup = {},
             downloadMaintenance = { mockk(relaxed = true) },
         )

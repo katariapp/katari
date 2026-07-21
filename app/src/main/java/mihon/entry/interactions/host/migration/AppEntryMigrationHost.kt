@@ -22,7 +22,6 @@ private const val MAX_ERROR_LENGTH = 2_000
 
 internal class AppEntryMigrationHost(
     private val handler: DatabaseHandler,
-    private val prepareTracks: suspend (Entry, Entry, List<EntryTrack>) -> List<EntryTrack>,
     private val hasCustomCover: (Long) -> Boolean,
     private val clockMillis: () -> Long = System::currentTimeMillis,
 ) : EntryMigrationPreparationHost, EntryMigrationExecutionHost, EntryMigrationConsequenceHost {
@@ -195,7 +194,6 @@ internal class AppEntryMigrationHost(
                         targetChildren = state.targetChildren,
                         sourceCategoryIds = state.sourceCategoryIds,
                         sourceTracks = state.sourceTracks,
-                        preparedTracks = prepareTracks(state.source, state.target, state.sourceTracks),
                     )
                 }
             } catch (error: CancellationException) {

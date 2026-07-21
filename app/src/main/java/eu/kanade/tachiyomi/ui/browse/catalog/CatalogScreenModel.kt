@@ -23,7 +23,6 @@ import eu.kanade.domain.source.model.applySnapshot
 import eu.kanade.domain.source.model.snapshot
 import eu.kanade.domain.source.service.BrowseFeedService
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.presentation.entry.components.MergeEditorEntry
 import eu.kanade.presentation.entry.components.MergeTarget
 import eu.kanade.presentation.entry.components.buildMergeTargetQuery
@@ -31,7 +30,6 @@ import eu.kanade.presentation.entry.components.buildMergeTargets
 import eu.kanade.presentation.entry.components.rankMergeTargets
 import eu.kanade.presentation.util.ioCoroutineScope
 import eu.kanade.tachiyomi.data.cache.CoverCache
-import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
@@ -73,6 +71,7 @@ import mihon.entry.interactions.EntrySourceHomeFeature
 import mihon.entry.interactions.EntrySourceHomeResolution
 import mihon.entry.interactions.EntrySourceSettingsFeature
 import mihon.entry.interactions.EntrySourceSettingsResolution
+import mihon.entry.interactions.EntryTrackingFeature
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
@@ -132,7 +131,7 @@ class CatalogScreenModel(
     private val entryCatalogueFeature: EntryCatalogueFeature = Injekt.get(),
     private val entrySourceHomeFeature: EntrySourceHomeFeature = Injekt.get(),
     private val entrySourceSettingsFeature: EntrySourceSettingsFeature = Injekt.get(),
-    private val addTracks: AddTracks = Injekt.get(),
+    private val entryTrackingFeature: EntryTrackingFeature = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
     private val application: Application = Injekt.get(),
 ) : StateScreenModel<CatalogScreenModel.State>(
@@ -487,11 +486,7 @@ class CatalogScreenModel(
                 new = new.removeCovers()
             } else {
                 setEntryChapterFlags.await(entry.id, computeDefaultChapterFlags(libraryPreferences))
-                val source = sourceManager.getOrStub(sourceId)
-                addTracks.bindEnhancedTrackers(
-                    entry = entry,
-                    source = EntryTrackingSource.from(source, sourceManager.getDisplayInfo(sourceId)),
-                )
+                entryTrackingFeature.bindAutomatically(entry)
             }
 
             entryRepository.update(new)

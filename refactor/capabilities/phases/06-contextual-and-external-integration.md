@@ -996,10 +996,10 @@ persisted track. The root coordinator alone interprets those facts through decla
 API nor graph exports `Tracker`, `TrackerManager`, `EnhancedTracker`, `DeletableTracker`, or tracker database/network
 models.
 
-All seven planned relationship groups already enter static graph discovery. The registry relationship is shared and
-applicable for every contributed type; the remaining relationships are conditional candidates until the owning Feature
-operation supplies runtime evidence. This makes later consumer work a migration into known consequences rather than a
-series of hand-added tracker integrations.
+All eight planned relationship groups enter static graph discovery. Registry and Migration preparation apply for every
+contributed type; Entry availability/session/operations, automatic binding, synchronization, Library, and Stats remain
+conditional on their owning runtime evidence. This makes later consumer work a migration into known consequences
+rather than a series of hand-added tracker integrations.
 
 The boundary rule derives all public host-package declarations from source ownership. It does not enumerate host model
 names or current consumers. Existing raw tracker references remain unguarded only until 6.7.7 because enforcing that cut
@@ -1079,6 +1079,41 @@ without introducing a file allowlist. The migrated Entry tracking package itself
 Manifesto comparison found one external mechanics adapter, one Feature authority, operation-time contextual
 revalidation, and no type matrix, type provider, copied capability flag, raw application model, operation facade, or
 consumer registry. Tracker sub-capability absence produces structured unavailability and never invalidates a type.
+
+#### 6.7.4 — Automatic Binding and Synchronization
+
+- [x] Add an automatic-behavior facet to the single `EntryTrackingFeature`; do not register or inject another behavior
+  authority.
+- [x] Select eligible automatic-binding and progress-synchronization services from fresh host snapshots using exact
+  Entry type, authentication, source acceptance, automatic-binding support, and existing-track evidence.
+- [x] Migrate Catalogue, History, Entry library initialization, Merge initialization, reader updates, delayed retries,
+  remote refresh reconciliation, and manual registration reconciliation to structured Feature operations.
+- [x] Make F11 consume Tracking-owned track preparation before its optimistic transaction while leaving transaction and
+  persistence ownership in Migration.
+- [x] Confine raw tracker selection, enhanced matching, progress mechanics, and tracker-specific migration transforms
+  to the application Tracking host and tracker implementation.
+
+Automatic binding now has one policy gate. Callers submit an Entry and do not enumerate trackers, cast enhanced
+services, test types, or reproduce source acceptance. The Feature derives the eligible services from current external
+evidence, the host performs matching, and each bound track is reconciled through the same Tracking synchronization
+relationship. Failures, unmatched services, and contextual unavailability remain structured results.
+
+Progress synchronization follows the same split: the Feature chooses authenticated, type-compatible services with an
+existing track; the host updates only those service IDs and retains delayed-retry mechanics. Reader, Entry, and worker
+callers no longer reach the raw progress interactor. Remote refresh and registration return refreshed/bound track facts
+to the Feature, which explicitly invokes reconciliation instead of letting lower-level interactors trigger a hidden
+cross-feature consequence. The existing reconciliation mechanic still delegates local Consumption changes to F09.
+
+Migration keeps ownership of execution, optimistic validation, and atomic row persistence. It now asks Tracking to
+prepare target rows after live authorization succeeds. The Tracking host performs the tracker-specific local identity
+transform without network work, then Migration commits the returned neutral rows. This milestone also corrects the
+static graph census: Migration preparation had been described in 6.7.1 but was missing from executable Tracking
+integrations; it is now an unconditional shared Tracking consequence for every contributed type.
+
+Manifesto comparison found no content-type Tracking provider, type matrix, mandatory tracker operation, consumer
+service selection, copied source/authentication gate, or compatibility callback. A future type becomes eligible for
+binding and synchronization solely when an external tracker declares support and the relevant live evidence exists;
+Migration preparation requires no additional type opt-in.
 
 ### 6.8 — Compatibility Reconciliation and Context Census
 

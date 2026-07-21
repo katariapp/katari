@@ -9,9 +9,11 @@ import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntrySnapshot
+import mihon.entry.interactions.host.tracking.EntryTrackingHostRefreshResult
 import mihon.entry.interactions.host.tracking.EntryTrackingHostService
 import mihon.entry.interactions.host.tracking.EntryTrackingHostServiceCapabilities
 import mihon.entry.interactions.host.tracking.EntryTrackingOperationHost
@@ -94,9 +96,28 @@ class EntryTrackingOperationsTest {
         }
     }
 
-    private fun feature(operations: EntryTrackingOperationHost): EntryTrackingFeature {
+    @Test
+    fun `refresh selects the resolved session and reconciles returned tracks`() = runTest {
+        val operations = mockk<EntryTrackingOperationHost>()
+        val automation = mockk<EntryTrackingAutomationHost>()
+        coEvery { operations.refresh(entry.id, setOf(service.id)) } returns
+            EntryTrackingHostRefreshResult(listOf(track), emptyList())
+        coEvery { automation.reconcileRemoteProgress(entry, service.id, track) } returns Unit
+        val feature = feature(operations, automation)
+
+        feature.refresh(entry) shouldBe EntryTrackingRefreshResult.Completed(emptyList())
+
+        coVerify(exactly = 1) { operations.refresh(entry.id, setOf(service.id)) }
+        coVerify(exactly = 1) { automation.reconcileRemoteProgress(entry, service.id, track) }
+    }
+
+    private fun feature(
+        operations: EntryTrackingOperationHost,
+        automation: EntryTrackingAutomationHost = mockk(relaxed = true),
+    ): EntryTrackingFeature {
         val host = object : EntryTrackingHost {
             override val operations = operations
+            override val automation = automation
 
             override fun registeredServices() = listOf(service)
 

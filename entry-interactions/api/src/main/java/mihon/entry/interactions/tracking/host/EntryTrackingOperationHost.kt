@@ -6,7 +6,7 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.track.model.EntryTrack
 
 interface EntryTrackingOperationHost {
-    suspend fun refresh(entryId: Long): List<EntryTrackingHostRefreshFailure>
+    suspend fun refresh(entryId: Long, serviceIds: Set<Long>): EntryTrackingHostRefreshResult
 
     suspend fun search(serviceId: Long, query: String): List<EntryTrackingSearchCandidate>
 
@@ -15,9 +15,9 @@ interface EntryTrackingOperationHost {
         candidate: EntryTrackingSearchCandidate,
         entryId: Long,
         private: Boolean,
-    )
+    ): EntryTrack?
 
-    suspend fun registerAutomatically(serviceId: Long, entry: Entry): Boolean
+    suspend fun registerAutomatically(serviceId: Long, entry: Entry): EntryTrack?
 
     suspend fun mutate(serviceId: Long, track: EntryTrack, mutation: EntryTrackingMutation)
 
@@ -30,4 +30,9 @@ data class EntryTrackingHostRefreshFailure(
     val serviceId: Long,
     val serviceName: String,
     val cause: Throwable,
+)
+
+data class EntryTrackingHostRefreshResult(
+    val refreshedTracks: List<EntryTrack>,
+    val failures: List<EntryTrackingHostRefreshFailure>,
 )

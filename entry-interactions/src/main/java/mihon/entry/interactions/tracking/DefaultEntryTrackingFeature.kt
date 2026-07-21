@@ -12,8 +12,10 @@ import tachiyomi.domain.entry.model.Entry
 internal class DefaultEntryTrackingFeature(
     private val evaluation: FeatureGraphEvaluation,
     private val host: EntryTrackingHost,
+    private val automation: DefaultEntryTrackingAutomation = DefaultEntryTrackingAutomation(evaluation, host),
 ) : EntryTrackingFeature,
-    EntryTrackingOperations by DefaultEntryTrackingOperations(evaluation, host) {
+    EntryTrackingOperations by DefaultEntryTrackingOperations(evaluation, host, automation),
+    EntryTrackingAutomation by automation {
 
     override fun availability(entryType: EntryType): EntryTrackingAvailability {
         val services = host.registeredServices().filter { entryType in it.supportedEntryTypes }

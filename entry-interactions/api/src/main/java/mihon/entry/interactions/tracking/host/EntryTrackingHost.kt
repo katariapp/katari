@@ -9,6 +9,7 @@ import tachiyomi.domain.track.model.EntryTrack
 /** Segregated application adapter used only by the root Tracking Feature. */
 interface EntryTrackingHost {
     val operations: EntryTrackingOperationHost
+    val automation: EntryTrackingAutomationHost
 
     fun registeredServices(): List<EntryTrackingHostService>
 

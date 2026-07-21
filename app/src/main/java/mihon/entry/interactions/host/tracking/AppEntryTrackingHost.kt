@@ -1,6 +1,10 @@
 package mihon.entry.interactions.host.tracking
 
+import android.app.Application
+import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.RefreshTracks
+import eu.kanade.domain.track.interactor.SyncChapterProgressWithTrack
+import eu.kanade.domain.track.interactor.TrackChapter
 import eu.kanade.tachiyomi.data.track.DeletableTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
@@ -19,12 +23,25 @@ class AppEntryTrackingHost(
     private val getTracks: GetTracks,
     refreshTracks: RefreshTracks,
     deleteTrack: DeleteTrack,
+    app: Application,
+    addTracks: AddTracks,
+    trackChapter: TrackChapter,
+    syncChapterProgress: SyncChapterProgressWithTrack,
 ) : EntryTrackingHost {
 
     override val operations: EntryTrackingOperationHost = AppEntryTrackingOperationHost(
         trackerManager = trackerManager,
         refreshTracks = refreshTracks,
         deleteTrack = deleteTrack,
+        getTracks = getTracks,
+    )
+    override val automation: EntryTrackingAutomationHost = AppEntryTrackingAutomationHost(
+        app = app,
+        trackerManager = trackerManager,
+        sourceManager = sourceManager,
+        addTracks = addTracks,
+        trackChapter = trackChapter,
+        syncChapterProgress = syncChapterProgress,
     )
 
     override fun registeredServices(): List<EntryTrackingHostService> {

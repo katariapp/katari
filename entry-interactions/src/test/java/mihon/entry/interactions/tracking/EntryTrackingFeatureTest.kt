@@ -8,6 +8,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntrySnapshot
@@ -113,9 +114,9 @@ class EntryTrackingFeatureTest {
         val tracking = evaluation.integrations.filter { it.subject.feature == ENTRY_TRACKING_FEATURE_ID }
 
         tracking shouldHaveSize EntryTrackingIntegration.entries.size
-        tracking.filterIsInstance<ApplicableFeatureIntegration>() shouldHaveSize 1
+        tracking.filterIsInstance<ApplicableFeatureIntegration>() shouldHaveSize 2
         tracking.filterIsInstance<ConditionalFeatureIntegration>() shouldHaveSize
-            EntryTrackingIntegration.entries.size - 1
+            EntryTrackingIntegration.entries.size - 2
         tracking.map { it.subject.contentType }.distinct() shouldHaveSize 1
     }
 
@@ -125,6 +126,7 @@ class EntryTrackingFeatureTest {
     ): EntryTrackingFeature {
         val host = object : EntryTrackingHost {
             override val operations: EntryTrackingOperationHost = mockk(relaxed = true)
+            override val automation: EntryTrackingAutomationHost = mockk(relaxed = true)
 
             override fun registeredServices() = services
 

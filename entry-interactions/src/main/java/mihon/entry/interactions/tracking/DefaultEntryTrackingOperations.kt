@@ -8,6 +8,7 @@ import tachiyomi.domain.entry.model.Entry
 internal class DefaultEntryTrackingOperations(
     evaluation: FeatureGraphEvaluation,
     private val host: EntryTrackingHost,
+    private val automation: DefaultEntryTrackingAutomation,
 ) : EntryTrackingOperations {
     private val resolver = EntryTrackingOperationResolver(evaluation, host)
 
@@ -16,10 +17,18 @@ internal class DefaultEntryTrackingOperations(
         if (available is ResolvedTrackingServices.Unavailable) {
             return EntryTrackingRefreshResult.Unavailable(available.reason)
         }
+        val services = (available as ResolvedTrackingServices.Available).services
         return operationCatching(
             block = {
+                val result = host.operations.refresh(
+                    entryId = entry.id,
+                    serviceIds = services.mapTo(mutableSetOf()) { it.service.id },
+                )
+                result.refreshedTracks.forEach { track ->
+                    automation.reconcileRemoteProgress(entry, track.trackerId, track)
+                }
                 EntryTrackingRefreshResult.Completed(
-                    host.operations.refresh(entry.id).map { failure ->
+                    result.failures.map { failure ->
                         EntryTrackingRefreshFailure(
                             serviceId = EntryTrackingServiceId(failure.serviceId),
                             serviceName = failure.serviceName,
@@ -70,7 +79,9 @@ internal class DefaultEntryTrackingOperations(
         }
         return operationCatching(
             block = {
-                host.operations.register(serviceId.value, candidate, entry.id, private)
+                host.operations.register(serviceId.value, candidate, entry.id, private)?.let { track ->
+                    automation.reconcileRemoteProgress(entry, serviceId.value, track)
+                }
                 EntryTrackingOperationResult.Completed
             },
             failed = EntryTrackingOperationResult::Failed,
@@ -93,7 +104,9 @@ internal class DefaultEntryTrackingOperations(
         }
         return operationCatching(
             block = {
-                if (host.operations.registerAutomatically(serviceId.value, entry)) {
+                val track = host.operations.registerAutomatically(serviceId.value, entry)
+                if (track != null) {
+                    automation.reconcileRemoteProgress(entry, serviceId.value, track)
                     EntryTrackingAutomaticRegistrationResult.Registered
                 } else {
                     EntryTrackingAutomaticRegistrationResult.NoMatch
