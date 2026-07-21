@@ -1043,6 +1043,43 @@ Manifesto comparison found no new type opt-in, type matrix, copied authenticatio
 flag, consumer registry, or mandatory tracker sub-capability. A future type declared by a tracker receives the Entry
 action, badge, and dialog rows through the unchanged Feature path; absent trackers or sub-capabilities remain valid.
 
+#### 6.7.3 — Entry Tracking Operations
+
+- [x] Add cohesive Tracking Feature operations for refresh, search, manual/automatic registration, mutations, and
+  local/remote removal with neutral requests and structured outcomes.
+- [x] Revalidate exact service registration, Entry-type support, authentication, and source acceptance at command time.
+- [x] Validate status, score, date, privacy, automatic-binding, existing-track, and remote-deletion requirements from
+  tracker-owned evidence before invoking mechanics.
+- [x] Keep raw tracker objects, tracker search models, registry lookup, capability casts, and domain interactors inside
+  the application host adapter.
+- [x] Migrate every Entry tracking dialog and selector to the Feature operation boundary.
+- [x] Split the former monolithic tracking dialog into home, status, progress, score, date, search, removal, and feedback
+  files with mirrored Tracking operation coverage.
+
+`EntryTrackingFeature` remains the single injected behavior boundary and now implements a cohesive operations facet;
+the facet is not separately registered or injected. Each command carries the authoritative Entry and stable service ID.
+The coordinator resolves a fresh host snapshot before dispatch, so a screen opened before logout, source change, or
+service removal cannot bypass current applicability by retaining a tracker object.
+
+Search candidates are neutral immutable values. The host converts tracker-owned search models at the boundary and
+reconstructs them only when registration executes; application presentation no longer imports the raw tracker search
+model. Each candidate retains its originating service identity, and cross-service registration is rejected. Mutations
+are structured intents, and the coordinator obtains the current persisted track from the same resolved session rather
+than trusting a stale UI-supplied record.
+
+Remote removal is now one coordinated operation. When requested and supported, remote deletion is attempted first;
+local removal still runs if the remote call fails, preserving the prior user-visible local-removal outcome while making
+the partial failure explicit. Cancellation still propagates. Other failures and operation-time unavailability are
+structured and retain the existing UI logging or error presentation.
+
+The raw registry remains in automatic synchronization, account/settings/backup, Library/Stats, and the temporary
+settings logo adapter assigned to 6.7.4–6.7.6. Global raw-tracker enforcement therefore remains deferred to 6.7.7
+without introducing a file allowlist. The migrated Entry tracking package itself has no raw tracker dependency.
+
+Manifesto comparison found one external mechanics adapter, one Feature authority, operation-time contextual
+revalidation, and no type matrix, type provider, copied capability flag, raw application model, operation facade, or
+consumer registry. Tracker sub-capability absence produces structured unavailability and never invalidates a type.
+
 ### 6.8 — Compatibility Reconciliation and Context Census
 
 - [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current

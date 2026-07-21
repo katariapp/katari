@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -12,6 +13,7 @@ import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntrySnapshot
 import mihon.entry.interactions.host.tracking.EntryTrackingHostService
 import mihon.entry.interactions.host.tracking.EntryTrackingHostServiceCapabilities
+import mihon.entry.interactions.host.tracking.EntryTrackingOperationHost
 import mihon.feature.graph.ApplicableFeatureIntegration
 import mihon.feature.graph.ConditionalFeatureIntegration
 import org.junit.jupiter.api.Test
@@ -122,6 +124,8 @@ class EntryTrackingFeatureTest {
         snapshots: List<EntryTrackingHostEntrySnapshot>,
     ): EntryTrackingFeature {
         val host = object : EntryTrackingHost {
+            override val operations: EntryTrackingOperationHost = mockk(relaxed = true)
+
             override fun registeredServices() = services
 
             override fun observeEntry(entry: Entry) = flowOf(*snapshots.toTypedArray())

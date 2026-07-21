@@ -459,9 +459,7 @@ class EntryScreen(
             EntryScreenModel.Dialog.TrackSheet -> {
                 NavigatorAdaptiveSheet(
                     screen = TrackInfoDialogHomeScreen(
-                        entryId = successState.entry.id,
-                        entryTitle = successState.entry.displayTitle,
-                        entryType = successState.entry.type,
+                        entry = successState.entry,
                     ),
                     enableSwipeDismiss = { it.lastItem is TrackInfoDialogHomeScreen },
                     onDismissRequest = onDismissRequest,

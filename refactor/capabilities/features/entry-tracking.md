@@ -1,6 +1,6 @@
 # Entry Tracking
 
-Status: architecture established; Entry session consumers migrated
+Status: architecture established; Entry session and operations migrated
 
 ## Owner and Relationships
 
@@ -43,8 +43,19 @@ parsing remain external-system mechanics.
 The Entry action, badge, and tracking-dialog rows consume these results directly. Registered availability controls
 whether the action exists; the authenticated session controls whether it opens the dialog and which rows/count appear.
 The dialog no longer receives a raw tracker-bearing application model or reconstructs type, login, source, status,
-score, date, privacy, or automatic-binding presentation gates. Operation execution remains assigned to the next
-milestone and still resolves raw services internally until those commands enter the Feature.
+score, date, privacy, or automatic-binding presentation gates. Operation execution enters the same Feature through
+structured commands.
+
+The operations facet covers refresh, search, manual and automatic registration, status/progress/score/date/privacy
+mutation, local unregistration, and optional remote deletion. Every request re-resolves the exact service against the
+current Entry session before host dispatch. Capability-specific operations are checked against tracker-owned evidence,
+and mutations use the current persisted track rather than a UI-supplied tracker or track record.
+
+The host alone converts neutral search candidates to and from tracker-owned models and invokes the raw registry,
+tracker methods, refresh coordinator, and local deletion interactor. UI operation screens consume neutral descriptors,
+candidates, mutation intents, and structured results. Candidates remain bound to their originating service, preventing
+one service's result from being registered through another. Automatic background binding/synchronization remains
+separate work because it owns different consequences despite sharing the same external tracker system.
 
 ## Discovered Consequences
 
@@ -60,8 +71,8 @@ The graph declares every censused relationship before consumer migration:
 | Authenticated Library integration | F14 tracker-filter evidence and score-sort evidence |
 | Authenticated Stats integration | Tracker and normalized score evidence |
 
-Later Phase 6.7 milestones add operations to this same boundary and resolve these already-discovered relationships.
-They do not add another tracker facade, consumer registry, type provider, or settings service list.
+Later Phase 6.7 milestones resolve the remaining background, account, Library, and Stats relationships through this
+same boundary. They do not add another tracker facade, consumer registry, type provider, or settings service list.
 
 ## Boundary Enforcement
 

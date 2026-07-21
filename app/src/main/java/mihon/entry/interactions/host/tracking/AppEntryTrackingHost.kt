@@ -1,5 +1,6 @@
 package mihon.entry.interactions.host.tracking
 
+import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.tachiyomi.data.track.DeletableTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
@@ -9,13 +10,22 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.source.service.SourceManager
+import tachiyomi.domain.track.interactor.DeleteTrack
 import tachiyomi.domain.track.interactor.GetTracks
 
 class AppEntryTrackingHost(
     private val trackerManager: TrackerManager,
     private val sourceManager: SourceManager,
     private val getTracks: GetTracks,
+    refreshTracks: RefreshTracks,
+    deleteTrack: DeleteTrack,
 ) : EntryTrackingHost {
+
+    override val operations: EntryTrackingOperationHost = AppEntryTrackingOperationHost(
+        trackerManager = trackerManager,
+        refreshTracks = refreshTracks,
+        deleteTrack = deleteTrack,
+    )
 
     override fun registeredServices(): List<EntryTrackingHostService> {
         return trackerManager.trackers.map(Tracker::toHostService)

@@ -291,6 +291,12 @@ service identity, capabilities, track state, status labels, and tracker-formatte
 `TrackItem` wrapper is removed. Dialog commands remain explicitly assigned to 6.7.3; no temporary consumer allowlist or
 parallel session adapter was added.
 
+Phase 6.7.3 moves Entry refresh/search/registration/mutation/removal commands behind the same Feature. Every command
+revalidates the current exact service session and tracker-owned sub-capability evidence; presentation no longer imports
+raw tracker objects or tracker search records. The app host is the only raw operation adapter. Remote deletion followed
+by unconditional local removal is now coordinated with a structured partial-failure result. Background synchronization,
+account/settings/backup, and Library/Stats consumers remain assigned to 6.7.4–6.7.6 rather than hidden in an allowlist.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

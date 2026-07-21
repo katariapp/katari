@@ -211,7 +211,7 @@ class AppModule(val app: Application) : InjektModule {
             hasCustomCover = { entryId -> get<CoverCache>().getCustomCoverFile(entryId).exists() },
         )
         val migrationCustomCoverHost = AppEntryMigrationCustomCoverHost(app, get())
-        val trackingHost = AppEntryTrackingHost(get(), get(), get())
+        val trackingHost = AppEntryTrackingHost(get(), get(), get(), get(), get())
         addEntryInteractionRuntime(
             app = app,
             dependencies = EntryInteractionRuntimeDependencies(
