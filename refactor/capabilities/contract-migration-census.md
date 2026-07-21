@@ -12,7 +12,7 @@ The table must disappear as an active completion mechanism after migration. Norm
 verifiers, scenarios, and production subjects directly. This file records why existing tests migrate or remain
 owner-local so the transition does not omit behavior merely because no marker contract exists today.
 
-## Current State
+## Census Baseline
 
 - There are 37 production Feature contributions under `entry-interactions`.
 - Fifteen Features currently declare 18 contract definitions. Migration declares four distinct contracts; each other
@@ -30,6 +30,19 @@ owner-local so the transition does not omit behavior merely because no marker co
 If the validation gate were connected without further migration, it would correctly report 18 missing verifier
 obligations and four missing applicable-context scenario groups. That result would still be incomplete because the 22
 Features without declarations and the undeclared cooperation/context relationships would remain invisible.
+
+## Migration Progress
+
+Phase 7.1.1 raises the production graph to 32 exact contract definitions across 23 Features. Sixteen definitions now
+have discovered executable verifiers: Open, Continue, Consumption provider/context behavior, Bookmarking
+provider/context behavior, Progress Transfer, Playback Preferences Transfer, Child List, Child Group Filtering, Type
+Presentation, and Update Eligibility policy/context behavior.
+
+The production host enrolls every applicable subject automatically. Provider contracts execute the shared Feature
+coordinator against a recording operational boundary selected from the production provider's type; they do not retest
+media-specific processor mechanics. Context contracts execute the same shared coordinator after their feature-owned
+applicable scenarios resolve. The declaration-only Update Eligibility assertion was removed; its policy behavior remains
+covered by executable contracts and focused policy tests.
 
 ## Validation Host Gate
 
@@ -166,9 +179,9 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.1 — Fundamental Provider Contracts
 
-- Open, Continue, Consumption, Bookmarking, Progress, Playback Preferences, Child List, Child Group Filtering, Type
+- [x] Open, Continue, Consumption, Bookmarking, Progress, Playback Preferences, Child List, Child Group Filtering, Type
   Presentation, and Update Eligibility.
-- Remove only replaced contract-ID/support assertions.
+- [x] Remove only replaced contract-ID/support assertions.
 
 ### 7.1.2 — Download Contracts
 

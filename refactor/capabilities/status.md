@@ -89,6 +89,7 @@ Updated: 2026-07-21
 - Application compilation-baseline commit: `d25aacc27` (`(fix): restore application compilation`)
 - Phase 7.0 contract-execution architecture commit: `d7b363bff` (`(feat): execute selected feature contracts`)
 - Phase 7.1 production contract census commit: `6be1cec52` (`(docs): census production feature contracts`)
+- Phase 7.1.0 production validation host commit: `4af26ba57` (`(feat): validate production interaction contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -96,9 +97,9 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.0 Production validation host and exact-definition binding
-- State: The production-backed validation gate is implemented and validated for review. No production verifier,
-  report, or documentation projection has migrated.
+- Milestone: Phase 7.1.1 Fundamental provider contracts
+- State: Fundamental navigation, state, child, presentation, and eligibility contracts are implemented and validated
+  for review. Download contracts have not started; reporting and documentation projection have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1412,7 +1413,28 @@ Focused Phase 7.1.0 validation-host findings:
 - Formatting, Feature Graph tests, Feature Validation tests, Entry Interactions tests, and FOSS application compilation
   pass.
 
+Focused Phase 7.1.1 fundamental-contract findings:
+
+- The production graph now declares 32 exact contracts across 23 Features. Sixteen fundamental definitions have
+  discovered verifiers, including six applicable contextual scenario groups.
+- Open, Continue, Consumption, Bookmarking, Progress Transfer, Playback Preferences Transfer, Child List, Child Group
+  Filtering, Type Presentation, and Update Eligibility now execute shared Feature behavior for every graph-selected
+  production subject.
+- Provider selection enrolls a production subject, while the contract executes the shared coordinator against a
+  recording operational boundary. Type-owned processors, repositories, readers, and media mechanics remain covered by
+  their owner suites rather than being reconstructed in shared contracts.
+- Consumption and Bookmarking contextual contracts execute the same shared coordinator after applicable state-change
+  scenarios resolve. Update Eligibility executes both its unconditional policy and its contextual eligible decision.
+- Validation contributors are installed through module-local service metadata. No central contract suite, type matrix,
+  or per-type fixture was added.
+- The declaration-only Update Eligibility contract/type assertion was removed. Focused policy, structured absence, and
+  type-owned behavior tests remain.
+- Contract validation files mirror their production feature groups and are split by ownership; no catch-all verifier
+  file was introduced.
+- Formatting, Feature Graph tests, Feature Validation tests, Entry Interactions tests, and FOSS application compilation
+  pass.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1.0 validation host after review. Then migrate only the fundamental provider contracts in Phase 7.1.1
-and stop before beginning Download contracts.
+Commit the Phase 7.1.1 fundamental contracts after review. Then migrate only Download contracts in Phase 7.1.2 and stop
+before beginning Library, Settings, and Media contracts.

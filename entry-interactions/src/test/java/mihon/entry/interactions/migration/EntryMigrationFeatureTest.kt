@@ -266,7 +266,7 @@ class EntryMigrationFeatureTest {
     }
 
     @Test
-    fun `target refresh is an F11 owned relationship with structured outcomes`() = runTest {
+    fun `target refresh relationship returns structured outcomes`() = runTest {
         val sourceRefresh = mockk<EntrySourceRefreshFeature>()
         val feature = feature(RecordingMigrationHost(source, target), sourceRefresh = sourceRefresh)
         val intent = EntryMigrationTargetRefreshIntent(

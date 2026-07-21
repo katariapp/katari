@@ -6,6 +6,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -17,13 +18,17 @@ import mihon.feature.graph.SharedFeatureConsequence
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
-private val ENTRY_OPEN_FEATURE_ID = FeatureId("entry.open")
-private val ENTRY_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.open.provider")
+internal val ENTRY_OPEN_FEATURE_ID = FeatureId("entry.open")
+internal val ENTRY_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.open.provider")
 private val ENTRY_OPEN_FEATURE_OWNER = ContributionOwner("entry-open")
 private val ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID = FeatureArtifactId("entry.open.dispatch")
 
 private object EntryOpenDispatchConsequence : SharedFeatureConsequence {
     override val id = ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID
+}
+
+internal object EntryOpenBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.open.behavior")
 }
 
 internal object EntryOpenFeatureContributor : FeatureGraphContributor {
@@ -39,6 +44,7 @@ internal object EntryOpenFeatureContributor : FeatureGraphContributor {
                         id = ENTRY_OPEN_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryOpenCapability.definition),
                         sharedConsequences = listOf(EntryOpenDispatchConsequence),
+                        behavioralContracts = listOf(EntryOpenBehaviorContract),
                     ),
                 ),
             ),

@@ -23,7 +23,9 @@ import mihon.entry.interactions.productionEntryFeatureContributors
 import mihon.entry.interactions.productionEntryTypeRuntimeModules
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import mihon.feature.graph.ConditionalFeatureIntegration
+import mihon.feature.graph.validation.CompletedFeatureContractExecution
 import mihon.feature.graph.validation.FeatureContractReference
+import mihon.feature.graph.validation.FeatureContractVerificationResult
 import mihon.feature.graph.validation.MissingFeatureContractScenarioObligation
 import mihon.feature.graph.validation.MissingFeatureContractVerifierObligation
 import mihon.feature.graph.validation.ValidationFeatureContractPlanIssue
@@ -75,7 +77,7 @@ class ProductionEntryInteractionContractValidationTest {
     }
 
     @Test
-    fun `production composition exposes every currently unimplemented contract obligation`() = runTest {
+    fun `production composition executes discovered contracts and exposes every remaining obligation`() = runTest {
         val composition = productionComposition()
 
         val result = validateEntryInteractionContracts(composition)
@@ -99,9 +101,12 @@ class ProductionEntryInteractionContractValidationTest {
             .filterIsInstance<MissingFeatureContractVerifierObligation>()
             .map { it.contract }
             .distinct()
+        val executedContracts = plan.executions
+            .map { it.verifier.verifier.contract }
+            .distinct()
 
         result.isSuccessful shouldBe false
-        plan.executions shouldBe emptyList()
+        plan.executions.isNotEmpty() shouldBe true
         val expectedScenarios = composition.featureGraphEvaluation.integrations
             .filterIsInstance<ConditionalFeatureIntegration>()
             .flatMap { candidate ->
@@ -115,9 +120,20 @@ class ProductionEntryInteractionContractValidationTest {
             .map { it.obligation }
             .filterIsInstance<MissingFeatureContractScenarioObligation>()
             .map { it.contract to it.integration }
+        val executedScenarios = plan.executions
+            .mapNotNull { execution ->
+                execution.scenario?.scenario?.let { it.contract to it.integration }
+            }
+            .distinct()
 
-        missingVerifiers.shouldContainExactlyInAnyOrder(applicableContracts)
-        missingScenarios.shouldContainExactlyInAnyOrder(expectedScenarios)
+        (executedContracts + missingVerifiers).distinct()
+            .shouldContainExactlyInAnyOrder(applicableContracts)
+        (executedScenarios + missingScenarios).distinct()
+            .shouldContainExactlyInAnyOrder(expectedScenarios)
+        result.executions.all { execution ->
+            execution is CompletedFeatureContractExecution &&
+                execution.verification == FeatureContractVerificationResult.Passed
+        } shouldBe true
     }
 
     private fun productionComposition(): EntryInteractionComposition {

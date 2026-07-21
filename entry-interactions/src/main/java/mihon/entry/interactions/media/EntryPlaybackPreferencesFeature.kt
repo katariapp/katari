@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -15,9 +16,9 @@ import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
-private val ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID = FeatureId("entry.playback-preferences-transfer")
+internal val ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID = FeatureId("entry.playback-preferences-transfer")
 private val ENTRY_PLAYBACK_PREFERENCES_FEATURE_OWNER = ContributionOwner("entry-playback-preferences-transfer")
-private val ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID =
+internal val ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID =
     FeatureIntegrationId("entry.playback-preferences-transfer.provider")
 private val ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID =
     FeatureIntegrationId("entry.playback-preferences-transfer.migration")
@@ -33,6 +34,10 @@ private object EntryPlaybackPreferencesMigrationConsequence : SharedFeatureConse
     override val id = FeatureArtifactId("entry.playback-preferences-transfer.migration-copy")
 }
 
+internal object EntryPlaybackPreferencesBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.playback-preferences-transfer.behavior")
+}
+
 internal object EntryPlaybackPreferencesFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_PLAYBACK_PREFERENCES_FEATURE_OWNER
 
@@ -46,6 +51,7 @@ internal object EntryPlaybackPreferencesFeatureContributor : FeatureGraphContrib
                         id = ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
                         sharedConsequences = EntryPlaybackPreferencesConsequence.entries,
+                        behavioralContracts = listOf(EntryPlaybackPreferencesBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID,

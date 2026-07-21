@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -13,13 +14,17 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 
-private val ENTRY_TYPE_PRESENTATION_FEATURE_ID = FeatureId("entry.type-presentation")
+internal val ENTRY_TYPE_PRESENTATION_FEATURE_ID = FeatureId("entry.type-presentation")
 private val ENTRY_TYPE_PRESENTATION_FEATURE_OWNER = ContributionOwner("entry-type-presentation")
-private val ENTRY_TYPE_PRESENTATION_INTEGRATION_ID = FeatureIntegrationId("entry.type-presentation.provider")
+internal val ENTRY_TYPE_PRESENTATION_INTEGRATION_ID = FeatureIntegrationId("entry.type-presentation.provider")
 private val ENTRY_TYPE_PRESENTATION_CONSEQUENCE_ID = FeatureArtifactId("entry.type-presentation.vocabulary")
 
 private object EntryTypePresentationConsequence : SharedFeatureConsequence {
     override val id = ENTRY_TYPE_PRESENTATION_CONSEQUENCE_ID
+}
+
+internal object EntryTypePresentationBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.type-presentation.behavior")
 }
 
 internal object EntryTypePresentationFeatureContributor : FeatureGraphContributor {
@@ -35,6 +40,7 @@ internal object EntryTypePresentationFeatureContributor : FeatureGraphContributo
                         id = ENTRY_TYPE_PRESENTATION_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryTypePresentationCapability.definition),
                         sharedConsequences = listOf(EntryTypePresentationConsequence),
+                        behavioralContracts = listOf(EntryTypePresentationBehaviorContract),
                     ),
                 ),
             ),

@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -15,8 +16,8 @@ import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 import tachiyomi.domain.entry.model.Entry
 
-private val ENTRY_CONTINUE_FEATURE_ID = FeatureId("entry.continue")
-private val ENTRY_CONTINUE_INTEGRATION_ID = FeatureIntegrationId("entry.continue.provider")
+internal val ENTRY_CONTINUE_FEATURE_ID = FeatureId("entry.continue")
+internal val ENTRY_CONTINUE_INTEGRATION_ID = FeatureIntegrationId("entry.continue.provider")
 private val ENTRY_CONTINUE_FEATURE_OWNER = ContributionOwner("entry-continue")
 private val ENTRY_CONTINUE_DISPATCH_CONSEQUENCE_ID = FeatureArtifactId("entry.continue.dispatch")
 private val ENTRY_CONTINUE_TARGET_CONSEQUENCE_ID = FeatureArtifactId("entry.continue.next-target")
@@ -27,6 +28,10 @@ private object EntryContinueDispatchConsequence : SharedFeatureConsequence {
 
 private object EntryContinueTargetConsequence : SharedFeatureConsequence {
     override val id = ENTRY_CONTINUE_TARGET_CONSEQUENCE_ID
+}
+
+internal object EntryContinueBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.continue.behavior")
 }
 
 internal object EntryContinueFeatureContributor : FeatureGraphContributor {
@@ -45,6 +50,7 @@ internal object EntryContinueFeatureContributor : FeatureGraphContributor {
                             EntryContinueDispatchConsequence,
                             EntryContinueTargetConsequence,
                         ),
+                        behavioralContracts = listOf(EntryContinueBehaviorContract),
                     ),
                 ),
             ),

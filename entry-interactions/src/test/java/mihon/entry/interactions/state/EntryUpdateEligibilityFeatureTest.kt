@@ -3,7 +3,6 @@ package mihon.entry.interactions
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.EntryUpdateStrategy
 import io.kotest.assertions.throwables.shouldThrow
-import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
@@ -12,24 +11,6 @@ import tachiyomi.domain.entry.model.EntryStatus
 
 class EntryUpdateEligibilityFeatureTest {
     private val entry = Entry.create().copy(id = 7L, type = EntryType.BOOK)
-
-    @Test
-    fun `a provider-less content type receives the shared policy and behavior contract`() {
-        val composition = compositionFor(EntryType.BOOK)
-        val feature = featureFor(composition, policy())
-
-        composition.featureGraphEvaluation.sharedConsequences
-            .filter { it.subject.feature.value == "entry.update-eligibility" }
-            .map { it.subject.contentType.value }
-            .distinct()
-            .shouldContainExactly("book")
-        composition.featureArtifacts.behavioralContracts
-            .filter { it.subject.feature.value == "entry.update-eligibility" }
-            .map { it.contract.id.value }
-            .shouldContainExactly("entry.update-eligibility.behavior")
-
-        feature.evaluate(request(entry)) shouldBe EntryUpdateEligibility.Eligible
-    }
 
     @Test
     fun `one-shot completed caught-up and started policies produce structured reasons`() {

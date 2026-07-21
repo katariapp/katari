@@ -16,8 +16,8 @@ import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
-private val ENTRY_PROGRESS_FEATURE_ID = FeatureId("entry.progress-transfer")
-private val ENTRY_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.provider")
+internal val ENTRY_PROGRESS_FEATURE_ID = FeatureId("entry.progress-transfer")
+internal val ENTRY_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.provider")
 private val ENTRY_PROGRESS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.migration")
 private val ENTRY_PROGRESS_FEATURE_OWNER = ContributionOwner("entry-progress-transfer")
 
@@ -33,7 +33,7 @@ private object EntryProgressMigrationConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.progress-transfer.migration-copy")
 }
 
-private object EntryProgressBehaviorContract : FeatureBehaviorContract {
+internal object EntryProgressBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.progress-transfer.behavior")
 }
 

@@ -4,6 +4,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -16,9 +17,9 @@ import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
-private val ENTRY_CHILD_LIST_FEATURE_ID = FeatureId("entry.child-list")
+internal val ENTRY_CHILD_LIST_FEATURE_ID = FeatureId("entry.child-list")
 private val ENTRY_CHILD_LIST_FEATURE_OWNER = ContributionOwner("entry-child-list")
-private val ENTRY_CHILD_LIST_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.provider")
+internal val ENTRY_CHILD_LIST_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.provider")
 private val ENTRY_CHILD_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.progress")
 private val ENTRY_CHILD_LIST_ORDER_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.order")
 private val ENTRY_CHILD_LIST_FIRST_CHILD_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.first-reading-child")
@@ -41,6 +42,10 @@ private object EntryChildProgressConsequence : SharedFeatureConsequence {
     override val id = ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID
 }
 
+internal object EntryChildListBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.child-list.behavior")
+}
+
 internal object EntryChildListFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_CHILD_LIST_FEATURE_OWNER
 
@@ -58,6 +63,7 @@ internal object EntryChildListFeatureContributor : FeatureGraphContributor {
                             EntryChildListFirstChildConsequence,
                             EntryChildListDisplayConsequence,
                         ),
+                        behavioralContracts = listOf(EntryChildListBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_CHILD_PROGRESS_INTEGRATION_ID,

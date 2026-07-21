@@ -21,10 +21,12 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val FEATURE_ID = FeatureId("entry.update-eligibility")
+internal val ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID = FeatureId("entry.update-eligibility")
 private val FEATURE_OWNER = ContributionOwner("entry-update-eligibility")
-private val POLICY_INTEGRATION = FeatureIntegrationId("entry.update-eligibility.shared-policy")
-private val DECISION_INTEGRATION = FeatureIntegrationId("entry.update-eligibility.decision")
+internal val ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION =
+    FeatureIntegrationId("entry.update-eligibility.shared-policy")
+internal val ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION =
+    FeatureIntegrationId("entry.update-eligibility.decision")
 
 private enum class EntryUpdateEligibilityPolicyConsequence(
     override val id: FeatureArtifactId,
@@ -42,8 +44,12 @@ private enum class EntryUpdateEligibilityDecisionConsequence(
     STATS(FeatureArtifactId("entry.update-eligibility.stats")),
 }
 
-private object EntryUpdateEligibilityBehaviorContract : FeatureBehaviorContract {
+internal object EntryUpdateEligibilityBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.update-eligibility.behavior")
+}
+
+internal object EntryUpdateEligibilityDecisionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.update-eligibility.decision-behavior")
 }
 
 internal data class EntryUpdateEligibilityPolicy(
@@ -61,50 +67,50 @@ internal data class EntryUpdateEligibilityContext(
     val outsideReleasePeriod: Boolean,
 )
 
-private val POLICY_CONTEXT = contextInputDefinition<EntryUpdateEligibilityPolicy>(
+internal val ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT = contextInputDefinition<EntryUpdateEligibilityPolicy>(
     ContextInputId("entry.update-eligibility.configuration"),
     ContributionOwner("entry-update-configuration"),
 )
-private val ONE_SHOT_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_UPDATE_ELIGIBILITY_ONE_SHOT_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.update-eligibility.one-shot-already-fetched"),
     ContributionOwner("entry-state"),
 )
-private val COMPLETED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_UPDATE_ELIGIBILITY_COMPLETED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.update-eligibility.completed"),
     ContributionOwner("entry-state"),
 )
-private val UNCONSUMED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_UPDATE_ELIGIBILITY_UNCONSUMED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.update-eligibility.has-unconsumed"),
     ContributionOwner("entry-state"),
 )
-private val NOT_STARTED_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_UPDATE_ELIGIBILITY_NOT_STARTED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.update-eligibility.not-started-with-children"),
     ContributionOwner("entry-state"),
 )
-private val RELEASE_PERIOD_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_UPDATE_ELIGIBILITY_RELEASE_PERIOD_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.update-eligibility.outside-release-period"),
     ContributionOwner("entry-update-window"),
 )
 
 private val NOT_ALWAYS_UPDATE_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.update-eligibility.not-always-update"),
-    listOf(ONE_SHOT_CONTEXT),
+    listOf(ENTRY_UPDATE_ELIGIBILITY_ONE_SHOT_CONTEXT),
 )
 private val COMPLETED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.update-eligibility.skip-completed"),
-    listOf(POLICY_CONTEXT, COMPLETED_CONTEXT),
+    listOf(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT, ENTRY_UPDATE_ELIGIBILITY_COMPLETED_CONTEXT),
 )
 private val NOT_CAUGHT_UP_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.update-eligibility.not-caught-up"),
-    listOf(POLICY_CONTEXT, UNCONSUMED_CONTEXT),
+    listOf(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT, ENTRY_UPDATE_ELIGIBILITY_UNCONSUMED_CONTEXT),
 )
 private val NOT_STARTED_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.update-eligibility.not-started"),
-    listOf(POLICY_CONTEXT, NOT_STARTED_CONTEXT),
+    listOf(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT, ENTRY_UPDATE_ELIGIBILITY_NOT_STARTED_CONTEXT),
 )
 private val OUTSIDE_RELEASE_PERIOD_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.update-eligibility.outside-release-period-blocker"),
-    listOf(POLICY_CONTEXT, RELEASE_PERIOD_CONTEXT),
+    listOf(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT, ENTRY_UPDATE_ELIGIBILITY_RELEASE_PERIOD_CONTEXT),
 )
 
 internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContributor {
@@ -113,38 +119,42 @@ internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContribut
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(
             FeatureContribution(
-                feature = FEATURE_ID,
+                feature = ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID,
                 owner = owner,
                 integrations = listOf(
                     FeatureIntegration(
-                        id = POLICY_INTEGRATION,
+                        id = ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = EntryUpdateEligibilityPolicyConsequence.entries,
                         behavioralContracts = listOf(EntryUpdateEligibilityBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = DECISION_INTEGRATION,
+                        id = ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
                         contextInputs = listOf(
-                            POLICY_CONTEXT,
-                            ONE_SHOT_CONTEXT,
-                            COMPLETED_CONTEXT,
-                            UNCONSUMED_CONTEXT,
-                            NOT_STARTED_CONTEXT,
-                            RELEASE_PERIOD_CONTEXT,
+                            ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT,
+                            ENTRY_UPDATE_ELIGIBILITY_ONE_SHOT_CONTEXT,
+                            ENTRY_UPDATE_ELIGIBILITY_COMPLETED_CONTEXT,
+                            ENTRY_UPDATE_ELIGIBILITY_UNCONSUMED_CONTEXT,
+                            ENTRY_UPDATE_ELIGIBILITY_NOT_STARTED_CONTEXT,
+                            ENTRY_UPDATE_ELIGIBILITY_RELEASE_PERIOD_CONTEXT,
                         ),
                         contextRule = featureContextRule(owner) { evidence ->
-                            val policy = evidence.value(POLICY_CONTEXT)
+                            val policy = evidence.value(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT)
                             when {
-                                evidence.value(ONE_SHOT_CONTEXT) ->
+                                evidence.value(ENTRY_UPDATE_ELIGIBILITY_ONE_SHOT_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(NOT_ALWAYS_UPDATE_BLOCKER))
-                                policy.skipCompleted && evidence.value(COMPLETED_CONTEXT) ->
+                                policy.skipCompleted && evidence.value(ENTRY_UPDATE_ELIGIBILITY_COMPLETED_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(COMPLETED_BLOCKER))
-                                policy.skipWhenUnconsumed && evidence.value(UNCONSUMED_CONTEXT) ->
+                                policy.skipWhenUnconsumed && evidence.value(
+                                    ENTRY_UPDATE_ELIGIBILITY_UNCONSUMED_CONTEXT,
+                                ) ->
                                     FeatureContextDecision.Blocked(listOf(NOT_CAUGHT_UP_BLOCKER))
-                                policy.skipWhenNotStarted && evidence.value(NOT_STARTED_CONTEXT) ->
+                                policy.skipWhenNotStarted &&
+                                    evidence.value(ENTRY_UPDATE_ELIGIBILITY_NOT_STARTED_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(NOT_STARTED_BLOCKER))
-                                policy.skipOutsideReleasePeriod && evidence.value(RELEASE_PERIOD_CONTEXT) ->
+                                policy.skipOutsideReleasePeriod &&
+                                    evidence.value(ENTRY_UPDATE_ELIGIBILITY_RELEASE_PERIOD_CONTEXT) ->
                                     FeatureContextDecision.Blocked(listOf(OUTSIDE_RELEASE_PERIOD_BLOCKER))
                                 else -> FeatureContextDecision.Applicable
                             }
@@ -157,6 +167,7 @@ internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContribut
                             OUTSIDE_RELEASE_PERIOD_BLOCKER,
                         ),
                         sharedConsequences = EntryUpdateEligibilityDecisionConsequence.entries,
+                        behavioralContracts = listOf(EntryUpdateEligibilityDecisionBehaviorContract),
                     ),
                 ),
             ),
@@ -168,8 +179,8 @@ internal fun FeatureGraphEvaluation.updateEligibilityContentTypes(): Set<Content
     sharedConsequences
         .asSequence()
         .filter { applicability ->
-            applicability.subject.feature == FEATURE_ID &&
-                applicability.subject.integration == POLICY_INTEGRATION &&
+            applicability.subject.feature == ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID &&
+                applicability.subject.integration == ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION &&
                 applicability.consequence.id == EntryUpdateEligibilityPolicyConsequence.TYPE_PARTICIPATION.id
         }
         .mapTo(mutableSetOf()) { it.subject.contentType }
@@ -182,18 +193,18 @@ internal fun FeatureGraphEvaluation.requireUpdateEligibilityContext(
 ) {
     requireEntryContextState(
         type = type,
-        feature = FEATURE_ID,
-        integration = DECISION_INTEGRATION,
+        feature = ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID,
+        integration = ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION,
         consequences = EntryUpdateEligibilityDecisionConsequence.entries.map(
             EntryUpdateEligibilityDecisionConsequence::id,
         ),
         evidence = listOf(
-            contextEvidence(POLICY_CONTEXT, policy),
-            contextEvidence(ONE_SHOT_CONTEXT, context.oneShotAlreadyFetched),
-            contextEvidence(COMPLETED_CONTEXT, context.completed),
-            contextEvidence(UNCONSUMED_CONTEXT, context.hasUnconsumed),
-            contextEvidence(NOT_STARTED_CONTEXT, context.notStartedWithChildren),
-            contextEvidence(RELEASE_PERIOD_CONTEXT, context.outsideReleasePeriod),
+            contextEvidence(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT, policy),
+            contextEvidence(ENTRY_UPDATE_ELIGIBILITY_ONE_SHOT_CONTEXT, context.oneShotAlreadyFetched),
+            contextEvidence(ENTRY_UPDATE_ELIGIBILITY_COMPLETED_CONTEXT, context.completed),
+            contextEvidence(ENTRY_UPDATE_ELIGIBILITY_UNCONSUMED_CONTEXT, context.hasUnconsumed),
+            contextEvidence(ENTRY_UPDATE_ELIGIBILITY_NOT_STARTED_CONTEXT, context.notStartedWithChildren),
+            contextEvidence(ENTRY_UPDATE_ELIGIBILITY_RELEASE_PERIOD_CONTEXT, context.outsideReleasePeriod),
         ),
         applicable = applicable,
     )

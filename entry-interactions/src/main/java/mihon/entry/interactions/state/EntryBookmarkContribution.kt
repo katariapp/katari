@@ -5,6 +5,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -19,11 +20,23 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val FEATURE_ID = FeatureId("entry.bookmarking")
+internal val ENTRY_BOOKMARK_FEATURE_ID = FeatureId("entry.bookmarking")
 private val FEATURE_OWNER = ContributionOwner("entry-bookmarking")
-private val PROVIDER_INTEGRATION = FeatureIntegrationId("entry.bookmarking.provider")
-private val AVAILABILITY_INTEGRATION = FeatureIntegrationId("entry.bookmarking.availability")
-private val MUTATION_INTEGRATION = FeatureIntegrationId("entry.bookmarking.mutation")
+internal val ENTRY_BOOKMARK_PROVIDER_INTEGRATION = FeatureIntegrationId("entry.bookmarking.provider")
+internal val ENTRY_BOOKMARK_AVAILABILITY_INTEGRATION = FeatureIntegrationId("entry.bookmarking.availability")
+internal val ENTRY_BOOKMARK_MUTATION_INTEGRATION = FeatureIntegrationId("entry.bookmarking.mutation")
+
+internal object EntryBookmarkProviderBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.bookmarking.provider-behavior")
+}
+
+internal object EntryBookmarkAvailabilityBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.bookmarking.availability-behavior")
+}
+
+internal object EntryBookmarkMutationBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.bookmarking.mutation-behavior")
+}
 
 private enum class EntryBookmarkProviderConsequence(
     override val id: FeatureArtifactId,
@@ -40,21 +53,21 @@ private object EntryBookmarkMutationConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.bookmarking.mutation")
 }
 
-private val SELECTION_CHANGE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_BOOKMARK_SELECTION_CHANGE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.bookmarking.selection-change"),
     ContributionOwner("entry-selection"),
 )
-private val MUTATION_CHANGE_CONTEXT = contextInputDefinition<Boolean>(
+internal val ENTRY_BOOKMARK_MUTATION_CHANGE_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.bookmarking.mutation-change"),
     ContributionOwner("entry-state"),
 )
 private val SELECTION_NO_CHANGE_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.bookmarking.selection-no-change"),
-    listOf(SELECTION_CHANGE_CONTEXT),
+    listOf(ENTRY_BOOKMARK_SELECTION_CHANGE_CONTEXT),
 )
 private val MUTATION_NO_CHANGE_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.bookmarking.mutation-no-change"),
-    listOf(MUTATION_CHANGE_CONTEXT),
+    listOf(ENTRY_BOOKMARK_MUTATION_CHANGE_CONTEXT),
 )
 
 internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
@@ -64,20 +77,21 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
         val bookmark = CapabilityExpression.Provided(EntryBookmarkCapability.definition)
         sink.add(
             FeatureContribution(
-                feature = FEATURE_ID,
+                feature = ENTRY_BOOKMARK_FEATURE_ID,
                 owner = owner,
                 integrations = listOf(
                     FeatureIntegration(
-                        id = PROVIDER_INTEGRATION,
+                        id = ENTRY_BOOKMARK_PROVIDER_INTEGRATION,
                         prerequisites = bookmark,
                         sharedConsequences = EntryBookmarkProviderConsequence.entries,
+                        behavioralContracts = listOf(EntryBookmarkProviderBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = AVAILABILITY_INTEGRATION,
+                        id = ENTRY_BOOKMARK_AVAILABILITY_INTEGRATION,
                         prerequisites = bookmark,
-                        contextInputs = listOf(SELECTION_CHANGE_CONTEXT),
+                        contextInputs = listOf(ENTRY_BOOKMARK_SELECTION_CHANGE_CONTEXT),
                         contextRule = featureContextRule(owner) { evidence ->
-                            if (evidence.value(SELECTION_CHANGE_CONTEXT)) {
+                            if (evidence.value(ENTRY_BOOKMARK_SELECTION_CHANGE_CONTEXT)) {
                                 FeatureContextDecision.Applicable
                             } else {
                                 FeatureContextDecision.Blocked(listOf(SELECTION_NO_CHANGE_BLOCKER))
@@ -85,13 +99,14 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(SELECTION_NO_CHANGE_BLOCKER),
                         sharedConsequences = listOf(EntryBookmarkAvailabilityConsequence),
+                        behavioralContracts = listOf(EntryBookmarkAvailabilityBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = MUTATION_INTEGRATION,
+                        id = ENTRY_BOOKMARK_MUTATION_INTEGRATION,
                         prerequisites = bookmark,
-                        contextInputs = listOf(MUTATION_CHANGE_CONTEXT),
+                        contextInputs = listOf(ENTRY_BOOKMARK_MUTATION_CHANGE_CONTEXT),
                         contextRule = featureContextRule(owner) { evidence ->
-                            if (evidence.value(MUTATION_CHANGE_CONTEXT)) {
+                            if (evidence.value(ENTRY_BOOKMARK_MUTATION_CHANGE_CONTEXT)) {
                                 FeatureContextDecision.Applicable
                             } else {
                                 FeatureContextDecision.Blocked(listOf(MUTATION_NO_CHANGE_BLOCKER))
@@ -99,6 +114,7 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
                         },
                         contextBlockers = listOf(MUTATION_NO_CHANGE_BLOCKER),
                         sharedConsequences = listOf(EntryBookmarkMutationConsequence),
+                        behavioralContracts = listOf(EntryBookmarkMutationBehaviorContract),
                     ),
                 ),
             ),
@@ -108,18 +124,18 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
 
 internal fun FeatureGraphEvaluation.bookmarkTypes(): Set<EntryType> =
     applicableProviderTypes<EntryBookmarkProcessor>(
-        feature = FEATURE_ID,
-        integration = PROVIDER_INTEGRATION,
+        feature = ENTRY_BOOKMARK_FEATURE_ID,
+        integration = ENTRY_BOOKMARK_PROVIDER_INTEGRATION,
         consequence = EntryBookmarkProviderConsequence.PROVIDER_DISPATCH.id,
     )
 
 internal fun FeatureGraphEvaluation.requireBookmarkAvailabilityContext(type: EntryType, canChange: Boolean) {
     requireEntryContextState(
         type = type,
-        feature = FEATURE_ID,
-        integration = AVAILABILITY_INTEGRATION,
+        feature = ENTRY_BOOKMARK_FEATURE_ID,
+        integration = ENTRY_BOOKMARK_AVAILABILITY_INTEGRATION,
         consequences = listOf(EntryBookmarkAvailabilityConsequence.id),
-        evidence = listOf(contextEvidence(SELECTION_CHANGE_CONTEXT, canChange)),
+        evidence = listOf(contextEvidence(ENTRY_BOOKMARK_SELECTION_CHANGE_CONTEXT, canChange)),
         applicable = canChange,
     )
 }
@@ -127,10 +143,10 @@ internal fun FeatureGraphEvaluation.requireBookmarkAvailabilityContext(type: Ent
 internal fun FeatureGraphEvaluation.requireBookmarkMutationContext(type: EntryType, canChange: Boolean) {
     requireEntryContextState(
         type = type,
-        feature = FEATURE_ID,
-        integration = MUTATION_INTEGRATION,
+        feature = ENTRY_BOOKMARK_FEATURE_ID,
+        integration = ENTRY_BOOKMARK_MUTATION_INTEGRATION,
         consequences = listOf(EntryBookmarkMutationConsequence.id),
-        evidence = listOf(contextEvidence(MUTATION_CHANGE_CONTEXT, canChange)),
+        evidence = listOf(contextEvidence(ENTRY_BOOKMARK_MUTATION_CHANGE_CONTEXT, canChange)),
         applicable = canChange,
     )
 }
