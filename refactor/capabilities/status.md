@@ -84,15 +84,16 @@ Updated: 2026-07-21
 - Phase 6.7.5 Tracking accounts commit: `5322276d9` (`(refactor): migrate tracking accounts`)
 - Phase 6.7.6 Tracking collection commit: `a3524f04c` (`(refactor): migrate tracking collection consumers`)
 - Phase 6.7.7 Tracking reconciliation commit: `ac5db98eb` (`(refactor): reconcile tracking boundaries`)
+- Phase 6.8 Compatibility reconciliation commit: `555d409b6` (`(refactor): reconcile contextual integration boundaries`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.8 Compatibility reconciliation and context census
-- State: Phase 6.8 is implemented and validating for review. Phase 7 has not started.
+- Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
+- Milestone: Restore the application compilation baseline before Phase 7.0 implementation
+- State: Decision `0023` and the Phase 7 sequence are approved. The planning milestone is ready to commit.
 
 Focused Phase 6 preparation findings:
 
@@ -1328,7 +1329,23 @@ Focused Phase 6.8 findings:
   validation pass. Focused app testing reaches only the same unchanged Anime debug-launcher and `MoreTab` compile
   failures recorded before this milestone.
 
+Focused Phase 7.0 preparation findings:
+
+- Production behavioral contracts are currently identifier/fixture declarations, not executable validators. Static
+  selection also drops matched providers and adapters, so feature-by-feature test migration cannot begin on the current
+  artifact shape.
+- Context resolution has no contract/projection selection path. Static conditional candidates must not be reported or
+  tested as unconditional support; feature-owned validation scenarios must resolve typed evidence first.
+- No production feature supplies a developer-report or documentation projection. The current content-type reference is
+  therefore still handwritten product documentation rather than a verified graph projection.
+- Decision `0023` proposes separate production contract definitions and validation-only verifier contributions,
+  discovered without a central suite list. Missing verifiers and contextual scenarios are feature-owner obligations;
+  only explicitly requested media fixtures are content-type-owner obligations.
+- Phase 7 is split into architecture, production contracts, declaration-test removal, developer reporting,
+  documentation projection, and repository-validation reconciliation. No product migration starts before the generic
+  unknown-contribution proof passes.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.8 after review. Then explicitly notify the user that Phase 7 is beginning before starting its first
-milestone.
+Commit the approved Phase 7 planning milestone. Then restore the two known application compilation failures and stop
+before implementing the generic Phase 7.0 execution/projection mechanism.
