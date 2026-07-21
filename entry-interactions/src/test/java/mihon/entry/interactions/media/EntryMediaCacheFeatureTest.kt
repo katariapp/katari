@@ -28,11 +28,7 @@ class EntryMediaCacheFeatureTest {
             id = EntryMediaCacheId("future.cache"),
             autoClearPreference = EntryMediaCacheAutoClearPreference("future_auto_clear"),
         )
-        val (feature, composition) = featureAndComposition(plugin(provider(artifact)))
-
-        composition.featureArtifacts.behavioralContracts
-            .filter { it.subject.feature == ENTRY_MEDIA_CACHE_FEATURE_ID }
-            .map { it.contract.id.value } shouldBe listOf("entry.media-cache.behavior")
+        val feature = feature(plugin(provider(artifact)))
 
         val setting = feature.settings().single()
         setting.id shouldBe artifact.id
@@ -119,12 +115,7 @@ class EntryMediaCacheFeatureTest {
     private fun feature(
         plugin: EntryInteractionPlugin,
         store: InMemoryPreferenceStore = InMemoryPreferenceStore(),
-    ): EntryMediaCacheFeature = featureAndComposition(plugin, store).first
-
-    private fun featureAndComposition(
-        plugin: EntryInteractionPlugin,
-        store: InMemoryPreferenceStore = InMemoryPreferenceStore(),
-    ): Pair<EntryMediaCacheFeature, EntryInteractionComposition> {
+    ): EntryMediaCacheFeature {
         val composition = createEntryInteractionComposition(
             plugins = listOf(plugin),
             featureContributors = listOf(EntryMediaCacheFeatureContributor),
@@ -133,7 +124,7 @@ class EntryMediaCacheFeatureTest {
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.mediaCache,
             preferenceStore = store,
-        ) to composition
+        )
     }
 
     private fun plugin(provider: EntryMediaCacheProvider? = null): EntryInteractionPlugin {

@@ -28,7 +28,7 @@ private val ENTRY_MEDIA_CACHE_BEHAVIOR_CONTRACT_ID = FeatureArtifactId("entry.me
 
 private data class MediaCacheConsequence(override val id: FeatureArtifactId) : SharedFeatureConsequence
 
-private object EntryMediaCacheBehaviorContract : FeatureBehaviorContract {
+internal object EntryMediaCacheBehaviorContract : FeatureBehaviorContract {
     override val id = ENTRY_MEDIA_CACHE_BEHAVIOR_CONTRACT_ID
 }
 

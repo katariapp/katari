@@ -29,11 +29,11 @@ internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-update-notifications.presentation")
 internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-update-notifications.open-participation")
-private val ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_CONTEXT_INTEGRATION_ID =
+internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_CONTEXT_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-update-notifications.open-child")
 internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-update-notifications.consumption-participation")
-private val ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_CONTEXT_INTEGRATION_ID =
+internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_CONTEXT_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-update-notifications.mark-consumed")
 internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_DOWNLOAD_INTEGRATION_ID =
     FeatureIntegrationId("entry.library-update-notifications.download")
@@ -63,26 +63,50 @@ private class NotificationConsequence(
     override val id: FeatureArtifactId,
 ) : SharedFeatureConsequence
 
-private object EntryLibraryUpdateNotificationBehaviorContract : FeatureBehaviorContract {
+internal object EntryLibraryUpdateNotificationBehaviorContract : FeatureBehaviorContract {
     override val id = ENTRY_LIBRARY_UPDATE_NOTIFICATION_BEHAVIOR_CONTRACT_ID
 }
 
-private val HAS_CHILDREN_CONTEXT = contextInputDefinition<Boolean>(
+internal object EntryLibraryUpdateNotificationPresentationBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-update-notifications.presentation-behavior")
+}
+
+internal object EntryLibraryUpdateNotificationOpenBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-update-notifications.open-behavior")
+}
+
+internal object EntryLibraryUpdateNotificationOpenActionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-update-notifications.open-child-behavior")
+}
+
+internal object EntryLibraryUpdateNotificationConsumptionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-update-notifications.consumption-behavior")
+}
+
+internal object EntryLibraryUpdateNotificationConsumptionActionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-update-notifications.mark-consumed-behavior")
+}
+
+internal object EntryLibraryUpdateNotificationDownloadBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-update-notifications.download-behavior")
+}
+
+internal val ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.library-update-notifications.has-children"),
     ContributionOwner("entry-selection"),
 )
 private val OPEN_WITHOUT_CHILDREN_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.library-update-notifications.open-without-children"),
-    listOf(HAS_CHILDREN_CONTEXT),
+    listOf(ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT),
 )
 private val CONSUMPTION_WITHOUT_CHILDREN_BLOCKER = FeatureContextBlocker(
     FeatureArtifactId("entry.library-update-notifications.consume-without-children"),
-    listOf(HAS_CHILDREN_CONTEXT),
+    listOf(ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT),
 )
 
 private fun hasChildrenRule(owner: ContributionOwner, blocker: FeatureContextBlocker) =
     featureContextRule(owner) { evidence ->
-        if (evidence.value(HAS_CHILDREN_CONTEXT)) {
+        if (evidence.value(ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT)) {
             FeatureContextDecision.Applicable
         } else {
             FeatureContextDecision.Blocked(listOf(blocker))
@@ -114,6 +138,7 @@ internal object EntryLibraryUpdateNotificationFeatureContributor : FeatureGraphC
                         sharedConsequences = listOf(
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_CONSEQUENCE_ID),
                         ),
+                        behavioralContracts = listOf(EntryLibraryUpdateNotificationPresentationBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_INTEGRATION_ID,
@@ -121,16 +146,18 @@ internal object EntryLibraryUpdateNotificationFeatureContributor : FeatureGraphC
                         sharedConsequences = listOf(
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_CONSEQUENCE_ID),
                         ),
+                        behavioralContracts = listOf(EntryLibraryUpdateNotificationOpenBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_CONTEXT_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryOpenCapability.definition),
-                        contextInputs = listOf(HAS_CHILDREN_CONTEXT),
+                        contextInputs = listOf(ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT),
                         contextRule = hasChildrenRule(owner, OPEN_WITHOUT_CHILDREN_BLOCKER),
                         contextBlockers = listOf(OPEN_WITHOUT_CHILDREN_BLOCKER),
                         sharedConsequences = listOf(
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_ACTION_CONSEQUENCE_ID),
                         ),
+                        behavioralContracts = listOf(EntryLibraryUpdateNotificationOpenActionBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_INTEGRATION_ID,
@@ -138,11 +165,12 @@ internal object EntryLibraryUpdateNotificationFeatureContributor : FeatureGraphC
                         sharedConsequences = listOf(
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_CONSEQUENCE_ID),
                         ),
+                        behavioralContracts = listOf(EntryLibraryUpdateNotificationConsumptionBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_CONTEXT_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryConsumptionCapability.definition),
-                        contextInputs = listOf(HAS_CHILDREN_CONTEXT),
+                        contextInputs = listOf(ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT),
                         contextRule = hasChildrenRule(owner, CONSUMPTION_WITHOUT_CHILDREN_BLOCKER),
                         contextBlockers = listOf(CONSUMPTION_WITHOUT_CHILDREN_BLOCKER),
                         sharedConsequences = listOf(
@@ -150,6 +178,7 @@ internal object EntryLibraryUpdateNotificationFeatureContributor : FeatureGraphC
                                 ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_ACTION_CONSEQUENCE_ID,
                             ),
                         ),
+                        behavioralContracts = listOf(EntryLibraryUpdateNotificationConsumptionActionBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_UPDATE_NOTIFICATION_DOWNLOAD_INTEGRATION_ID,
@@ -157,6 +186,7 @@ internal object EntryLibraryUpdateNotificationFeatureContributor : FeatureGraphC
                         sharedConsequences = listOf(
                             NotificationConsequence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_DOWNLOAD_CONSEQUENCE_ID),
                         ),
+                        behavioralContracts = listOf(EntryLibraryUpdateNotificationDownloadBehaviorContract),
                     ),
                 ),
             ),
@@ -199,7 +229,7 @@ private fun FeatureGraphEvaluation.requireLibraryUpdateNotificationActionContext
         feature = ENTRY_LIBRARY_UPDATE_NOTIFICATION_FEATURE_ID,
         integration = integration,
         consequences = listOf(consequence),
-        evidence = listOf(contextEvidence(HAS_CHILDREN_CONTEXT, hasChildren)),
+        evidence = listOf(contextEvidence(ENTRY_LIBRARY_UPDATE_NOTIFICATION_HAS_CHILDREN_CONTEXT, hasChildren)),
         applicable = hasChildren,
     )
 }

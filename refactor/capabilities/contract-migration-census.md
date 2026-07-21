@@ -51,6 +51,12 @@ production subject. Bookmark protection is owned by Download Lifecycle; notifica
 Download Actions. Notification event rendering and type-owned downloader, store, cache, and transfer mechanics remain
 in their focused owner suites.
 
+Phase 7.1.3 raises the production graph to 77 exact contract definitions across 29 Features. Sixty-nine definitions now
+have executable verifiers, including 23 applicable contextual scenario groups. The 29 Library, Settings, and Media
+contracts cover Filtering, Progress, Update Notifications and Refresh, Preview, Immersive, Viewer Settings, and Media
+Cache. Preview and Immersive execute their universal coordinators through recording processors and receive Child List
+only on the relationship that selects it, so neither Feature needs a per-type media fixture.
+
 ## Validation Host Gate
 
 Production verifier migration must not begin by rebuilding Manga, Anime, Book, or the Feature contributor list in a
@@ -121,9 +127,9 @@ tests remain type-owned mechanics unless a shared contract later declares a genu
 | Viewer Settings | `entry.viewer-settings.behavior` | Viewer-settings provider plus Migration cooperation | Retain provider/projection contract; add Migration cooperation contract | `EntryViewerSettingsFeatureTest` |
 | Media Cache | `entry.media-cache.behavior` | Media-cache provider | Retain | `EntryMediaCacheFeatureTest` |
 
-Preview and Immersive are the first possible media-fixture candidates. A fixture is introduced only if their actual
-production providers cannot execute the shared expectation from selected providers/adapters and feature-owned context
-evidence. It must not be an empty per-type contract opt-in.
+Preview and Immersive do not require media fixtures. Their shared coordinator behavior executes against recording
+processors, while graph-selected Child List providers enter only the child-backed relationship contracts. Renderer,
+decoder, player, and image-loading mechanics remain type-owned behavior rather than fixture-shaped contract opt-ins.
 
 ### Source and external context
 
@@ -198,9 +204,9 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.3 — Library, Settings, and Media Contracts
 
-- Library Filtering, Library Progress, Library Update Notifications/Refresh, Preview, Immersive, Viewer Settings, and
+- [x] Library Filtering, Library Progress, Library Update Notifications/Refresh, Preview, Immersive, Viewer Settings, and
   Media Cache.
-- Decide typed Preview/Immersive fixtures from actual verifier requirements, never from current type enumeration.
+- [x] Decide typed Preview/Immersive fixtures from actual verifier requirements, never from current type enumeration.
 
 ### 7.1.4 — Source and External-Context Contracts
 

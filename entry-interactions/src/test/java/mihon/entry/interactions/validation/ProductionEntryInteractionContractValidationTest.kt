@@ -130,10 +130,10 @@ class ProductionEntryInteractionContractValidationTest {
             .shouldContainExactlyInAnyOrder(applicableContracts)
         (executedScenarios + missingScenarios).distinct()
             .shouldContainExactlyInAnyOrder(expectedScenarios)
-        result.executions.all { execution ->
+        result.executions.filterNot { execution ->
             execution is CompletedFeatureContractExecution &&
                 execution.verification == FeatureContractVerificationResult.Passed
-        } shouldBe true
+        } shouldBe emptyList()
     }
 
     private fun productionComposition(): EntryInteractionComposition {

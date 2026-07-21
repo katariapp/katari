@@ -15,11 +15,11 @@ import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 
-private val FEATURE_ID = FeatureId("entry.library-progress")
+internal val ENTRY_LIBRARY_PROGRESS_FEATURE_ID = FeatureId("entry.library-progress")
 private val FEATURE_OWNER = ContributionOwner("entry-library-progress")
-private val PROVIDER_INTEGRATION = FeatureIntegrationId("entry.library-progress.provider")
-private val CONTINUE_INTEGRATION = FeatureIntegrationId("entry.library-progress.continue")
-private val BOOKMARK_INTEGRATION = FeatureIntegrationId("entry.library-progress.bookmark")
+internal val ENTRY_LIBRARY_PROGRESS_PROVIDER_INTEGRATION = FeatureIntegrationId("entry.library-progress.provider")
+internal val ENTRY_LIBRARY_PROGRESS_CONTINUE_INTEGRATION = FeatureIntegrationId("entry.library-progress.continue")
+internal val ENTRY_LIBRARY_PROGRESS_BOOKMARK_INTEGRATION = FeatureIntegrationId("entry.library-progress.bookmark")
 
 private enum class EntryLibraryProgressConsequence(
     override val id: FeatureArtifactId,
@@ -41,8 +41,16 @@ private object EntryLibraryProgressBookmarkConsequence : SharedFeatureConsequenc
     override val id = FeatureArtifactId("entry.library-progress.bookmarks")
 }
 
-private object EntryLibraryProgressBehaviorContract : FeatureBehaviorContract {
+internal object EntryLibraryProgressBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.library-progress.behavior")
+}
+
+internal object EntryLibraryProgressContinueBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-progress.continue-behavior")
+}
+
+internal object EntryLibraryProgressBookmarkBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-progress.bookmark-behavior")
 }
 
 internal object EntryLibraryProgressFeatureContributor : FeatureGraphContributor {
@@ -51,30 +59,32 @@ internal object EntryLibraryProgressFeatureContributor : FeatureGraphContributor
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(
             FeatureContribution(
-                feature = FEATURE_ID,
+                feature = ENTRY_LIBRARY_PROGRESS_FEATURE_ID,
                 owner = owner,
                 integrations = listOf(
                     FeatureIntegration(
-                        id = PROVIDER_INTEGRATION,
+                        id = ENTRY_LIBRARY_PROGRESS_PROVIDER_INTEGRATION,
                         prerequisites = CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                         sharedConsequences = EntryLibraryProgressConsequence.entries,
                         behavioralContracts = listOf(EntryLibraryProgressBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = CONTINUE_INTEGRATION,
+                        id = ENTRY_LIBRARY_PROGRESS_CONTINUE_INTEGRATION,
                         prerequisites = allOf(
                             CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                             CapabilityExpression.Provided(EntryContinueCapability.definition),
                         ),
                         sharedConsequences = listOf(EntryLibraryProgressContinueConsequence),
+                        behavioralContracts = listOf(EntryLibraryProgressContinueBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = BOOKMARK_INTEGRATION,
+                        id = ENTRY_LIBRARY_PROGRESS_BOOKMARK_INTEGRATION,
                         prerequisites = allOf(
                             CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                             CapabilityExpression.Provided(EntryBookmarkCapability.definition),
                         ),
                         sharedConsequences = listOf(EntryLibraryProgressBookmarkConsequence),
+                        behavioralContracts = listOf(EntryLibraryProgressBookmarkBehaviorContract),
                     ),
                 ),
             ),
@@ -92,8 +102,8 @@ internal fun FeatureGraphEvaluation.libraryProgressSelection(): EntryLibraryProg
     val baseProviderTypes = EntryLibraryProgressConsequence.entries
         .mapTo(mutableSetOf()) { consequence ->
             applicableProviderTypes<EntryLibraryProgressProvider>(
-                feature = FEATURE_ID,
-                integration = PROVIDER_INTEGRATION,
+                feature = ENTRY_LIBRARY_PROGRESS_FEATURE_ID,
+                integration = ENTRY_LIBRARY_PROGRESS_PROVIDER_INTEGRATION,
                 consequence = consequence.id,
             )
         }
@@ -103,13 +113,13 @@ internal fun FeatureGraphEvaluation.libraryProgressSelection(): EntryLibraryProg
     return EntryLibraryProgressGraphSelection(
         applicableTypes = baseProviderTypes,
         continueTypes = applicableProviderTypes<EntryLibraryProgressProvider>(
-            feature = FEATURE_ID,
-            integration = CONTINUE_INTEGRATION,
+            feature = ENTRY_LIBRARY_PROGRESS_FEATURE_ID,
+            integration = ENTRY_LIBRARY_PROGRESS_CONTINUE_INTEGRATION,
             consequence = EntryLibraryProgressContinueConsequence.id,
         ),
         bookmarkTypes = applicableProviderTypes<EntryLibraryProgressProvider>(
-            feature = FEATURE_ID,
-            integration = BOOKMARK_INTEGRATION,
+            feature = ENTRY_LIBRARY_PROGRESS_FEATURE_ID,
+            integration = ENTRY_LIBRARY_PROGRESS_BOOKMARK_INTEGRATION,
             consequence = EntryLibraryProgressBookmarkConsequence.id,
         ),
     )

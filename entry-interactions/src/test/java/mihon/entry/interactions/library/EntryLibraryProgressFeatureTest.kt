@@ -45,10 +45,6 @@ class EntryLibraryProgressFeatureTest {
             ),
         )
 
-        features.composition.featureArtifacts.behavioralContracts
-            .filter { it.subject.feature.value == "entry.library-progress" }
-            .map { it.contract.id.value } shouldBe listOf("entry.library-progress.behavior")
-
         val result = features.libraryProgress.calculate(
             entry = entry,
             chapters = listOf(chapter(id = 11L, read = true, bookmark = true), next),
@@ -108,7 +104,6 @@ class EntryLibraryProgressFeatureTest {
                 interaction = composition.interactions.libraryProgress,
                 continueFeature = continueFeature,
             ),
-            composition = composition,
         )
     }
 
@@ -162,6 +157,5 @@ class EntryLibraryProgressFeatureTest {
 
     private data class Features(
         val libraryProgress: EntryLibraryProgressFeature,
-        val composition: EntryInteractionComposition,
     )
 }

@@ -21,13 +21,17 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-private val FEATURE_ID = FeatureId("entry.library-filtering")
+internal val ENTRY_LIBRARY_FILTER_FEATURE_ID = FeatureId("entry.library-filtering")
 private val FEATURE_OWNER = ContributionOwner("entry-library-filtering")
-private val PARTICIPATION_INTEGRATION = FeatureIntegrationId("entry.library-filtering.participation")
-private val FILTER_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.library-filtering.context")
-private val BOOKMARK_INTEGRATION = FeatureIntegrationId("entry.library-filtering.bookmark-control")
-private val PROGRESS_INTEGRATION = FeatureIntegrationId("entry.library-filtering.progress-controls")
-private val RELEASE_PERIOD_INTEGRATION = FeatureIntegrationId("entry.library-filtering.outside-release-period")
+internal val ENTRY_LIBRARY_FILTER_PARTICIPATION_INTEGRATION =
+    FeatureIntegrationId("entry.library-filtering.participation")
+internal val ENTRY_LIBRARY_FILTER_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.library-filtering.context")
+internal val ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION =
+    FeatureIntegrationId("entry.library-filtering.bookmark-control")
+internal val ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION =
+    FeatureIntegrationId("entry.library-filtering.progress-controls")
+internal val ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION =
+    FeatureIntegrationId("entry.library-filtering.outside-release-period")
 
 private object EntryLibraryFilterParticipationConsequence : SharedFeatureConsequence {
     override val id = FeatureArtifactId("entry.library-filtering.type-participation")
@@ -53,8 +57,24 @@ private object EntryLibraryFilterReleasePeriodConsequence : SharedFeatureConsequ
     override val id = FeatureArtifactId("entry.library-filtering.outside-release-period")
 }
 
-private object EntryLibraryFilterBehaviorContract : FeatureBehaviorContract {
+internal object EntryLibraryFilterBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.library-filtering.behavior")
+}
+
+internal object EntryLibraryFilterContextBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-filtering.context-behavior")
+}
+
+internal object EntryLibraryFilterProgressBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-filtering.progress-behavior")
+}
+
+internal object EntryLibraryFilterBookmarkBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-filtering.bookmark-behavior")
+}
+
+internal object EntryLibraryFilterReleasePeriodBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.library-filtering.outside-release-period-behavior")
 }
 
 internal data class EntryLibraryFilterStateContext(
@@ -70,15 +90,15 @@ internal data class EntryLibraryTrackingFilterContext(
     val targetTrackerIds: Set<Long>,
 )
 
-private val POLICY_CONTEXT = contextInputDefinition<EntryLibraryFilterPolicy>(
+internal val ENTRY_LIBRARY_FILTER_POLICY_CONTEXT = contextInputDefinition<EntryLibraryFilterPolicy>(
     ContextInputId("entry.library-filtering.preferences"),
     ContributionOwner("entry-library-filter-configuration"),
 )
-private val LIBRARY_STATE_CONTEXT = contextInputDefinition<EntryLibraryFilterStateContext>(
+internal val ENTRY_LIBRARY_FILTER_STATE_CONTEXT = contextInputDefinition<EntryLibraryFilterStateContext>(
     ContextInputId("entry.library-filtering.library-state"),
     ContributionOwner("entry-library-state"),
 )
-private val TRACKING_CONTEXT = contextInputDefinition<EntryLibraryTrackingFilterContext>(
+internal val ENTRY_LIBRARY_FILTER_TRACKING_CONTEXT = contextInputDefinition<EntryLibraryTrackingFilterContext>(
     ContextInputId("entry.library-filtering.tracking"),
     ContributionOwner("entry-tracking-state"),
 )
@@ -89,41 +109,49 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(
             FeatureContribution(
-                feature = FEATURE_ID,
+                feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
                 owner = owner,
                 integrations = listOf(
                     FeatureIntegration(
-                        id = PARTICIPATION_INTEGRATION,
+                        id = ENTRY_LIBRARY_FILTER_PARTICIPATION_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = listOf(EntryLibraryFilterParticipationConsequence),
                         behavioralContracts = listOf(EntryLibraryFilterBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = FILTER_CONTEXT_INTEGRATION,
+                        id = ENTRY_LIBRARY_FILTER_CONTEXT_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
-                        contextInputs = listOf(POLICY_CONTEXT, LIBRARY_STATE_CONTEXT, TRACKING_CONTEXT),
+                        contextInputs = listOf(
+                            ENTRY_LIBRARY_FILTER_POLICY_CONTEXT,
+                            ENTRY_LIBRARY_FILTER_STATE_CONTEXT,
+                            ENTRY_LIBRARY_FILTER_TRACKING_CONTEXT,
+                        ),
                         contextRule = featureContextRule(owner) { FeatureContextDecision.Applicable },
                         sharedConsequences = EntryLibraryFilterContextConsequence.entries,
+                        behavioralContracts = listOf(EntryLibraryFilterContextBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = PROGRESS_INTEGRATION,
+                        id = ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION,
                         prerequisites = CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                         sharedConsequences = listOf(EntryLibraryFilterProgressControlConsequence),
+                        behavioralContracts = listOf(EntryLibraryFilterProgressBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = BOOKMARK_INTEGRATION,
+                        id = ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION,
                         prerequisites = allOf(
                             CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                             CapabilityExpression.Provided(EntryBookmarkCapability.definition),
                         ),
                         sharedConsequences = listOf(EntryLibraryFilterBookmarkControlConsequence),
+                        behavioralContracts = listOf(EntryLibraryFilterBookmarkBehaviorContract),
                     ),
                     FeatureIntegration(
-                        id = RELEASE_PERIOD_INTEGRATION,
+                        id = ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION,
                         prerequisites = CapabilityExpression.Provided(
                             EntryOutsideReleasePeriodFilterCapability.definition,
                         ),
                         sharedConsequences = listOf(EntryLibraryFilterReleasePeriodConsequence),
+                        behavioralContracts = listOf(EntryLibraryFilterReleasePeriodBehaviorContract),
                     ),
                 ),
             ),
@@ -141,22 +169,22 @@ internal data class EntryLibraryFilterGraphSelection(
 internal fun FeatureGraphEvaluation.libraryFilterSelection(): EntryLibraryFilterGraphSelection {
     return EntryLibraryFilterGraphSelection(
         participatingContentTypes = selectedContentTypes(
-            PARTICIPATION_INTEGRATION,
+            ENTRY_LIBRARY_FILTER_PARTICIPATION_INTEGRATION,
             EntryLibraryFilterParticipationConsequence.id,
         ),
         bookmarkTypes = applicableProviderTypes<EntryBookmarkProcessor>(
-            feature = FEATURE_ID,
-            integration = BOOKMARK_INTEGRATION,
+            feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
+            integration = ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION,
             consequence = EntryLibraryFilterBookmarkControlConsequence.id,
         ),
         progressTypes = applicableProviderTypes<EntryLibraryProgressProvider>(
-            feature = FEATURE_ID,
-            integration = PROGRESS_INTEGRATION,
+            feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
+            integration = ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION,
             consequence = EntryLibraryFilterProgressControlConsequence.id,
         ),
         releasePeriodTypes = applicableProviderTypes<EntryOutsideReleasePeriodFilterProvider>(
-            feature = FEATURE_ID,
-            integration = RELEASE_PERIOD_INTEGRATION,
+            feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
+            integration = ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION,
             consequence = EntryLibraryFilterReleasePeriodConsequence.id,
         ),
     )
@@ -171,13 +199,13 @@ internal fun FeatureGraphEvaluation.requireLibraryFilterContext(
     types.forEach { type ->
         requireEntryContextState(
             type = type,
-            feature = FEATURE_ID,
-            integration = FILTER_CONTEXT_INTEGRATION,
+            feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
+            integration = ENTRY_LIBRARY_FILTER_CONTEXT_INTEGRATION,
             consequences = EntryLibraryFilterContextConsequence.entries.map(EntryLibraryFilterContextConsequence::id),
             evidence = listOf(
-                contextEvidence(POLICY_CONTEXT, policy),
-                contextEvidence(LIBRARY_STATE_CONTEXT, state),
-                contextEvidence(TRACKING_CONTEXT, tracking),
+                contextEvidence(ENTRY_LIBRARY_FILTER_POLICY_CONTEXT, policy),
+                contextEvidence(ENTRY_LIBRARY_FILTER_STATE_CONTEXT, state),
+                contextEvidence(ENTRY_LIBRARY_FILTER_TRACKING_CONTEXT, tracking),
             ),
             applicable = true,
         )
@@ -191,7 +219,7 @@ private fun FeatureGraphEvaluation.selectedContentTypes(
     return sharedConsequences
         .asSequence()
         .filter { applicability ->
-            applicability.subject.feature == FEATURE_ID &&
+            applicability.subject.feature == ENTRY_LIBRARY_FILTER_FEATURE_ID &&
                 applicability.subject.integration == integration &&
                 applicability.consequence.id == consequence
         }

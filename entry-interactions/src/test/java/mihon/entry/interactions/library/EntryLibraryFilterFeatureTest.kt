@@ -18,11 +18,6 @@ class EntryLibraryFilterFeatureTest {
         val composition = composition(plugin(EntryType.ANIME))
         val feature = DefaultEntryLibraryFilterFeature(composition.featureGraphEvaluation)
 
-        composition.featureArtifacts.behavioralContracts
-            .filter { it.subject.feature.value == "entry.library-filtering" }
-            .map { it.contract.id.value }
-            .shouldContainExactly("entry.library-filtering.behavior")
-
         val result = feature.filter(
             request(
                 target(EntryType.ANIME, downloaded = false),

@@ -91,6 +91,7 @@ Updated: 2026-07-21
 - Phase 7.1 production contract census commit: `6be1cec52` (`(docs): census production feature contracts`)
 - Phase 7.1.0 production validation host commit: `4af26ba57` (`(feat): validate production interaction contracts`)
 - Phase 7.1.1 fundamental contract commit: `5a02a90e2` (`(test): execute fundamental feature contracts`)
+- Phase 7.1.2 Download contract commit: `bef5f374e` (`(test): execute download feature contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -98,10 +99,10 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.2 Download contracts
-- State: Download Runtime, Actions, Automatic Downloads, Lifecycle, Configuration, and Maintenance contracts are
-  implemented and validated for review. Library, Settings, and Media contracts have not started; reporting and
-  documentation projection have not migrated.
+- Milestone: Phase 7.1.3 Library, Settings, and Media contracts
+- State: Library Filtering, Progress, Update Notifications/Refresh, Preview, Immersive, Viewer Settings, and Media Cache
+  contracts are implemented and validated for review. Source and External-Context contracts have not started;
+  reporting and documentation projection have not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1453,7 +1454,25 @@ Focused Phase 7.1.2 Download-contract findings:
 - Validation contributors and support files mirror the Download production boundaries; no combined Download verifier
   or central content-type fixture was introduced.
 
+Focused Phase 7.1.3 Library, Settings, and Media contract findings:
+
+- The production graph now declares 77 exact contracts across 29 Features. Sixty-nine definitions have executable
+  verifiers, including 23 applicable contextual scenario groups.
+- Library Filtering derives generic participation, policy execution, Progress controls, Bookmark controls, and
+  release-period controls independently. Library Progress separately derives Continue targets and Bookmark summaries.
+- Library Update Notifications derive presentation, Open destinations, Consumption actions, and Download actions from
+  their respective relationships. Empty-child blockers remain contextual instead of changing notification
+  participation. Library Update Refresh verifies its source-refresh handoff independently.
+- Preview and Immersive contracts execute shared coordinators with recording operational processors. Their child-backed
+  contracts receive graph-selected Child List providers; no type enumeration or media fixture was introduced.
+- Viewer Settings validates provider projections and its independently selected Migration relationship. Media Cache
+  validates discovery, settings, and clearing through a recording artifact without touching production caches.
+- The declaration-only Library Filtering, Library Progress, and Media Cache assertions were removed. Their focused
+  behavior, structured absence, failure, and compatibility tests remain.
+- Preview, Immersive, and Viewer Settings now separate graph contributions from coordinator implementations instead of
+  accumulating both responsibilities in oversized Feature files.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1.2 Download contracts after review. Then migrate only Library, Settings, and Media contracts in
-Phase 7.1.3 and stop before beginning Source and External-Context contracts.
+Commit the Phase 7.1.3 Library, Settings, and Media contracts after review. Then migrate only Source and
+External-Context contracts in Phase 7.1.4 and stop before beginning Workflow and Tracking contracts.

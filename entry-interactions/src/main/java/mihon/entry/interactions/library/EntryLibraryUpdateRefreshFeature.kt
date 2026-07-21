@@ -14,9 +14,10 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.SharedFeatureConsequence
 
-private val FEATURE_ID = FeatureId("entry.library-update-refresh")
+internal val ENTRY_LIBRARY_UPDATE_REFRESH_FEATURE_ID = FeatureId("entry.library-update-refresh")
 private val FEATURE_OWNER = ContributionOwner("entry-library-update")
-private val REFRESH_INTEGRATION = FeatureIntegrationId("entry.library-update-refresh.source-refresh")
+internal val ENTRY_LIBRARY_UPDATE_REFRESH_INTEGRATION =
+    FeatureIntegrationId("entry.library-update-refresh.source-refresh")
 
 private enum class EntryLibraryUpdateRefreshConsequence(
     override val id: FeatureArtifactId,
@@ -25,7 +26,7 @@ private enum class EntryLibraryUpdateRefreshConsequence(
     NEW_CHILD_HANDOFF(FeatureArtifactId("entry.library-update-refresh.new-child-handoff")),
 }
 
-private object EntryLibraryUpdateRefreshBehaviorContract : FeatureBehaviorContract {
+internal object EntryLibraryUpdateRefreshBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.library-update-refresh.behavior")
 }
 
@@ -35,11 +36,11 @@ internal object EntryLibraryUpdateRefreshFeatureContributor : FeatureGraphContri
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(
             FeatureContribution(
-                feature = FEATURE_ID,
+                feature = ENTRY_LIBRARY_UPDATE_REFRESH_FEATURE_ID,
                 owner = owner,
                 integrations = listOf(
                     FeatureIntegration(
-                        id = REFRESH_INTEGRATION,
+                        id = ENTRY_LIBRARY_UPDATE_REFRESH_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = EntryLibraryUpdateRefreshConsequence.entries,
                         behavioralContracts = listOf(EntryLibraryUpdateRefreshBehaviorContract),
@@ -91,8 +92,8 @@ private fun FeatureGraphEvaluation.libraryUpdateRefreshContentTypes(): Set<Conte
     sharedConsequences
         .asSequence()
         .filter { applicability ->
-            applicability.subject.feature == FEATURE_ID &&
-                applicability.subject.integration == REFRESH_INTEGRATION &&
+            applicability.subject.feature == ENTRY_LIBRARY_UPDATE_REFRESH_FEATURE_ID &&
+                applicability.subject.integration == ENTRY_LIBRARY_UPDATE_REFRESH_INTEGRATION &&
                 applicability.consequence.id == EntryLibraryUpdateRefreshConsequence.SOURCE_REFRESH.id
         }
         .mapTo(mutableSetOf()) { it.subject.contentType }

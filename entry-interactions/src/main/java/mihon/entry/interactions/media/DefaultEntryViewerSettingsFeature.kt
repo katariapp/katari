@@ -22,61 +22,6 @@ import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
-private val ENTRY_VIEWER_SETTINGS_FEATURE_ID = FeatureId("entry.viewer-settings")
-private val ENTRY_VIEWER_SETTINGS_FEATURE_OWNER = ContributionOwner("entry-viewer-settings")
-private val ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.provider")
-private val ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.migration")
-
-private enum class EntryViewerSettingsConsequence(
-    override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
-    DISCOVERY(FeatureArtifactId("entry.viewer-settings.discovery")),
-    SETTINGS_HUB(FeatureArtifactId("entry.viewer-settings.settings-hub")),
-    SCREEN_PROJECTION(FeatureArtifactId("entry.viewer-settings.screen-projection")),
-    SEARCH_INDEX(FeatureArtifactId("entry.viewer-settings.search-index")),
-    ENTRY_OVERRIDE(FeatureArtifactId("entry.viewer-settings.entry-override")),
-    PREFERENCE_OWNERSHIP(FeatureArtifactId("entry.viewer-settings.preference-ownership")),
-    RESET(FeatureArtifactId("entry.viewer-settings.reset")),
-    BACKUP(FeatureArtifactId("entry.viewer-settings.backup")),
-}
-
-private object EntryViewerSettingsMigrationConsequence : SharedFeatureConsequence {
-    override val id = FeatureArtifactId("entry.viewer-settings.migration")
-}
-
-private object EntryViewerSettingsBehaviorContract : FeatureBehaviorContract {
-    override val id = FeatureArtifactId("entry.viewer-settings.behavior")
-}
-
-internal object EntryViewerSettingsFeatureContributor : FeatureGraphContributor {
-    override val owner = ENTRY_VIEWER_SETTINGS_FEATURE_OWNER
-
-    override fun contributeTo(sink: FeatureGraphContributionSink) {
-        sink.add(
-            FeatureContribution(
-                feature = ENTRY_VIEWER_SETTINGS_FEATURE_ID,
-                owner = owner,
-                integrations = listOf(
-                    FeatureIntegration(
-                        id = ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID,
-                        prerequisites = CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
-                        sharedConsequences = EntryViewerSettingsConsequence.entries,
-                        behavioralContracts = listOf(EntryViewerSettingsBehaviorContract),
-                    ),
-                    FeatureIntegration(
-                        id = ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
-                            CapabilityExpression.Provided(EntryMigrationCapability.definition),
-                        ),
-                        sharedConsequences = listOf(EntryViewerSettingsMigrationConsequence),
-                    ),
-                ),
-            ),
-        )
-    }
-}
-
 internal fun interface EntryLegacyMangaViewerFlagsReset {
     suspend fun reset(): Boolean
 }

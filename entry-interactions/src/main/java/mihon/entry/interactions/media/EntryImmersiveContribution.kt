@@ -1,0 +1,220 @@
+package mihon.entry.interactions
+
+import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
+import eu.kanade.tachiyomi.source.entry.EntryType
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
+import eu.kanade.tachiyomi.source.entry.supportedEntryTypes
+import kotlinx.coroutines.CancellationException
+import mihon.feature.graph.CapabilityExpression
+import mihon.feature.graph.ContextInputId
+import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureContextBlocker
+import mihon.feature.graph.FeatureContextDecision
+import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureGraphContributionSink
+import mihon.feature.graph.FeatureGraphContributor
+import mihon.feature.graph.FeatureGraphEvaluation
+import mihon.feature.graph.FeatureId
+import mihon.feature.graph.FeatureIntegration
+import mihon.feature.graph.FeatureIntegrationId
+import mihon.feature.graph.SharedFeatureConsequence
+import mihon.feature.graph.allOf
+import mihon.feature.graph.contextEvidence
+import mihon.feature.graph.contextInputDefinition
+import mihon.feature.graph.featureContextRule
+import tachiyomi.domain.entry.model.Entry
+
+internal val ENTRY_IMMERSIVE_FEATURE_ID = FeatureId("entry.immersive")
+private val ENTRY_IMMERSIVE_FEATURE_OWNER = ContributionOwner("entry-immersive")
+internal val ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.provider")
+internal val ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.source-context")
+internal val ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.entry-context")
+internal val ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.first-reading-child")
+internal val ENTRY_IMMERSIVE_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.open-target")
+
+internal enum class EntryImmersiveConsequence(
+    override val id: FeatureArtifactId,
+) : SharedFeatureConsequence {
+    SOURCE_AVAILABILITY(FeatureArtifactId("entry.immersive.source-availability")),
+    ENTRY_AVAILABILITY(FeatureArtifactId("entry.immersive.entry-availability")),
+    CATALOGUE_SURFACE(FeatureArtifactId("entry.immersive.catalogue-surface")),
+    FEED_SURFACE(FeatureArtifactId("entry.immersive.feed-surface")),
+    LONG_PRESS(FeatureArtifactId("entry.immersive.long-press")),
+    LOAD(FeatureArtifactId("entry.immersive.load")),
+    PRELOAD(FeatureArtifactId("entry.immersive.preload")),
+    RENDER(FeatureArtifactId("entry.immersive.render")),
+    PROGRESS(FeatureArtifactId("entry.immersive.progress")),
+    LIFECYCLE(FeatureArtifactId("entry.immersive.lifecycle")),
+}
+
+internal val ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES = setOf(
+    EntryImmersiveConsequence.SOURCE_AVAILABILITY,
+    EntryImmersiveConsequence.CATALOGUE_SURFACE,
+    EntryImmersiveConsequence.FEED_SURFACE,
+    EntryImmersiveConsequence.LONG_PRESS,
+)
+internal val ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES = setOf(
+    EntryImmersiveConsequence.ENTRY_AVAILABILITY,
+    EntryImmersiveConsequence.LOAD,
+    EntryImmersiveConsequence.RENDER,
+    EntryImmersiveConsequence.PROGRESS,
+    EntryImmersiveConsequence.LIFECYCLE,
+)
+
+internal object EntryImmersiveProviderDispatchConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.immersive.provider-dispatch")
+}
+
+internal val ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.immersive.source-installed"),
+    ContributionOwner("entry-source"),
+)
+internal val ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.immersive.source-opt-in"),
+    ContributionOwner("entry-source"),
+)
+internal val ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT = contextInputDefinition<Boolean>(
+    ContextInputId("entry.immersive.declared-type-compatibility"),
+    ContributionOwner("entry-source-description"),
+)
+private val ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE = FeatureContextBlocker(
+    FeatureArtifactId("entry.immersive.source-unavailable"),
+    listOf(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT),
+)
+private val ENTRY_IMMERSIVE_SOURCE_OPTED_OUT = FeatureContextBlocker(
+    FeatureArtifactId("entry.immersive.source-opted-out"),
+    listOf(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT),
+)
+private val ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE = FeatureContextBlocker(
+    FeatureArtifactId("entry.immersive.declared-type-incompatible"),
+    listOf(ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT),
+)
+
+internal object EntryImmersiveChildConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.immersive.first-reading-child.selection")
+}
+
+internal object EntryImmersiveChildRefreshConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.immersive.first-reading-child.refresh")
+}
+
+internal object EntryImmersiveOpenConsequence : SharedFeatureConsequence {
+    override val id = FeatureArtifactId("entry.immersive.open-target.dispatch")
+}
+
+internal object EntryImmersiveBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.immersive.behavior")
+}
+
+internal object EntryImmersiveProviderBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.immersive.provider-behavior")
+}
+
+internal object EntryImmersiveSourceBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.immersive.source-context-behavior")
+}
+
+internal object EntryImmersiveChildBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.immersive.first-reading-child-behavior")
+}
+
+internal object EntryImmersiveOpenBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.immersive.open-target-behavior")
+}
+
+internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
+    override val owner = ENTRY_IMMERSIVE_FEATURE_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(
+            FeatureContribution(
+                feature = ENTRY_IMMERSIVE_FEATURE_ID,
+                owner = owner,
+                integrations = listOf(
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                        sharedConsequences = listOf(
+                            EntryImmersiveProviderDispatchConsequence,
+                            EntryImmersiveConsequence.PRELOAD,
+                        ),
+                        behavioralContracts = listOf(EntryImmersiveProviderBehaviorContract),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                        contextInputs = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT,
+                            ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT,
+                            ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT,
+                        ),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            when {
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE))
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_OPTED_OUT))
+                                !evidence.value(ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE,
+                            ENTRY_IMMERSIVE_SOURCE_OPTED_OUT,
+                            ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE,
+                        ),
+                        sharedConsequences = ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES.toList(),
+                        behavioralContracts = listOf(EntryImmersiveSourceBehaviorContract),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID,
+                        prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                        contextInputs = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT,
+                            ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT,
+                        ),
+                        contextRule = featureContextRule(owner) { evidence ->
+                            when {
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE))
+                                !evidence.value(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT) ->
+                                    FeatureContextDecision.Blocked(listOf(ENTRY_IMMERSIVE_SOURCE_OPTED_OUT))
+                                else -> FeatureContextDecision.Applicable
+                            }
+                        },
+                        contextBlockers = listOf(
+                            ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE,
+                            ENTRY_IMMERSIVE_SOURCE_OPTED_OUT,
+                        ),
+                        sharedConsequences = ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES.toList(),
+                        behavioralContracts = listOf(EntryImmersiveBehaviorContract),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID,
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                            CapabilityExpression.Provided(EntryChildListCapability.definition),
+                        ),
+                        sharedConsequences = listOf(
+                            EntryImmersiveChildConsequence,
+                            EntryImmersiveChildRefreshConsequence,
+                        ),
+                        behavioralContracts = listOf(EntryImmersiveChildBehaviorContract),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_IMMERSIVE_OPEN_INTEGRATION_ID,
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryImmersiveCapability.definition),
+                            CapabilityExpression.Provided(EntryOpenCapability.definition),
+                        ),
+                        sharedConsequences = listOf(EntryImmersiveOpenConsequence),
+                        behavioralContracts = listOf(EntryImmersiveOpenBehaviorContract),
+                    ),
+                ),
+            ),
+        )
+    }
+}
