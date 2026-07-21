@@ -94,8 +94,8 @@ later migrations use it.
 The final dependency direction is:
 
 1. Entry-type contributions provide identity and whatever fundamental interaction providers currently exist.
-2. Feature contributions declare capability expressions, contextual inputs, consequences, specialized requirements,
-   contracts, and projections.
+2. Feature contributions declare capability expressions, contextual inputs, consequences, specialized prerequisites
+   or requirements, contracts, and projections.
 3. A generic assembler discovers contributions and builds the relationship graph.
 4. A generic evaluator determines applicable integrations and emits obligations.
 5. Runtime consumers, validation, behavioral contracts, developer reporting, and documentation consume evaluated graph

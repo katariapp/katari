@@ -22,14 +22,16 @@ types even though the graph must retain a separate applicability relationship fo
   - `AllOf` requires every term; and
   - `AnyOf` requires at least one term.
 - A missing capability prerequisite produces an inapplicable result and no obligation.
+- A missing specialized prerequisite also produces an inapplicable result and no obligation. This lets a type opt into
+  genuinely media-specific participation by supplying the feature-owned adapter, without an empty capability provider.
 - Satisfied capability prerequisites plus unresolved contextual inputs produce a conditional result. Runtime context is
   not guessed or flattened into type-wide support. Specialized requirements remain pending and do not become obligations
   until contextual applicability is resolved.
 - Satisfied statically evaluable prerequisites plus missing specialized adapters produce an incomplete result and one
   actionable obligation per missing adapter. The feature owner defines the requirement; the affected content-type owner
   is responsible for supplying the adapter.
-- An integration is statically applicable only when its capability prerequisites and specialized requirements are
-  satisfied and no contextual input remains unresolved.
+- An integration is statically applicable only when its capability and specialized prerequisites plus specialized
+  requirements are satisfied and no contextual input remains unresolved.
 - Every statically applicable integration creates one edge per shared consequence and affected content type. Each edge
   references the original feature-owned consequence object. Evaluation neither instantiates nor copies a coordinator per
   type.

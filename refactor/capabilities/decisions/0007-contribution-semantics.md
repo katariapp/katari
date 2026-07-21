@@ -21,10 +21,12 @@ catalog, explicit absence outcomes, and type-wide reports.
 - Any provider subset is valid. Provider presence means supported; absence means unsupported and creates no declaration
   or obligation.
 - A feature contribution owns one or more integrations. Each integration declares a positive capability expression,
-  contextual inputs, shared executable consequences, specialized adapter requirements, behavioral contracts, and
-  projections.
+  contextual inputs, shared executable consequences, specialized adapter prerequisites or requirements, behavioral
+  contracts, and projections.
+- A missing specialized prerequisite makes the relationship inapplicable, just like a missing capability provider. It
+  represents genuine type-owned participation without turning that participation into missing work.
 - A missing prerequisite makes an integration inapplicable. A missing specialized adapter becomes an obligation only
-  after the prerequisites are satisfied.
+  when it was declared as a requirement and the prerequisites are satisfied.
 - Content types do not list consuming features. They reference a feature only when supplying genuinely specialized work
   through an adapter contract owned by that feature.
 - Consequences, contracts, and projections are opaque executable objects to the kernel, not descriptive support labels.

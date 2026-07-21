@@ -2,7 +2,6 @@ package mihon.entry.interactions.validation
 
 import android.app.Application
 import eu.kanade.tachiyomi.network.NetworkHelper
-import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -22,13 +21,8 @@ import mihon.entry.interactions.createEntryInteractionComposition
 import mihon.entry.interactions.productionEntryFeatureContributors
 import mihon.entry.interactions.productionEntryTypeRuntimeModules
 import mihon.entry.interactions.settings.EntryInteractionPreferences
-import mihon.feature.graph.ConditionalFeatureIntegration
 import mihon.feature.graph.validation.CompletedFeatureContractExecution
-import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractVerificationResult
-import mihon.feature.graph.validation.MissingFeatureContractScenarioObligation
-import mihon.feature.graph.validation.MissingFeatureContractVerifierObligation
-import mihon.feature.graph.validation.ValidationFeatureContractPlanIssue
 import nl.adaptivity.xmlutil.serialization.XML
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.AfterEach
@@ -77,59 +71,14 @@ class ProductionEntryInteractionContractValidationTest {
     }
 
     @Test
-    fun `production composition executes discovered contracts and exposes every remaining obligation`() = runTest {
+    fun `production composition executes every discovered contract without unresolved work`() = runTest {
         val composition = productionComposition()
 
         val result = validateEntryInteractionContracts(composition)
-        val plan = result.plan
-        val applicableContracts = buildList {
-            composition.featureArtifacts.behavioralContracts.mapTo(this) { selection ->
-                FeatureContractReference(selection.subject.feature, selection.contract)
-            }
-            composition.featureGraphEvaluation.integrations
-                .filterIsInstance<ConditionalFeatureIntegration>()
-                .flatMapTo(this) { candidate ->
-                    candidate.integration.behavioralContracts.map { contract ->
-                        FeatureContractReference(candidate.subject.feature, contract)
-                    }
-                }
-        }
-            .distinct()
-        val missingVerifiers = plan.issues
-            .filterIsInstance<ValidationFeatureContractPlanIssue>()
-            .map { it.obligation }
-            .filterIsInstance<MissingFeatureContractVerifierObligation>()
-            .map { it.contract }
-            .distinct()
-        val executedContracts = plan.executions
-            .map { it.verifier.verifier.contract }
-            .distinct()
 
-        result.isSuccessful shouldBe false
-        plan.executions.isNotEmpty() shouldBe true
-        val expectedScenarios = composition.featureGraphEvaluation.integrations
-            .filterIsInstance<ConditionalFeatureIntegration>()
-            .flatMap { candidate ->
-                candidate.integration.behavioralContracts.map { contract ->
-                    FeatureContractReference(candidate.subject.feature, contract) to candidate.integration.id
-                }
-            }
-            .distinct()
-        val missingScenarios = plan.issues
-            .filterIsInstance<ValidationFeatureContractPlanIssue>()
-            .map { it.obligation }
-            .filterIsInstance<MissingFeatureContractScenarioObligation>()
-            .map { it.contract to it.integration }
-        val executedScenarios = plan.executions
-            .mapNotNull { execution ->
-                execution.scenario?.scenario?.let { it.contract to it.integration }
-            }
-            .distinct()
-
-        (executedContracts + missingVerifiers).distinct()
-            .shouldContainExactlyInAnyOrder(applicableContracts)
-        (executedScenarios + missingScenarios).distinct()
-            .shouldContainExactlyInAnyOrder(expectedScenarios)
+        result.isSuccessful shouldBe true
+        result.plan.isComplete shouldBe true
+        result.plan.executions.isNotEmpty() shouldBe true
         result.executions.filterNot { execution ->
             execution is CompletedFeatureContractExecution &&
                 execution.verification == FeatureContractVerificationResult.Passed

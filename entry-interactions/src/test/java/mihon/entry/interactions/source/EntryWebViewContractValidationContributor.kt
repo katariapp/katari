@@ -72,9 +72,9 @@ class EntryWebViewContractValidationContributor : FeatureValidationContributor {
             val source = mockk<ChapterWebViewSource> {
                 every { getChapterUrl(any()) } returns "https://example.test/child"
             }
-            val host = EntryChildWebViewHostRequirement.bind(object : EntryChildWebViewHostAdapter {
-                override val type = type
-            })
+            val host = EntryChildWebViewHostContribution.bind(
+                input.adapter(EntryChildWebViewHostContribution.definition),
+            )
             val feature = DefaultEntryWebViewFeature(
                 productionSubjectEvaluation(type, EntryWebViewFeatureContributor, listOf(host)),
                 mockk { every { get(7L) } returns source },

@@ -117,7 +117,7 @@ class FeatureContractValidationTest {
     }
 
     @Test
-    fun `missing verifier and media fixture are owned without invalidating unsupported types`() {
+    fun `missing verifier and media fixture are owned without invalidating unsupported types`() = runSuspend {
         val fixture = contractFixtureDefinition<ExampleFixture>(ContractFixtureId("example.fixture"), featureOwner)
         val contract = contract(listOf(fixture))
         val graph = graph(
@@ -141,6 +141,7 @@ class FeatureContractValidationTest {
             responsibleOwner shouldBe ContributionOwner("missing.type")
             subject.contentType shouldBe ContentTypeId("missing")
         }
+        validateFeatureContracts(plan).isSuccessful shouldBe false
     }
 
     @Test

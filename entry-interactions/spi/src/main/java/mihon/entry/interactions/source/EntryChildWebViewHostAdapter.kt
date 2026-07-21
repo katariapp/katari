@@ -7,16 +7,17 @@ import mihon.feature.graph.SpecializedAdapterId
 import mihon.feature.graph.specializedAdapterDefinition
 
 /**
- * Type-owned proof that a media host routes canonical child actions through [EntryWebViewFeature].
+ * Type-owned participation in canonical child actions routed through [EntryWebViewFeature].
  *
  * The adapter has no dispatch method: application behavior must continue through the Feature result. It is contributed
- * beside the reader/player UI so contextual graph resolution can report genuinely missing host integration.
+ * beside the reader/player UI. Its presence makes the child WebView relationship eligible for that content type;
+ * absence is ordinary unsupported behavior.
  */
 interface EntryChildWebViewHostAdapter : EntryInteractionSpecializedAdapter {
     override val type: EntryType
 }
 
-object EntryChildWebViewHostRequirement {
+object EntryChildWebViewHostContribution {
     val definition = specializedAdapterDefinition<EntryChildWebViewHostAdapter>(
         id = SpecializedAdapterId("entry.web-view.child-host"),
         owner = ContributionOwner("entry-web-view"),

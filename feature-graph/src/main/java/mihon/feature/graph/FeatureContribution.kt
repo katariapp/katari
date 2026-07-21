@@ -81,8 +81,9 @@ data class FeatureProjection<P : Any>(
 /**
  * One feature-owned relationship between provider-backed prerequisites and their consequences.
  *
- * Context inputs describe additional runtime information that later evaluation must retain. Specialized requirements
- * differ from prerequisites: they become obligations only after [prerequisites] are satisfied.
+ * Context inputs describe additional runtime information that later evaluation must retain. Specialized prerequisites
+ * make the relationship inapplicable when the affected type has not contributed that media-specific participation.
+ * Specialized requirements instead become obligations after the other prerequisites establish applicability.
  */
 data class FeatureIntegration(
     val id: FeatureIntegrationId,
@@ -90,6 +91,7 @@ data class FeatureIntegration(
     val contextInputs: List<ContextInputDefinition<*>> = emptyList(),
     val contextRule: FeatureContextRule? = null,
     val contextBlockers: List<FeatureContextBlocker> = emptyList(),
+    val specializedPrerequisites: List<SpecializedAdapterDefinition<*>> = emptyList(),
     val specializedRequirements: List<SpecializedAdapterDefinition<*>> = emptyList(),
     val sharedConsequences: List<SharedFeatureConsequence> = emptyList(),
     val behavioralContracts: List<FeatureBehaviorContract> = emptyList(),
@@ -110,7 +112,15 @@ data class FeatureIntegration(
                 }
             }
         }
+        requireUnique("Specialized prerequisites for $id", specializedPrerequisites.map { it.id.value })
         requireUnique("Specialized requirements for $id", specializedRequirements.map { it.id.value })
+        require(
+            specializedPrerequisites.none { prerequisite ->
+                specializedRequirements.any { requirement -> requirement.id == prerequisite.id }
+            },
+        ) {
+            "Feature integration $id cannot use one specialized adapter as both a prerequisite and a requirement"
+        }
         requireUnique("Shared consequences for $id", sharedConsequences.map { it.id.value })
         requireUnique("Behavioral contracts for $id", behavioralContracts.map { it.id.value })
         behavioralContracts.forEach { contract ->
@@ -148,9 +158,9 @@ data class FeatureContribution(
                 "Feature $feature cannot use context rule owned by ${rule.owner}"
             }
         }
-        integrations.flatMap { it.specializedRequirements }.forEach { requirement ->
+        integrations.flatMap { it.specializedPrerequisites + it.specializedRequirements }.forEach { requirement ->
             require(requirement.owner == owner) {
-                "Feature $feature cannot own specialized requirement ${requirement.id} declared by ${requirement.owner}"
+                "Feature $feature cannot use specialized adapter ${requirement.id} declared by ${requirement.owner}"
             }
         }
         integrations

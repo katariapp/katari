@@ -35,7 +35,7 @@ fun assembleFeatureGraph(
             type.specializedAdapters.map { it.definition }
         }
         discovered.features.flatMapTo(this) { feature ->
-            feature.integrations.flatMap { it.specializedRequirements }
+            feature.integrations.flatMap { it.specializedPrerequisites + it.specializedRequirements }
         }
     }
     val contractFixtureDefinitions = buildList {
@@ -138,7 +138,7 @@ private fun validateReachability(discovered: DiscoveredFeatureGraphContributions
         .mapTo(mutableSetOf()) { it.id }
     val requiredAdapters = discovered.features
         .flatMap { it.integrations }
-        .flatMap { it.specializedRequirements }
+        .flatMap { it.specializedPrerequisites + it.specializedRequirements }
         .mapTo(mutableSetOf()) { it.id }
     val requiredFixtures = discovered.features
         .flatMap { it.integrations }
@@ -169,7 +169,8 @@ private fun validateReachability(discovered: DiscoveredFeatureGraphContributions
 
     discovered.features.forEach { feature ->
         feature.integrations.forEach { integration ->
-            val hasEffect = integration.specializedRequirements.isNotEmpty() ||
+            val hasEffect = integration.specializedPrerequisites.isNotEmpty() ||
+                integration.specializedRequirements.isNotEmpty() ||
                 integration.sharedConsequences.isNotEmpty() ||
                 integration.behavioralContracts.isNotEmpty() ||
                 integration.projectionRequirements.isNotEmpty()

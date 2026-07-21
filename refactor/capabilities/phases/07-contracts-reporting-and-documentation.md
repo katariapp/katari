@@ -61,10 +61,10 @@ contributions:
 - [x] Census every production Feature, declared contract, undeclared shared expectation, and behavioral suite in the
   test register in [`../contract-migration-census.md`](../contract-migration-census.md).
 - [x] Establish the production validation host and exact-definition binding before adding a production verifier.
-- [ ] Implement each feature-owned verifier once and execute it for every statically or contextually applicable
+- [x] Implement each feature-owned verifier once and execute it for every statically or contextually applicable
   production contribution.
-- [ ] Request content-type fixtures only for genuine media-specific validation input.
-- [ ] Keep compatibility, storage, serialization, and media-algorithm tests outside shared feature contracts.
+- [x] Request content-type fixtures only for genuine media-specific validation input.
+- [x] Keep compatibility, storage, serialization, and media-algorithm tests outside shared feature contracts.
 
 ### 7.2 — Declaration-Test Removal and Boundary Enforcement
 

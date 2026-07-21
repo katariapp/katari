@@ -94,6 +94,7 @@ Updated: 2026-07-21
 - Phase 7.1.2 Download contract commit: `bef5f374e` (`(test): execute download feature contracts`)
 - Phase 7.1.3 Library and Media contract commit: `ad53083b0` (`(test): execute library and media contracts`)
 - Phase 7.1.4 Source context contract commit: `e14affa81` (`(test): execute source context contracts`)
+- Phase 7.1.5 Workflow and Tracking contract commit: `26b44c8d3` (`(test): execute workflow and tracking contracts`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -101,10 +102,11 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.1.5 Workflow and Tracking contracts
-- State: Merge, Migration, and Tracking base/cooperation/context contracts are implemented and validated for review.
-  Every production contract definition has an executable verifier and scenario where contextual. Final contract
-  reconciliation, reporting, and documentation projection have not migrated.
+- Milestone: Phase 7.1.6 Contract Reconciliation
+- State: Production contract migration is complete and validated for review. Every selected production relationship
+  executes its discovered verifier successfully, contextual scenarios cover every statically compatible subject, and
+  synthetic provider-support Feature graphs have been removed. Reporting and documentation projection have not
+  migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1054,9 +1056,9 @@ Focused Phase 6.5.2 findings:
 
 - Entry and child WebView support are separate contextual integrations under one Feature. A source may implement either
   supported subset without becoming invalid or creating a content-type declaration.
-- Child controls are media-host-specific, so source applicability activates one specialized host requirement. Manga
-  supplies it through the ordinary plugin; a future applicable type without the integration receives a named
-  `entry.web-view.child-host` obligation instead of silently missing UI.
+- Child controls are media-host-specific, so Manga supplies one specialized host adapter through the ordinary plugin.
+  Phase 7.1.6 clarified that this adapter is an applicability prerequisite: types without a media host remain valid and
+  do not claim child WebView consequences.
 - Child resolution returns canonical URL and source identity together, with missing, unsupported, and failed outcomes.
   WebView headers retain their existing separately resolved consequence and are not an eager child-URL prerequisite.
 - Manga reader actions and Android Assist now follow one active-child result. Child transitions clear stale state, and
@@ -1482,8 +1484,8 @@ Focused Phase 7.1.4 Source and External-Context contract findings:
   source evidence. They do not become Entry-type capabilities or require a source to implement every public contract.
 - Related Entries, Cover Network, Source Settings, Source Home, Source Refresh, Deep Link, and Tracker Source Adapter
   execute their shared coordinators from applicable external context without enumerating content types.
-- Entry and child WebView are separate contracts. Child WebView validation supplies the specialized host adapter only
-  for the applicable relationship, preserving the delayed adapter obligation instead of making it universal.
+- Entry and child WebView are separate contracts. Child WebView validation consumes the graph-selected specialized host
+  adapter only for participating media hosts; it neither supplies a synthetic adapter nor makes hosting universal.
 - Source SDK compatibility, source implementations, network/media failures after applicability, and legacy adapter ABI
   remain in their existing owner tests. No media fixture or source-support matrix was introduced.
 - Validation contributors mirror their production catalogue, child, and source ownership; no combined external-context
@@ -1507,7 +1509,28 @@ Focused Phase 7.1.5 Workflow and Tracking contract findings:
 - The production plan has no missing verifier or scenario. Its only remaining issues are the previously exposed
   child-WebView specialized host obligations for Anime and Book, which Phase 7.1.6 must reconcile explicitly.
 
+Focused Phase 7.1.6 Contract Reconciliation findings:
+
+- The census baseline contained 36 production Feature contributions, not 37; the earlier count and corresponding
+  no-contract count were corrected without adding a completion list or changing runtime participation.
+- Specialized adapters now have two explicit graph roles. A specialized prerequisite makes participation optional and
+  its absence ordinarily inapplicable; a specialized requirement still becomes an owned obligation after the other
+  prerequisites establish applicability. Decision `0024` records when each role is valid.
+- Child WebView uses Manga's real reader-host contribution as a specialized prerequisite. Anime and Book remain valid
+  without claiming media-host behavior, and an applicable Manga source context still selects the shared child WebView
+  contract and consequences.
+- Production validation is now a successful gate: all 116 exact definitions have one discovered verifier, all 57
+  contextual scenario groups cover their statically compatible subjects, and every selected execution passes.
+- Manga and Anime provider behavior tests reuse the production Feature composition boundary. Their synthetic Features,
+  copied capability enumeration, and synthetic specialized-requirement reconstruction were removed; type-owned media
+  behavior remains covered.
+- Validation-kernel coverage proves unresolved plan issues make the aggregate unsuccessful. Remaining declaration-only
+  contract assertions were not found.
+- The migration-inventory probes found no deleted capability authority or new unclassified product gate. Feature-graph,
+  feature-validation, root/Anime/Manga interaction tests, boundary enforcement, build-logic tests, formatting, and FOSS
+  application compilation pass.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.1.5 Workflow and Tracking contracts after review. Then begin Phase 7.1.6 contract reconciliation,
-including resolution of the child-WebView host obligations, and stop before developer reporting.
+Commit Phase 7.1.6 after review. Then begin Phase 7.2 declaration-test removal and boundary enforcement; do not begin
+developer reporting until that milestone is complete.

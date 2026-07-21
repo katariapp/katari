@@ -21,7 +21,7 @@ internal fun productionEntryTypeRuntimeModules(
  * This list installs independent contributors. It does not describe type support or contract applicability; those are
  * discovered from the contributors and the installed type modules by graph evaluation.
  */
-internal fun productionEntryFeatureContributors(): List<FeatureGraphContributor> = listOf(
+fun productionEntryFeatureContributors(): List<FeatureGraphContributor> = listOf(
     EntryOpenFeatureContributor,
     EntryContinueFeatureContributor,
     EntryDownloadRuntimeFeatureContributor,

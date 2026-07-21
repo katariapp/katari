@@ -99,6 +99,70 @@ class FeatureGraphEvaluationTest {
     }
 
     @Test
+    fun `missing specialized prerequisite is inapplicable without creating an obligation`() {
+        val adapter = specializedAdapterDefinition<ExampleAdapter>(
+            id = SpecializedAdapterId("example.adapter"),
+            owner = featureOwner,
+        )
+        val type = contentType("subject", CapabilityProvider(alpha, AlphaProvider()))
+        val evaluation = evaluate(
+            contentTypes = listOf(type),
+            integrations = listOf(
+                integration(
+                    id = "example.integration",
+                    prerequisites = CapabilityExpression.Provided(alpha),
+                    specializedPrerequisites = listOf(adapter),
+                ),
+            ),
+        )
+
+        val result = evaluation.integrations.single() as InapplicableFeatureIntegration
+        result.matchedProviders shouldHaveSize 1
+        result.unmetPrerequisites shouldBe emptyList()
+        result.unmetSpecializedPrerequisites shouldContainExactly listOf(adapter)
+        evaluation.obligations shouldBe emptyList()
+        evaluation.sharedConsequences shouldBe emptyList()
+    }
+
+    @Test
+    fun `supplied specialized prerequisite participates in contextual selection`() {
+        val adapter = specializedAdapterDefinition<ExampleAdapter>(
+            id = SpecializedAdapterId("example.adapter"),
+            owner = featureOwner,
+        )
+        val context = contextInputDefinition<ExampleContext>(
+            id = ContextInputId("example.context"),
+            owner = featureOwner,
+        )
+        val supplied = SpecializedAdapter(adapter, ExampleAdapter())
+        val evaluation = evaluate(
+            contentTypes = listOf(
+                contentType(
+                    "subject",
+                    CapabilityProvider(alpha, AlphaProvider()),
+                    specializedAdapters = listOf(supplied),
+                ),
+            ),
+            integrations = listOf(
+                integration(
+                    id = "example.integration",
+                    prerequisites = CapabilityExpression.Provided(alpha),
+                    contextInputs = listOf(context),
+                    specializedPrerequisites = listOf(adapter),
+                ),
+            ),
+        )
+
+        val candidate = evaluation.integrations.single() as ConditionalFeatureIntegration
+        candidate.suppliedAdapters shouldContainExactly listOf(supplied)
+        candidate.pendingSpecializedRequirements shouldBe emptyList()
+
+        val resolved = resolveFeatureContext(candidate, listOf(contextEvidence(context, ExampleContext())))
+        val applicable = resolved.integration as ApplicableFeatureContext
+        applicable.suppliedAdapters shouldContainExactly listOf(supplied)
+    }
+
+    @Test
     fun `unresolved context remains conditional without activating work or obligations`() {
         val context = contextInputDefinition<ExampleContext>(
             id = ContextInputId("example.context"),
@@ -238,6 +302,7 @@ class FeatureGraphEvaluationTest {
         id: String,
         prerequisites: CapabilityExpression,
         contextInputs: List<ContextInputDefinition<*>> = emptyList(),
+        specializedPrerequisites: List<SpecializedAdapterDefinition<*>> = emptyList(),
         specializedRequirements: List<SpecializedAdapterDefinition<*>> = emptyList(),
         consequence: SharedFeatureConsequence = consequence("$id.consequence"),
     ): FeatureIntegration {
@@ -250,6 +315,7 @@ class FeatureGraphEvaluationTest {
             } else {
                 featureContextRule(featureOwner) { FeatureContextDecision.Applicable }
             },
+            specializedPrerequisites = specializedPrerequisites,
             specializedRequirements = specializedRequirements,
             sharedConsequences = listOf(consequence),
         )

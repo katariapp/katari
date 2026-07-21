@@ -5,11 +5,9 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.WebViewSource
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.source.service.SourceManager
@@ -117,28 +115,8 @@ class EntryWebViewFeatureTest {
             EntryChildWebViewResolution.Failed(2L, error)
     }
 
-    @Test
-    fun `applicable child source exposes missing media host integration`() {
-        val source = mockk<ChapterWebViewSource> {
-            every { getChapterUrl(any()) } returns "https://example.test/child"
-        }
-        val feature = DefaultEntryWebViewFeature(
-            sourceFeatureEvaluation(EntryWebViewFeatureContributor),
-            mockk { every { get(7L) } returns source },
-        )
-
-        val failure = assertThrows<IllegalStateException> {
-            feature.resolveChild(
-                owner = Entry.create().copy(source = 7L, type = EntryType.BOOK),
-                child = EntryChapter.create(),
-            )
-        }
-
-        failure.message.orEmpty() shouldContain "entry.web-view.child-host"
-    }
-
     private val childHostAdapters = listOf(
-        EntryChildWebViewHostRequirement.bind(
+        EntryChildWebViewHostContribution.bind(
             object : EntryChildWebViewHostAdapter {
                 override val type = EntryType.BOOK
             },

@@ -28,6 +28,7 @@ data class InapplicableFeatureIntegration internal constructor(
     override val integration: FeatureIntegration,
     val matchedProviders: List<CapabilityProvider<*>>,
     val unmetPrerequisites: List<CapabilityExpression>,
+    val unmetSpecializedPrerequisites: List<SpecializedAdapterDefinition<*>> = emptyList(),
 ) : FeatureIntegrationEvaluation
 
 /** Capability prerequisites are satisfied, but runtime context must decide whether the integration applies. */
@@ -151,18 +152,24 @@ private fun evaluateIntegration(
     )
     val prerequisiteResult = integration.prerequisites.evaluateAgainst(contentType.providers)
 
-    if (!prerequisiteResult.isSatisfied) {
+    val adaptersById = contentType.specializedAdapters.associateBy { it.definition.id }
+    val specializedPrerequisites = integration.specializedPrerequisites.sortedBy { it.id.value }
+    val missingSpecializedPrerequisites = specializedPrerequisites.filter { it.id !in adaptersById }
+
+    if (!prerequisiteResult.isSatisfied || missingSpecializedPrerequisites.isNotEmpty()) {
         return InapplicableFeatureIntegration(
             subject = subject,
             integration = integration,
             matchedProviders = prerequisiteResult.matchedProviders,
             unmetPrerequisites = prerequisiteResult.unmetRequirements,
+            unmetSpecializedPrerequisites = missingSpecializedPrerequisites,
         )
     }
 
-    val adaptersById = contentType.specializedAdapters.associateBy { it.definition.id }
     val requirements = integration.specializedRequirements.sortedBy { it.id.value }
-    val suppliedAdapters = requirements.mapNotNull { adaptersById[it.id] }
+    val suppliedAdapters = (specializedPrerequisites + requirements)
+        .distinctBy { it.id }
+        .mapNotNull { adaptersById[it.id] }
     val missingRequirements = requirements.filter { it.id !in adaptersById }
 
     if (integration.contextInputs.isNotEmpty()) {

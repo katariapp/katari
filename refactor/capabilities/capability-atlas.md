@@ -520,9 +520,9 @@ The new standalone `feature-graph` module establishes the target model without a
 - a missing provider means unsupported and requires no explicit absence declaration;
 - capability definitions are owned beside their provider contracts rather than listed in a central catalog;
 - a feature owns integrations containing positive capability prerequisites, contextual inputs, shared executable
-  consequences, specialized adapter requirements, behavioral contracts, and projections;
-- specialized requirements are separate from prerequisites so missing adapters can become obligations only after the
-  feature applies; and
+  consequences, specialized adapter prerequisites or requirements, behavioral contracts, and projections;
+- specialized prerequisites express optional type-owned participation; specialized requirements remain separate so
+  missing adapters can become obligations only after the feature applies; and
 - content types never enumerate consuming features except when they supply genuinely specialized adapters defined by
   those features.
 

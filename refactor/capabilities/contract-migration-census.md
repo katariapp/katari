@@ -14,12 +14,12 @@ owner-local so the transition does not omit behavior merely because no marker co
 
 ## Census Baseline
 
-- There are 37 production Feature contributions under `entry-interactions`.
+- There are 36 production Feature contributions under `entry-interactions`.
 - Fifteen Features currently declare 18 contract definitions. Migration declares four distinct contracts; each other
   declaring Feature has one.
 - Four declared contracts are contextual: Related Entries, Preview, Immersive, and Source Refresh. The other fourteen
   are statically selected.
-- Twenty-two Features have behavioral suites but no contract definition.
+- Twenty-one Features have behavioral suites but no contract definition.
 - No production validation contributor, executable verifier, applicable-context scenario, or contract fixture exists.
 - Six suites inspect selected contract identifiers or subjects without executing the declared contract: Library
   Filtering, Library Progress, Media Cache, Merge, Migration, and Update Eligibility.
@@ -28,7 +28,7 @@ owner-local so the transition does not omit behavior merely because no marker co
   have no selected contract.
 
 If the validation gate were connected without further migration, it would correctly report 18 missing verifier
-obligations and four missing applicable-context scenario groups. That result would still be incomplete because the 22
+obligations and four missing applicable-context scenario groups. That result would still be incomplete because the 21
 Features without declarations and the undeclared cooperation/context relationships would remain invisible.
 
 ## Migration Progress
@@ -70,6 +70,14 @@ workflow, optional Download/Migration relationships, preparation authority, memb
 Migration validates independently selected providers, state-derived options, preparation/execution authority, and
 cooperation with Progress, Playback Preferences, Viewer Settings, and Downloads. Tracking validates its external
 registry, session, automation, synchronization, migration, Library, and Stats projections without a type provider.
+
+Phase 7.1.6 makes the complete production run successful. All 116 definitions bind to exactly one discovered verifier;
+all 57 contextual scenario groups resolve every statically compatible subject; and every selected execution passes.
+Child WebView host participation is now an explicit specialized prerequisite: Manga participates through its real
+reader host, while Anime and Book remain valid without claiming that media-specific UI integration. Type-module tests
+reuse the production Feature composition boundary instead of manufacturing synthetic provider-support Features.
+Decision [`0024`](decisions/0024-specialized-participation-prerequisites.md) records the distinction between optional
+specialized participation and missing specialized work after applicability.
 
 ## Validation Host Gate
 
@@ -234,11 +242,11 @@ genuine media behavior assertions in the type modules.
 
 ### 7.1.6 — Contract Reconciliation
 
-- Verify every production contract has exactly one discovered verifier and every contextual contract has an applicable
+- [x] Verify every production contract has exactly one discovered verifier and every contextual contract has an applicable
   scenario.
-- Verify every selected production subject executes and one unresolved issue makes the aggregate result unsuccessful.
-- Remove remaining declaration-only assertions and synthetic provider-support Features.
-- Re-run the migration-inventory test register before developer reporting begins.
+- [x] Verify every selected production subject executes and one unresolved issue makes the aggregate result unsuccessful.
+- [x] Remove remaining declaration-only assertions and synthetic provider-support Features.
+- [x] Re-run the migration-inventory test register before developer reporting begins.
 
 ## Manifesto Check
 

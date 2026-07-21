@@ -180,7 +180,7 @@ private fun ConditionalFeatureIntegration.resolveApplicable(
 ): FeatureContextEvaluation {
     val adaptersById = suppliedAdaptersById()
     val requirements = integration.specializedRequirements.sortedBy { it.id.value }
-    val suppliedAdapters = requirements.mapNotNull { adaptersById[it.id] }
+    val selectedAdapters = suppliedAdapters.sortedBy { it.definition.id.value }
     val missingRequirements = requirements.filter { it.id !in adaptersById }
     if (missingRequirements.isNotEmpty()) {
         val obligations = missingRequirements.map { requirement ->
@@ -196,7 +196,7 @@ private fun ConditionalFeatureIntegration.resolveApplicable(
                 integration = integration,
                 matchedProviders = matchedProviders,
                 evidence = evidence,
-                suppliedAdapters = suppliedAdapters,
+                suppliedAdapters = selectedAdapters,
                 obligations = obligations,
             ),
             obligations = obligations,
@@ -210,7 +210,7 @@ private fun ConditionalFeatureIntegration.resolveApplicable(
             integration = integration,
             matchedProviders = matchedProviders,
             evidence = evidence,
-            suppliedAdapters = suppliedAdapters,
+            suppliedAdapters = selectedAdapters,
         ),
         obligations = emptyList(),
         sharedConsequences = integration.sharedConsequences

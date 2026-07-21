@@ -109,7 +109,7 @@ class EntryInteractionCompositionTest {
             override val owner = ContributionOwner("test.type.manga")
             override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
             override val specializedAdapters = listOf(
-                EntryChildWebViewHostRequirement.bind(
+                EntryChildWebViewHostContribution.bind(
                     object : EntryChildWebViewHostAdapter {
                         override val type = EntryType.ANIME
                     },

@@ -37,7 +37,7 @@ local ownership while leaving the application-wide relationship model dependent 
 
 - Source and tracker contracts remain authoritative external facts.
 - Entry, selection, preference, profile, and platform values remain operation-scoped evidence rather than capabilities.
-- Features own consequences, contextual interpretation, blockers, and any specialized requirements.
+- Features own consequences, contextual interpretation, blockers, and any specialized prerequisites or requirements.
 - Type-owned media providers may use external media contracts internally behind a Feature.
 - Compatibility adapters may expose current external contracts but cannot declare application support separately.
 

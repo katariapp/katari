@@ -530,8 +530,8 @@ turning a consequence-specific result into a reusable raw-source facade.
   support does not imply `ChapterWebViewSource` support.
 - [x] Resolve canonical child URL and authoritative source identity through one structured result with distinct
   missing, unsupported, and failed outcomes.
-- [x] Require a type-owned media-host adapter only after source context makes child WebView behavior applicable; Manga
-  contributes the current reader adapter, while unrelated types and unsupported sources remain valid.
+- [x] Require type-owned media-host participation before child WebView behavior becomes eligible; Manga contributes the
+  current reader adapter, while unrelated types and unsupported sources remain valid.
 - [x] Migrate Manga reader WebView, browser, share, and Android Assist availability from raw source casts and separate
   getters to the same active-child resolution.
 - [x] Clear and replace the active resolution at each child transition and reject an asynchronously completed result
@@ -545,10 +545,9 @@ receives no child consequences. Runtime WebView headers continue through the exi
 URL does not eagerly require headers needed only after WebView launch.
 
 Because child controls live inside a media-specific reader/player rather than a shared application screen, the child
-integration has one specialized host requirement. Source support alone discovers the shared URL/action consequences;
-if the affected content type has not supplied its host adapter, contextual resolution reports the missing adapter rather
-than claiming those UI consequences are complete. Provider absence or a source without child WebView support remains an
-ordinary blocker and creates no adapter obligation.
+integration has one specialized host prerequisite. A content type participates only by supplying that real host
+adapter; source support then discovers the shared URL/action consequences for participating types. Adapter absence and
+a source without child WebView support are both ordinary inapplicability, and neither claims those UI consequences.
 
 The Manga reader now hides all canonical-child actions until an `Available` result exists for the current child. A
 failed or unavailable transition clears the prior result, so a previous chapter URL cannot authorize actions for the

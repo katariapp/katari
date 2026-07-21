@@ -11,7 +11,7 @@ obligations. It is intentionally generic and may break production compilation at
 - [x] Define a valid content-type contribution containing identity and zero or more interaction providers.
 - [x] Define provider contributions without a separate support or absence declaration.
 - [x] Define a feature contribution containing prerequisite expressions, contextual inputs, shared consequences,
-  specialized requirements, behavioral contracts, and projections.
+  specialized prerequisites and requirements, behavioral contracts, and projections.
 - [x] Define ownership and identity rules for every contribution and relationship.
 - [x] Define unsupported prerequisites, applicability, and incomplete downstream obligations without inferring them from
   current types.
@@ -97,9 +97,9 @@ provider is mandatory, and there is no absence declaration. `CapabilityDefinitio
 provider contract rather than added to a central catalog.
 
 `FeatureContribution` owns integrations containing positive capability expressions, typed contextual inputs, shared
-executable consequences, specialized adapter requirements, behavioral contracts, and projections. Missing prerequisites
-mean inapplicable; specialized requirements are structurally separate so Milestone 3.3 can turn missing adapters into
-obligations only after applicability is established.
+executable consequences, specialized adapter prerequisites or requirements, behavioral contracts, and projections.
+Missing capability or specialized prerequisites mean inapplicable; specialized requirements are structurally separate
+so Milestone 3.3 can turn missing adapters into obligations only after applicability is established.
 
 Construction enforces stable identities, contribution-local uniqueness, and feature ownership of specialized
 requirements. Cross-contribution validation is intentionally deferred to Milestone 3.2 graph assembly. Anonymous
@@ -128,10 +128,11 @@ The generic evaluator derives one result for every discovered content-type and f
 `Always`, `Provided`, `AllOf`, and `AnyOf` expressions are evaluated only from contributed providers. A missing provider
 produces inapplicability without an obligation; no current operation is treated as mandatory for type validity.
 
-Satisfied capability prerequisites lead to one of three distinct states. Integrations with unresolved contextual inputs
-remain conditional, retaining pending specialized requirements without prematurely turning them into failures. Missing
-specialized adapters on statically applicable integrations produce actionable obligations attributed to the affected
-content-type owner. Complete integrations become applicable and expose their matched provider and adapter objects.
+Satisfied capability and specialized prerequisites lead to one of three distinct states. Integrations with unresolved
+contextual inputs remain conditional, retaining pending specialized requirements without prematurely turning them into
+failures. Missing specialized adapters declared as requirements on statically applicable integrations produce
+actionable obligations attributed to the affected content-type owner. Complete integrations become applicable and
+expose their matched provider and adapter objects.
 
 Every applicable content-type/integration pair creates edges to its feature-owned shared consequences. The edges retain
 the original consequence object, so multiple types can point to one single-gate coordinator without evaluation copying,

@@ -132,7 +132,7 @@ internal object EntryWebViewFeatureContributor : FeatureGraphContributor {
                             ENTRY_CHILD_WEB_VIEW_MISSING,
                             ENTRY_CHILD_WEB_VIEW_UNSUPPORTED,
                         ),
-                        specializedRequirements = listOf(EntryChildWebViewHostRequirement.definition),
+                        specializedPrerequisites = listOf(EntryChildWebViewHostContribution.definition),
                         sharedConsequences = EntryChildWebViewConsequence.entries,
                         behavioralContracts = listOf(EntryChildWebViewBehaviorContract),
                     ),
