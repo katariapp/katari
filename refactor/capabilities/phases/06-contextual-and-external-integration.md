@@ -1115,6 +1115,40 @@ service selection, copied source/authentication gate, or compatibility callback.
 binding and synchronization solely when an external tracker declares support and the relevant live evidence exists;
 Migration preparation requires no additional type opt-in.
 
+#### 6.7.5 — Account, Settings, and Backup Integration
+
+- [x] Add a cohesive account/diagnostics facet to the single `EntryTrackingFeature`; do not register another account
+  service or expose the application host to consumers.
+- [x] Derive ordinary and enhanced settings rows from authoritative tracker registrations instead of hardcoding built-in
+  services and separately discovering enhanced services.
+- [x] Move login method, credential identity, OAuth initiation, enhanced availability, account presentation order, and
+  current account state behind tracker-owned declarations and the Tracking host.
+- [x] Route credential login, passive login, and logout through structured Feature results while retaining concrete
+  OAuth callback parsing as tracker-owned platform mechanics.
+- [x] Migrate backup missing-login diagnostics from direct registry access to stable service IDs resolved by Tracking.
+- [x] Remove the temporary raw-tracker settings preference, widget, and logo adapter.
+
+The account facet projects every registered service through neutral account rows. Trackers declare whether login uses
+credentials, external authorization, or passive source-backed activation; credential trackers declare username versus
+email identity, and external trackers provide their own authorization URI. Enhanced source installation remains host
+evidence. The settings screen only groups and presents these results, so a future tracker appears without another UI
+branch or registry copy.
+
+Account operations re-resolve stable service IDs before dispatch and return completed, external-authorization,
+unavailable, or failed results. Stored credentials are requested only for the selected credential service rather than
+being exposed in the observable account snapshot. Existing tracker implementations continue owning credentials,
+network login, logout, and OAuth state. `TrackLoginActivity` retains concrete callback decoding because it completes an
+external tracker protocol and does not decide Entry applicability or construct the service catalogue.
+
+Backup validation supplies referenced service IDs to Tracking and receives sorted names for registered services that
+are currently logged out. Missing/removed service IDs retain the previous ignored behavior. Backup parsing and source
+validation remain backup-owned; the validator no longer interprets the tracker registry.
+
+Manifesto comparison found one authoritative registration, automatically derived settings rows, purpose-specific
+account metadata, one Feature boundary, and no hardcoded service catalogue, content-type support copy, UI tracker cast,
+backup registry query, or second login authority. Tracker-specific OAuth implementation remains explicit external work,
+not a forgotten application integration.
+
 ### 6.8 — Compatibility Reconciliation and Context Census
 
 - [ ] Verify `C24` remains confined to the legacy Manga adapter and bundled Local source and that both expose current

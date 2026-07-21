@@ -9,6 +9,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.host.tracking.EntryTrackingAccountHost
 import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
@@ -118,6 +119,7 @@ class EntryTrackingOperationsTest {
         val host = object : EntryTrackingHost {
             override val operations = operations
             override val automation = automation
+            override val accounts: EntryTrackingAccountHost = mockk(relaxed = true)
 
             override fun registeredServices() = listOf(service)
 

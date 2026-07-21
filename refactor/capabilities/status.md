@@ -80,6 +80,7 @@ Updated: 2026-07-20
 - Phase 6.7.1 Tracking boundary commit: `62f68d30e` (`(refactor): establish tracking feature boundary`)
 - Phase 6.7.2 Entry tracking session commit: `bf3507b53` (`(refactor): migrate entry tracking session`)
 - Phase 6.7.3 Entry tracking operations commit: `3a26ce996` (`(refactor): migrate entry tracking operations`)
+- Phase 6.7.4 Tracking automation commit: `bba933301` (`(refactor): migrate tracking automation`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -87,8 +88,8 @@ Updated: 2026-07-20
 ## Active Work
 
 - Phase: Phase 6 — Contextual and External Integration
-- Milestone: Phase 6.7.4 Automatic binding and synchronization
-- State: Phase 6.7.4 is implemented and validating for review. Account/settings/backup has not migrated.
+- Milestone: Phase 6.7.5 Account, settings, and backup integration
+- State: Phase 6.7.5 is implemented and validating for review. Library/Stats integration has not migrated.
 
 Focused Phase 6 preparation findings:
 
@@ -1256,7 +1257,23 @@ Focused Phase 6.7.4 findings:
   unrelated `HEAD` source issues in the anime debug launcher and profile shortcut UI; this milestone introduces no
   remaining compiler diagnostics.
 
+Focused Phase 6.7.5 findings:
+
+- One account facet on `EntryTrackingFeature` exposes current/reactive neutral accounts, structured login/logout, and
+  missing-login diagnostics; it is not separately injected or registered.
+- The settings screen no longer hardcodes eight ordinary services or casts the registry for enhanced services. Every
+  registered tracker supplies a row through tracker-owned login and account-presentation metadata.
+- Credential identity, external authorization initiation, passive enhanced login, installed-source availability,
+  display username, login state, and existing row order are preserved through the host projection.
+- Stored credentials are fetched only after selecting a credential account and do not enter the observable account
+  snapshot. Settings preference/widget/logo presentation no longer receives raw tracker objects.
+- Backup validation resolves referenced service IDs through Tracking and no longer queries `TrackerManager`.
+- OAuth callback decoding remains in `TrackLoginActivity` as reviewed tracker-owned platform mechanics; it neither
+  decides Entry support nor constructs account rows.
+- Focused Tracking tests, all Entry-interactions tests, formatting, and boundary validation pass. FOSS compilation still
+  reaches only the unrelated unchanged `HEAD` issues in the anime debug launcher and profile shortcut UI.
+
 ## Exact Next Action After Review
 
-Commit Phase 6.7.4 after review, then implement Phase 6.7.5 account, settings, and backup integration. Continue through Phase 6 afterward
+Commit Phase 6.7.5 after review, then implement Phase 6.7.6 Library and Stats integration. Continue through Phase 6 afterward
 and explicitly notify the user when Phase 7 is reached.

@@ -43,6 +43,10 @@ class AppEntryTrackingHost(
         trackChapter = trackChapter,
         syncChapterProgress = syncChapterProgress,
     )
+    override val accounts: EntryTrackingAccountHost = AppEntryTrackingAccountHost(
+        trackerManager = trackerManager,
+        sourceManager = sourceManager,
+    )
 
     override fun registeredServices(): List<EntryTrackingHostService> {
         return trackerManager.trackers.map(Tracker::toHostService)
@@ -72,7 +76,7 @@ class AppEntryTrackingHost(
     }
 }
 
-private fun Tracker.toHostService(): EntryTrackingHostService {
+internal fun Tracker.toHostService(): EntryTrackingHostService {
     return EntryTrackingHostService(
         id = id,
         name = name,

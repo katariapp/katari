@@ -303,6 +303,11 @@ select raw trackers or call synchronization interactors. F11 retains transaction
 prepared by Tracking. The executable graph now includes the previously documented but omitted unconditional Migration
 preparation relationship; account/settings/backup and Library/Stats remain assigned to 6.7.5–6.7.6.
 
+Phase 6.7.5 moves account rows, login initiation, credential/passive login, logout, enhanced-source availability, logo
+presentation, and backup missing-login diagnostics behind the same Feature. Trackers now declare their account login
+mechanics and presentation order, so settings contains no built-in service list or enhanced-tracker cast. OAuth callback
+decoding remains reviewed tracker-owned platform mechanics. Library/Stats consumers remain assigned to 6.7.6.
+
 ## Approved Findings Outside the Current Interaction Contribution Boundary
 
 These classifications were approved on 2026-07-18. “Include” means the behavior must participate in the

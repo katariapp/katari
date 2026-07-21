@@ -8,6 +8,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import mihon.entry.interactions.host.tracking.EntryTrackingAccountHost
 import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
@@ -127,6 +128,7 @@ class EntryTrackingFeatureTest {
         val host = object : EntryTrackingHost {
             override val operations: EntryTrackingOperationHost = mockk(relaxed = true)
             override val automation: EntryTrackingAutomationHost = mockk(relaxed = true)
+            override val accounts: EntryTrackingAccountHost = mockk(relaxed = true)
 
             override fun registeredServices() = services
 

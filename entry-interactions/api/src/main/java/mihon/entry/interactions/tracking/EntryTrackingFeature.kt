@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import tachiyomi.domain.entry.model.Entry
 
 /** Application-facing boundary for tracker-backed Entry behavior. */
-interface EntryTrackingFeature : EntryTrackingOperations, EntryTrackingAutomation {
+interface EntryTrackingFeature : EntryTrackingOperations, EntryTrackingAutomation, EntryTrackingAccounts {
     fun availability(entryType: EntryType): EntryTrackingAvailability
 
     fun observeSession(entry: Entry): Flow<EntryTrackingSession>

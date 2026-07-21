@@ -11,7 +11,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import eu.kanade.presentation.theme.TachiyomiPreviewTheme
-import eu.kanade.tachiyomi.data.track.Tracker
 import tachiyomi.presentation.core.util.clickableNoIndication
 
 @Composable
@@ -36,29 +35,16 @@ fun TrackLogoIcon(
     )
 }
 
-@Composable
-fun TrackLogoIcon(
-    tracker: Tracker,
-    onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null,
-) {
-    TrackLogoIcon(
-        name = tracker.name,
-        logoResource = tracker.getLogo(),
-        onClick = onClick,
-        onLongClick = onLongClick,
-    )
-}
-
 @PreviewLightDark
 @Composable
 private fun TrackLogoIconPreviews(
     @PreviewParameter(TrackLogoIconPreviewProvider::class)
-    tracker: Tracker,
+    data: TrackLogoIconPreviewData,
 ) {
     TachiyomiPreviewTheme {
         TrackLogoIcon(
-            tracker = tracker,
+            name = data.name,
+            logoResource = data.logoResource,
             onClick = null,
             onLongClick = null,
         )

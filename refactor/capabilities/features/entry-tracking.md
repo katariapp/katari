@@ -1,6 +1,6 @@
 # Entry Tracking
 
-Status: architecture established; Entry session, operations, automatic binding, and synchronization migrated
+Status: architecture established; Entry, automation, accounts, settings, and backup consumers migrated
 
 ## Owner and Relationships
 
@@ -63,6 +63,16 @@ services from current type/authentication/source/track evidence, while the host 
 mechanics, and tracker-specific local Migration transformations. F09 still owns Consumption mutation, and F11 still
 owns the optimistic transaction that persists prepared track rows.
 
+The account facet exposes current/reactive neutral account rows, login initiation, credential login, logout, and backup
+missing-login diagnostics. Tracker declarations own login style, credential identity, external authorization URI,
+enhanced availability semantics, and presentation order. Settings derives ordinary and enhanced groups from those rows
+instead of naming built-in trackers. Stored credentials are retrieved only for a selected credential account and are
+not part of the observable snapshot. Backup supplies referenced service IDs and receives logged-out service names.
+
+Concrete OAuth callback parsing remains tracker-owned platform mechanics. It may access the tracker registry to finish
+service-specific protocol state, but it does not decide Entry applicability, create settings rows, or expose another
+application account API.
+
 ## Discovered Consequences
 
 The graph declares every censused relationship before consumer migration:
@@ -78,7 +88,7 @@ The graph declares every censused relationship before consumer migration:
 | Authenticated Library integration | F14 tracker-filter evidence and score-sort evidence |
 | Authenticated Stats integration | Tracker and normalized score evidence |
 
-Later Phase 6.7 milestones resolve the remaining account, Library, and Stats relationships through this
+Later Phase 6.7 milestones resolve the remaining Library and Stats relationships through this
 same boundary. They do not add another tracker facade, consumer registry, type provider, or settings service list.
 
 ## Boundary Enforcement
@@ -107,6 +117,7 @@ The proof tests behavior and architecture. It does not assert which Entry types 
 - Every contributed type participates without a Tracking provider or mandatory operation.
 - Tracker absence and sub-capability absence are valid, not incomplete type contributions.
 - Common consequences are declared by the Tracking Feature rather than opted into by types or consumers.
+- Settings and backup derive from authoritative account registrations; adding a tracker does not require a UI list edit.
 - Application code cannot use the host as an alternate behavior boundary.
 - No production type matrix, tracker consumer list, copied authentication flag, compatibility facade, or
   declaration-restatement test was introduced.

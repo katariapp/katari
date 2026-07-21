@@ -10,6 +10,7 @@ import tachiyomi.domain.track.model.EntryTrack
 interface EntryTrackingHost {
     val operations: EntryTrackingOperationHost
     val automation: EntryTrackingAutomationHost
+    val accounts: EntryTrackingAccountHost
 
     fun registeredServices(): List<EntryTrackingHostService>
 
