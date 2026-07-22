@@ -632,8 +632,7 @@ private fun Screen.FeedCatalogActionDialogs(
                 onDismissRequest = onDismissRequest,
                 onEditCategories = { navigator.push(CategoryScreen()) },
                 onConfirm = { include, _ ->
-                    screenModel.changeFavorite(dialog.entry)
-                    screenModel.moveEntryToCategories(dialog.entry, include)
+                    screenModel.addFavorite(dialog.entry, include)
                 },
             )
         }

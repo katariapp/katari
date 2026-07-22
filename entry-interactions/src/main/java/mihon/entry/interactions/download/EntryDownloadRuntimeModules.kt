@@ -1,5 +1,7 @@
 package mihon.entry.interactions
 
+import mihon.feature.graph.FeatureExecutionHandler
+import mihon.feature.graph.FeatureExecutionParticipantBinding
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
@@ -118,6 +120,7 @@ internal val EntryDownloadConfigurationFeatureRuntimeModule = EntryFeatureRuntim
 internal val EntryDownloadMaintenanceFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.maintenance",
     contributor = EntryDownloadMaintenanceFeatureContributor,
+    additionalContributors = listOf(EntryDownloadLibraryMembershipContributor),
 ) {
     addSingletonFactory<EntryDownloadMaintenanceFeature> {
         val composition = get<EntryInteractionComposition>()
@@ -128,6 +131,20 @@ internal val EntryDownloadMaintenanceFeatureRuntimeModule = EntryFeatureRuntimeM
         )
     }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_LIBRARY_REMOVAL_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    event.entries.forEach { entry ->
+                        if (get<EntryDownloadMaintenanceFeature>().inspectEntry(entry) ==
+                            EntryDownloadMaintenanceInspection.HasDownloads
+                        ) {
+                            event.outcomes.requireDownloadDecision(entry)
+                        }
+                    }
+                },
+            ),
+        ),
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryDownloadMaintenanceFeature>() }),
     )
 }

@@ -65,7 +65,6 @@ import tachiyomi.domain.entry.interactor.GetNextUnreadChapter
 import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
 import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryChapterFlags
-import tachiyomi.domain.entry.interactor.SetEntryFavorite
 import tachiyomi.domain.entry.interactor.SetEntryViewerFlags
 import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.entry.interactor.UpdateEntry
@@ -130,7 +129,6 @@ class DomainModule : InjektModule {
         addFactory { GetEntry(get()) }
         addFactory { GetEntryById(get()) }
         addFactory { GetNextUnreadChapter(get()) }
-        addFactory { SetEntryFavorite(get()) }
         addFactory { SetEntryCategories(get()) }
         addFactory { SetEntryChapterFlags(get()) }
         addFactory { NetworkToLocalEntry(get()) }

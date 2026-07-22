@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import mihon.feature.graph.FeatureExecutionHandler
+import mihon.feature.graph.FeatureExecutionParticipantBinding
 import tachiyomi.domain.entry.service.EntryChildOwnershipResolutionPort
 import tachiyomi.domain.entry.service.EntryLibraryGroupingResolutionPort
 import uy.kohesive.injekt.api.addSingletonFactory
@@ -12,6 +14,7 @@ import uy.kohesive.injekt.api.get
 internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.merge",
     contributor = EntryMergeFeatureContributor,
+    additionalContributors = listOf(EntryMergeLibraryMembershipContributor),
 ) { context ->
     val dependencies = context.dependencies
     addSingletonFactory {
@@ -54,6 +57,17 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryMergeDownloadOwnershipCoordinator(dependencies.mergeHost)
     }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_LIBRARY_REMOVAL_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val result = get<EntryMergeLibraryLifecycleFeature>().entriesRemovedFromLibrary(event.entries)
+                    check(result.unresolvedGroupCount == 0) {
+                        "Merge membership changed while removing Library entries"
+                    }
+                },
+            ),
+        ),
         runtimeBoundaries = listOf(
             entryFeatureRuntimeBoundary { get<EntryMergeFeature>() },
             entryFeatureRuntimeBoundary { get<EntryMergeChildOwnershipProjection>() },

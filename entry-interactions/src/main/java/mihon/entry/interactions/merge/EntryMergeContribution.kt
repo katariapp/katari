@@ -9,6 +9,8 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionParticipantDefinition
+import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
@@ -21,7 +23,7 @@ internal val ENTRY_MERGE_BASE_INTEGRATION_ID = FeatureIntegrationId("entry.merge
 internal val ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.merge.download")
 internal val ENTRY_MERGE_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.merge.migration")
 
-private val ENTRY_MERGE_FEATURE_OWNER = ContributionOwner("entry-merge")
+internal val ENTRY_MERGE_FEATURE_OWNER = ContributionOwner("entry-merge")
 private val ENTRY_MERGE_REFERENCE = entryContentTypeReferenceContribution(
     id = "merge",
     owner = ENTRY_MERGE_FEATURE_OWNER,
@@ -71,7 +73,15 @@ internal enum class EntryMergeBehaviorContract(
     LIBRARY_INITIALIZATION(FeatureArtifactId("entry.merge.library-initialization.behavior")),
     COVER_CLEANUP(FeatureArtifactId("entry.merge.cover-cleanup.behavior")),
     DOWNLOAD_REMOVAL(FeatureArtifactId("entry.merge.download-removal.behavior")),
+    LIBRARY_REMOVAL_PARTICIPATION(FeatureArtifactId("entry.merge.library-removal-participation.behavior")),
 }
+
+internal val ENTRY_MERGE_LIBRARY_REMOVAL_PARTICIPANT = FeatureExecutionParticipantDefinition(
+    id = FeatureExecutionParticipantId("entry.merge.library-removal"),
+    owner = ENTRY_MERGE_FEATURE_OWNER,
+    point = ENTRY_LIBRARY_REMOVING_EXECUTION_POINT,
+    behavioralContracts = listOf(EntryMergeBehaviorContract.LIBRARY_REMOVAL_PARTICIPATION),
+)
 
 internal object EntryMergeFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_MERGE_FEATURE_OWNER
@@ -105,6 +115,14 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                 ) + entryMergePreparationContextIntegrations(owner) + entryMergeExecutionContextIntegrations(owner),
             ),
         )
+    }
+}
+
+internal object EntryMergeLibraryMembershipContributor : FeatureGraphContributor {
+    override val owner = ENTRY_MERGE_FEATURE_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(ENTRY_MERGE_LIBRARY_REMOVAL_PARTICIPANT)
     }
 }
 

@@ -25,7 +25,6 @@ import eu.kanade.presentation.entry.components.buildMergeTargets
 import eu.kanade.presentation.entry.components.rankMergeTargets
 import eu.kanade.presentation.entry.entryTypePresentation
 import eu.kanade.presentation.util.formattedMessage
-import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
@@ -76,7 +75,6 @@ import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
 import mihon.entry.interactions.EntryDownloadActionTarget
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
-import mihon.entry.interactions.EntryDownloadMaintenanceInspection
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
 import mihon.entry.interactions.EntryDownloadOptionsFeature
@@ -85,6 +83,12 @@ import mihon.entry.interactions.EntryDownloadRuntimeFeature
 import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
+import mihon.entry.interactions.EntryLibraryAddRequest
+import mihon.entry.interactions.EntryLibraryAddResult
+import mihon.entry.interactions.EntryLibraryCategorySelection
+import mihon.entry.interactions.EntryLibraryDuplicatePolicy
+import mihon.entry.interactions.EntryLibraryMembershipFeature
+import mihon.entry.interactions.EntryLibraryRemovalResult
 import mihon.entry.interactions.EntryMergeCandidateFeature
 import mihon.entry.interactions.EntryMergeCommitIntent
 import mihon.entry.interactions.EntryMergeDissolveIntent
@@ -141,7 +145,6 @@ import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.interactor.SetEntryCategories
 import tachiyomi.domain.entry.interactor.SetEntryChapterFlags
-import tachiyomi.domain.entry.interactor.SetEntryFavorite
 import tachiyomi.domain.entry.interactor.UpdateEntry
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
@@ -157,7 +160,6 @@ import tachiyomi.i18n.MR
 import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.time.Instant
 
 class EntryScreenModel(
     private val context: Context,
@@ -185,11 +187,10 @@ class EntryScreenModel(
     private val entryMergeCandidateFeature: EntryMergeCandidateFeature = Injekt.get(),
     private val entryMergeNavigationFeature: EntryMergeNavigationFeature = Injekt.get(),
     private val entryMergeMetadataRefreshFeature: EntryMergeMetadataRefreshFeature = Injekt.get(),
-    private val coverCache: CoverCache = Injekt.get(),
+    private val entryLibraryMembershipFeature: EntryLibraryMembershipFeature = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getEntryWithChapters: GetEntryWithChapters = Injekt.get(),
     private val setEntryChapterFlags: SetEntryChapterFlags = Injekt.get(),
-    private val setEntryFavorite: SetEntryFavorite = Injekt.get(),
     private val setEntryCategories: SetEntryCategories = Injekt.get(),
     private val updateEntry: UpdateEntry = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
@@ -790,16 +791,16 @@ class EntryScreenModel(
             return
         }
         toggleFavorite(
-            onRemoved = {
+            onRemoved = { downloadEntries ->
                 screenModelScope.launch {
-                    if (!hasDownloads()) return@launch
+                    if (downloadEntries.isEmpty()) return@launch
                     val result = snackbarHostState.showSnackbar(
                         message = context.stringResource(MR.strings.delete_downloads_for_manga),
                         actionLabel = context.stringResource(MR.strings.action_delete),
                         withDismissAction = true,
                     )
                     if (result == SnackbarResult.ActionPerformed) {
-                        deleteDownloads()
+                        deleteDownloads(downloadEntries)
                     }
                 }
             },
@@ -810,7 +811,7 @@ class EntryScreenModel(
      * Update favorite status of entry, (removes / adds) entry (to / from) library.
      */
     fun toggleFavorite(
-        onRemoved: () -> Unit,
+        onRemoved: (List<Entry>) -> Unit,
         checkDuplicate: Boolean = true,
     ) {
         val state = successState ?: return
@@ -818,51 +819,47 @@ class EntryScreenModel(
             val entry = state.entry
 
             if (isFavorited) {
-                // Remove from library
-                if (setEntryFavorite.await(entry.id, false)) {
-                    // Remove covers and update last modified in db
-                    if (entry.removeCovers() != entry) {
-                        updateEntry.awaitUpdateCoverLastModified(entry.id)
+                when (val result = entryLibraryMembershipFeature.remove(listOf(entry))) {
+                    is EntryLibraryRemovalResult.Removed -> withUIContext {
+                        onRemoved(result.downloadDecisionEntries)
                     }
-                    withUIContext { onRemoved() }
+                    is EntryLibraryRemovalResult.Failed -> logcat(LogPriority.ERROR, result.cause)
+                    EntryLibraryRemovalResult.NoChange -> Unit
                 }
             } else {
-                // Add to library
-                // First, check if duplicate exists if callback is provided
-                if (checkDuplicate) {
-                    val duplicates = entryMergeCandidateFeature.candidates(entry)
-
-                    if (duplicates.isNotEmpty()) {
-                        updateSuccessState { it.copy(dialog = Dialog.DuplicateEntry(entry, duplicates)) }
-                        return@launchIO
-                    }
-                }
-
-                // Now check if user previously set categories, when available
-                val categories = getCategories()
-                val defaultCategoryId = libraryPreferences.defaultCategory.get().toLong()
-                val defaultCategory = categories.find { it.id == defaultCategoryId }
-                when {
-                    // Default category set
-                    defaultCategory != null -> {
-                        val result = setEntryFavorite.await(entry.id, true)
-                        if (!result) return@launchIO
-                        moveEntryToCategory(defaultCategory)
-                    }
-
-                    // Automatic 'Default' or no categories
-                    defaultCategoryId == 0L || categories.isEmpty() -> {
-                        val result = setEntryFavorite.await(entry.id, true)
-                        if (!result) return@launchIO
-                        moveEntryToCategory(null)
-                    }
-
-                    // Choose a category
-                    else -> showChangeCategoryDialog()
-                }
-
-                entryTrackingFeature.bindAutomatically(entry)
+                addToLibrary(
+                    EntryLibraryAddRequest(
+                        entry = entry,
+                        duplicatePolicy = if (checkDuplicate) {
+                            EntryLibraryDuplicatePolicy.CHECK
+                        } else {
+                            EntryLibraryDuplicatePolicy.ALLOW
+                        },
+                    ),
+                )
             }
+        }
+    }
+
+    private suspend fun addToLibrary(request: EntryLibraryAddRequest) {
+        when (val result = entryLibraryMembershipFeature.add(request)) {
+            is EntryLibraryAddResult.DuplicateCandidates -> updateSuccessState {
+                it.copy(dialog = Dialog.DuplicateEntry(result.entry, result.candidates))
+            }
+            is EntryLibraryAddResult.CategorySelectionRequired -> updateSuccessState {
+                it.copy(
+                    dialog = Dialog.ChangeCategory(
+                        entry = result.entry,
+                        initialSelection = result.categories.mapAsCheckboxState {
+                            it.id in result.selectedCategoryIds
+                        },
+                    ),
+                )
+            }
+            is EntryLibraryAddResult.Failed -> logcat(LogPriority.ERROR, result.cause)
+            is EntryLibraryAddResult.Added,
+            is EntryLibraryAddResult.AlreadyInLibrary,
+            -> Unit
         }
     }
 
@@ -905,20 +902,11 @@ class EntryScreenModel(
     }
 
     /**
-     * Returns true if the entry has any downloads.
+     * Deletes all the downloads selected from the structured Library-removal follow-up.
      */
-    private suspend fun hasDownloads(): Boolean {
-        val entry = successState?.entry ?: return false
-        return downloadMaintenance.inspectEntry(entry) == EntryDownloadMaintenanceInspection.HasDownloads
-    }
-
-    /**
-     * Deletes all the downloads for the entry.
-     */
-    private fun deleteDownloads() {
-        val state = successState ?: return
+    private fun deleteDownloads(entries: List<Entry>) {
         screenModelScope.launchNonCancellable {
-            downloadMaintenance.removeEntryDownloads(state.entry)
+            entries.forEach { entry -> downloadMaintenance.removeEntryDownloads(entry) }
         }
     }
 
@@ -948,39 +936,21 @@ class EntryScreenModel(
     }
 
     fun moveEntryToCategoriesAndAddToLibrary(entry: Entry, categories: List<Long>) {
-        moveEntryToCategory(categories)
-        if (entry.favorite) return
-
         screenModelScope.launchIO {
-            setEntryFavorite.await(entry.id, true)
-        }
-    }
-
-    /**
-     * Move the given entry to categories.
-     *
-     * @param categories the selected categories.
-     */
-    private fun moveEntryToCategories(categories: List<Category>) {
-        val categoryIds = categories.map { it.id }
-        moveEntryToCategory(categoryIds)
-    }
-
-    private fun moveEntryToCategory(categoryIds: List<Long>) {
-        screenModelScope.launchIO {
-            getDisplayedMemberIds().forEach { memberId ->
-                setEntryCategories.await(memberId, categoryIds)
+            if (entry.favorite) {
+                getDisplayedMemberIds().forEach { memberId ->
+                    setEntryCategories.await(memberId, categories)
+                }
+                return@launchIO
             }
+            addToLibrary(
+                EntryLibraryAddRequest(
+                    entry = entry,
+                    duplicatePolicy = EntryLibraryDuplicatePolicy.ALLOW,
+                    categorySelection = EntryLibraryCategorySelection.Selected(categories),
+                ),
+            )
         }
-    }
-
-    /**
-     * Move the given entry to the category.
-     *
-     * @param category the selected category, or null for default category.
-     */
-    private fun moveEntryToCategory(category: Category?) {
-        moveEntryToCategories(listOfNotNull(category))
     }
 
     // Entry info - end
@@ -2312,15 +2282,6 @@ class EntryScreenModel(
                 latestUpload = 0L,
                 downloadCount = 0,
             )
-        }
-    }
-
-    private fun Entry.removeCovers(): Entry {
-        if (isLocal()) return this
-        return if (coverCache.deleteFromCache(this, true) > 0) {
-            copy(coverLastModified = Instant.now().toEpochMilli())
-        } else {
-            this
         }
     }
 

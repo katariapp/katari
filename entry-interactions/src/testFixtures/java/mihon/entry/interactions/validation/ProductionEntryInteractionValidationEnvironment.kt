@@ -17,6 +17,8 @@ import mihon.entry.interactions.EntryFeatureRuntimeInstallation
 import mihon.entry.interactions.EntryInteractionActivityTheme
 import mihon.entry.interactions.EntryInteractionComposition
 import mihon.entry.interactions.EntryInteractionRuntimeDependencies
+import mihon.entry.interactions.EntryLibraryCustomCoverHost
+import mihon.entry.interactions.EntryLibraryMembershipHost
 import mihon.entry.interactions.EntryPageImageCache
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
@@ -95,6 +97,8 @@ class ProductionEntryInteractionValidationEnvironment(
                     viewerSettingsProjection("builtin.book.prose.html"),
                 ),
                 sourceRefreshUpdateLibraryTitles = { false },
+                libraryMembershipHost = mockk<EntryLibraryMembershipHost>(relaxed = true),
+                libraryCustomCoverHost = mockk<EntryLibraryCustomCoverHost>(relaxed = true),
                 mergeHost = mockk<EntryMergeHost>(relaxed = true),
                 mergeCoverCleanup = {},
                 migrationPreparationHost = mockk<EntryMigrationPreparationHost>(relaxed = true),

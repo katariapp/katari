@@ -29,7 +29,6 @@ import eu.kanade.presentation.entry.components.buildMergeTargetQuery
 import eu.kanade.presentation.entry.components.buildMergeTargets
 import eu.kanade.presentation.entry.components.rankMergeTargets
 import eu.kanade.presentation.util.ioCoroutineScope
-import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
@@ -45,6 +44,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import logcat.LogPriority
 import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
@@ -53,7 +53,12 @@ import mihon.entry.interactions.EntryImmersiveAvailability
 import mihon.entry.interactions.EntryImmersiveContext
 import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveSourceAvailability
-import mihon.entry.interactions.EntryMergeCandidateFeature
+import mihon.entry.interactions.EntryLibraryAddRequest
+import mihon.entry.interactions.EntryLibraryAddResult
+import mihon.entry.interactions.EntryLibraryCategorySelection
+import mihon.entry.interactions.EntryLibraryDuplicatePolicy
+import mihon.entry.interactions.EntryLibraryMembershipFeature
+import mihon.entry.interactions.EntryLibraryRemovalResult
 import mihon.entry.interactions.EntryMergeCommitIntent
 import mihon.entry.interactions.EntryMergeEditReference
 import mihon.entry.interactions.EntryMergeEditorEntry
@@ -71,21 +76,17 @@ import mihon.entry.interactions.EntrySourceHomeFeature
 import mihon.entry.interactions.EntrySourceHomeResolution
 import mihon.entry.interactions.EntrySourceSettingsFeature
 import mihon.entry.interactions.EntrySourceSettingsResolution
-import mihon.entry.interactions.EntryTrackingFeature
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.mapAsCheckboxState
 import tachiyomi.core.common.util.lang.launchIO
-import tachiyomi.domain.category.interactor.GetCategories
+import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.category.repository.CategoryRepository
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
-import tachiyomi.domain.entry.interactor.SetEntryCategories
-import tachiyomi.domain.entry.interactor.SetEntryChapterFlags
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.library.service.DuplicatePreferences
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.interactor.GetRemoteCatalog
@@ -94,10 +95,8 @@ import tachiyomi.domain.source.model.SourceDisplayInfo
 import tachiyomi.domain.source.service.CatalogSource
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
-import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
-import java.time.Instant
 import java.util.UUID
 import eu.kanade.tachiyomi.source.entry.EntryFilter as SourceModelFilter
 
@@ -114,24 +113,18 @@ class CatalogScreenModel(
     customPreferences: CustomPreferences = Injekt.get(),
     private val browseFeedService: BrowseFeedService = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
-    private val coverCache: CoverCache = Injekt.get(),
     private val getRemoteCatalog: GetRemoteCatalog = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val entryMergeCandidateFeature: EntryMergeCandidateFeature = Injekt.get(),
+    private val entryLibraryMembershipFeature: EntryLibraryMembershipFeature = Injekt.get(),
     private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
-    private val getCategories: GetCategories = Injekt.get(),
     private val categoryRepository: CategoryRepository = Injekt.get(),
-    private val setEntryCategories: SetEntryCategories = Injekt.get(),
-    private val setEntryChapterFlags: SetEntryChapterFlags = Injekt.get(),
     private val getLibraryEntries: GetLibraryEntries = Injekt.get(),
     private val duplicatePreferences: DuplicatePreferences = Injekt.get(),
-    private val entryRepository: EntryRepository = Injekt.get(),
     private val entryPreviewFeature: EntryPreviewFeature = Injekt.get(),
     private val entryImmersiveFeature: EntryImmersiveFeature = Injekt.get(),
     private val entryCatalogueFeature: EntryCatalogueFeature = Injekt.get(),
     private val entrySourceHomeFeature: EntrySourceHomeFeature = Injekt.get(),
     private val entrySourceSettingsFeature: EntrySourceSettingsFeature = Injekt.get(),
-    private val entryTrackingFeature: EntryTrackingFeature = Injekt.get(),
     private val getIncognitoState: GetIncognitoState = Injekt.get(),
     private val application: Application = Injekt.get(),
 ) : StateScreenModel<CatalogScreenModel.State>(
@@ -411,7 +404,23 @@ class CatalogScreenModel(
     }
 
     fun addFavorite(entry: Entry) {
-        addFavoriteInternal(entry)
+        screenModelScope.launchIO {
+            applyLibraryAdd(
+                EntryLibraryAddRequest(entry, duplicatePolicy = EntryLibraryDuplicatePolicy.ALLOW),
+            )
+        }
+    }
+
+    fun addFavorite(entry: Entry, categoryIds: List<Long>) {
+        screenModelScope.launchIO {
+            applyLibraryAdd(
+                EntryLibraryAddRequest(
+                    entry = entry,
+                    duplicatePolicy = EntryLibraryDuplicatePolicy.ALLOW,
+                    categorySelection = EntryLibraryCategorySelection.Selected(categoryIds),
+                ),
+            )
+        }
     }
 
     fun confirmBrowseLibraryAction(item: CatalogListItem) {
@@ -464,82 +473,44 @@ class CatalogScreenModel(
         }
 
         setDialog(Dialog.CheckingDuplicates)
-        val duplicates = entryMergeCandidateFeature.candidates(entry)
-        when {
-            duplicates.isNotEmpty() -> setDialog(Dialog.DuplicateEntry(entry, duplicates))
-            else -> {
-                setDialog(null)
-                addFavorite(entry)
-            }
-        }
+        applyLibraryAdd(EntryLibraryAddRequest(entry))
     }
 
     fun changeFavorite(entry: Entry) {
-        screenModelScope.launch {
-            val favorite = !entry.favorite
-            var new = entry.copy(
-                favorite = favorite,
-                dateAdded = if (favorite) Instant.now().toEpochMilli() else 0L,
-            )
-
-            if (!favorite) {
-                new = new.removeCovers()
-            } else {
-                setEntryChapterFlags.await(entry.id, computeDefaultChapterFlags(libraryPreferences))
-                entryTrackingFeature.bindAutomatically(entry)
-            }
-
-            entryRepository.update(new)
-        }
-    }
-
-    private fun addFavoriteInternal(entry: Entry) {
-        screenModelScope.launch {
-            val categories = getAllCategories()
-            val defaultCategoryId = libraryPreferences.defaultCategory.get()
-            val defaultCategory = categories.find { it.id == defaultCategoryId.toLong() }
-
-            when {
-                defaultCategory != null -> {
-                    moveEntryToCategories(entry, defaultCategory)
-                    changeFavorite(entry)
-                }
-                defaultCategoryId == 0 || categories.isEmpty() -> {
-                    moveEntryToCategories(entry)
-                    changeFavorite(entry)
-                }
-                else -> {
-                    val preselectedIds = categoryRepository
-                        .getCategoriesByEntryId(entry.id)
-                        .map { it.id }
-                    setDialog(
-                        Dialog.ChangeEntryCategory(
-                            entry,
-                            categories.mapAsCheckboxState { it.id in preselectedIds },
-                        ),
-                    )
-                }
-            }
-        }
-    }
-
-    suspend fun getAllCategories(): List<Category> {
-        return getCategories.subscribe()
-            .firstOrNull()
-            ?.filterNot { it.isSystemCategory }
-            .orEmpty()
-    }
-
-    fun moveEntryToCategories(entry: Entry, vararg categories: Category) {
-        moveEntryToCategories(entry, categories.filter { it.id != 0L }.map { it.id })
-    }
-
-    fun moveEntryToCategories(entry: Entry, categoryIds: List<Long>) {
         screenModelScope.launchIO {
-            setEntryCategories.await(
-                entryId = entry.id,
-                categoryIds = categoryIds.toList(),
+            if (entry.favorite) {
+                when (val result = entryLibraryMembershipFeature.remove(listOf(entry))) {
+                    is EntryLibraryRemovalResult.Failed -> logcat(LogPriority.ERROR, result.cause)
+                    is EntryLibraryRemovalResult.Removed,
+                    EntryLibraryRemovalResult.NoChange,
+                    -> Unit
+                }
+            } else {
+                applyLibraryAdd(
+                    EntryLibraryAddRequest(entry, duplicatePolicy = EntryLibraryDuplicatePolicy.ALLOW),
+                )
+            }
+        }
+    }
+
+    private suspend fun applyLibraryAdd(request: EntryLibraryAddRequest) {
+        when (val result = entryLibraryMembershipFeature.add(request)) {
+            is EntryLibraryAddResult.DuplicateCandidates -> setDialog(
+                Dialog.DuplicateEntry(result.entry, result.candidates),
             )
+            is EntryLibraryAddResult.CategorySelectionRequired -> setDialog(
+                Dialog.ChangeEntryCategory(
+                    result.entry,
+                    result.categories.mapAsCheckboxState { it.id in result.selectedCategoryIds },
+                ),
+            )
+            is EntryLibraryAddResult.Failed -> {
+                setDialog(null)
+                logcat(LogPriority.ERROR, result.cause)
+            }
+            is EntryLibraryAddResult.Added,
+            is EntryLibraryAddResult.AlreadyInLibrary,
+            -> setDialog(null)
         }
     }
 
@@ -758,17 +729,6 @@ class CatalogScreenModel(
                 append(" • ")
                 append(creator)
             }
-        }
-    }
-
-    private fun Entry.isLocal(): Boolean = source == LocalSource.ID
-
-    private fun Entry.removeCovers(): Entry {
-        if (isLocal()) return this
-        return if (coverCache.deleteFromCache(this, true) > 0) {
-            copy(coverLastModified = Instant.now().toEpochMilli())
-        } else {
-            this
         }
     }
 
@@ -1165,11 +1125,4 @@ internal fun CatalogScreenModel.State.toSavedPresetState(defaultFilters: EntryFi
         query = query,
         filters = filterSnapshot,
     )
-}
-
-private fun computeDefaultChapterFlags(libraryPreferences: LibraryPreferences): Long {
-    return Entry.SHOW_ALL or
-        libraryPreferences.sortChapterBySourceOrNumber.get() or
-        libraryPreferences.displayChapterByNameOrNumber.get() or
-        libraryPreferences.sortChapterByAscendingOrDescending.get()
 }

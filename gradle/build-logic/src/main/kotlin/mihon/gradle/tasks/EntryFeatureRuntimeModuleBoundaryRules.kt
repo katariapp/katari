@@ -5,6 +5,7 @@ internal fun checkEntryFeatureRuntimeModuleBoundaries(
 ): List<EntryFeatureRuntimeModuleBoundaryFinding> {
     val findings = mutableListOf<EntryFeatureRuntimeModuleBoundaryFinding>()
     val productionSources = sources.filter { "/src/main/" in it.relativePath }
+    if (productionSources.none { "EntryFeatureRuntimeModule" in it.content }) return emptyList()
     val topology = productionSources.singleOrNull {
         it.relativePath.endsWith("/runtime/EntryInteractionProductionTopology.kt")
     } ?: return listOf(
@@ -63,7 +64,11 @@ internal fun checkEntryFeatureRuntimeModuleBoundaries(
         }
     }
     val boundContributors = productionSources.flatMap { source ->
-        CONTRIBUTOR_BINDING.findAll(source.content).map { match -> match.groupValues[1] }.toList()
+        val primary = CONTRIBUTOR_BINDING.findAll(source.content).map { match -> match.groupValues[1] }
+        val additional = ADDITIONAL_CONTRIBUTOR_BINDING.findAll(source.content).flatMap { match ->
+            CONTRIBUTOR_REFERENCE.findAll(match.groupValues[1]).map { it.value }
+        }
+        (primary + additional).toList()
     }
     contributors.forEach { contributor ->
         val bindingCount = boundContributors.count { it == contributor.name }
@@ -141,9 +146,14 @@ private val FEATURE_MODULE_DECLARATION = Regex(
 )
 private val FEATURE_MODULE_CONSTRUCTION = Regex("""(?<!class\s)\bEntryFeatureRuntimeModule\s*\(""")
 private val FEATURE_CONTRIBUTOR_DECLARATION = Regex(
-    """(?:internal\s+)?(?:object|class)\s+([A-Za-z_][A-Za-z0-9_]*FeatureContributor)\s*:\s*FeatureGraphContributor""",
+    """(?:internal\s+)?(?:object|class)\s+([A-Za-z_][A-Za-z0-9_]*Contributor)\s*:\s*FeatureGraphContributor""",
 )
 private val CONTRIBUTOR_BINDING = Regex("""contributor\s*=\s*([A-Za-z_][A-Za-z0-9_]*)""")
+private val ADDITIONAL_CONTRIBUTOR_BINDING = Regex(
+    """additionalContributors\s*=\s*listOf\((.*?)\)""",
+    RegexOption.DOT_MATCHES_ALL,
+)
+private val CONTRIBUTOR_REFERENCE = Regex("""\b[A-Za-z_][A-Za-z0-9_]*Contributor\b""")
 private val PRODUCTION_TOPOLOGY = Regex(
     """productionEntryFeatureRuntimeModules\(\)\s*:\s*List<EntryFeatureRuntimeModule>\s*=\s*listOf\((.*?)\n\)""",
     RegexOption.DOT_MATCHES_ALL,

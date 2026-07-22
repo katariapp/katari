@@ -10,6 +10,8 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionParticipantDefinition
+import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
@@ -19,7 +21,7 @@ import mihon.feature.graph.FeatureIntegrationId
 import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID = FeatureId("entry.download.maintenance")
-private val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER = ContributionOwner("entry-download-maintenance")
+internal val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER = ContributionOwner("entry-download-maintenance")
 private val ENTRY_DOWNLOAD_MAINTENANCE_REFERENCE = entryContentTypeReferenceContribution(
     id = "download-maintenance",
     owner = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER,
@@ -33,6 +35,18 @@ internal val ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID =
 internal object EntryDownloadMaintenanceBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.download.maintenance.provider-behavior")
 }
+
+internal object EntryDownloadLibraryRemovalBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.maintenance.library-removal.behavior")
+}
+
+internal val ENTRY_DOWNLOAD_LIBRARY_REMOVAL_PARTICIPANT = FeatureExecutionParticipantDefinition(
+    id = FeatureExecutionParticipantId("entry.download.maintenance.library-removal"),
+    owner = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER,
+    point = ENTRY_LIBRARY_REMOVED_EXECUTION_POINT,
+    prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
+    behavioralContracts = listOf(EntryDownloadLibraryRemovalBehaviorContract),
+)
 
 private val ENTRY_DOWNLOAD_CACHE_MAINTENANCE_BEHAVIOR_ID =
     FeatureArtifactId("entry.download.maintenance.cache")
@@ -84,6 +98,14 @@ internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContrib
                 ),
             ),
         )
+    }
+}
+
+internal object EntryDownloadLibraryMembershipContributor : FeatureGraphContributor {
+    override val owner = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(ENTRY_DOWNLOAD_LIBRARY_REMOVAL_PARTICIPANT)
     }
 }
 

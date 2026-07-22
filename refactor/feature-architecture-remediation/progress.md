@@ -5,10 +5,10 @@
 - Baseline branch: `features-arch-refactor`
 - Baseline commit: `1d962d406` (`chore: planning cleanup`)
 - Current phase: R3 — Library Membership Lifecycle
-- Phase state: in progress
+- Phase state: complete; awaiting milestone review and commit
 - Last updated: 2026-07-22
-- Next action: define the Library Membership Feature boundary and inventory every current add/remove mutation and
-  follow-up before moving consumers behind the coordinator.
+- Next action: after the R3 milestone is approved and committed, begin R4 with separate Metadata, destructive-removal,
+  and Profile-move execution points.
 
 ## Approved Decisions
 
@@ -25,7 +25,7 @@
 | --- | --- | --- | --- |
 | R1 — Executable Participation Architecture | Complete | `76e4341ef` | Architecture first; no app workflow migration |
 | R2 — Production Composition and Enforcement | Complete | `dd58b169e` | One module per production Feature |
-| R3 — Library Membership Lifecycle | In progress | — | Includes current premature Tracking defect |
+| R3 — Library Membership Lifecycle | Complete, awaiting commit | — | One membership boundary and discovered follow-ups |
 | R4 — Entry Lifecycle Operations | Pending | — | Metadata, removal, Profile move |
 | R5 — Backup and Restore Participation | Pending | — | Includes tracker diagnostics defect |
 | R6 — Catalogue Feature Completion | Pending | — | Removes raw provider dispatch |
@@ -101,6 +101,45 @@
 - Expected user action: review only the constraints listed under questionable actions. No answer or design decision
   is needed if they are acceptable; respond `commit and continue` to commit R2 and begin R3, or name the constraint that
   should change.
+
+### Phase R3 milestone — 2026-07-22
+
+- Outcome: Added an always-applicable Library Membership Feature that owns duplicate preparation, profile-scoped
+  category/default-state decisions, atomic persistence, commit boundaries, and structured add/remove results. Entry,
+  History, Catalogue/Feed, and Library consumers now use this boundary; the former `SetEntryFavorite` and
+  `EntryRemovalCleanupInteraction` paths were removed.
+- Notable changes: Tracking contributes an after-commit addition participant; Merge contributes a fail-fast
+  transactional removal participant; Download Maintenance contributes a capability-derived post-removal inspection;
+  and custom covers contribute a host-owned post-removal participant. Category selection no longer triggers Tracking
+  before membership exists. Download presence is returned as a structured UI decision instead of being independently
+  probed after removal. The production module boundary now supports additional independently owned contributors while
+  still installing and enforcing them through one Feature module.
+- Questionable actions or decisions: Library Membership is deliberately always applicable because it needs no
+  media-specific provider. Tracking, Merge, and custom-cover participation likewise run through shared Features/hosts
+  for every type; Download participation alone is conditional on the Download provider. Merge, Migration, restore, and
+  Profile-move workflows retain their own atomic membership transitions because they are separate single-gate
+  coordinators; their remaining lifecycle participation belongs to R4/R5 rather than being forced through a UI-oriented
+  add/remove command. No design decision is required unless that workflow boundary is unacceptable.
+- Validation performed: `spotlessApply`; SQLDelight migration verification; complete Feature Graph, Feature Validation,
+  Entry Interactions API, and Entry Interactions unit tests; focused build-logic tests; full FOSS unit tests; FOSS app
+  Kotlin compilation; telemetry/updater Release Kotlin compilation; Entry interaction boundary enforcement; production
+  Entry Feature developer-report generation. The report contains 3 content types, 37 Features, 3 execution points, 369
+  evaluated integrations, all selected execution contracts passing, and 0 obligations.
+- Known failures or intentionally broken compilation: none. One combined validation command incorrectly applied the
+  telemetry property to the FOSS variant and failed at `processFossGoogleServices`; rerunning FOSS and Release validation
+  as separate commands passed.
+- Manifesto comparison: an unknown future content type receives Library membership, Tracking, Merge, and custom-cover
+  behavior from discovered always-applicable relationships and receives Download follow-up only when it supplies the
+  Download provider. Adding another participant through its owning production module automatically enters graph
+  evaluation, runtime binding enforcement, behavioral-contract validation, reporting, and all applicable content types.
+  Screens no longer reconstruct this consequence list, capability absence remains valid, tests exercise sequencing and
+  behavior rather than declaring type support, and the content-type reference derives Library membership from the same
+  Feature integration. R3 is aligned with the manifesto within its approved lifecycle scope.
+- Documentation impact: the executable content-type projection now includes Library membership and the resumable ledger
+  records the stable lifecycle boundary. Enduring contributor workflow documentation remains scheduled for R8 after all
+  lifecycle and persistence APIs stabilize.
+- Expected user action: review only the workflow-boundary decision under questionable actions. No answer is needed if it
+  is acceptable; respond `commit and continue` to commit R3 and begin R4, or name the boundary that should change.
 
 ## Milestone Template
 

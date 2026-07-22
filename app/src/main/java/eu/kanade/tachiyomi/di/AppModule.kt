@@ -20,11 +20,9 @@ import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
 import eu.kanade.tachiyomi.entry.AppEntryMetadataUpdateHooks
-import eu.kanade.tachiyomi.entry.AppEntryRemovalCleanupInteraction
 import eu.kanade.tachiyomi.entry.AppMangaPageImageCache
 import eu.kanade.tachiyomi.entry.AppReaderIncognitoState
 import eu.kanade.tachiyomi.entry.AppReaderTracking
-import eu.kanade.tachiyomi.entry.EntryRemovalCleanupInteraction
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.network.JavaScriptEngine
 import eu.kanade.tachiyomi.network.NetworkHelper
@@ -41,6 +39,8 @@ import mihon.entry.interactions.host.AppEntryMergeDuplicateCandidateHost
 import mihon.entry.interactions.host.AppEntryMergeHost
 import mihon.entry.interactions.host.AppEntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.AppEntryMigrationHost
+import mihon.entry.interactions.host.library.AppEntryLibraryCustomCoverHost
+import mihon.entry.interactions.host.library.AppEntryLibraryMembershipHost
 import mihon.entry.interactions.host.tracking.AppEntryTrackingHost
 import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
@@ -160,7 +160,6 @@ class AppModule(val app: Application) : InjektModule {
 
         addSingletonFactory { MangaPageCache(app, get()) }
         addSingletonFactory { CoverCache(app) }
-        addSingletonFactory<EntryRemovalCleanupInteraction> { AppEntryRemovalCleanupInteraction(get()) }
         addSingletonFactory<EntryMetadataUpdateHooks> { AppEntryMetadataUpdateHooks(get()) }
         addSingletonFactory { NetworkHelper(app, get()) }
         addSingletonFactory { JavaScriptEngine(app) }
@@ -187,6 +186,8 @@ class AppModule(val app: Application) : InjektModule {
             hasCustomCover = { entryId -> get<CoverCache>().getCustomCoverFile(entryId).exists() },
         )
         val migrationCustomCoverHost = AppEntryMigrationCustomCoverHost(app, get())
+        val libraryMembershipHost = AppEntryLibraryMembershipHost(get(), get<ProfileStore>())
+        val libraryCustomCoverHost = AppEntryLibraryCustomCoverHost(get(), get())
         val trackingHost = AppEntryTrackingHost(
             trackerManager = get(),
             sourceManager = get(),
@@ -221,9 +222,11 @@ class AppModule(val app: Application) : InjektModule {
                 sourceRefreshUpdateLibraryTitles = { profileId ->
                     LibraryPreferences(get<ProfileStore>().profileStore(profileId)).updateMangaTitles.get()
                 },
+                libraryMembershipHost = libraryMembershipHost,
+                libraryCustomCoverHost = libraryCustomCoverHost,
                 mergeHost = mergeHost,
                 mergeCoverCleanup = { entry ->
-                    get<EntryRemovalCleanupInteraction>().cleanupAfterLibraryRemoval(entry)
+                    libraryCustomCoverHost.cleanupAfterLibraryRemoval(entry)
                 },
                 migrationPreparationHost = migrationHost,
                 migrationExecutionHost = migrationHost,

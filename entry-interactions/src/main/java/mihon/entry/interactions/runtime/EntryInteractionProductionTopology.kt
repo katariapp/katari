@@ -32,6 +32,7 @@ internal fun productionEntryFeatureRuntimeModules(): List<EntryFeatureRuntimeMod
     EntryPlaybackPreferencesFeatureRuntimeModule,
     EntryChildListFeatureRuntimeModule,
     EntryLibraryFilterFeatureRuntimeModule,
+    EntryLibraryMembershipFeatureRuntimeModule,
     EntryChildGroupFilterFeatureRuntimeModule,
     EntryPreviewFeatureRuntimeModule,
     EntryImmersiveFeatureRuntimeModule,
@@ -57,5 +58,5 @@ internal fun productionEntryFeatureRuntimeModules(): List<EntryFeatureRuntimeMod
 
 /** Graph-only view for cross-module content-type validation. Production runtime must install the modules themselves. */
 fun productionEntryFeatureGraphForValidation(): List<FeatureGraphContributor> {
-    return productionEntryFeatureRuntimeModules().map(EntryFeatureRuntimeModule::contributor)
+    return productionEntryFeatureRuntimeModules().flatMap(EntryFeatureRuntimeModule::graphContributors)
 }

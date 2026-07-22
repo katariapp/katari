@@ -13,6 +13,9 @@ import mihon.feature.graph.validation.FeatureContractExecutionInput
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractExecutionInput
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
@@ -34,6 +37,31 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
                 )
             }
         }
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_MERGE_LIBRARY_REMOVAL_PARTICIPANT.id,
+                    EntryMergeBehaviorContract.LIBRARY_REMOVAL_PARTICIPATION,
+                ),
+                verification = ::verifyLibraryRemovalParticipation,
+            ),
+        )
+    }
+
+    private suspend fun verifyLibraryRemovalParticipation(
+        input: FeatureExecutionContractExecutionInput,
+    ) = verifyFeatureContract {
+        val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+        val entries = listOf(entry(1L, type), entry(2L, type))
+        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
+        val host = RecordingEntryMergeHost(entries, listOf(membership))
+
+        val result = EntryMergeLibraryLifecycleCoordinator(host).entriesRemovedFromLibrary(listOf(entries.last()))
+
+        contractExpectation(
+            result == EntryMergeLibraryRemovalResult(changedGroupCount = 1, unresolvedGroupCount = 0),
+            "Library removal must update Merge membership transactionally",
+        )
     }
 
     private suspend fun verifyMerge(

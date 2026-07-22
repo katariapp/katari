@@ -5,9 +5,13 @@ import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryInteractionProviderBinding
 import mihon.entry.interactions.createEntryInteractionComposition
 import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureExecutionHandler
+import mihon.feature.graph.FeatureExecutionParticipantBinding
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.SpecializedAdapter
+import mihon.feature.graph.discoverFeatureGraphContributions
+import mihon.feature.graph.featureGraphContributor
 import mihon.feature.graph.validation.FeatureContractFailure
 import mihon.feature.graph.validation.FeatureContractVerificationResult
 
@@ -35,7 +39,12 @@ internal fun productionSubjectEvaluation(
         override val owner = ContributionOwner("contract-subject.${type.name.lowercase()}")
         override val providerBindings = bindings
     }
-    return createEntryInteractionComposition(listOf(plugin), listOf(feature)).featureGraphEvaluation
+    val contributors = validationContributors(feature)
+    return createEntryInteractionComposition(
+        listOf(plugin),
+        contributors,
+        validationExecutionBindings(contributors),
+    ).featureGraphEvaluation
 }
 
 /** Provider-free equivalent for an unconditional Feature and an already selected production subject. */
@@ -50,7 +59,37 @@ internal fun productionSubjectEvaluation(
         override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
         override val specializedAdapters = specializedAdapters
     }
-    return createEntryInteractionComposition(listOf(plugin), listOf(feature)).featureGraphEvaluation
+    val contributors = validationContributors(feature)
+    return createEntryInteractionComposition(
+        listOf(plugin),
+        contributors,
+        validationExecutionBindings(contributors),
+    ).featureGraphEvaluation
+}
+
+private fun validationExecutionBindings(
+    contributors: List<FeatureGraphContributor>,
+): List<FeatureExecutionParticipantBinding<*>> {
+    return discoverFeatureGraphContributions(contributors).executionParticipants.map(::noOpBinding)
+}
+
+private fun validationContributors(feature: FeatureGraphContributor): List<FeatureGraphContributor> {
+    val discovered = discoverFeatureGraphContributions(listOf(feature))
+    val declaredPointIds = discovered.executionPoints.mapTo(mutableSetOf()) { it.id }
+    val pointOwners = discovered.executionParticipants
+        .map { it.point }
+        .filterNot { it.id in declaredPointIds }
+        .distinctBy { it.id }
+        .map { point -> featureGraphContributor(point.owner) { add(point) } }
+    return listOf(feature) + pointOwners
+}
+
+@Suppress("UNCHECKED_CAST")
+private fun noOpBinding(
+    definition: mihon.feature.graph.FeatureExecutionParticipantDefinition<*>,
+): FeatureExecutionParticipantBinding<*> {
+    val typed = definition as mihon.feature.graph.FeatureExecutionParticipantDefinition<Any>
+    return FeatureExecutionParticipantBinding(typed, FeatureExecutionHandler { })
 }
 
 internal suspend fun verifyFeatureContract(block: suspend () -> Unit): FeatureContractVerificationResult {

@@ -21,6 +21,22 @@ class EntryFeatureRuntimeModuleBoundaryRulesTest {
     }
 
     @Test
+    fun `host participant contributor belongs to a feature module as an additional contributor`() {
+        check(
+            featureSource = """
+                internal object ExampleFeatureContributor : FeatureGraphContributor
+                internal object ExampleHostConsequenceContributor : FeatureGraphContributor
+                internal val ExampleFeatureRuntimeModule = EntryFeatureRuntimeModule(
+                    id = "example",
+                    contributor = ExampleFeatureContributor,
+                    additionalContributors = listOf(ExampleHostConsequenceContributor),
+                ) { runtime() }
+            """.trimIndent(),
+            topologySource = topology("ExampleFeatureRuntimeModule"),
+        ).shouldBeEmpty()
+    }
+
+    @Test
     fun `declared module omitted from production topology fails`() {
         val findings = check(
             featureSource = """

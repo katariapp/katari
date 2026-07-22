@@ -1,9 +1,38 @@
 package mihon.entry.interactions
 
+import mihon.feature.graph.FeatureExecutionHandler
+import mihon.feature.graph.FeatureExecutionParticipantBinding
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.EntryLibraryProgressResolutionPort
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
+
+internal val EntryLibraryMembershipFeatureRuntimeModule = EntryFeatureRuntimeModule(
+    id = "entry.library-membership",
+    contributor = EntryLibraryMembershipFeatureContributor,
+    additionalContributors = listOf(EntryLibraryCustomCoverContributor),
+) { context ->
+    addSingletonFactory<EntryLibraryMembershipFeature> {
+        EntryLibraryMembershipCoordinator(
+            host = context.dependencies.libraryMembershipHost,
+            mergeCandidates = get(),
+            executions = get<EntryInteractionComposition>().featureExecutions,
+        )
+    }
+    EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_LIBRARY_CUSTOM_COVER_REMOVAL_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    event.entries.forEach { entry ->
+                        context.dependencies.libraryCustomCoverHost.cleanupAfterLibraryRemoval(entry)
+                    }
+                },
+            ),
+        ),
+        runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryLibraryMembershipFeature>() }),
+    )
+}
 
 internal val EntryLibraryFilterFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.library-filtering",

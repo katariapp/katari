@@ -12,7 +12,6 @@ import eu.kanade.presentation.entry.DownloadAction
 import eu.kanade.presentation.entry.entryTypePresentation
 import eu.kanade.presentation.library.components.LibraryDisplaySettings
 import eu.kanade.presentation.library.components.LibraryToolbarTitle
-import eu.kanade.tachiyomi.entry.EntryRemovalCleanupInteraction
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
@@ -52,12 +51,13 @@ import mihon.entry.interactions.EntryLibraryFilterFeature
 import mihon.entry.interactions.EntryLibraryFilterPolicy
 import mihon.entry.interactions.EntryLibraryFilterRequest
 import mihon.entry.interactions.EntryLibraryFilterTarget
+import mihon.entry.interactions.EntryLibraryMembershipFeature
+import mihon.entry.interactions.EntryLibraryRemovalResult
 import mihon.entry.interactions.EntryMergeCommitIntent
 import mihon.entry.interactions.EntryMergeEditReference
 import mihon.entry.interactions.EntryMergeEditorEntryReference
 import mihon.entry.interactions.EntryMergeExecutionResult
 import mihon.entry.interactions.EntryMergeFeature
-import mihon.entry.interactions.EntryMergeLibraryLifecycleFeature
 import mihon.entry.interactions.EntryMergePreparationResult
 import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.entry.interactions.EntryMigrationFeature
@@ -86,7 +86,6 @@ import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.GetLibraryEntries
 import tachiyomi.domain.entry.interactor.SetEntryCategories
-import tachiyomi.domain.entry.interactor.SetEntryFavorite
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryStatus
 import tachiyomi.domain.entry.repository.EntryChapterRepository
@@ -112,7 +111,6 @@ class LibraryScreenModel(
     private val getLibraryEntries: GetLibraryEntries = Injekt.get(),
     private val getCategories: GetCategories = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
-    private val setEntryFavorite: SetEntryFavorite = Injekt.get(),
     private val setEntryCategories: SetEntryCategories = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
@@ -121,11 +119,10 @@ class LibraryScreenModel(
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryMigrationFeature: EntryMigrationFeature = Injekt.get(),
     private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
-    private val entryMergeLibraryLifecycleFeature: EntryMergeLibraryLifecycleFeature = Injekt.get(),
+    private val entryLibraryMembershipFeature: EntryLibraryMembershipFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
     private val entryLibraryFilterFeature: EntryLibraryFilterFeature = Injekt.get(),
     private val entryCatalogueFeature: EntryCatalogueFeature = Injekt.get(),
-    private val entryRemovalCleanupInteraction: EntryRemovalCleanupInteraction = Injekt.get(),
     private val trackingFeature: EntryTrackingFeature = Injekt.get(),
     private val profileStore: ProfileAwareStore = Injekt.get(),
     private val profileDatabase: ProfileDatabase = Injekt.get(),
@@ -717,13 +714,11 @@ class LibraryScreenModel(
             val distinctEntries = entries.distinctBy { it.id }
 
             if (deleteFromLibrary) {
-                val mergeRemoval = entryMergeLibraryLifecycleFeature.entriesRemovedFromLibrary(distinctEntries)
-                check(mergeRemoval.unresolvedGroupCount == 0) {
-                    "Merge membership changed while removing Library entries"
-                }
-                distinctEntries.forEach { entry ->
-                    entryRemovalCleanupInteraction.cleanupAfterLibraryRemoval(entry)
-                    setEntryFavorite.await(entry.id, false)
+                when (val result = entryLibraryMembershipFeature.remove(distinctEntries)) {
+                    is EntryLibraryRemovalResult.Failed -> throw result.cause
+                    is EntryLibraryRemovalResult.Removed,
+                    EntryLibraryRemovalResult.NoChange,
+                    -> Unit
                 }
             }
 

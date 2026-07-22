@@ -1,8 +1,23 @@
 package mihon.entry.interactions
 
+import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionParticipantDefinition
+import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
+
+internal object EntryTrackingLibraryAdditionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.tracking.library-addition.behavior")
+}
+
+internal val ENTRY_TRACKING_LIBRARY_ADDITION_PARTICIPANT = FeatureExecutionParticipantDefinition(
+    id = FeatureExecutionParticipantId("entry.tracking.library-addition"),
+    owner = ENTRY_TRACKING_OWNER,
+    point = ENTRY_LIBRARY_ADDED_EXECUTION_POINT,
+    behavioralContracts = listOf(EntryTrackingLibraryAdditionBehaviorContract),
+)
 
 internal object EntryTrackingFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_TRACKING_OWNER
@@ -15,5 +30,13 @@ internal object EntryTrackingFeatureContributor : FeatureGraphContributor {
                 integrations = entryTrackingIntegrations(),
             ),
         )
+    }
+}
+
+internal object EntryTrackingLibraryMembershipContributor : FeatureGraphContributor {
+    override val owner = ENTRY_TRACKING_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(ENTRY_TRACKING_LIBRARY_ADDITION_PARTICIPANT)
     }
 }

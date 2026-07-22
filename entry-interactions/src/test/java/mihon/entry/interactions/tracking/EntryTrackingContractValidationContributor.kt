@@ -26,6 +26,9 @@ import mihon.feature.graph.validation.FeatureContractExecutionInput
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractExecutionInput
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
@@ -49,6 +52,38 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
                 )
             }
         }
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_TRACKING_LIBRARY_ADDITION_PARTICIPANT.id,
+                    EntryTrackingLibraryAdditionBehaviorContract,
+                ),
+                verification = ::verifyLibraryAddition,
+            ),
+        )
+    }
+
+    private suspend fun verifyLibraryAddition(
+        input: FeatureExecutionContractExecutionInput,
+    ) = verifyFeatureContract {
+        val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+        val entry = Entry.create().copy(id = 41L, type = type)
+        val service = service(type)
+        val feature = DefaultEntryTrackingFeature(
+            productionSubjectEvaluation(type, EntryTrackingFeatureContributor),
+            host(
+                service,
+                EntryTrackingHostEntrySnapshot(
+                    listOf(EntryTrackingHostEntryService(service, true, true, null, null)),
+                ),
+                track(entry.id),
+            ),
+        )
+
+        contractExpectation(
+            feature.bindAutomatically(entry) is EntryTrackingAutomaticBindingResult.Completed,
+            "Library addition must invoke Tracking automatic binding after membership is committed",
+        )
     }
 
     private suspend fun verifyTracking(

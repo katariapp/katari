@@ -363,7 +363,7 @@ class EntryScreen(
                 DuplicateEntryDialog(
                     duplicates = dialog.duplicates,
                     onDismissRequest = onDismissRequest,
-                    onConfirm = { screenModel.toggleFavorite(onRemoved = {}, checkDuplicate = false) },
+                    onConfirm = { screenModel.toggleFavorite(onRemoved = { _ -> }, checkDuplicate = false) },
                     onOpenEntry = { navigator.push(EntryScreen(it.id)) },
                     onMigrate = { screenModel.showMigrateDialog(it) },
                 )

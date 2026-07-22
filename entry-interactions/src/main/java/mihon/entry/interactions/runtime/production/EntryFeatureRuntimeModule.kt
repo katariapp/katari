@@ -15,11 +15,15 @@ import kotlin.reflect.KClass
 internal class EntryFeatureRuntimeModule(
     val id: String,
     val contributor: FeatureGraphContributor,
+    val additionalContributors: List<FeatureGraphContributor> = emptyList(),
     val installRuntime: InjektRegistrar.(EntryFeatureRuntimeInstallationContext) -> EntryFeatureRuntimeArtifacts,
 ) {
     init {
         require(id.isNotBlank()) { "Entry Feature runtime module id cannot be blank" }
     }
+
+    val graphContributors: List<FeatureGraphContributor>
+        get() = listOf(contributor) + additionalContributors
 }
 
 internal data class EntryFeatureRuntimeInstallationContext(
@@ -61,11 +65,12 @@ internal fun installEntryFeatureRuntimeModules(
         "Duplicate Entry Feature runtime modules: ${duplicateIds.keys.sorted()}"
     }
     val duplicateContributors = modules
-        .groupBy { it.contributor }
+        .flatMap { module -> module.graphContributors.map { it to module.id } }
+        .groupBy({ it.first }, { it.second })
         .filterValues { it.size > 1 }
     check(duplicateContributors.isEmpty()) {
         "Entry Feature graph contributors installed by multiple runtime modules: " +
-            duplicateContributors.values.map { matches -> matches.map(EntryFeatureRuntimeModule::id).sorted() }
+            duplicateContributors.values.map(List<String>::sorted)
     }
     val installed = modules.map { module ->
         InstalledEntryFeatureRuntimeModule(

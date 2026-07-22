@@ -2,6 +2,8 @@ package mihon.entry.interactions
 
 import android.app.Application
 import coil3.ComponentRegistry
+import mihon.entry.interactions.EntryLibraryCustomCoverHost
+import mihon.entry.interactions.EntryLibraryMembershipHost
 import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.host.EntryMigrationConsequenceHost
 import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
@@ -30,6 +32,8 @@ data class EntryInteractionRuntimeDependencies(
     val profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
     val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
     val sourceRefreshUpdateLibraryTitles: (profileId: Long) -> Boolean,
+    val libraryMembershipHost: EntryLibraryMembershipHost,
+    val libraryCustomCoverHost: EntryLibraryCustomCoverHost,
     val mergeHost: EntryMergeHost,
     val mergeCoverCleanup: suspend (Entry) -> Unit,
     val migrationPreparationHost: EntryMigrationPreparationHost,
@@ -70,7 +74,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
     addSingletonFactory<EntryInteractionComposition> {
         createEntryInteractionComposition(
             plugins = typeRuntimeContributions.map(EntryTypeRuntimeContribution::plugin),
-            featureContributors = installedFeatureModules.map { it.module.contributor },
+            featureContributors = installedFeatureModules.flatMap { it.module.graphContributors },
             executionBindings = installedFeatureModules.flatMap { it.artifacts.executionBindings },
         )
     }

@@ -466,10 +466,7 @@ data class CatalogScreen(
                     onDismissRequest = onDismissRequest,
                     onEditCategories = { navigator.push(CategoryScreen()) },
                     onConfirm = { include, _ ->
-                        screenModel.changeFavorite(
-                            CatalogListItem.EntryItem(dialog.entry, screenModel.sourceItemOrientation),
-                        )
-                        screenModel.moveEntryToCategories(dialog.entry, include)
+                        screenModel.addFavorite(dialog.entry, include)
                     },
                 )
             }

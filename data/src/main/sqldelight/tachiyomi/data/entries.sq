@@ -228,6 +228,20 @@ SET favorite = :favorite
 WHERE profile_id = :profileId
 AND _id = :entryId;
 
+removeFromLibrary:
+UPDATE entries
+SET favorite = 0,
+    date_added = 0
+WHERE profile_id = :profileId
+AND _id = :entryId
+AND favorite = 1;
+
+touchCoverLastModified:
+UPDATE entries
+SET cover_last_modified = :coverLastModified
+WHERE profile_id = :profileId
+AND _id = :entryId;
+
 prepareForLibrary:
 UPDATE entries
 SET favorite = 1,
