@@ -2,17 +2,22 @@ package mihon.feature.graph
 
 import kotlin.reflect.KClass
 
+/** Owner-defined metadata carried with a context input for projections and validation. */
+interface ContextInputMetadata
+
 /** Context whose value is supplied later without flattening it into type-wide capability support. */
 data class ContextInputDefinition<C : Any>(
     val id: ContextInputId,
     val owner: ContributionOwner,
     val valueType: KClass<C>,
+    val metadata: Set<ContextInputMetadata> = emptySet(),
 )
 
 inline fun <reified C : Any> contextInputDefinition(
     id: ContextInputId,
     owner: ContributionOwner,
-): ContextInputDefinition<C> = ContextInputDefinition(id, owner, C::class)
+    metadata: Set<ContextInputMetadata> = emptySet(),
+): ContextInputDefinition<C> = ContextInputDefinition(id, owner, C::class, metadata)
 
 /** Feature-owned interpretation of a complete contextual evidence snapshot. */
 interface FeatureContextRule {

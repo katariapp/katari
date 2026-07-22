@@ -105,9 +105,9 @@ Updated: 2026-07-22
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
 - Milestone: Phase 7.4 Documentation Projection
-- State: Feature-owned content-reference projection, production binding, deterministic Markdown rendering, and
-  dedicated generate/verify tasks are implemented. Source SDK documentation verification is the remaining Phase 7.4
-  milestone before repository-wide Phase 7.5 reconciliation.
+- State: Phase 7.4 documentation projection is complete. Both the content-type reference and source SDK contextual
+  consumer coverage are generated and independently verified from the exact production graph. Phase 7.5 repository
+  validation and register reconciliation are next, but have not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1622,8 +1622,29 @@ Focused Phase 7.4 Generated Reference findings:
 - Formatting, renderer tests, production generation, independent checked-in verification, FOSS unit-test compilation,
   and Entry-interaction boundary validation pass.
 
+Focused Phase 7.4 Source SDK Consumer Coverage findings:
+
+- Context inputs now carry neutral owner-defined metadata. Source-owned inputs must classify each consuming Feature
+  integration as reading one or more public SDK contracts or as a justified non-contract runtime fact; a future
+  integration that reuses an input without exact classification becomes an owner-attributed planning issue.
+- The production graph discovers 20 contextual consumers across 11 public source SDK contracts. Consumer identity is
+  rendered from the exact Feature, integration, and evidence-input IDs rather than from a handwritten consumer list.
+- The verifier separately requires every contextually consumed contract to remain described in the handwritten SDK
+  documentation after removing the generated region. Contracts used only by source lifecycle or media implementations
+  remain normal contract documentation and are not given synthetic graph relationships.
+- `SourceMetadata` is classified only for Catalogue description and Immersive contextual pruning. The generated prose
+  explicitly rejects interpreting it as Entry behavior support, and no content-type cells are derived from SDK
+  metadata.
+- A combined catalogue evidence object exposed the need for relationship-level precision. Contract classifications can
+  therefore be scoped to exact integrations; Availability and Latest no longer falsely appear to consume orientation
+  or descriptive type metadata.
+- `generateSourceSdkConsumerCoverage` replaces only the marked coverage table, while
+  `verifySourceSdkConsumerCoverage` checks both graph coverage and handwritten public contract presence without
+  rewriting the document.
+- Formatting, Feature Graph tests, generic planner/renderer tests, production generation, independent source SDK and
+  content-reference verification, FOSS unit-test compilation, and boundary validation pass.
+
 ## Exact Next Action After Review
 
-Review and commit the generated content-type-reference milestone. Then verify the source SDK contract documentation
-against contextual consumer coverage without treating descriptive source metadata as Entry behavior support. Do not
-begin repository-wide Phase 7.5 reconciliation until Phase 7.4 is complete.
+Review and commit the Phase 7.4 source SDK consumer-coverage milestone. Then begin Phase 7.5 by defining how the existing
+contract, obligation, report, and documentation tasks enter normal repository validation before changing task wiring.

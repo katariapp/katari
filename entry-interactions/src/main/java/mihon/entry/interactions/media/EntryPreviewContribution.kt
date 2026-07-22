@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -99,9 +100,9 @@ internal val ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT = contextInputDefinition<E
     ContextInputId("entry.preview.source-requirement"),
     ContributionOwner("entry-preview-provider"),
 )
-internal val ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.preview.source-support"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.preview.source-support"),
+    contracts = setOf(EntryPreviewSource::class),
 )
 internal val ENTRY_PREVIEW_ENABLED_CONTEXT = contextInputDefinition<Boolean>(
     ContextInputId("entry.preview.enabled"),

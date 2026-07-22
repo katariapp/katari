@@ -5,6 +5,7 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -44,9 +45,9 @@ internal object EntrySourceSettingsBehaviorContract : FeatureBehaviorContract {
 
 internal data class SourceSettingsContext(val installed: Boolean, val configurable: Boolean)
 
-internal val SOURCE_SETTINGS_CONTEXT = contextInputDefinition<SourceSettingsContext>(
-    ContextInputId("entry.source-settings.context"),
-    ContributionOwner("entry-source"),
+internal val SOURCE_SETTINGS_CONTEXT = entrySourceContextInputDefinition<SourceSettingsContext>(
+    id = ContextInputId("entry.source-settings.context"),
+    contracts = setOf(ConfigurableSource::class),
 )
 private val SOURCE_SETTINGS_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.source-settings.source-missing"),

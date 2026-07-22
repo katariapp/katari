@@ -1,10 +1,12 @@
 package mihon.entry.interactions
 
+import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.CancellationException
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -40,9 +42,9 @@ private val ENTRY_SOURCE_REFRESH_REFERENCE = entryContentTypeReferenceContributi
 )
 internal val ENTRY_SOURCE_REFRESH_INTEGRATION_ID = FeatureIntegrationId("entry.source-refresh.execution")
 
-internal val ENTRY_SOURCE_REFRESH_SOURCE_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.source-refresh.source-state"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_SOURCE_REFRESH_SOURCE_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.source-refresh.source-state"),
+    contracts = setOf(UnifiedSource::class),
 )
 private val ENTRY_SOURCE_REFRESH_SOURCE_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.source-refresh.source-missing"),

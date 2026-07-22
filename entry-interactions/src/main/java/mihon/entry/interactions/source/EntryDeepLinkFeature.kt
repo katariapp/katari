@@ -8,6 +8,7 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -63,9 +64,9 @@ internal data class EntryDeepLinkContext(
     val matchState: EntryDeepLinkMatchState,
 )
 
-internal val ENTRY_DEEP_LINK_CONTEXT = contextInputDefinition<EntryDeepLinkContext>(
-    ContextInputId("entry.deep-link.context"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_DEEP_LINK_CONTEXT = entrySourceContextInputDefinition<EntryDeepLinkContext>(
+    id = ContextInputId("entry.deep-link.context"),
+    contracts = setOf(ResolvableSource::class),
 )
 private val ENTRY_DEEP_LINK_NO_RESOLVER = FeatureContextBlocker(
     FeatureArtifactId("entry.deep-link.no-resolver"),

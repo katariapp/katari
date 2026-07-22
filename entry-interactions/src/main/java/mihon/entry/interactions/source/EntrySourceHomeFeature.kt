@@ -5,6 +5,7 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -54,9 +55,9 @@ internal data class SourceHomeContext(
     val urlState: SourceHomeUrlState,
 )
 
-internal val SOURCE_HOME_CONTEXT = contextInputDefinition<SourceHomeContext>(
-    ContextInputId("entry.source-home.context"),
-    ContributionOwner("entry-source"),
+internal val SOURCE_HOME_CONTEXT = entrySourceContextInputDefinition<SourceHomeContext>(
+    id = ContextInputId("entry.source-home.context"),
+    contracts = setOf(SourceHomePage::class),
 )
 private val SOURCE_HOME_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.source-home.source-missing"),

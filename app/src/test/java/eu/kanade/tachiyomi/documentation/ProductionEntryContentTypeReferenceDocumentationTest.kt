@@ -17,8 +17,8 @@ class ProductionEntryContentTypeReferenceDocumentationTest {
         assumeTrue(mode != null, "Executed only by the content-type-reference documentation tasks")
         val referenceFile = File(requireNotNull(System.getProperty(FILE_PROPERTY)))
 
-        ProductionEntryContentTypeReferenceEnvironment(temporaryDirectory).use { environment ->
-            val generated = renderEntryContentTypeReferenceMarkdown(environment.plan())
+        ProductionEntryDocumentationEnvironment(temporaryDirectory).use { environment ->
+            val generated = renderEntryContentTypeReferenceMarkdown(environment.contentTypeReferencePlan())
             val current = referenceFile.readText()
             val expected = replaceEntryContentTypeReferenceGeneratedRegion(current, generated)
             when (mode) {

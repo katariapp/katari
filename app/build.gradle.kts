@@ -4,6 +4,7 @@ import mihon.gradle.getLatestCommitCount
 import mihon.gradle.getLatestCommitSha
 import mihon.gradle.tasks.ReplaceShortcutsPlaceholderTask
 import org.gradle.api.tasks.testing.Test
+import java.io.File
 import java.io.FileInputStream
 import java.util.Properties
 import kotlin.io.encoding.Base64
@@ -353,23 +354,33 @@ val contentTypeReferenceFile = rootProject.layout.projectDirectory.file("docs/fe
 val contentTypeReferenceTestClass =
     "eu.kanade.tachiyomi.documentation.ProductionEntryContentTypeReferenceDocumentationTest"
 
-fun Test.useProductionContentTypeReference(mode: String) {
+fun Test.useProductionEntryDocumentation(
+    testClass: String,
+    propertyPrefix: String,
+    mode: String,
+    file: File,
+) {
     testClassesDirs = files(
         providers.provider { tasks.named<Test>("testFossUnitTest").get().testClassesDirs },
     )
     classpath = files(
         providers.provider { tasks.named<Test>("testFossUnitTest").get().classpath },
     )
-    filter.includeTestsMatching(contentTypeReferenceTestClass)
-    systemProperty("mihon.entry.contentTypeReference.mode", mode)
-    systemProperty("mihon.entry.contentTypeReference.file", contentTypeReferenceFile.asFile.absolutePath)
+    filter.includeTestsMatching(testClass)
+    systemProperty("$propertyPrefix.mode", mode)
+    systemProperty("$propertyPrefix.file", file.absolutePath)
     testLogging.showStandardStreams = true
 }
 
 val generateContentTypeReference = tasks.register<Test>("generateContentTypeReference") {
     group = "documentation"
     description = "Generates the capability tables in the content-type reference from the production Feature graph"
-    useProductionContentTypeReference("generate")
+    useProductionEntryDocumentation(
+        testClass = contentTypeReferenceTestClass,
+        propertyPrefix = "mihon.entry.contentTypeReference",
+        mode = "generate",
+        file = contentTypeReferenceFile.asFile,
+    )
     outputs.file(contentTypeReferenceFile)
     outputs.upToDateWhen { false }
 }
@@ -377,9 +388,44 @@ val generateContentTypeReference = tasks.register<Test>("generateContentTypeRefe
 tasks.register<Test>("verifyContentTypeReference") {
     group = "verification"
     description = "Verifies the content-type reference against the production Feature graph"
-    useProductionContentTypeReference("verify")
+    useProductionEntryDocumentation(
+        testClass = contentTypeReferenceTestClass,
+        propertyPrefix = "mihon.entry.contentTypeReference",
+        mode = "verify",
+        file = contentTypeReferenceFile.asFile,
+    )
     inputs.file(contentTypeReferenceFile)
     mustRunAfter(generateContentTypeReference)
+}
+
+val sourceSdkCapabilitiesFile = rootProject.layout.projectDirectory.file("docs/developers/sdk/capabilities.md")
+val sourceSdkConsumerCoverageTestClass =
+    "eu.kanade.tachiyomi.documentation.ProductionEntrySourceSdkConsumerCoverageDocumentationTest"
+
+val generateSourceSdkConsumerCoverage = tasks.register<Test>("generateSourceSdkConsumerCoverage") {
+    group = "documentation"
+    description = "Generates source SDK contextual consumer coverage from the production Feature graph"
+    useProductionEntryDocumentation(
+        testClass = sourceSdkConsumerCoverageTestClass,
+        propertyPrefix = "mihon.entry.sourceSdkConsumerCoverage",
+        mode = "generate",
+        file = sourceSdkCapabilitiesFile.asFile,
+    )
+    outputs.file(sourceSdkCapabilitiesFile)
+    outputs.upToDateWhen { false }
+}
+
+tasks.register<Test>("verifySourceSdkConsumerCoverage") {
+    group = "verification"
+    description = "Verifies source SDK contextual consumer coverage against the production Feature graph"
+    useProductionEntryDocumentation(
+        testClass = sourceSdkConsumerCoverageTestClass,
+        propertyPrefix = "mihon.entry.sourceSdkConsumerCoverage",
+        mode = "verify",
+        file = sourceSdkCapabilitiesFile.asFile,
+    )
+    inputs.file(sourceSdkCapabilitiesFile)
+    mustRunAfter(generateSourceSdkConsumerCoverage)
 }
 
 androidComponents {

@@ -2,12 +2,15 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.EntryType
+import eu.kanade.tachiyomi.source.entry.SourceMetadata
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.supportedEntryTypes
 import kotlinx.coroutines.CancellationException
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.ENTRY_SOURCE_DESCRIPTION_CONTEXT_OWNER
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -78,17 +81,18 @@ internal object EntryImmersiveProviderDispatchConsequence : SharedFeatureConsequ
     override val id = FeatureArtifactId("entry.immersive.provider-dispatch")
 }
 
-internal val ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.immersive.source-installed"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.immersive.source-installed"),
+    nonContractReason = "Source installation is runtime registration state, not a public SDK contract",
 )
-internal val ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.immersive.source-opt-in"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.immersive.source-opt-in"),
+    contracts = setOf(EntryCatalogueSource::class),
 )
-internal val ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.immersive.declared-type-compatibility"),
-    ContributionOwner("entry-source-description"),
+internal val ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.immersive.declared-type-compatibility"),
+    owner = ENTRY_SOURCE_DESCRIPTION_CONTEXT_OWNER,
+    contracts = setOf(SourceMetadata::class),
 )
 private val ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE = FeatureContextBlocker(
     FeatureArtifactId("entry.immersive.source-unavailable"),

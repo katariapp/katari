@@ -11,11 +11,11 @@ class ProductionEntryContentTypeReferencePlanTest {
     @TempDir
     lateinit var temporaryDirectory: File
 
-    private lateinit var environment: ProductionEntryContentTypeReferenceEnvironment
+    private lateinit var environment: ProductionEntryDocumentationEnvironment
 
     @BeforeEach
     fun setUp() {
-        environment = ProductionEntryContentTypeReferenceEnvironment(temporaryDirectory)
+        environment = ProductionEntryDocumentationEnvironment(temporaryDirectory)
     }
 
     @AfterEach
@@ -25,6 +25,6 @@ class ProductionEntryContentTypeReferencePlanTest {
 
     @Test
     fun `production reference plan resolves from production composition and registrations`() {
-        environment.plan().isComplete shouldBe true
+        environment.contentTypeReferencePlan().isComplete shouldBe true
     }
 }

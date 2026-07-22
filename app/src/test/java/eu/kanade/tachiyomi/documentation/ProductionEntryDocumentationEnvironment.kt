@@ -8,6 +8,8 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceRegistrat
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContextEvidence
 import mihon.entry.interactions.documentation.projection.EntryContentTypeReferencePlan
 import mihon.entry.interactions.documentation.projection.planEntryContentTypeReference
+import mihon.entry.interactions.documentation.source.EntrySourceSdkConsumerCoveragePlan
+import mihon.entry.interactions.documentation.source.planEntrySourceSdkConsumerCoverage
 import mihon.entry.interactions.toContentTypeId
 import mihon.entry.interactions.validation.ProductionEntryInteractionValidationEnvironment
 import tachiyomi.source.local.LOCAL_SOURCE_SUPPORTED_ENTRY_TYPES
@@ -15,12 +17,12 @@ import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.addSingletonFactory
 import java.io.File
 
-class ProductionEntryContentTypeReferenceEnvironment(
+class ProductionEntryDocumentationEnvironment(
     temporaryDirectory: File,
 ) : AutoCloseable {
     private val interactionEnvironment = ProductionEntryInteractionValidationEnvironment(temporaryDirectory)
 
-    fun plan(): EntryContentTypeReferencePlan {
+    fun contentTypeReferencePlan(): EntryContentTypeReferencePlan {
         val composition = interactionEnvironment.composition()
         Injekt.addSingletonFactory<GlobalTrackPreferences> { mockk(relaxed = true) }
         val registrations = EntryContentTypeReferenceRegistrations(
@@ -38,6 +40,10 @@ class ProductionEntryContentTypeReferenceEnvironment(
             evaluation = composition.featureGraphEvaluation,
             contextEvidence = entryContentTypeReferenceContextEvidence(registrations),
         )
+    }
+
+    fun sourceSdkConsumerCoveragePlan(): EntrySourceSdkConsumerCoveragePlan {
+        return planEntrySourceSdkConsumerCoverage(interactionEnvironment.composition().featureGraph)
     }
 
     override fun close() {

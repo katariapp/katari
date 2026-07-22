@@ -5,6 +5,7 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -44,9 +45,9 @@ internal object EntryCoverNetworkBehaviorContract : FeatureBehaviorContract {
 
 internal data class EntryCoverNetworkContext(val installed: Boolean, val supported: Boolean)
 
-internal val ENTRY_COVER_NETWORK_CONTEXT = contextInputDefinition<EntryCoverNetworkContext>(
-    ContextInputId("entry.cover-network.source-context"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_COVER_NETWORK_CONTEXT = entrySourceContextInputDefinition<EntryCoverNetworkContext>(
+    id = ContextInputId("entry.cover-network.source-context"),
+    contracts = setOf(EntryImageSource::class),
 )
 private val ENTRY_COVER_NETWORK_SOURCE_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.cover-network.source-missing"),

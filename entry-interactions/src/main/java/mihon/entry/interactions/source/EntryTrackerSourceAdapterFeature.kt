@@ -1,10 +1,15 @@
 package mihon.entry.interactions
 
+import eu.kanade.tachiyomi.source.entry.ConfigurableSource
 import eu.kanade.tachiyomi.source.entry.EntryImageSource
+import eu.kanade.tachiyomi.source.entry.SourceHomePage
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.ENTRY_SOURCE_HOME_CONTEXT_OWNER
+import mihon.entry.interactions.documentation.source.ENTRY_SOURCE_SETTINGS_CONTEXT_OWNER
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -42,17 +47,19 @@ internal object EntryTrackerSourceAdapterBehaviorContract : FeatureBehaviorContr
     override val id = FeatureArtifactId("entry.tracker-source-adapter.behavior")
 }
 
-internal val TRACKER_SOURCE_SETTINGS_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.tracker-source-adapter.settings"),
-    ContributionOwner("entry-source-settings"),
+internal val TRACKER_SOURCE_SETTINGS_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.tracker-source-adapter.settings"),
+    owner = ENTRY_SOURCE_SETTINGS_CONTEXT_OWNER,
+    contracts = setOf(ConfigurableSource::class),
 )
-internal val TRACKER_SOURCE_HOME_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.tracker-source-adapter.home"),
-    ContributionOwner("entry-source-home"),
+internal val TRACKER_SOURCE_HOME_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.tracker-source-adapter.home"),
+    owner = ENTRY_SOURCE_HOME_CONTEXT_OWNER,
+    contracts = setOf(SourceHomePage::class),
 )
-internal val TRACKER_SOURCE_IMAGE_CLIENT_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.tracker-source-adapter.image-client"),
-    ContributionOwner("entry-source"),
+internal val TRACKER_SOURCE_IMAGE_CLIENT_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.tracker-source-adapter.image-client"),
+    contracts = setOf(EntryImageSource::class),
 )
 private val TRACKER_SOURCE_SETTINGS_UNAVAILABLE = FeatureContextBlocker(
     FeatureArtifactId("entry.tracker-source-adapter.settings-unavailable"),

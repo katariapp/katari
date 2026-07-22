@@ -78,24 +78,12 @@ fun renderEntryContentTypeReferenceMarkdown(plan: EntryContentTypeReferencePlan)
 fun replaceEntryContentTypeReferenceGeneratedRegion(
     document: String,
     generatedMarkdown: String,
-): String {
-    val startIndex = document.singleMarkerIndex(ENTRY_CONTENT_TYPE_REFERENCE_START_MARKER)
-    val endIndex = document.singleMarkerIndex(ENTRY_CONTENT_TYPE_REFERENCE_END_MARKER)
-    require(startIndex < endIndex) {
-        "$ENTRY_CONTENT_TYPE_REFERENCE_START_MARKER must appear before $ENTRY_CONTENT_TYPE_REFERENCE_END_MARKER"
-    }
-
-    val before = document.substring(0, startIndex + ENTRY_CONTENT_TYPE_REFERENCE_START_MARKER.length)
-    val after = document.substring(endIndex)
-    return "$before\n\n${generatedMarkdown.trim()}\n\n$after"
-}
-
-private fun String.singleMarkerIndex(marker: String): Int {
-    val first = indexOf(marker)
-    require(first >= 0) { "Missing generated-region marker: $marker" }
-    require(indexOf(marker, first + marker.length) < 0) { "Duplicate generated-region marker: $marker" }
-    return first
-}
+): String = replaceGeneratedMarkdownRegion(
+    document = document,
+    generatedMarkdown = generatedMarkdown,
+    startMarker = ENTRY_CONTENT_TYPE_REFERENCE_START_MARKER,
+    endMarker = ENTRY_CONTENT_TYPE_REFERENCE_END_MARKER,
+)
 
 private fun ContentTypeId.displayName(): String {
     return value

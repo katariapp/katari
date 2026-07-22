@@ -10,6 +10,7 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -66,13 +67,13 @@ internal object EntryRelatedEntriesBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.related-entries.behavior")
 }
 
-internal val ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.related-entries.source-installed"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.related-entries.source-installed"),
+    nonContractReason = "Source installation is runtime registration state, not a public SDK contract",
 )
-internal val ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
-    ContextInputId("entry.related-entries.source-support"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT = entrySourceContextInputDefinition<Boolean>(
+    id = ContextInputId("entry.related-entries.source-support"),
+    contracts = setOf(RelatedEntriesSource::class),
 )
 private val ENTRY_RELATED_ENTRIES_SOURCE_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.related-entries.source-missing"),

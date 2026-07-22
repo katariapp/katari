@@ -7,6 +7,7 @@ import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -64,9 +65,9 @@ internal object EntryChildWebViewBehaviorContract : FeatureBehaviorContract {
 
 internal data class EntryWebViewContext(val installed: Boolean, val supported: Boolean)
 
-internal val ENTRY_WEB_VIEW_CONTEXT = contextInputDefinition<EntryWebViewContext>(
-    ContextInputId("entry.web-view.source-context"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_WEB_VIEW_CONTEXT = entrySourceContextInputDefinition<EntryWebViewContext>(
+    id = ContextInputId("entry.web-view.source-context"),
+    contracts = setOf(WebViewSource::class),
 )
 private val ENTRY_WEB_VIEW_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.web-view.source-missing"),
@@ -78,9 +79,9 @@ private val ENTRY_WEB_VIEW_UNSUPPORTED = FeatureContextBlocker(
 )
 internal data class EntryChildWebViewContext(val installed: Boolean, val supported: Boolean)
 
-internal val ENTRY_CHILD_WEB_VIEW_CONTEXT = contextInputDefinition<EntryChildWebViewContext>(
-    ContextInputId("entry.web-view.child-source-context"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_CHILD_WEB_VIEW_CONTEXT = entrySourceContextInputDefinition<EntryChildWebViewContext>(
+    id = ContextInputId("entry.web-view.child-source-context"),
+    contracts = setOf(ChapterWebViewSource::class),
 )
 private val ENTRY_CHILD_WEB_VIEW_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.web-view.child-source-missing"),

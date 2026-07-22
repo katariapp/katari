@@ -3,6 +3,7 @@ package mihon.entry.interactions
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.entry.interactions.documentation.entryContentTypeReferenceNoteContribution
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -144,9 +145,9 @@ internal enum class EntryDownloadSelectionState {
     NOTIFICATION_LIMIT_EXCEEDED,
 }
 
-internal val ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT = contextInputDefinition<EntryDownloadSourceAccess>(
-    ContextInputId("entry.download.actions.source-access"),
-    ContributionOwner("entry-source"),
+internal val ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT = entrySourceContextInputDefinition<EntryDownloadSourceAccess>(
+    id = ContextInputId("entry.download.actions.source-access"),
+    nonContractReason = "Remote, Local, and stub access is application source state, not a public SDK contract",
 )
 internal val ENTRY_DOWNLOAD_SELECTION_CONTEXT = contextInputDefinition<EntryDownloadSelectionState>(
     ContextInputId("entry.download.actions.selection"),

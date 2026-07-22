@@ -1,12 +1,16 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
+import eu.kanade.tachiyomi.source.entry.EntryItemOrientationProvider
+import eu.kanade.tachiyomi.source.entry.SourceMetadata
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.entryItemOrientation
 import eu.kanade.tachiyomi.source.entry.supportedEntryTypes
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceContribution
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
+import mihon.entry.interactions.documentation.source.ENTRY_SOURCE_CONTEXT_OWNER
+import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
 import mihon.feature.graph.ApplicableFeatureContext
 import mihon.feature.graph.BlockedFeatureContext
 import mihon.feature.graph.CapabilityExpression
@@ -34,7 +38,7 @@ import tachiyomi.domain.source.model.UnifiedStubSource
 
 internal val ENTRY_CATALOGUE_FEATURE_ID = FeatureId("entry.catalogue")
 private val ENTRY_CATALOGUE_FEATURE_OWNER = ContributionOwner("entry-catalogue")
-private val SOURCE_CONTRACT_OWNER = ContributionOwner("entry-source")
+private val SOURCE_CONTRACT_OWNER = ENTRY_SOURCE_CONTEXT_OWNER
 
 internal val SOURCE_DESCRIPTION_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.source-description")
 internal val CATALOGUE_AVAILABILITY_INTEGRATION_ID = FeatureIntegrationId("entry.catalogue.availability")
@@ -73,9 +77,18 @@ internal data class SourceDescriptionEvidence(
     val description: EntrySourceDescription,
 )
 
-internal val SOURCE_DESCRIPTION_CONTEXT = contextInputDefinition<SourceDescriptionEvidence>(
+internal val SOURCE_DESCRIPTION_CONTEXT = entrySourceContextInputDefinition<SourceDescriptionEvidence>(
     id = ContextInputId("entry.source.description"),
     owner = SOURCE_CONTRACT_OWNER,
+    contracts = setOf(
+        EntryCatalogueSource::class,
+        SourceMetadata::class,
+        EntryItemOrientationProvider::class,
+    ),
+    contractIntegrations = mapOf(
+        SourceMetadata::class to setOf(SOURCE_DESCRIPTION_INTEGRATION_ID),
+        EntryItemOrientationProvider::class to setOf(SOURCE_DESCRIPTION_INTEGRATION_ID),
+    ),
 )
 internal val LOCAL_SOURCE_REGISTERED_SUPPORT_CONTEXT = contextInputDefinition<Boolean>(
     id = ContextInputId("entry.catalogue.local-source-registered-support"),

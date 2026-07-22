@@ -94,7 +94,7 @@ contributions:
   legacy-extension, and tracker registrations without copying a type or support matrix.
 - [x] Generate or verify the deterministic capability section of `docs/features/content-type-reference.md` while
   retaining appropriate explanatory prose.
-- [ ] Verify source SDK contract documentation against contextual consumer coverage without treating descriptive source
+- [x] Verify source SDK contract documentation against contextual consumer coverage without treating descriptive source
   metadata as Entry behavior support.
 
 ### 7.5 — Repository Validation and Register Reconciliation
