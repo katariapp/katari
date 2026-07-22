@@ -97,17 +97,26 @@ Updated: 2026-07-22
 - Phase 7.1.5 Workflow and Tracking contract commit: `26b44c8d3` (`(test): execute workflow and tracking contracts`)
 - Phase 7.1.6 Contract Reconciliation commit: `f4b4382f9` (`(test): reconcile production feature contracts`)
 - Phase 7.2 Boundary Enforcement commit: `691011fce` (`(test): enforce graph-selected contract validation`)
+- Phase 7.3 Developer Reporting commit: `6ba6c6d79` (`(feat): report evaluated feature architecture`)
+- Phase 7.4 Projection Participation commit: `6ac9481e6` (`(feat): classify optional feature projections`)
+- Phase 7.4 Feature Projection commit: `f39734c78` (`(feat): project entry feature documentation`)
+- Phase 7.4 Production Projection commit: `dc0c7c1cb` (`(feat): bind production documentation projection`)
+- Phase 7.4 Content Reference commit: `1c2c295e8` (`(docs): generate content type reference`)
+- Phase 7.4 Source SDK Coverage commit: `8597962de` (`(docs): verify source SDK consumer coverage`)
+- Phase 7.5 Validation Design commit: `4897232ca` (`(docs): define entry feature validation gates`)
+- Phase 7.5 Repository Wiring commit: `9869c9038` (`(build): verify entry feature architecture`)
+- Phase 7.5 Register Reconciliation commit: `b82822cdf` (`(test): reconcile entry feature validation register`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
 
 ## Active Work
 
-- Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.5 Repository Validation and Register Reconciliation
-- State: Repository-validation wiring and the complete test/reporting/documentation/boundary register reconciliation
-  are implemented. Shared completeness, app-consumer behavior, compatibility, and owner-local mechanics now have
-  explicit non-overlapping validation roles. Only the unknown-contribution acceptance path remains in Phase 7.5.
+- Phase: Phase 7 complete — Graph-Selected Contracts, Reporting, and Documentation
+- Milestone: Phase 7.5 Unknown-Contribution Acceptance
+- State: All Phase 7 milestones and exit gates are complete. The architecture gate executes production contracts,
+  reporting, and documentation verification, and one cross-channel anonymous contribution proves that static and
+  contextual participation reaches every projection without a curated edit. Phase 8 has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1675,7 +1684,23 @@ Focused Phase 7.5 Register Reconciliation findings:
 - The focused Download menu, Updates, source indicator, Library grouping, notification action/boundary, backup wire,
   and restore suites pass together after correction.
 
+Focused Phase 7.5 Unknown-Contribution Acceptance findings:
+
+- One anonymous future Audio-like contribution supplies a previously unknown capability and Feature with independent
+  static and contextual relationships. It uses normal content-type, Feature, validation, scenario, and projection owner
+  contributions; no production type or Feature is named.
+- Static and contextual exact contract definitions both execute successfully. The contextual scenario supplies source
+  evidence while the developer report continues to label the relationship conditional rather than promoting it to
+  type-wide support.
+- The same graph produces complete content-reference rows for the unknown type and discovers its contextual source SDK
+  contract consumer. Rendering succeeds for the developer report, content-type reference, and SDK coverage table.
+- Static boundary enforcement rejected the first filename because ordinary tests cannot inspect contract declarations.
+  The proof was renamed to declare its contract-validation role; the enforcement rule and its allowlists are unchanged.
+- The focused acceptance test and the complete `verifyEntryFeatureArchitecture` repository gate pass.
+- Manifesto alignment is complete for Phase 7: provider absence remains valid, artifact channels remain optional,
+  scenarios remain conditional evidence, and no central completion list participates in execution or projection.
+
 ## Exact Next Action After Review
 
-Review and commit the Phase 7.5 register reconciliation. Then run the unknown type/capability/Feature acceptance path
-across static and contextual contracts, reporting, and documentation before handing Phase 7 to Phase 8.
+Review and commit the Phase 7.5 acceptance proof and Phase 7 completion state. Do not begin Phase 8 until that milestone
+is accepted; Phase 8 starts by rerunning and classifying every legacy/census probe before removing residual paths.

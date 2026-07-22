@@ -102,7 +102,7 @@ contributions:
 - [x] Integrate unresolved-obligation checks, contract execution, report generation, and documentation verification with
   normal repository validation.
 - [x] Reconcile every test, reporting, documentation, and boundary surface listed in the migration inventory.
-- [ ] Run the unknown type/capability/feature acceptance path across static and contextual contracts, reporting, and
+- [x] Run the unknown type/capability/feature acceptance path across static and contextual contracts, reporting, and
   documentation before handing the branch to Phase 8.
 
 #### Preparation findings
@@ -127,6 +127,15 @@ contributions:
 - Reconciliation corrected two stale app-test expectations without changing production behavior: Updates consumed
   state no longer pretends to have partial progress, and notification routing recognizes both the modern payload path
   and its legacy merge-aware fallback.
+- One cross-channel acceptance proof contributes an anonymous future media type, capability, Feature, static
+  relationship, contextual source relationship, exact contract verifiers, applicable scenario, and feature-owned
+  projections through their normal owner APIs.
+- The same discovered graph executes both contracts, produces a complete obligation-free developer report, renders the
+  future type and both relationships in the content-type reference, and discovers the contextual source SDK consumer.
+  No layer receives a copied type, Feature, contract, row, or consumer list.
+- Boundary validation initially rejected the acceptance proof as an ordinary test inspecting contract declarations.
+  Naming it as contract-validation ownership made the exception structural and reviewable; no boundary rule or
+  allowlist was weakened.
 
 ## Exit Gate
 
@@ -141,3 +150,8 @@ contributions:
 Confirm that removing duplicated capability assertions and manual documentation decisions does not weaken enforcement.
 In particular, verify that validation contribution discovery does not become a renamed central checklist, contextual
 scenarios do not become support declarations, and optional artifact channels do not become mandatory type operations.
+
+Phase 7 satisfies this review. Provider absence remains ordinary inapplicability, validation contributors bind exact
+feature-owned contracts, scenarios retain conditional semantics, and projection participation never enables behavior.
+The acceptance proof begins only with owner contributions and reaches execution, reporting, and both documentation
+projections without a current-type or current-Feature registry.
