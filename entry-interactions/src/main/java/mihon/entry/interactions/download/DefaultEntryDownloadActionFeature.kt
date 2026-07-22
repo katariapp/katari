@@ -9,36 +9,38 @@ import tachiyomi.domain.entry.service.sortedForReading
 internal class DefaultEntryDownloadActionFeature(
     private val evaluation: FeatureGraphEvaluation,
     private val interaction: EntryDownloadInteraction,
+    private val sourceAccessResolver: EntryDownloadSourceAccessResolver,
 ) : EntryDownloadActionFeature {
     private val individualTypes = evaluation.downloadIndividualTypes()
     private val bulkTypes = evaluation.downloadBulkTypes()
     private val bookmarkedBulkTypes = evaluation.downloadBookmarkedBulkTypes()
 
-    override fun individualAvailability(target: EntryDownloadActionTarget): EntryDownloadActionAvailability {
-        return availability(listOf(target), individualTypes, evaluation::requireDownloadIndividualContext)
+    override fun individualAvailability(request: EntryDownloadActionRequest): EntryDownloadActionAvailability {
+        return availability(listOf(request), individualTypes, evaluation::requireDownloadIndividualContext)
     }
 
     override fun individualSelectionAvailability(
-        targets: List<EntryDownloadActionTarget>,
+        requests: List<EntryDownloadActionRequest>,
     ): EntryDownloadActionAvailability {
-        return availability(targets, individualTypes, evaluation::requireDownloadIndividualContext)
+        return availability(requests, individualTypes, evaluation::requireDownloadIndividualContext)
     }
 
     override fun bulkAvailability(
-        targets: List<EntryDownloadActionTarget>,
+        requests: List<EntryDownloadActionRequest>,
         action: EntryBulkDownloadAction,
     ): EntryDownloadActionAvailability {
         val bookmarked = action.type == EntryBulkDownloadActionType.BOOKMARKED
         val applicableTypes = if (bookmarked) bookmarkedBulkTypes else bulkTypes
-        return availability(targets, applicableTypes) { target ->
+        return availability(requests, applicableTypes) { target ->
             evaluation.requireDownloadBulkContext(target, bookmarked)
         }
     }
 
     override fun notificationAvailability(
-        target: EntryDownloadActionTarget,
+        entry: Entry,
         childCount: Int,
     ): EntryDownloadActionAvailability {
+        val target = resolveTarget(EntryDownloadActionRequest.forEntry(entry))
         if (target.type !in individualTypes) {
             return EntryDownloadActionAvailability.Inapplicable(setOf(target.type))
         }
@@ -61,12 +63,11 @@ internal class DefaultEntryDownloadActionFeature(
     }
 
     override suspend fun download(
-        target: EntryDownloadActionTarget,
         entry: Entry,
         chapters: List<EntryChapter>,
         startNow: Boolean,
     ): EntryDownloadActionResult {
-        requireTargetMatchesEntry(target, entry)
+        val target = resolveTarget(EntryDownloadActionRequest.forEntry(entry))
         return when (val availability = individualOperationAvailability(target, chapters)) {
             EntryDownloadActionAvailability.Available -> {
                 interaction.download(entry, chapters, startNow)
@@ -78,11 +79,10 @@ internal class DefaultEntryDownloadActionFeature(
     }
 
     override suspend fun delete(
-        target: EntryDownloadActionTarget,
         entry: Entry,
         chapters: List<EntryChapter>,
     ): EntryDownloadActionResult {
-        requireTargetMatchesEntry(target, entry)
+        val target = resolveTarget(EntryDownloadActionRequest.forEntry(entry))
         return when (val availability = individualOperationAvailability(target, chapters)) {
             EntryDownloadActionAvailability.Available -> {
                 interaction.delete(entry, chapters)
@@ -94,10 +94,17 @@ internal class DefaultEntryDownloadActionFeature(
     }
 
     override fun cancel(
-        target: EntryDownloadActionTarget,
+        request: EntryDownloadActionRequest,
         chapterId: Long,
     ): EntryDownloadCancellationResult {
-        return when (val availability = individualAvailability(target)) {
+        val target = resolveTarget(request)
+        return when (
+            val availability = availabilityResolved(
+                listOf(target),
+                individualTypes,
+                evaluation::requireDownloadIndividualContext,
+            )
+        ) {
             EntryDownloadActionAvailability.Available -> interaction.cancelQueuedDownload(target.type, chapterId)
                 ?.let(EntryDownloadCancellationResult::Cancelled)
                 ?: EntryDownloadCancellationResult.NotQueued
@@ -110,8 +117,8 @@ internal class DefaultEntryDownloadActionFeature(
         }
     }
 
-    override fun retry(targets: List<EntryDownloadActionTarget>): EntryDownloadActionResult {
-        return when (val availability = individualSelectionAvailability(targets)) {
+    override fun retry(requests: List<EntryDownloadActionRequest>): EntryDownloadActionResult {
+        return when (val availability = individualSelectionAvailability(requests)) {
             EntryDownloadActionAvailability.Available -> {
                 interaction.startDownloads()
                 EntryDownloadActionResult.Performed
@@ -122,17 +129,13 @@ internal class DefaultEntryDownloadActionFeature(
     }
 
     override suspend fun resolveBulkDownloadCandidates(
-        target: EntryDownloadActionTarget,
-        entry: Entry,
-        action: EntryBulkDownloadAction,
-        candidates: List<EntryChapter>?,
-        memberEntryIds: List<Long>,
+        request: EntryBulkDownloadRequest,
     ): EntryBulkDownloadResolutionResult {
-        requireTargetMatchesEntry(target, entry)
-        return when (val availability = bulkAvailability(listOf(target), action)) {
+        val target = resolveTarget(EntryDownloadActionRequest(request.entry.type, request.sourceIds))
+        return when (val availability = bulkAvailabilityResolved(listOf(target), request.action)) {
             EntryDownloadActionAvailability.Available -> {
-                val pool = interaction.resolveBulkDownloadCandidatePool(entry, candidates)
-                pool.selectBulkDownloadCandidates(entry, action, memberEntryIds)
+                val pool = interaction.resolveBulkDownloadCandidatePool(request.entry, request.visibleCandidates)
+                pool.selectBulkDownloadCandidates(request.entry, request.action, request.memberEntryIds)
                     .takeIf(List<EntryChapter>::isNotEmpty)
                     ?.let(EntryBulkDownloadResolutionResult::Candidates)
                     ?: EntryBulkDownloadResolutionResult.NoCandidates
@@ -169,6 +172,25 @@ internal class DefaultEntryDownloadActionFeature(
     }
 
     private fun availability(
+        requests: List<EntryDownloadActionRequest>,
+        applicableTypes: Set<EntryType>,
+        requireContext: (EntryDownloadActionTarget) -> Unit,
+    ): EntryDownloadActionAvailability {
+        return availabilityResolved(requests.map(::resolveTarget), applicableTypes, requireContext)
+    }
+
+    private fun bulkAvailabilityResolved(
+        targets: List<EntryDownloadActionTarget>,
+        action: EntryBulkDownloadAction,
+    ): EntryDownloadActionAvailability {
+        val bookmarked = action.type == EntryBulkDownloadActionType.BOOKMARKED
+        val applicableTypes = if (bookmarked) bookmarkedBulkTypes else bulkTypes
+        return availabilityResolved(targets, applicableTypes) { target ->
+            evaluation.requireDownloadBulkContext(target, bookmarked)
+        }
+    }
+
+    private fun availabilityResolved(
         targets: List<EntryDownloadActionTarget>,
         applicableTypes: Set<EntryType>,
         requireContext: (EntryDownloadActionTarget) -> Unit,
@@ -190,10 +212,8 @@ internal class DefaultEntryDownloadActionFeature(
         }
     }
 
-    private fun requireTargetMatchesEntry(target: EntryDownloadActionTarget, entry: Entry) {
-        require(target.type == entry.type) {
-            "Download action target ${target.type} does not match Entry type ${entry.type}"
-        }
+    private fun resolveTarget(request: EntryDownloadActionRequest): EntryDownloadActionTarget {
+        return EntryDownloadActionTarget(request.type, sourceAccessResolver.resolve(request.sourceIds))
     }
 }
 

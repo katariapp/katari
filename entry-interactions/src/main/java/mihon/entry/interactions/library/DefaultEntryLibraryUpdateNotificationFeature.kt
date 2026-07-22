@@ -139,10 +139,7 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
                         }
                         if (update.entry.type in downloadTypes) {
                             val availability = downloadActionFeature.notificationAvailability(
-                                target = EntryDownloadActionTarget(
-                                    type = update.entry.type,
-                                    sourceAccess = update.downloadSourceAccess,
-                                ),
+                                entry = update.entry,
                                 childCount = update.children.size,
                             )
                             when (availability) {

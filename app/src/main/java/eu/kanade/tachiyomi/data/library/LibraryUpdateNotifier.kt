@@ -19,7 +19,6 @@ import eu.kanade.tachiyomi.core.security.SecurityPreferences
 import eu.kanade.tachiyomi.data.notification.NotificationHandler
 import eu.kanade.tachiyomi.data.notification.NotificationReceiver
 import eu.kanade.tachiyomi.data.notification.Notifications
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.lang.chop
 import eu.kanade.tachiyomi.util.system.cancelNotification
@@ -28,7 +27,6 @@ import eu.kanade.tachiyomi.util.system.notificationBuilder
 import eu.kanade.tachiyomi.util.system.notify
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.runBlocking
-import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryLibraryUpdateNotificationAction
 import mihon.entry.interactions.EntryLibraryUpdateNotificationDestination
 import mihon.entry.interactions.EntryLibraryUpdateNotificationFeature
@@ -46,7 +44,6 @@ import tachiyomi.core.common.util.system.logcat
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.library.model.LibraryItem
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -56,7 +53,6 @@ import java.text.NumberFormat
 class LibraryUpdateNotifier(
     private val context: Context,
     private val securityPreferences: SecurityPreferences = Injekt.get(),
-    private val sourceManager: SourceManager = Injekt.get(),
     private val notificationFeature: EntryLibraryUpdateNotificationFeature = Injekt.get(),
 ) {
 
@@ -182,11 +178,6 @@ class LibraryUpdateNotifier(
                     EntryLibraryUpdateNotificationInput(
                         entry = entry,
                         children = children.toList(),
-                        downloadSourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
-                            EntryDownloadSourceAccess.LOCAL_OR_STUB
-                        } else {
-                            EntryDownloadSourceAccess.REMOTE
-                        },
                     )
                 },
             )

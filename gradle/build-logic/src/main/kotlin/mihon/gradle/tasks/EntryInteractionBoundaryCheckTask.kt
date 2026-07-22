@@ -277,6 +277,7 @@ private class EntryInteractionBoundaryRules(
             checkCatalogueFeatureBypass(file, findings)
             checkLegacySourceCompatibilityBoundary(file, findings)
             checkSourceActionFeatureBypass(file, findings)
+            checkDownloadActionPolicyBypass(file, findings)
             checkSourceRefreshFeatureBypass(file, findings)
             checkSourceRefreshMechanicsBypass(file, findings)
             checkMeteredSourcePolicyBypass(file, findings)
@@ -631,6 +632,39 @@ private class EntryInteractionBoundaryRules(
                 lineNumber = index + 1,
                 reason = "Immersive source opt-in must be interpreted by EntryImmersiveFeature",
             )
+        }
+    }
+
+    private fun checkDownloadActionPolicyBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath()) return
+        val isApplicationLayer = file.relativePath.startsWith("app/src/main/") ||
+            file.relativePath.startsWith("data/src/main/") ||
+            file.relativePath.startsWith("domain/src/main/") ||
+            file.relativePath.startsWith("presentation-core/src/main/") ||
+            file.relativePath.startsWith("presentation-widget/src/main/")
+        if (!isApplicationLayer) return
+
+        listOf("EntryDownloadActionTarget", "EntryDownloadSourceAccess").forEach { policyType ->
+            file.findReference(policyType)?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "Download applicability evidence is owned by EntryDownloadActionFeature, " +
+                        "not application policy type $policyType",
+                )
+            }
+        }
+
+        if (file.findReference("EntryDownloadActionFeature") == null) return
+        listOf("MangaReaderSettingsProvider", "skipFiltered", "isLocalOrStub").forEach { policyInput ->
+            file.findReference(policyInput)?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "Download consumers must pass factual requests to EntryDownloadActionFeature; " +
+                        "$policyInput must not select generic Download behavior",
+                )
+            }
         }
     }
 

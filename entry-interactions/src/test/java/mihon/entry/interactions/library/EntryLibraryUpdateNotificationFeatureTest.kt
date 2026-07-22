@@ -146,7 +146,7 @@ class EntryLibraryUpdateNotificationFeatureTest {
         )
 
         val item = feature.project(
-            listOf(input(sourceAccess = EntryDownloadSourceAccess.LOCAL_OR_STUB)),
+            listOf(input()),
         ).groups.single().updates.single()
 
         item.actions.shouldContainExactly(EntryLibraryUpdateNotificationAction.VIEW_ENTRY)
@@ -341,8 +341,7 @@ class EntryLibraryUpdateNotificationFeatureTest {
 
     private fun input(
         children: List<EntryChapter> = listOf(child),
-        sourceAccess: EntryDownloadSourceAccess = EntryDownloadSourceAccess.REMOTE,
     ): EntryLibraryUpdateNotificationInput {
-        return EntryLibraryUpdateNotificationInput(entry, children, sourceAccess)
+        return EntryLibraryUpdateNotificationInput(entry, children)
     }
 }

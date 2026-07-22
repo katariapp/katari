@@ -126,7 +126,7 @@ private suspend fun verifyLibraryUpdateNotification(
     val entry = Entry.create().copy(id = 88L, type = type)
     val child = EntryChapter.create().copy(id = 89L, entryId = entry.id)
     val item = feature.project(
-        listOf(EntryLibraryUpdateNotificationInput(entry, listOf(child), EntryDownloadSourceAccess.REMOTE)),
+        listOf(EntryLibraryUpdateNotificationInput(entry, listOf(child))),
     ).groups.single().updates.single()
 
     contractExpectation(

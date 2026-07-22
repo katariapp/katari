@@ -29,7 +29,6 @@ sealed interface EntryLibraryUpdateQueueWarning {
 data class EntryLibraryUpdateNotificationInput(
     val entry: Entry,
     val children: List<EntryChapter>,
-    val downloadSourceAccess: EntryDownloadSourceAccess,
 )
 
 data class EntryLibraryUpdateNotificationProjection(

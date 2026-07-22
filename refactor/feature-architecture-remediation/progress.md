@@ -4,10 +4,10 @@
 
 - Baseline branch: `features-arch-refactor`
 - Baseline commit: `1d962d406` (`chore: planning cleanup`)
-- Current phase: R6 — Catalogue Feature Completion
+- Current phase: R7 — Download Policy and Context Ownership
 - Phase state: complete; awaiting milestone review and commit
 - Last updated: 2026-07-22
-- Next action: after R6 is approved and committed, begin R7 Download Policy and Context Ownership.
+- Next action: after R7 is approved and committed, begin R8 Enforcement, Secondary Audit, and Documentation.
 
 ## Approved Decisions
 
@@ -27,8 +27,8 @@
 | R3 — Library Membership Lifecycle | Complete | `7984e5608` | One membership boundary and discovered follow-ups |
 | R4 — Entry Lifecycle Operations | Complete | `197d74fa1` | Metadata, removal, Profile move |
 | R5 — Backup and Restore Participation | Complete | `456eb25d0` | Includes tracker diagnostics defect |
-| R6 — Catalogue Feature Completion | Complete, awaiting commit | — | One Catalogue execution authority |
-| R7 — Download Policy and Context Ownership | Pending | — | Removes Manga preference leak |
+| R6 — Catalogue Feature Completion | Complete | `1bf11cf7e` | One Catalogue execution authority |
+| R7 — Download Policy and Context Ownership | Complete, awaiting commit | — | Feature-owned source and bulk policy |
 | R8 — Enforcement, Secondary Audit, and Documentation | Pending | — | Final alignment and cleanup |
 
 ## Milestones
@@ -261,6 +261,45 @@
 - Expected user action: review only the lazy Anime cache boundary and retained Domain assembly port described under
   questionable actions. No decision or additional feedback is required if both are acceptable. Respond
   `commit and continue` to commit R6 and begin R7, or identify the boundary that should change.
+
+### Phase R7 milestone — 2026-07-22
+
+- Outcome: Made `EntryDownloadActionFeature` the sole authority that converts source identities into Download
+  applicability evidence. Application callers now provide factual Entry/source requests or visible children; the old
+  public policy target and source-access enum are internal runtime context only. Entry details, Library, Updates,
+  notification broadcasts, and library-update notification projection no longer reconstruct local/stub policy.
+- Notable changes: Download and delete operations derive their facts from the supplied Entry. Lightweight Updates rows
+  use factual type/source requests. Entry-details bulk actions always use the currently visible filtered children, so
+  `MangaReaderSettingsProvider.skipFiltered` no longer controls generic Anime, Book, or Manga Download behavior. Library
+  bulk availability and execution now retain the same complete source set for merged items. Type-specific candidate-pool
+  loading remains with each Download provider, while the Feature continues to own shared Next, Unread, and Bookmarked
+  selection. Library-update notification inputs no longer carry preinterpreted Download evidence.
+- Questionable actions or decisions: A merged Library or Entry-details selection remains unavailable as a whole when
+  any participating source is local, missing, or a stub; execution now consistently preserves that existing Library
+  availability rule instead of independently accepting individual members. The Feature-owned resolver imports
+  `LocalSource.ID` from `source-local` so the policy does not leak back into app callers. No answer is needed unless
+  merged actions should instead support partial per-member execution or Local-source identity should be exposed through
+  a different host port.
+- Validation performed: `spotlessApply`; focused Download Feature, source-access resolver, notification action, Library
+  selection, and build-boundary tests; full FOSS unit tests; FOSS Kotlin compilation; telemetry/updater Release Kotlin
+  compilation; full Entry Feature architecture verification, including boundary enforcement, graph/validation tests,
+  contract execution, developer reporting, and documentation verification. The report contains 3 content types, 41
+  Features, 14 execution points, 381 evaluated integrations, all selected contracts passing, and 0 obligations.
+- Known failures or intentionally broken compilation: none. The first full FOSS run exposed one stale source-structure
+  assertion for the old Library bulk method shape; the assertion was migrated, a behavioral merged-source regression
+  was added, and the focused and full reruns passed.
+- Manifesto comparison: Download provider presence remains the sole declaration of content-type support, and
+  Bookmark-based bulk behavior remains derived from Download plus Bookmarking. UI, workers, and notifications query one
+  Feature authority instead of restating support or applicability. An unknown future type that contributes Download
+  behavior inherits the shared source policy, action availability, bulk selection, notification policy, and shared
+  contracts; absence remains valid unsupported behavior. Build validation rejects reintroducing caller-manufactured
+  policy or letting Manga reader/source helpers select generic Download behavior. R7 is aligned with the manifesto.
+- Documentation impact: the source capability guide now explains that Download support is provider-owned and source
+  applicability has no second extension flag. Unified Library documentation records local/missing-source behavior and
+  visible-filtered bulk selection. Generated content-type and source-SDK projections were verified unchanged.
+- Expected user action: review only the merged all-source blocking behavior and the Feature-owned `source-local`
+  dependency described under questionable actions. No feedback or decision is required if both are acceptable. Respond
+  `commit and continue` to commit R7 and begin R8, or identify the boundary that should change.
 
 ## Milestone Template
 

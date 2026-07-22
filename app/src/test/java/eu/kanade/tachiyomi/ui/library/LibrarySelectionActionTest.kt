@@ -79,8 +79,7 @@ class LibrarySelectionActionTest {
             source.contains(
                 """
                 fun performDownloadAction(action: DownloadAction) {
-                        val entryIds = selectedActionEntryIds(state.value.selectedLibraryItems)
-                        downloadBulkDownloadCandidates(action, entryIds)
+                        downloadBulkDownloadCandidates(action, state.value.selectedLibraryItems)
                         clearSelection()
                     }
                 """.trimIndent(),
@@ -96,6 +95,20 @@ class LibrarySelectionActionTest {
                 """.trimIndent(),
             ),
         )
+    }
+
+    @Test
+    fun `merged download execution keeps the source set used by availability`() {
+        val member = Entry.create().copy(id = 2L, source = 20L, type = EntryType.ANIME)
+        val selected = listOf(
+            libraryItem(
+                id = 1L,
+                memberIds = listOf(1L, member.id),
+                sourceIds = setOf(10L, member.source),
+            ),
+        )
+
+        selected.downloadSourceIdsFor(member) shouldBe setOf(10L, 20L)
     }
 
     @Test
@@ -141,7 +154,11 @@ class LibrarySelectionActionTest {
     }
 }
 
-private fun libraryItem(id: Long, memberIds: List<Long> = listOf(id)): LibraryItem {
+private fun libraryItem(
+    id: Long,
+    memberIds: List<Long> = listOf(id),
+    sourceIds: Set<Long> = setOf(1L),
+): LibraryItem {
     val entry = Entry.create().copy(
         id = id,
         source = 1L,
@@ -156,7 +173,7 @@ private fun libraryItem(id: Long, memberIds: List<Long> = listOf(id)): LibraryIt
         sourceLanguage = "en",
         sourceItemOrientation = EntryItemOrientation.VERTICAL,
         displaySourceId = 1L,
-        sourceIds = setOf(1L),
+        sourceIds = sourceIds,
         isLocal = false,
         isMerged = memberIds.size > 1,
         memberEntryIds = memberIds.map { LibraryItemKey(EntryType.ANIME, it) },

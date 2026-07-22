@@ -17,8 +17,9 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 class EntryDownloadActionFeatureTest {
     private val entry = Entry.create().copy(id = 7L, source = 11L, type = EntryType.BOOK)
-    private val remoteTarget = EntryDownloadActionTarget(EntryType.BOOK, EntryDownloadSourceAccess.REMOTE)
-    private val localTarget = EntryDownloadActionTarget(EntryType.BOOK, EntryDownloadSourceAccess.LOCAL_OR_STUB)
+    private val localEntry = entry.copy(source = 12L)
+    private val remoteRequest = EntryDownloadActionRequest(EntryType.BOOK, setOf(entry.source))
+    private val localRequest = EntryDownloadActionRequest(EntryType.BOOK, setOf(localEntry.source))
     private val chapter = EntryChapter.create().copy(id = 12L, entryId = entry.id)
 
     @Test
@@ -26,11 +27,11 @@ class EntryDownloadActionFeatureTest {
         val download = downloadProcessor()
         val feature = featureFor(EntryDownloadCapability.bind(download))
 
-        feature.individualAvailability(remoteTarget) shouldBe EntryDownloadActionAvailability.Available
-        feature.bulkAvailability(listOf(remoteTarget), EntryBulkDownloadAction.unread) shouldBe
+        feature.individualAvailability(remoteRequest) shouldBe EntryDownloadActionAvailability.Available
+        feature.bulkAvailability(listOf(remoteRequest), EntryBulkDownloadAction.unread) shouldBe
             EntryDownloadActionAvailability.Inapplicable(setOf(EntryType.BOOK))
-        feature.download(remoteTarget, entry, listOf(chapter)) shouldBe EntryDownloadActionResult.Performed
-        feature.retry(listOf(remoteTarget)) shouldBe EntryDownloadActionResult.Performed
+        feature.download(entry, listOf(chapter)) shouldBe EntryDownloadActionResult.Performed
+        feature.retry(listOf(remoteRequest)) shouldBe EntryDownloadActionResult.Performed
 
         coVerify(exactly = 1) { download.download(entry, listOf(chapter), false) }
         verify(exactly = 1) { download.startDownloads() }
@@ -46,14 +47,10 @@ class EntryDownloadActionFeatureTest {
         )
 
         feature.resolveBulkDownloadCandidates(
-            target = remoteTarget,
-            entry = entry,
-            action = EntryBulkDownloadAction.unread,
+            EntryBulkDownloadRequest(entry, EntryBulkDownloadAction.unread),
         ) shouldBe EntryBulkDownloadResolutionResult.Candidates(listOf(unread))
         feature.resolveBulkDownloadCandidates(
-            target = remoteTarget,
-            entry = entry,
-            action = EntryBulkDownloadAction.bookmarked,
+            EntryBulkDownloadRequest(entry, EntryBulkDownloadAction.bookmarked),
         ) shouldBe EntryBulkDownloadResolutionResult.Inapplicable(setOf(EntryType.BOOK))
     }
 
@@ -67,12 +64,10 @@ class EntryDownloadActionFeatureTest {
             EntryBookmarkCapability.bind(bookmarkProcessor()),
         )
 
-        feature.bulkAvailability(listOf(remoteTarget), EntryBulkDownloadAction.bookmarked) shouldBe
+        feature.bulkAvailability(listOf(remoteRequest), EntryBulkDownloadAction.bookmarked) shouldBe
             EntryDownloadActionAvailability.Available
         feature.resolveBulkDownloadCandidates(
-            target = remoteTarget,
-            entry = entry,
-            action = EntryBulkDownloadAction.bookmarked,
+            EntryBulkDownloadRequest(entry, EntryBulkDownloadAction.bookmarked),
         ) shouldBe EntryBulkDownloadResolutionResult.Candidates(listOf(bookmarked))
     }
 
@@ -81,19 +76,19 @@ class EntryDownloadActionFeatureTest {
         val download = downloadProcessor()
         val feature = featureFor(EntryDownloadCapability.bind(download))
 
-        feature.individualAvailability(localTarget) shouldBe EntryDownloadActionAvailability.Blocked(
+        feature.individualAvailability(localRequest) shouldBe EntryDownloadActionAvailability.Blocked(
             setOf(EntryDownloadActionBlocker.LOCAL_OR_STUB),
         )
-        feature.download(localTarget, entry, listOf(chapter)) shouldBe EntryDownloadActionResult.Blocked(
+        feature.download(localEntry, listOf(chapter)) shouldBe EntryDownloadActionResult.Blocked(
             setOf(EntryDownloadActionBlocker.LOCAL_OR_STUB),
         )
-        feature.download(remoteTarget, entry, emptyList()) shouldBe EntryDownloadActionResult.Blocked(
+        feature.download(entry, emptyList()) shouldBe EntryDownloadActionResult.Blocked(
             setOf(EntryDownloadActionBlocker.EMPTY_SELECTION),
         )
         feature.bulkAvailability(emptyList(), EntryBulkDownloadAction.unread) shouldBe
             EntryDownloadActionAvailability.Blocked(setOf(EntryDownloadActionBlocker.EMPTY_SELECTION))
         feature.individualSelectionAvailability(
-            listOf(remoteTarget, EntryDownloadActionTarget(EntryType.MANGA, EntryDownloadSourceAccess.REMOTE)),
+            listOf(remoteRequest, EntryDownloadActionRequest(EntryType.MANGA, setOf(entry.source))),
         ) shouldBe EntryDownloadActionAvailability.Inapplicable(setOf(EntryType.MANGA))
 
         coVerify(exactly = 0) { download.download(any(), any(), any()) }
@@ -103,14 +98,14 @@ class EntryDownloadActionFeatureTest {
     fun `notification action adds its selection limit without changing type support`() {
         val feature = featureFor(EntryDownloadCapability.bind(downloadProcessor()))
 
-        feature.notificationAvailability(remoteTarget, 0) shouldBe EntryDownloadActionAvailability.Blocked(
+        feature.notificationAvailability(entry, 0) shouldBe EntryDownloadActionAvailability.Blocked(
             setOf(EntryDownloadActionBlocker.EMPTY_SELECTION),
         )
-        feature.notificationAvailability(remoteTarget, 15) shouldBe EntryDownloadActionAvailability.Available
-        feature.notificationAvailability(remoteTarget, 16) shouldBe EntryDownloadActionAvailability.Blocked(
+        feature.notificationAvailability(entry, 15) shouldBe EntryDownloadActionAvailability.Available
+        feature.notificationAvailability(entry, 16) shouldBe EntryDownloadActionAvailability.Blocked(
             setOf(EntryDownloadActionBlocker.NOTIFICATION_SELECTION_TOO_LARGE),
         )
-        feature.individualAvailability(remoteTarget) shouldBe EntryDownloadActionAvailability.Available
+        feature.individualAvailability(remoteRequest) shouldBe EntryDownloadActionAvailability.Available
     }
 
     private fun featureFor(vararg bindings: EntryInteractionProviderBinding<*>): EntryDownloadActionFeature {
@@ -126,6 +121,13 @@ class EntryDownloadActionFeatureTest {
         return DefaultEntryDownloadActionFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.download,
+            sourceAccessResolver = EntryDownloadSourceAccessResolver { sourceIds ->
+                if (localEntry.source in sourceIds) {
+                    EntryDownloadSourceAccess.LOCAL_OR_STUB
+                } else {
+                    EntryDownloadSourceAccess.REMOTE
+                }
+            },
         )
     }
 

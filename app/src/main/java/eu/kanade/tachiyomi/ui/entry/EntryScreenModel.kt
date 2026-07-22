@@ -28,7 +28,6 @@ import eu.kanade.presentation.util.formattedMessage
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.util.lang.toStoredDisplayName
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.collections.immutable.ImmutableList
@@ -56,6 +55,7 @@ import logcat.LogPriority
 import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
+import mihon.entry.interactions.EntryBulkDownloadRequest
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryChildGroupFilterFeature
 import mihon.entry.interactions.EntryChildGroupFilterObservationResult
@@ -73,14 +73,13 @@ import mihon.entry.interactions.EntryChildProgressResult
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryContinueFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
-import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadActionRequest
 import mihon.entry.interactions.EntryDownloadMaintenanceFeature
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadOptions
 import mihon.entry.interactions.EntryDownloadOptionsFeature
 import mihon.entry.interactions.EntryDownloadOptionsResolution
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
-import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
 import mihon.entry.interactions.EntryLibraryAddRequest
@@ -130,7 +129,6 @@ import mihon.entry.interactions.EntryTrackingProgressInspection
 import mihon.entry.interactions.EntryTrackingProgressSynchronizationResult
 import mihon.entry.interactions.EntryTrackingRefreshResult
 import mihon.entry.interactions.EntryTrackingSession
-import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
 import tachiyomi.core.common.i18n.stringResource
 import tachiyomi.core.common.preference.CheckboxState
 import tachiyomi.core.common.preference.TriState
@@ -170,7 +168,6 @@ class EntryScreenModel(
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val duplicatePreferences: tachiyomi.domain.library.service.DuplicatePreferences = Injekt.get(),
     trackPreferences: TrackPreferences = Injekt.get(),
-    readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryDownloadOptionsFeature: EntryDownloadOptionsFeature = Injekt.get(),
@@ -214,17 +211,12 @@ class EntryScreenModel(
     private val isFavorited: Boolean
         get() = entry?.favorite ?: false
 
-    private val allChapters: List<EntryChapterList.Item>?
-        get() = successState?.chapters
-
     private val filteredChapters: List<EntryChapterList.Item>?
         get() = successState?.processedChapters
 
     val chapterSwipeStartAction = libraryPreferences.swipeToEndAction.get()
     val chapterSwipeEndAction = libraryPreferences.swipeToStartAction.get()
     var autoTrackState = trackPreferences.autoUpdateTrackOnMarkRead.get()
-
-    private val skipFiltered by readerPreferences.skipFiltered.asState(screenModelScope)
 
     private val previewConfigState = MutableStateFlow(EntryPreviewConfig.Disabled)
     val previewConfig = previewConfigState.asStateFlow()
@@ -1077,8 +1069,8 @@ class EntryScreenModel(
     fun isContinueApplicable(entry: Entry): Boolean = entryContinueFeature.isApplicable(entry.type)
 
     private fun getBulkDownloadCandidateItems(): List<EntryChapterList.Item> {
-        val chapterItems = if (skipFiltered) filteredChapters.orEmpty() else allChapters.orEmpty()
-        return chapterItems.filter { item -> item.downloadState == EntryDownloadState.NOT_DOWNLOADED }
+        return filteredChapters.orEmpty()
+            .filter { item -> item.downloadState == EntryDownloadState.NOT_DOWNLOADED }
     }
 
     private fun startDownload(
@@ -1152,7 +1144,7 @@ class EntryScreenModel(
             if (selection != null) {
                 entryDownloadOptionsFeature.download(entry, chapters, selection, startNow)
             } else {
-                entryDownloadActionFeature.download(downloadActionTarget(entry), entry, chapters, startNow)
+                entryDownloadActionFeature.download(entry, chapters, startNow)
             }
 
             if (!isFavorited && !successState.hasPromptedToAddBefore) {
@@ -1179,7 +1171,7 @@ class EntryScreenModel(
             ChapterDownloadAction.START -> {
                 startDownload(items, false)
                 if (items.any { it.downloadState == EntryDownloadState.ERROR }) {
-                    entryDownloadActionFeature.retry(items.map { downloadActionTarget(it.entry) })
+                    entryDownloadActionFeature.retry(items.map { EntryDownloadActionRequest.forEntry(it.entry) })
                 }
             }
             ChapterDownloadAction.START_NOW -> {
@@ -1201,11 +1193,13 @@ class EntryScreenModel(
 
         screenModelScope.launchNonCancellable {
             val result = entryDownloadActionFeature.resolveBulkDownloadCandidates(
-                target = downloadActionTarget(state.entry),
-                entry = state.entry,
-                action = action.toEntryBulkDownloadAction(),
-                candidates = candidateItems.map(EntryChapterList.Item::chapter),
-                memberEntryIds = state.memberIds,
+                EntryBulkDownloadRequest(
+                    entry = state.entry,
+                    action = action.toEntryBulkDownloadAction(),
+                    sourceIds = state.chapters.mapTo(mutableSetOf(state.entry.source)) { it.entry.source },
+                    visibleCandidates = candidateItems.map(EntryChapterList.Item::chapter),
+                    memberEntryIds = state.memberIds,
+                ),
             )
             if (result is EntryBulkDownloadResolutionResult.Candidates) {
                 val itemsByChapterId = candidateItems.associateBy { it.chapter.id }
@@ -1232,7 +1226,10 @@ class EntryScreenModel(
 
     private fun cancelDownload(chapterId: Long) {
         val chapterItem = successState?.chapters.orEmpty().firstOrNull { it.id == chapterId } ?: return
-        val result = entryDownloadActionFeature.cancel(downloadActionTarget(chapterItem.entry), chapterId)
+        val result = entryDownloadActionFeature.cancel(
+            EntryDownloadActionRequest.forEntry(chapterItem.entry),
+            chapterId,
+        )
         if (result is mihon.entry.interactions.EntryDownloadCancellationResult.Cancelled) {
             updateDownloadState(result.status)
         }
@@ -1338,7 +1335,7 @@ class EntryScreenModel(
             .forEach { (_, chapterItems) ->
                 val entry = chapterItems.first().entry
                 val chapters = chapterItems.map { it.chapter }
-                entryDownloadActionFeature.download(downloadActionTarget(entry), entry, chapters)
+                entryDownloadActionFeature.download(entry, chapters)
             }
         toggleAllSelection(false)
     }
@@ -1380,23 +1377,12 @@ class EntryScreenModel(
                 chapters.groupBy { it.entryId }
                     .forEach { (memberEntryId, memberChapters) ->
                         val entry = entryRepository.getEntryById(memberEntryId) ?: return@forEach
-                        entryDownloadActionFeature.delete(downloadActionTarget(entry), entry, memberChapters)
+                        entryDownloadActionFeature.delete(entry, memberChapters)
                     }
             } catch (e: Throwable) {
                 logcat(LogPriority.ERROR, e)
             }
         }
-    }
-
-    private fun downloadActionTarget(entry: Entry): EntryDownloadActionTarget {
-        return EntryDownloadActionTarget(
-            type = entry.type,
-            sourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
-                EntryDownloadSourceAccess.LOCAL_OR_STUB
-            } else {
-                EntryDownloadSourceAccess.REMOTE
-            },
-        )
     }
 
     private fun downloadNewEntryChapters(chapters: List<EntryChapter>) {

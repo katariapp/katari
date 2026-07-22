@@ -15,7 +15,6 @@ import eu.kanade.presentation.library.components.LibraryToolbarTitle
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.getDisplayNameForEntryInfo
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.util.system.isReleaseBuildType
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -37,14 +36,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import mihon.core.common.utils.mutate
 import mihon.entry.interactions.EntryBulkDownloadAction
+import mihon.entry.interactions.EntryBulkDownloadRequest
 import mihon.entry.interactions.EntryBulkDownloadResolutionResult
 import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
-import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadActionRequest
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
-import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryLibraryFilterAvailability
 import mihon.entry.interactions.EntryLibraryFilterControlAvailability
 import mihon.entry.interactions.EntryLibraryFilterFeature
@@ -631,23 +630,23 @@ class LibraryScreenModel(
      * Queues the amount specified of unread chapters from the list of selected entries.
      */
     fun performDownloadAction(action: DownloadAction) {
-        val entryIds = selectedActionEntryIds(state.value.selectedLibraryItems)
-        downloadBulkDownloadCandidates(action, entryIds)
+        downloadBulkDownloadCandidates(action, state.value.selectedLibraryItems)
         clearSelection()
     }
 
-    private fun downloadBulkDownloadCandidates(action: DownloadAction, entryIds: List<Long>) {
+    private fun downloadBulkDownloadCandidates(action: DownloadAction, items: List<LibraryItem>) {
         screenModelScope.launchNonCancellable {
-            val entries = getActionEntries(entryIds)
+            val entries = getActionEntries(selectedActionEntryIds(items))
             entries.forEach { entry ->
-                val target = downloadActionTarget(entry)
                 val result = entryDownloadActionFeature.resolveBulkDownloadCandidates(
-                    target = target,
-                    entry = entry,
-                    action = action.toEntryBulkDownloadAction(),
+                    EntryBulkDownloadRequest(
+                        entry = entry,
+                        action = action.toEntryBulkDownloadAction(),
+                        sourceIds = items.downloadSourceIdsFor(entry),
+                    ),
                 )
                 if (result is EntryBulkDownloadResolutionResult.Candidates) {
-                    entryDownloadActionFeature.download(target, entry, result.chapters)
+                    entryDownloadActionFeature.download(entry, result.chapters)
                 }
             }
         }
@@ -655,31 +654,11 @@ class LibraryScreenModel(
 
     fun canDownloadSelection(action: DownloadAction = DownloadAction.UNREAD_CHAPTERS): Boolean {
         return entryDownloadActionFeature.bulkAvailability(
-            targets = state.value.selectedLibraryItems.map(::downloadActionTarget),
+            requests = state.value.selectedLibraryItems.map { item ->
+                EntryDownloadActionRequest(item.entry.type, item.sourceIds)
+            },
             action = action.toEntryBulkDownloadAction(),
         ) == EntryDownloadActionAvailability.Available
-    }
-
-    private fun downloadActionTarget(item: LibraryItem): EntryDownloadActionTarget {
-        return EntryDownloadActionTarget(
-            type = item.entry.type,
-            sourceAccess = if (item.sourceIds.any { sourceManager.get(it).isLocalOrStub() }) {
-                EntryDownloadSourceAccess.LOCAL_OR_STUB
-            } else {
-                EntryDownloadSourceAccess.REMOTE
-            },
-        )
-    }
-
-    private fun downloadActionTarget(entry: Entry): EntryDownloadActionTarget {
-        return EntryDownloadActionTarget(
-            type = entry.type,
-            sourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
-                EntryDownloadSourceAccess.LOCAL_OR_STUB
-            } else {
-                EntryDownloadSourceAccess.REMOTE
-            },
-        )
     }
 
     /**
@@ -727,7 +706,7 @@ class LibraryScreenModel(
                 distinctEntries.forEach { entry ->
                     val chapters = entryChapterRepository.getChaptersByEntryIdAwait(entry.id)
                     if (chapters.isNotEmpty()) {
-                        entryDownloadActionFeature.delete(downloadActionTarget(entry), entry, chapters)
+                        entryDownloadActionFeature.delete(entry, chapters)
                     }
                 }
             }
@@ -1416,6 +1395,14 @@ internal fun selectedActionEntryIds(selection: List<LibraryItem>): List<Long> {
         .flatMap(LibraryItem::memberEntryIds)
         .map(LibraryItemKey::id)
         .distinct()
+}
+
+internal fun List<LibraryItem>.downloadSourceIdsFor(entry: Entry): Set<Long> {
+    return asSequence()
+        .filter { item -> item.memberEntryIds.any { it.id == entry.id } }
+        .flatMap { it.sourceIds }
+        .toSet()
+        .ifEmpty { setOf(entry.source) }
 }
 
 internal suspend fun categoriesForLibraryItem(

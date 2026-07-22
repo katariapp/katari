@@ -146,6 +146,38 @@ Download Feature must resolve this context and own generic bulk selection policy
 Approved product policy: bulk Download actions operate on the currently visible filtered children. They must not be
 controlled by the Manga reader preference.
 
+The R7 execution audit found six separate constructors of `EntryDownloadActionTarget` and two additional notification
+paths that manufacture the same `REMOTE` versus `LOCAL_OR_STUB` policy evidence from `SourceManager`:
+
+- Entry details constructs the target once in Compose for action visibility and again in its screen model for queue,
+  retry, bulk selection, cancellation, and deletion.
+- Library bulk actions derive one target from `LibraryItem.sourceIds` for visibility, then derive a different target
+  from only the persisted Entry source while executing. A merged item can therefore be rejected by one path and
+  accepted by the other.
+- Updates derives targets from lightweight update rows for item visibility, multi-selection, retry, cancellation,
+  queueing, and deletion.
+- Notification broadcasts reconstruct source access before queueing children.
+- Library-update notification creation attaches precomputed Download source access to each input, and the projection
+  reconstructs a target before asking the Download Feature whether to render the action.
+
+`EntryDownloadActionFeature` currently receives this already-interpreted target on every method, so graph context
+evaluation is centralized but the evidence feeding it is not. Callers can disagree, omit a source, or accidentally
+invert the local/stub rule. The target must be replaced by factual requests containing Entry type and source IDs where
+only lightweight data exists; operations that already receive an Entry must derive their request internally. A
+Feature-owned resolver must be the only component that converts those source IDs into Download source-access context.
+
+Bulk candidate selection has two distinct inputs that must remain explicit:
+
+- Library actions have no visible child list and ask the media-specific bulk-candidate provider to load the pool for
+  the selected Entry.
+- Entry details already has the currently visible, filtered child list and must pass that factual list to the Feature.
+  The Feature then applies shared `NEXT`, `UNREAD`, or `BOOKMARKED` selection. The caller must not switch between all
+  and filtered children based on `MangaReaderSettingsProvider.skipFiltered`.
+
+The target architecture therefore keeps type-specific pool loading in `EntryBulkDownloadCandidateProcessor`, keeps
+shared selection in `EntryDownloadActionFeature`, and makes source access a Feature-owned host fact. UI, notification,
+and worker code supplies domain identities or visible children, never applicability evidence.
+
 ### Entry lifecycle operations
 
 Metadata changes, destructive deletion, and Profile movement remain fixed integration lists:

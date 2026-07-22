@@ -15,7 +15,6 @@ import eu.kanade.presentation.updates.UpdatesUiModel
 import eu.kanade.presentation.updates.toUpdatesUiModels
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.source.entry.EntryType
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.collapseByVisibleEntry
 import eu.kanade.tachiyomi.util.lang.toLocalDate
 import kotlinx.collections.immutable.toPersistentList
@@ -41,10 +40,9 @@ import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryConsumptionStatus
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
-import mihon.entry.interactions.EntryDownloadActionTarget
+import mihon.entry.interactions.EntryDownloadActionRequest
 import mihon.entry.interactions.EntryDownloadCancellationResult
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
-import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryDownloadState
 import mihon.entry.interactions.EntryDownloadStatus
 import mihon.entry.interactions.EntryMergeNavigationFeature
@@ -61,7 +59,6 @@ import tachiyomi.domain.entry.model.asEntryCover
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.library.model.LibraryItemKey
 import tachiyomi.domain.library.service.LibraryPreferences
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.updates.interactor.GetUpdates
 import tachiyomi.domain.updates.model.UpdateItem
 import tachiyomi.domain.updates.model.UpdatesWithRelations
@@ -81,7 +78,6 @@ class UpdatesScreenModel(
     private val getEntry: GetEntry = Injekt.get(),
     private val entryMergeNavigationFeature: EntryMergeNavigationFeature = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
-    private val sourceManager: SourceManager = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val updatesPreferences: UpdatesPreferences = Injekt.get(),
     val snackbarHostState: SnackbarHostState = SnackbarHostState(),
@@ -223,7 +219,7 @@ class UpdatesScreenModel(
                         downloadStateProvider = { downloadStatus.state },
                         downloadProgressProvider = { downloadStatus.progress },
                         downloadAvailable = entryDownloadActionFeature.individualAvailability(
-                            downloadActionTarget(update.entryType, update.sourceId),
+                            downloadActionRequest(update.entryType, update.sourceId),
                         ) == EntryDownloadActionAvailability.Available,
                         selected = update.key in selectedKeys,
                     )
@@ -277,7 +273,7 @@ class UpdatesScreenModel(
                         entryDownloadActionFeature.retry(
                             chapterItems.map { item ->
                                 val update = item.update as UpdateItem.EntryUpdate
-                                downloadActionTarget(update.entryType, update.sourceId)
+                                downloadActionRequest(update.entryType, update.sourceId)
                             },
                         )
                     }
@@ -290,7 +286,6 @@ class UpdatesScreenModel(
                     val chapter = entryChapterRepository.getChapterById(chapterUpdate.update.chapterId)
                         ?: return@launch
                     entryDownloadActionFeature.download(
-                        target = downloadActionTarget(entry.type, entry.source),
                         entry = entry,
                         chapters = listOf(chapter),
                         startNow = true,
@@ -311,18 +306,18 @@ class UpdatesScreenModel(
     }
 
     fun canUseDownloadActions(items: List<UpdatesItem>): Boolean {
-        val targets = items.mapNotNull { item ->
+        val requests = items.mapNotNull { item ->
             val update = item.update as? UpdateItem.EntryUpdate ?: return@mapNotNull null
-            downloadActionTarget(update.entryType, update.sourceId)
+            downloadActionRequest(update.entryType, update.sourceId)
         }
-        if (targets.size != items.size) return false
-        return entryDownloadActionFeature.individualSelectionAvailability(targets) ==
+        if (requests.size != items.size) return false
+        return entryDownloadActionFeature.individualSelectionAvailability(requests) ==
             EntryDownloadActionAvailability.Available
     }
 
     private fun cancelDownload(update: UpdateItem.EntryUpdate) {
         val result = entryDownloadActionFeature.cancel(
-            target = downloadActionTarget(update.entryType, update.sourceId),
+            request = downloadActionRequest(update.entryType, update.sourceId),
             chapterId = update.update.chapterId,
         )
         if (result is EntryDownloadCancellationResult.Cancelled) {
@@ -381,7 +376,6 @@ class UpdatesScreenModel(
                 val entry = getEntry.await(entryId) ?: continue
                 val chapters = updates.mapNotNull { entryChapterRepository.getChapterById(it.update.chapterId) }
                 entryDownloadActionFeature.download(
-                    target = downloadActionTarget(entry.type, entry.source),
                     entry = entry,
                     chapters = chapters,
                 )
@@ -404,7 +398,6 @@ class UpdatesScreenModel(
                     val entry = getEntry.await(entryId) ?: return@forEach
                     val chapters = updates.mapNotNull { entryChapterRepository.getChapterById(it.update.chapterId) }
                     entryDownloadActionFeature.delete(
-                        target = downloadActionTarget(entry.type, entry.source),
                         entry = entry,
                         chapters = chapters,
                     )
@@ -553,15 +546,8 @@ class UpdatesScreenModel(
             .filter { it.chapters.isNotEmpty() }
     }
 
-    private fun downloadActionTarget(type: EntryType, sourceId: Long): EntryDownloadActionTarget {
-        return EntryDownloadActionTarget(
-            type = type,
-            sourceAccess = if (sourceManager.get(sourceId).isLocalOrStub()) {
-                EntryDownloadSourceAccess.LOCAL_OR_STUB
-            } else {
-                EntryDownloadSourceAccess.REMOTE
-            },
-        )
+    private fun downloadActionRequest(type: EntryType, sourceId: Long): EntryDownloadActionRequest {
+        return EntryDownloadActionRequest(type, setOf(sourceId))
     }
 
     private data class EntryChapterSelection(

@@ -6,50 +6,73 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 /** Feature-owned boundary for user-initiated individual and bulk download actions. */
 interface EntryDownloadActionFeature {
-    fun individualAvailability(target: EntryDownloadActionTarget): EntryDownloadActionAvailability
+    fun individualAvailability(request: EntryDownloadActionRequest): EntryDownloadActionAvailability
 
     fun individualSelectionAvailability(
-        targets: List<EntryDownloadActionTarget>,
+        requests: List<EntryDownloadActionRequest>,
     ): EntryDownloadActionAvailability
 
     fun bulkAvailability(
-        targets: List<EntryDownloadActionTarget>,
+        requests: List<EntryDownloadActionRequest>,
         action: EntryBulkDownloadAction,
     ): EntryDownloadActionAvailability
 
     fun notificationAvailability(
-        target: EntryDownloadActionTarget,
+        entry: Entry,
         childCount: Int,
     ): EntryDownloadActionAvailability
 
     suspend fun download(
-        target: EntryDownloadActionTarget,
         entry: Entry,
         chapters: List<EntryChapter>,
         startNow: Boolean = false,
     ): EntryDownloadActionResult
 
     suspend fun delete(
-        target: EntryDownloadActionTarget,
         entry: Entry,
         chapters: List<EntryChapter>,
     ): EntryDownloadActionResult
 
     fun cancel(
-        target: EntryDownloadActionTarget,
+        request: EntryDownloadActionRequest,
         chapterId: Long,
     ): EntryDownloadCancellationResult
 
     /** Restarts processing after a user retries selected failed downloads. */
-    fun retry(targets: List<EntryDownloadActionTarget>): EntryDownloadActionResult
+    fun retry(requests: List<EntryDownloadActionRequest>): EntryDownloadActionResult
 
     suspend fun resolveBulkDownloadCandidates(
-        target: EntryDownloadActionTarget,
-        entry: Entry,
-        action: EntryBulkDownloadAction,
-        candidates: List<EntryChapter>? = null,
-        memberEntryIds: List<Long> = emptyList(),
+        request: EntryBulkDownloadRequest,
     ): EntryBulkDownloadResolutionResult
+}
+
+data class EntryDownloadActionRequest(
+    val type: EntryType,
+    /** Every source participating in the requested action. The Feature interprets their runtime availability. */
+    val sourceIds: Set<Long>,
+) {
+    init {
+        require(sourceIds.isNotEmpty()) { "Download action request must contain at least one source" }
+    }
+
+    companion object {
+        fun forEntry(entry: Entry): EntryDownloadActionRequest {
+            return EntryDownloadActionRequest(entry.type, setOf(entry.source))
+        }
+    }
+}
+
+data class EntryBulkDownloadRequest(
+    val entry: Entry,
+    val action: EntryBulkDownloadAction,
+    val sourceIds: Set<Long> = setOf(entry.source),
+    /** The currently visible children, or `null` when the type provider must load the candidate pool. */
+    val visibleCandidates: List<EntryChapter>? = null,
+    val memberEntryIds: List<Long> = emptyList(),
+) {
+    init {
+        require(sourceIds.isNotEmpty()) { "Bulk Download request must contain at least one source" }
+    }
 }
 
 data class EntryBulkDownloadAction(
@@ -67,16 +90,6 @@ enum class EntryBulkDownloadActionType {
     NEXT,
     UNREAD,
     BOOKMARKED,
-}
-
-data class EntryDownloadActionTarget(
-    val type: EntryType,
-    val sourceAccess: EntryDownloadSourceAccess,
-)
-
-enum class EntryDownloadSourceAccess {
-    REMOTE,
-    LOCAL_OR_STUB,
 }
 
 enum class EntryDownloadActionBlocker {

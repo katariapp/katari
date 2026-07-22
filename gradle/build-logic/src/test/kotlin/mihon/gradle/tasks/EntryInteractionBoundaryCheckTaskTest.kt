@@ -471,6 +471,53 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application download consumers cannot manufacture applicability evidence`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import mihon.entry.interactions.EntryDownloadActionTarget
+                import mihon.entry.interactions.EntryDownloadSourceAccess
+
+                class AppFeature(
+                    val target: EntryDownloadActionTarget,
+                    val sourceAccess: EntryDownloadSourceAccess,
+                )
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "Download applicability evidence is owned by EntryDownloadActionFeature"
+        error.message shouldContain "EntryDownloadActionTarget"
+        error.message shouldContain "EntryDownloadSourceAccess"
+    }
+
+    @Test
+    fun `reader and source policy cannot select generic download behavior`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                class AppFeature(
+                    val downloads: EntryDownloadActionFeature,
+                    val readerSettings: MangaReaderSettingsProvider,
+                ) {
+                    val candidates = if (readerSettings.skipFiltered.get()) filtered else all
+                    val available = source.isLocalOrStub()
+                }
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "must not select generic Download behavior"
+        error.message shouldContain "MangaReaderSettingsProvider"
+        error.message shouldContain "skipFiltered"
+        error.message shouldContain "isLocalOrStub"
+    }
+
+    @Test
     fun `root module cannot export the provider spi`() {
         createBaseFixture(
             additionalFiles = mapOf(

@@ -30,11 +30,15 @@ internal val EntryDownloadActionFeatureRuntimeModule = EntryFeatureRuntimeModule
     id = "entry.download.actions",
     contributor = EntryDownloadActionFeatureContributor,
 ) { context ->
+    addSingletonFactory<EntryDownloadSourceAccessResolver> {
+        SourceManagerEntryDownloadSourceAccessResolver(get())
+    }
     addSingletonFactory<EntryDownloadActionFeature> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryDownloadActionFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.download,
+            sourceAccessResolver = get(),
         )
     }
     addSingletonFactory {

@@ -48,7 +48,6 @@ import eu.kanade.presentation.util.AssistContentScreen
 import eu.kanade.presentation.util.Screen
 import eu.kanade.presentation.util.isTabletUi
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreen
 import eu.kanade.tachiyomi.ui.browse.source.globalsearch.GlobalSearchScreen
 import eu.kanade.tachiyomi.ui.category.CategoryScreen
@@ -70,8 +69,7 @@ import mihon.entry.interactions.EntryChildGroupFilterStateResult
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionAvailability
 import mihon.entry.interactions.EntryDownloadActionFeature
-import mihon.entry.interactions.EntryDownloadActionTarget
-import mihon.entry.interactions.EntryDownloadSourceAccess
+import mihon.entry.interactions.EntryDownloadActionRequest
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewOpenTargetResult
@@ -147,23 +145,19 @@ class EntryScreen(
         }
 
         val successState = state as EntryScreenModel.State.Success
-        val downloadTarget = EntryDownloadActionTarget(
+        val downloadRequest = EntryDownloadActionRequest(
             type = successState.entry.type,
-            sourceAccess = if (successState.source.isLocalOrStub()) {
-                EntryDownloadSourceAccess.LOCAL_OR_STUB
-            } else {
-                EntryDownloadSourceAccess.REMOTE
-            },
+            sourceIds = successState.chapters.mapTo(mutableSetOf(successState.entry.source)) { it.entry.source },
         )
-        val downloadsAvailable = entryDownloadActionFeature.individualAvailability(downloadTarget) ==
+        val downloadsAvailable = entryDownloadActionFeature.individualAvailability(downloadRequest) ==
             EntryDownloadActionAvailability.Available
         val bulkDownloadsAvailable = entryDownloadActionFeature.bulkAvailability(
-            targets = listOf(downloadTarget),
+            requests = listOf(downloadRequest),
             action = EntryBulkDownloadAction.unread,
         ) == EntryDownloadActionAvailability.Available
         val bookmarksSupported = entryBookmarkFeature.isApplicable(successState.entry.type)
         val bookmarkedDownloadsSupported = entryDownloadActionFeature.bulkAvailability(
-            targets = listOf(downloadTarget),
+            requests = listOf(downloadRequest),
             action = EntryBulkDownloadAction.bookmarked,
         ) == EntryDownloadActionAvailability.Available
         val previewConfig by screenModel.previewConfig.collectAsStateWithLifecycle()

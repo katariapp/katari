@@ -114,46 +114,52 @@ private suspend fun verifyDownloadAction(
     val evaluation = productionSubjectEvaluation(bindings, EntryDownloadActionFeatureContributor)
     val entry = Entry.create().copy(id = 71L, type = download.type)
     val chapter = EntryChapter.create().copy(id = 72L, entryId = entry.id, bookmark = true)
-    val target = EntryDownloadActionTarget(download.type, EntryDownloadSourceAccess.REMOTE)
+    val request = EntryDownloadActionRequest.forEntry(entry)
     val interaction = recordingDownloadInteraction()
     var started = false
     every { interaction.startDownloads() } answers { started = true }
     coEvery { interaction.resolveBulkDownloadCandidatePool(entry, any()) } returns listOf(chapter)
-    val feature = DefaultEntryDownloadActionFeature(evaluation, interaction)
+    val feature = DefaultEntryDownloadActionFeature(
+        evaluation,
+        interaction,
+        EntryDownloadSourceAccessResolver { EntryDownloadSourceAccess.REMOTE },
+    )
 
     when (integration) {
         ENTRY_DOWNLOAD_INDIVIDUAL_PROVIDER_INTEGRATION,
         ENTRY_DOWNLOAD_INDIVIDUAL_CONTEXT_INTEGRATION,
         -> {
             contractExpectation(
-                feature.individualAvailability(target) == EntryDownloadActionAvailability.Available,
+                feature.individualAvailability(request) == EntryDownloadActionAvailability.Available,
                 "Download Actions must expose individual availability",
             )
             contractExpectation(
-                feature.retry(listOf(target)) == EntryDownloadActionResult.Performed && started,
+                feature.retry(listOf(request)) == EntryDownloadActionResult.Performed && started,
                 "Download Actions must dispatch an applicable individual action",
             )
         }
         ENTRY_DOWNLOAD_INDIVIDUAL_OPERATION_INTEGRATION -> contractExpectation(
-            feature.download(target, entry, listOf(chapter)) == EntryDownloadActionResult.Performed,
+            feature.download(entry, listOf(chapter)) == EntryDownloadActionResult.Performed,
             "Download Actions must dispatch an applicable individual operation",
         )
         ENTRY_DOWNLOAD_BULK_PROVIDER_INTEGRATION,
         ENTRY_DOWNLOAD_BULK_CONTEXT_INTEGRATION,
         -> contractExpectation(
-            feature.resolveBulkDownloadCandidates(target, entry, EntryBulkDownloadAction.unread) ==
+            feature.resolveBulkDownloadCandidates(EntryBulkDownloadRequest(entry, EntryBulkDownloadAction.unread)) ==
                 EntryBulkDownloadResolutionResult.Candidates(listOf(chapter)),
             "Download Actions must resolve shared bulk candidates",
         )
         ENTRY_DOWNLOAD_BOOKMARKED_BULK_PROVIDER_INTEGRATION,
         ENTRY_DOWNLOAD_BOOKMARKED_BULK_CONTEXT_INTEGRATION,
         -> contractExpectation(
-            feature.resolveBulkDownloadCandidates(target, entry, EntryBulkDownloadAction.bookmarked) ==
+            feature.resolveBulkDownloadCandidates(
+                EntryBulkDownloadRequest(entry, EntryBulkDownloadAction.bookmarked),
+            ) ==
                 EntryBulkDownloadResolutionResult.Candidates(listOf(chapter)),
             "Download Actions must resolve bookmarked bulk candidates",
         )
         ENTRY_DOWNLOAD_NOTIFICATION_CONTEXT_INTEGRATION -> contractExpectation(
-            feature.notificationAvailability(target, childCount = 1) == EntryDownloadActionAvailability.Available,
+            feature.notificationAvailability(entry, childCount = 1) == EntryDownloadActionAvailability.Available,
             "Download Actions must expose an applicable notification action",
         )
         else -> error("Unexpected Download Actions integration $integration")

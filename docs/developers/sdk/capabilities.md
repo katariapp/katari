@@ -188,3 +188,11 @@ extensions should implement only the Entry API contract. Neither contract alters
 unmetered transport, or guarantees that the provider transfers little data.
 
 Only opt in when the source's update traffic should intentionally be excluded from that warning.
+
+## Download applicability
+
+Download support belongs to the installed content-type interaction provider, not to source metadata or presentation.
+Application surfaces pass source identities to the Download Feature, which consistently resolves whether those sources
+can participate; extensions do not declare a second Download-availability flag. Local, missing, and compatibility-stub
+sources are not eligible for remote downloads. Bulk actions use the children currently visible after entry filtering,
+then apply the shared Next, Unread, or Bookmarked selection policy.

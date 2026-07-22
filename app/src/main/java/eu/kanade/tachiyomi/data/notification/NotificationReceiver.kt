@@ -9,7 +9,6 @@ import androidx.core.net.toUri
 import eu.kanade.tachiyomi.data.backup.restore.BackupRestoreJob
 import eu.kanade.tachiyomi.data.library.LibraryUpdateJob
 import eu.kanade.tachiyomi.data.updater.AppUpdateDownloadJob
-import eu.kanade.tachiyomi.source.isLocalOrStub
 import eu.kanade.tachiyomi.ui.main.MainActivity
 import eu.kanade.tachiyomi.util.system.cancelNotification
 import eu.kanade.tachiyomi.util.system.getParcelableExtraCompat
@@ -23,9 +22,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mihon.entry.interactions.EntryConsumptionFeature
 import mihon.entry.interactions.EntryDownloadActionFeature
-import mihon.entry.interactions.EntryDownloadActionTarget
 import mihon.entry.interactions.EntryDownloadRuntimeFeature
-import mihon.entry.interactions.EntryDownloadSourceAccess
 import mihon.entry.interactions.EntryMergeNavigationFeature
 import mihon.entry.interactions.EntryOpenFeature
 import mihon.entry.interactions.EntryOpenOptions
@@ -34,7 +31,6 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -57,7 +53,6 @@ class NotificationReceiver : BroadcastReceiver() {
     private val downloadRuntime: EntryDownloadRuntimeFeature by injectLazy()
     private val entryDownloadActionFeature: EntryDownloadActionFeature by injectLazy()
     private val entryOpenFeature: EntryOpenFeature by injectLazy()
-    private val sourceManager: SourceManager by injectLazy()
     private val scope: CoroutineScope by injectLazy()
     private val entryActionHandler by lazy {
         NotificationEntryActionHandler(
@@ -66,7 +61,6 @@ class NotificationReceiver : BroadcastReceiver() {
             entryConsumptionFeature = entryConsumptionFeature,
             entryDownloadActionFeature = entryDownloadActionFeature,
             entryOpenFeature = entryOpenFeature,
-            sourceManager = sourceManager,
         )
     }
 
@@ -879,7 +873,6 @@ internal class NotificationEntryActionHandler(
     private val entryConsumptionFeature: EntryConsumptionFeature,
     private val entryDownloadActionFeature: EntryDownloadActionFeature,
     private val entryOpenFeature: EntryOpenFeature,
-    private val sourceManager: SourceManager,
 ) {
     suspend fun openChild(
         context: Context,
@@ -930,14 +923,6 @@ internal class NotificationEntryActionHandler(
         val chapters = loadChapters(childIds)
         if (chapters.isNotEmpty()) {
             entryDownloadActionFeature.download(
-                target = EntryDownloadActionTarget(
-                    type = entry.type,
-                    sourceAccess = if (sourceManager.get(entry.source).isLocalOrStub()) {
-                        EntryDownloadSourceAccess.LOCAL_OR_STUB
-                    } else {
-                        EntryDownloadSourceAccess.REMOTE
-                    },
-                ),
                 entry = entry,
                 chapters = chapters,
             )
