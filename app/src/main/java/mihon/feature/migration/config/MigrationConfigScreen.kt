@@ -352,17 +352,15 @@ class MigrationConfigScreen(private val subjects: Collection<EntryMigrationSubje
             val includedSources = sourcePreferences.migrationSources.get()
             val disabledSources = sourcePreferences.disabledSources.get()
                 .mapNotNull { it.toLongOrNull() }
-            val sources = sourceManager.getCatalogueSources()
+            val sources = catalogueFeature.sources()
                 .asSequence()
                 .mapNotNull {
-                    val description = catalogueFeature.describe(it)
-                    val catalogue = description.catalogue ?: return@mapNotNull null
-                    if (description.language !in languages) return@mapNotNull null
+                    if (it.language !in languages) return@mapNotNull null
                     val source = Source(
                         id = it.id,
-                        lang = description.language,
+                        lang = it.language,
                         name = it.name,
-                        catalogue = catalogue,
+                        catalogue = tachiyomi.domain.source.model.EntryCatalogueDescription(it.supportsLatest),
                         isStub = false,
                     )
                     MigrationSource(

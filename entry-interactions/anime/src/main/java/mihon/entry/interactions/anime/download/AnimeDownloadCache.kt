@@ -38,6 +38,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.protobuf.ProtoBuf
 import logcat.LogPriority
+import mihon.entry.interactions.EntryCatalogueFeature
 import mihon.entry.interactions.anime.download.AnimeDownloadManager.Companion.TMP_DIR_SUFFIX
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.lang.launchNonCancellable
@@ -57,6 +58,7 @@ internal class AnimeDownloadCache(
     private val context: Context,
     private val provider: AnimeDownloadProvider = Injekt.get(),
     private val sourceManager: SourceManager = Injekt.get(),
+    private val catalogueFeature: () -> EntryCatalogueFeature = { Injekt.get() },
     private val storageManager: StorageManager = Injekt.get(),
 ) {
 
@@ -200,11 +202,11 @@ internal class AnimeDownloadCache(
 
             var sources = emptyList<Pair<Long, String>>()
             withTimeoutOrNull(30.seconds) {
-                sourceManager.isInitialized.first { it }
+                catalogueFeature().isInitialized.first { it }
                 sources =
-                    sourceManager.getCatalogueSources().map {
+                    catalogueFeature().sources().map {
                         it.id to
-                            provider.getSourceDirName(it)
+                            provider.getSourceDirName(it.name)
                     }
             }
 

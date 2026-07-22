@@ -125,7 +125,6 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.findChildOfType
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryStatus
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.DISABLED_ALPHA
 import tachiyomi.presentation.core.components.material.TextButton
@@ -153,8 +152,7 @@ fun EntryInfoBox(
     modifier: Modifier = Modifier,
 ) {
     val coverType = remember(entry.source) {
-        val source = Injekt.get<SourceManager>().getOrStub(entry.source)
-        Injekt.get<EntryCatalogueFeature>().describe(source).itemOrientation.toGridCoverType()
+        Injekt.get<EntryCatalogueFeature>().description(entry.source).itemOrientation.toGridCoverType()
     }
 
     Box(modifier = modifier) {

@@ -61,11 +61,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntryCatalogueSourceInfo
 import tachiyomi.domain.library.model.LibraryDisplayMode
 import tachiyomi.domain.source.model.CatalogListItem
-import tachiyomi.domain.source.service.CatalogSource
-import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.components.material.padding
 import tachiyomi.presentation.core.i18n.pluralStringResource
@@ -75,14 +73,12 @@ import tachiyomi.presentation.core.screens.EmptyScreenAction
 import tachiyomi.presentation.core.screens.LoadingScreen
 import tachiyomi.presentation.core.util.plus
 import tachiyomi.source.local.LocalSource
-import uy.kohesive.injekt.Injekt
-import uy.kohesive.injekt.api.get
 import eu.kanade.presentation.entry.components.EntryCover as CoverType
 import tachiyomi.core.common.i18n.stringResource as coreStringResource
 
 @Composable
 fun CatalogFeedBrowseContent(
-    source: CatalogSource?,
+    source: EntryCatalogueSourceInfo?,
     screenModel: FeedScreenModel<CatalogListItem>,
     columns: GridCells,
     displayMode: LibraryDisplayMode,
@@ -94,7 +90,6 @@ fun CatalogFeedBrowseContent(
     onItemClick: (CatalogListItem) -> Unit,
     onItemLongClick: (CatalogListItem) -> Unit,
 ) {
-    val catalogueFeature = remember { Injekt.get<EntryCatalogueFeature>() }
     val context = LocalContext.current
     val state by screenModel.state.collectAsState()
     val listState = rememberLazyListState()
@@ -201,7 +196,7 @@ fun CatalogFeedBrowseContent(
         EmptyScreen(
             modifier = Modifier.padding(contentPadding),
             message = state.error?.let(getErrorMessage) ?: stringResource(MR.strings.no_results_found),
-            actions = if (source?.source?.id == LocalSource.ID) {
+            actions = if (source?.id == LocalSource.ID) {
                 listOf(
                     EmptyScreenAction(
                         stringRes = MR.strings.local_source_help_guide,
@@ -232,8 +227,7 @@ fun CatalogFeedBrowseContent(
         return
     }
 
-    val sourceItemOrientation = source?.source?.let(catalogueFeature::describe)?.itemOrientation
-        ?: EntryItemOrientation.VERTICAL
+    val sourceItemOrientation = source?.itemOrientation ?: EntryItemOrientation.VERTICAL
 
     Box {
         when (displayMode) {

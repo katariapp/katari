@@ -1,12 +1,10 @@
 package eu.kanade.tachiyomi.source
 
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import tachiyomi.domain.source.model.SourceDisplayInfo
 import tachiyomi.domain.source.model.StubSource
 import tachiyomi.domain.source.model.UnifiedStubSource
-import tachiyomi.domain.source.service.CatalogSource
 import tachiyomi.source.local.LocalSource
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -44,6 +42,3 @@ fun SourceDisplayInfo.sourceNotInstalledName(): String =
 fun Source?.isLocalOrStub(): Boolean = this == null || id == LocalSource.ID || this is StubSource
 
 fun UnifiedSource?.isLocalOrStub(): Boolean = this == null || id == LocalSource.ID || this is UnifiedStubSource
-
-fun UnifiedSource.toCatalogSource(): CatalogSource? =
-    (this as? EntryCatalogueSource)?.let(CatalogSource::Mixed)

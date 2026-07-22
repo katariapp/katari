@@ -3,16 +3,11 @@ package mihon.entry.interactions
 import eu.kanade.tachiyomi.source.entry.EntryCatalogueSource
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientationProvider
 import eu.kanade.tachiyomi.source.entry.SourceMetadata
-import eu.kanade.tachiyomi.source.entry.UnifiedSource
-import eu.kanade.tachiyomi.source.entry.entryItemOrientation
-import eu.kanade.tachiyomi.source.entry.supportedEntryTypes
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceContribution
 import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
 import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.entry.interactions.documentation.source.ENTRY_SOURCE_CONTEXT_OWNER
 import mihon.entry.interactions.documentation.source.entrySourceContextInputDefinition
-import mihon.feature.graph.ApplicableFeatureContext
-import mihon.feature.graph.BlockedFeatureContext
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -24,17 +19,12 @@ import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
-import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
-import mihon.feature.graph.resolveFeatureContext
-import tachiyomi.domain.source.model.EntryCatalogueDescription
 import tachiyomi.domain.source.model.EntrySourceDescription
-import tachiyomi.domain.source.model.UnifiedStubSource
 
 internal val ENTRY_CATALOGUE_FEATURE_ID = FeatureId("entry.catalogue")
 private val ENTRY_CATALOGUE_FEATURE_OWNER = ContributionOwner("entry-catalogue")
@@ -116,7 +106,7 @@ private val LEGACY_SOURCE_UNAVAILABLE_BLOCKER = FeatureContextBlocker(
     inputs = listOf(LEGACY_SOURCE_REGISTERED_SUPPORT_CONTEXT),
 )
 
-private enum class EntryCatalogueBehavior(
+internal enum class EntryCatalogueBehavior(
     override val id: FeatureArtifactId,
 ) : FeatureBehaviorProjection {
     SOURCE_DESCRIPTION(FeatureArtifactId("entry.catalogue.source-description.projection")),
@@ -211,74 +201,3 @@ private fun sourceReferenceIntegration(
     projectionRequirements = listOf(reference.requirement),
     projections = listOf(reference.projection),
 )
-
-internal class DefaultEntryCatalogueFeature(
-    private val evaluation: FeatureGraphEvaluation,
-) : EntryCatalogueFeature {
-
-    override fun describe(source: UnifiedSource): EntrySourceDescription {
-        val catalogue = source as? EntryCatalogueSource
-        val description = EntrySourceDescription(
-            language = catalogue?.lang ?: (source as? UnifiedStubSource)?.lang.orEmpty(),
-            supportedEntryTypes = source.supportedEntryTypes()?.toSet(),
-            itemOrientation = source.entryItemOrientation(),
-            catalogue = catalogue?.let { EntryCatalogueDescription(supportsLatest = it.supportsLatest) },
-        )
-        val evidence = contextEvidence(SOURCE_DESCRIPTION_CONTEXT, SourceDescriptionEvidence(description))
-
-        requireUniformState(
-            SOURCE_DESCRIPTION_INTEGRATION_ID,
-            EntryCatalogueBehavior.SOURCE_DESCRIPTION,
-            evidence,
-            applicable = true,
-        )
-        requireUniformState(
-            CATALOGUE_AVAILABILITY_INTEGRATION_ID,
-            EntryCatalogueBehavior.CATALOGUE_AVAILABILITY,
-            evidence,
-            applicable = catalogue != null,
-        )
-        requireUniformState(
-            LATEST_AVAILABILITY_INTEGRATION_ID,
-            EntryCatalogueBehavior.LATEST_AVAILABILITY,
-            evidence,
-            applicable = catalogue?.supportsLatest == true,
-        )
-
-        return description
-    }
-
-    private fun requireUniformState(
-        integration: FeatureIntegrationId,
-        behaviorProjection: EntryCatalogueBehavior,
-        evidence: mihon.feature.graph.ContextEvidence<SourceDescriptionEvidence>,
-        applicable: Boolean,
-    ) {
-        val subjects = evaluation.integrations
-            .map { it.subject }
-            .filter { it.feature == ENTRY_CATALOGUE_FEATURE_ID && it.integration == integration }
-        check(subjects.isNotEmpty()) { "Entry Catalogue integration $integration was not discovered" }
-
-        subjects.forEach { subject ->
-            val resolution = resolveFeatureContext(
-                evaluation = evaluation,
-                contentType = subject.contentType,
-                feature = ENTRY_CATALOGUE_FEATURE_ID,
-                integration = integration,
-                evidence = listOf(evidence),
-            )
-            val resolved = resolution.integration
-            val hasBehavior = resolution.behaviorProjections.any { it.projection.id == behaviorProjection.id }
-            check(
-                if (applicable) {
-                    resolved is ApplicableFeatureContext && hasBehavior
-                } else {
-                    resolved is BlockedFeatureContext && !hasBehavior
-                },
-            ) {
-                "Entry Catalogue integration $integration resolved inconsistently for ${subject.contentType}: " +
-                    "$resolved, behaviors=${resolution.behaviorProjections}"
-            }
-        }
-    }
-}

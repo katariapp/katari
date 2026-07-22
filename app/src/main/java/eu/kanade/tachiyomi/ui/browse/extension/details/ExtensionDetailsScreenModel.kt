@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import logcat.LogPriority
 import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntryCatalogueSourceResolution
 import mihon.entry.interactions.EntrySourceHomeFeature
 import mihon.entry.interactions.EntrySourceHomeResolution
 import mihon.entry.interactions.EntrySourceSettingsFeature
@@ -76,10 +77,13 @@ class ExtensionDetailsScreenModel(
                                 compareBy(
                                     { !it.enabled },
                                     { item ->
-                                        val description = catalogueFeature.describe(item.source)
+                                        val source = (
+                                            catalogueFeature.source(item.source.id) as?
+                                                EntryCatalogueSourceResolution.Available
+                                            )?.source
                                         item.source.name.takeIf { item.labelAsName }
                                             ?: LocaleHelper.getSourceDisplayName(
-                                                description.language,
+                                                source?.language.orEmpty(),
                                                 context,
                                             ).lowercase()
                                     },
@@ -95,17 +99,20 @@ class ExtensionDetailsScreenModel(
                                 it.copyWithSources(
                                     sources
                                         .map { source ->
-                                            val description = catalogueFeature.describe(source.source)
+                                            val catalogueSource = (
+                                                catalogueFeature.source(source.source.id) as?
+                                                    EntryCatalogueSourceResolution.Available
+                                                )?.source
                                             ExtensionDetailsSourceUiModel(
                                                 id = source.source.id,
                                                 name = source.source.name,
                                                 title = source.source.name,
-                                                lang = description.language,
+                                                lang = catalogueSource?.language.orEmpty(),
                                                 labelAsName = source.labelAsName,
                                                 enabled = source.enabled,
                                                 hasSettings = sourceSettingsFeature.resolve(source.source.id) is
                                                     EntrySourceSettingsResolution.Available,
-                                                supportedEntryTypes = description.supportedEntryTypes,
+                                                supportedEntryTypes = catalogueSource?.supportedEntryTypes,
                                             )
                                         }
                                         .toImmutableList(),

@@ -126,6 +126,56 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application consumers cannot dispatch catalogue providers directly or through source manager`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                import eu.kanade.tachiyomi.source.entry.UnifiedSource
+                import tachiyomi.domain.source.service.SourceManager
+
+                class AppFeature(
+                    private val source: UnifiedSource,
+                    private val sourceManager: SourceManager,
+                ) {
+                    suspend fun search() = source.getSearchContent(1, "query", source.getFilterList())
+                    fun sources() = sourceManager.getCatalogueSources()
+                }
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "catalogue provider execution must use EntryCatalogueFeature"
+        error.message shouldContain "getSearchContent"
+        error.message shouldContain "getFilterList"
+        error.message shouldContain "getCatalogueSources"
+    }
+
+    @Test
+    fun `type modules cannot dispatch catalogue providers outside the Catalogue Feature host`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/anime/src/main/java/mihon/entry/interactions/anime/RawCatalogue.kt" to
+                    """
+                        package mihon.entry.interactions.anime
+
+                        import eu.kanade.tachiyomi.source.entry.UnifiedSource
+
+                        class RawCatalogue(private val source: UnifiedSource) {
+                            suspend fun popular() = source.getPopularContent(1)
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "catalogue provider execution must use EntryCatalogueFeature"
+        error.message shouldContain "getPopularContent"
+    }
+
+    @Test
     fun `new files under application source package cannot silently become description owners`() {
         createBaseFixture(
             additionalFiles = mapOf(

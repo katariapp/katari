@@ -14,7 +14,7 @@ internal fun ContentTypeFilter.matches(extension: Extension): Boolean {
 
 internal fun Extension.supportedEntryTypesForDisplay(
     installedSourceTypes: (UnifiedSource) -> Set<EntryType>? = { source ->
-        Injekt.get<EntryCatalogueFeature>().describe(source).supportedEntryTypes
+        Injekt.get<EntryCatalogueFeature>().description(source.id).supportedEntryTypes
     },
 ): Set<EntryType>? {
     val advertisedTypes = when (this) {

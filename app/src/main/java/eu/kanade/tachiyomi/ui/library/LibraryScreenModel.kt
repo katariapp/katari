@@ -574,7 +574,8 @@ class LibraryScreenModel(
             item.copy(
                 sourceName = sourceName,
                 sourceLanguage = sourceLanguage,
-                sourceItemOrientation = displayUnifiedSource?.let(entryCatalogueFeature::describe)?.itemOrientation
+                sourceItemOrientation = displayUnifiedSource?.let { entryCatalogueFeature.description(it.id) }
+                    ?.itemOrientation
                     ?: EntryItemOrientation.VERTICAL,
                 isLocal = item.sourceIds.size == 1 && item.entry.source == LocalSource.ID,
                 downloadCount = downloadCount,

@@ -42,7 +42,6 @@ import tachiyomi.data.entry.PlaybackPreferencesRepositoryImpl
 import tachiyomi.data.entry.ViewerSettingOverrideRepositoryImpl
 import tachiyomi.data.history.HistoryRepositoryImpl
 import tachiyomi.data.release.ReleaseServiceImpl
-import tachiyomi.data.source.CatalogSourceRepositoryImpl
 import tachiyomi.data.source.SourceRepositoryImpl
 import tachiyomi.data.source.StubSourceRepositoryImpl
 import tachiyomi.data.track.TrackRepositoryImpl
@@ -84,9 +83,7 @@ import tachiyomi.domain.history.interactor.UpsertHistory
 import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.release.interactor.GetApplicationRelease
 import tachiyomi.domain.release.service.ReleaseService
-import tachiyomi.domain.source.interactor.GetRemoteCatalog
 import tachiyomi.domain.source.interactor.GetSourcesWithNonLibraryEntries
-import tachiyomi.domain.source.repository.CatalogSourceRepository
 import tachiyomi.domain.source.repository.SourceRepository
 import tachiyomi.domain.source.repository.StubSourceRepository
 import tachiyomi.domain.source.service.HiddenSourceIds
@@ -170,14 +167,12 @@ class DomainModule : InjektModule {
 
         addSingletonFactory<HiddenSourceIds> { ProfileHiddenSourceIds(get()) }
         addSingletonFactory<SourceRepository> { SourceRepositoryImpl(get(), get(), get(), get()) }
-        addSingletonFactory<CatalogSourceRepository> { CatalogSourceRepositoryImpl(get(), get()) }
         addSingletonFactory<StubSourceRepository> { StubSourceRepositoryImpl(get()) }
         addFactory { GetEnabledSources(get(), get()) }
         addFactory { GetEnabledCatalogSources(get(), get(), get()) }
         addSingletonFactory { BrowseFeedService(get(), get()) }
         addFactory { GetLanguagesWithSources(get(), get()) }
         addFactory { GetLanguagesWithCatalogSources(get(), get()) }
-        addFactory { GetRemoteCatalog(get()) }
         addFactory { GetSourcesWithFavoriteCount(get(), get()) }
         addFactory { GetSourcesWithNonLibraryEntries(get(), get()) }
         addFactory { SetMigrateSorting(get()) }

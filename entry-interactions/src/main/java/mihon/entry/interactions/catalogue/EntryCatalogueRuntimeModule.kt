@@ -8,10 +8,12 @@ internal val EntryCatalogueFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.catalogue",
     contributor = EntryCatalogueFeatureContributor,
 ) {
+    addSingletonFactory<EntryCatalogueProviderHost> { SourceManagerEntryCatalogueProviderHost(get()) }
+    addSingletonFactory { EntryCatalogueGraphStateValidator(get<EntryInteractionComposition>().featureGraphEvaluation) }
     addSingletonFactory<EntryCatalogueFeature> {
-        DefaultEntryCatalogueFeature(get<EntryInteractionComposition>().featureGraphEvaluation)
+        DefaultEntryCatalogueFeature(get(), get(), get())
     }
-    addSingletonFactory<EntrySourceDescriptionResolutionPort> { get<EntryCatalogueFeature>() }
+    addSingletonFactory<EntrySourceDescriptionResolutionPort> { EntrySourceDescriptionAdapter(get(), get()) }
     EntryFeatureRuntimeArtifacts(
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryCatalogueFeature>() }),
     )

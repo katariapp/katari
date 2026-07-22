@@ -82,6 +82,10 @@ and their focused sections without inventing a graph relationship solely for doc
 
 `EntryCatalogueSource.supportsLatest` controls whether Katari offers the latest-updates catalogue call. Return `true` only when `getLatestUpdates()` has a meaningful implementation.
 
+Catalogue registration is the only source-side integration point. Katari derives source availability, paging, filters,
+global search, Migration search, presentation metadata, and normalized failures from that one installed provider through
+its Catalogue Feature boundary. An extension does not opt into those application surfaces separately.
+
 `supportsImmersiveFeed` opts the source into Katari's immersive catalogue and feed presentation. Katari composes this
 source-owned opt-in with the immersive runtime contributed for each returned entry type. It does not change the
 catalogue response shape; each returned entry type remains authoritative and must satisfy its normal media contract.

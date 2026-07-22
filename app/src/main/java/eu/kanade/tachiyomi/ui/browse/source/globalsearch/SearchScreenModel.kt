@@ -8,8 +8,6 @@ import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.service.SourcePreferences
 import eu.kanade.presentation.util.ioCoroutineScope
 import eu.kanade.tachiyomi.extension.ExtensionManager
-import eu.kanade.tachiyomi.source.adapter.defaultBackgroundFilterList
-import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
@@ -21,13 +19,14 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntryCatalogueSearchRequest
+import mihon.entry.interactions.EntryCatalogueSearchResult
+import mihon.entry.interactions.EntryCatalogueSourceInfo
 import tachiyomi.core.common.preference.toggle
 import tachiyomi.core.common.util.lang.launchIO
-import tachiyomi.domain.entry.adapter.toEntry
 import tachiyomi.domain.entry.interactor.GetEntry
 import tachiyomi.domain.entry.interactor.NetworkToLocalEntry
 import tachiyomi.domain.entry.model.Entry
-import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.concurrent.Executors
@@ -35,7 +34,6 @@ import java.util.concurrent.Executors
 abstract class SearchScreenModel(
     initialState: State = State(),
     sourcePreferences: SourcePreferences = Injekt.get(),
-    private val sourceManager: SourceManager = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
     private val networkToLocalEntry: NetworkToLocalEntry = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
@@ -55,11 +53,11 @@ abstract class SearchScreenModel(
 
     protected var extensionFilter: String? = null
 
-    open val sortComparator = { map: Map<UnifiedSource, SearchItemResult> ->
-        compareBy<UnifiedSource>(
+    open val sortComparator = { map: Map<EntryCatalogueSourceInfo, SearchItemResult> ->
+        compareBy<EntryCatalogueSourceInfo>(
             { (map[it] as? SearchItemResult.Success)?.isEmpty ?: true },
             { "${it.id}" !in pinnedSources },
-            { "${it.name.lowercase()} (${catalogueFeature.describe(it).language})" },
+            { "${it.name.lowercase()} (${it.language})" },
         )
     }
 
@@ -82,18 +80,18 @@ abstract class SearchScreenModel(
         }
     }
 
-    open fun getEnabledSources(): List<UnifiedSource> {
-        return sourceManager.getCatalogueSources()
-            .filter { catalogueFeature.describe(it).language in enabledLanguages && "${it.id}" !in disabledSources }
+    open fun getEnabledSources(): List<EntryCatalogueSourceInfo> {
+        return catalogueFeature.sources()
+            .filter { it.language in enabledLanguages && "${it.id}" !in disabledSources }
             .sortedWith(
                 compareBy(
                     { "${it.id}" !in pinnedSources },
-                    { "${it.name.lowercase()} (${catalogueFeature.describe(it).language})" },
+                    { "${it.name.lowercase()} (${it.language})" },
                 ),
             )
     }
 
-    private fun getSelectedSources(): List<UnifiedSource> {
+    private fun getSelectedSources(): List<EntryCatalogueSourceInfo> {
         val enabledSources = getEnabledSources()
 
         val filter = extensionFilter
@@ -101,11 +99,13 @@ abstract class SearchScreenModel(
             return enabledSources
         }
 
-        return extensionManager.installedExtensionsFlow.value
+        val extensionSourceIds = extensionManager.installedExtensionsFlow.value
             .filter { it.pkgName == filter }
             .filterIsInstance<eu.kanade.tachiyomi.extension.model.Extension.Installed>()
             .flatMap { extension -> extension.sources }
-            .filter { it in enabledSources }
+            .map { it.id }
+            .toSet()
+        return enabledSources.filter { it.id in extensionSourceIds }
     }
 
     fun updateSearchQuery(query: String?) {
@@ -159,13 +159,14 @@ abstract class SearchScreenModel(
                     }
 
                     try {
-                        val page = withContext(coroutineDispatcher) {
-                            source.getSearchContent(1, query, source.defaultBackgroundFilterList())
+                        val searchResult = withContext(coroutineDispatcher) {
+                            catalogueFeature.search(EntryCatalogueSearchRequest(source.id, query))
                         }
-
-                        val titles = page.items
-                            .map { it.toEntry(source.id) }
-                            .distinctBy { it.type to it.url }
+                        val titles = when (searchResult) {
+                            is EntryCatalogueSearchResult.Success -> searchResult.entries
+                            is EntryCatalogueSearchResult.Unavailable -> emptyList()
+                            is EntryCatalogueSearchResult.Failed -> throw searchResult.cause
+                        }
                             .let(::filterSearchResults)
                             .let { networkToLocalEntry(it) }
 
@@ -183,7 +184,7 @@ abstract class SearchScreenModel(
         }
     }
 
-    private fun updateItems(items: Map<UnifiedSource, SearchItemResult>) {
+    private fun updateItems(items: Map<EntryCatalogueSourceInfo, SearchItemResult>) {
         mutableState.update {
             it.copy(
                 items = items
@@ -192,7 +193,7 @@ abstract class SearchScreenModel(
         }
     }
 
-    private fun updateItem(source: UnifiedSource, result: SearchItemResult) {
+    private fun updateItem(source: EntryCatalogueSourceInfo, result: SearchItemResult) {
         updateItems(state.value.items + (source to result))
     }
 
@@ -215,7 +216,7 @@ abstract class SearchScreenModel(
         val searchQuery: String? = null,
         val sourceFilter: SourceFilter = SourceFilter.PinnedOnly,
         val onlyShowHasResults: Boolean = false,
-        val items: Map<UnifiedSource, SearchItemResult> = mapOf(),
+        val items: Map<EntryCatalogueSourceInfo, SearchItemResult> = mapOf(),
         val dialog: Dialog? = null,
     ) {
         val progress: Int = items.count { it.value !is SearchItemResult.Loading }

@@ -162,7 +162,7 @@ data class MigrateSourceSearchScreen(
                         }
                     },
                     onWebViewClick = {
-                        val source = screenModel.catalogSource?.source
+                        val source = screenModel.catalogSource
                         val home = source?.let {
                             Injekt.get<EntrySourceHomeFeature>().resolve(it.id)
                         } as? EntrySourceHomeResolution.Available

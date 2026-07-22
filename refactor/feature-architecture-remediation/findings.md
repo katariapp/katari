@@ -104,6 +104,37 @@ R5 compatibility rules are therefore:
 - Backup diagnostics must derive Tracking service IDs from `Backup.allEntries()`, which includes current generic,
   legacy Manga, legacy Anime, and profile-scoped Entries.
 
+### Catalogue execution
+
+The R6 execution audit found that Catalogue description already has a Feature authority, but Catalogue behavior still
+bypasses it through several parallel paths:
+
+- `CatalogSourceRepositoryImpl` and the three data paging sources resolve `EntryCatalogueSource` from `SourceManager`
+  and dispatch popular, latest, and search operations directly.
+- `CatalogFilterLoader` resolves raw filter contracts and source-compat asynchronous filters outside the Feature.
+- `GlobalSearchScreenModel` and the older `SearchScreenModel` independently enumerate sources, choose background
+  filters, dispatch first-page searches, normalize exceptions, deduplicate Entries, and persist matches.
+- Manual Migration search repeats the global-search path, while `SmartSourceSearchEngine` and
+  `MigrationListScreenModel` form a second direct Migration-search path with different candidate-persistence behavior.
+- `CatalogScreenModel`, chronological feeds, feed presentation, Migration configuration, browse-action settings, and
+  Anime download-cache recovery ask `SourceManager` or a raw `CatalogSource` wrapper to decide Catalogue availability.
+- `SourceManager.getCatalogueSource(s)` and `UnifiedSource.getPopularContent/getLatestUpdates/getSearchContent` leave
+  the raw dispatch path available to any future application consumer, even after existing callers are migrated.
+
+R6 must preserve two distinctions:
+
+- Catalogue paging and interactive global/manual search persist returned Entries through `NetworkToLocalEntry`, while
+  automatic smart Migration search keeps candidates ephemeral until it selects a target. Moving dispatch behind the
+  Feature must not silently persist every smart-search candidate.
+- General source lookup used by readers, downloads, tracking, source refresh, and other Feature adapters is not
+  Catalogue behavior. R6 removes Catalogue-specific lookup and execution from those consumers without turning
+  `EntryCatalogueFeature` into a catch-all source registry.
+
+The target boundary therefore exposes Feature-owned source facts and normalized Catalogue operations by source ID.
+Raw `EntryCatalogueSource`, filter compatibility helpers, and provider page calls remain confined to a Feature host
+adapter. Application and data consumers receive Feature models/results and cannot regain the old execution path through
+`UnifiedSource`, `CatalogSource`, or Catalogue-specific `SourceManager` methods.
+
 ### Download policy and context
 
 Generic bulk Download selection depends on `MangaReaderSettingsProvider.skipFiltered`, allowing a Manga reader setting

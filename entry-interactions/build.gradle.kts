@@ -23,6 +23,7 @@ dependencies {
     implementation(projects.entryInteractions.manga)
     implementation(projects.entryInteractions.anime)
     implementation(projects.entryInteractions.book)
+    implementation(projects.sourceCompat)
     implementation(libs.androidx.core)
     implementation(libs.androidx.work)
     implementation(libs.injekt)

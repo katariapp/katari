@@ -53,8 +53,6 @@ private object FakeSourceManager : SourceManager {
     override fun get(sourceKey: Long): UnifiedSource? = null
     override fun getOrStub(sourceKey: Long): UnifiedSource = error("Not used")
     override fun getAll(): List<UnifiedSource> = emptyList()
-    override fun getCatalogueSources(): List<UnifiedSource> = emptyList()
-    override fun getCatalogueSource(sourceKey: Long): EntryCatalogueSource? = null
     override fun getStubSources(): List<UnifiedSource> = emptyList()
     override fun getDisplayInfo(sourceKey: Long): SourceDisplayInfo {
         return SourceDisplayInfo(

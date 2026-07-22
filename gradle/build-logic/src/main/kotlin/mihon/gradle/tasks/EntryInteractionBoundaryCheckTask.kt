@@ -535,30 +535,49 @@ private class EntryInteractionBoundaryRules(
             file.relativePath.startsWith("domain/src/main/") ||
             file.relativePath.startsWith("presentation-core/src/main/") ||
             file.relativePath.startsWith("presentation-widget/src/main/")
-        if (!isApplicationLayer) return
 
-        if (file.relativePath !in SOURCE_DESCRIPTION_PORT_FILES) {
-            file.findReference("EntrySourceDescriptionResolutionPort")?.let { reference ->
-                findings += Finding(
-                    relativePath = file.relativePath,
-                    lineNumber = reference.lineNumber,
-                    reason = "application consumers must use EntryCatalogueFeature, not its Domain assembly port",
-                )
+        if (isApplicationLayer) {
+            if (file.relativePath !in SOURCE_DESCRIPTION_PORT_FILES) {
+                file.findReference("EntrySourceDescriptionResolutionPort")?.let { reference ->
+                    findings += Finding(
+                        relativePath = file.relativePath,
+                        lineNumber = reference.lineNumber,
+                        reason = "application consumers must use EntryCatalogueFeature, not its Domain assembly port",
+                    )
+                }
+            }
+
+            if (file.relativePath !in SOURCE_DESCRIPTION_COMPOSITION_FILES) {
+                file.imports
+                    .filter { it.importedFqName in RAW_SOURCE_DESCRIPTION_IMPORTS }
+                    .forEach { import ->
+                        findings += Finding(
+                            relativePath = file.relativePath,
+                            lineNumber = import.lineNumber,
+                            reason =
+                            "application source availability and description must use EntryCatalogueFeature, " +
+                                "not raw source contract ${import.importedFqName}",
+                        )
+                    }
             }
         }
 
-        if (file.relativePath in SOURCE_DESCRIPTION_COMPOSITION_FILES) return
+        val isCatalogueConsumerLayer = isApplicationLayer ||
+            (file.relativePath.startsWith("entry-interactions/") && "/src/main/" in file.relativePath)
+        if (!isCatalogueConsumerLayer) return
 
-        file.imports
-            .filter { it.importedFqName in RAW_SOURCE_DESCRIPTION_IMPORTS }
-            .forEach { import ->
-                findings += Finding(
-                    relativePath = file.relativePath,
-                    lineNumber = import.lineNumber,
-                    reason = "application source availability and description must use EntryCatalogueFeature, not " +
-                        "raw source contract ${import.importedFqName}",
-                )
+        if (file.relativePath !in CATALOGUE_PROVIDER_ASSEMBLY_FILES) {
+            RAW_CATALOGUE_OPERATION_NAMES.forEach { operation ->
+                file.findReference(operation)?.let { reference ->
+                    findings += Finding(
+                        relativePath = file.relativePath,
+                        lineNumber = reference.lineNumber,
+                        reason = "catalogue provider execution must use EntryCatalogueFeature, " +
+                            "not raw $operation dispatch",
+                    )
+                }
             }
+        }
     }
 
     private fun checkLegacySourceCompatibilityBoundary(file: KotlinSourceFile, findings: MutableList<Finding>) {
@@ -1070,14 +1089,9 @@ private class EntryInteractionBoundaryRules(
         private val SOURCE_DESCRIPTION_COMPOSITION_FILES = setOf(
             "app/src/main/java/eu/kanade/tachiyomi/extension/util/ExtensionLoader.kt",
             "app/src/main/java/eu/kanade/tachiyomi/source/AndroidSourceManager.kt",
-            "app/src/main/java/eu/kanade/tachiyomi/source/SourceExtensions.kt",
-            "data/src/main/java/tachiyomi/data/source/CatalogPagingSource.kt",
-            "domain/src/main/java/tachiyomi/domain/source/service/CatalogSource.kt",
-            "domain/src/main/java/tachiyomi/domain/source/service/SourceManager.kt",
         )
 
         private val SOURCE_DESCRIPTION_PORT_FILES = setOf(
-            "data/src/main/java/tachiyomi/data/source/CatalogSourceRepositoryImpl.kt",
             "data/src/main/java/tachiyomi/data/source/SourceRepositoryImpl.kt",
             "domain/src/main/java/tachiyomi/domain/entry/interactor/GetLibraryEntries.kt",
             "domain/src/main/java/tachiyomi/domain/source/service/EntrySourceDescriptionResolutionPort.kt",
@@ -1090,6 +1104,26 @@ private class EntryInteractionBoundaryRules(
             "eu.kanade.tachiyomi.source.entry.entryItemOrientation",
             "eu.kanade.tachiyomi.source.entry.supportedEntryTypes",
             "eu.kanade.tachiyomi.source.sourceItemOrientation",
+        )
+
+        private val CATALOGUE_PROVIDER_ASSEMBLY_FILES = setOf(
+            "domain/src/main/java/tachiyomi/domain/source/model/StubSource.kt",
+            "domain/src/main/java/tachiyomi/domain/source/model/UnifiedStubSource.kt",
+            "entry-interactions/src/main/java/mihon/entry/interactions/catalogue/host/" +
+                "SourceManagerEntryCatalogueProviderHost.kt",
+        )
+
+        private val RAW_CATALOGUE_OPERATION_NAMES = setOf(
+            "getPopularContent",
+            "getLatestUpdates",
+            "getSearchContent",
+            "getFilterList",
+            "getCatalogueSource",
+            "getCatalogueSources",
+            "resolveFilterList",
+            "defaultBackgroundFilterList",
+            "hasAsyncFilters",
+            "toCatalogSource",
         )
 
         private val RAW_SOURCE_ACTION_IMPORTS = mapOf(

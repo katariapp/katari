@@ -4,10 +4,10 @@
 
 - Baseline branch: `features-arch-refactor`
 - Baseline commit: `1d962d406` (`chore: planning cleanup`)
-- Current phase: R5 — Backup and Restore Participation
+- Current phase: R6 — Catalogue Feature Completion
 - Phase state: complete; awaiting milestone review and commit
 - Last updated: 2026-07-22
-- Next action: after R5 is approved and committed, begin R6 Catalogue Feature completion.
+- Next action: after R6 is approved and committed, begin R7 Download Policy and Context Ownership.
 
 ## Approved Decisions
 
@@ -26,8 +26,8 @@
 | R2 — Production Composition and Enforcement | Complete | `dd58b169e` | One module per production Feature |
 | R3 — Library Membership Lifecycle | Complete | `7984e5608` | One membership boundary and discovered follow-ups |
 | R4 — Entry Lifecycle Operations | Complete | `197d74fa1` | Metadata, removal, Profile move |
-| R5 — Backup and Restore Participation | Complete, awaiting commit | — | Includes tracker diagnostics defect |
-| R6 — Catalogue Feature Completion | Pending | — | Removes raw provider dispatch |
+| R5 — Backup and Restore Participation | Complete | `456eb25d0` | Includes tracker diagnostics defect |
+| R6 — Catalogue Feature Completion | Complete, awaiting commit | — | One Catalogue execution authority |
 | R7 — Download Policy and Context Ownership | Pending | — | Removes Manga preference leak |
 | R8 — Enforcement, Secondary Audit, and Documentation | Pending | — | Final alignment and cleanup |
 
@@ -220,6 +220,47 @@
 - Expected user action: review only the two compatibility/finalization choices under questionable actions. No answer
   is needed if they are acceptable; respond `commit and continue` to commit R5 and begin R6, or identify the rule that
   should change.
+
+### Phase R6 milestone — 2026-07-22
+
+- Outcome: Expanded `EntryCatalogueFeature` from source description into the one application boundary for source
+  discovery, availability, descriptions, filters, background search, popular/latest/search paging, and normalized
+  operation failures. Raw `EntryCatalogueSource` and `UnifiedSource` catalogue execution now exists only in the
+  Feature-owned provider host adapter.
+- Notable changes: Catalogue screens, chronological feeds, global search, manual and automatic Migration search,
+  extension metadata, Library orientation, feed presentation, browse settings, and Anime download-cache recovery now
+  consume source-ID-based Feature models/results. Paging and interactive search still persist displayed Entries through
+  `NetworkToLocalEntry`; automatic smart Migration still keeps candidates ephemeral until selecting a winner. The old
+  data repository/paging implementation, `GetRemoteCatalog`, `CatalogSource`, conversion helper, and Catalogue-specific
+  `SourceManager` methods were removed. Stable serialized popular/latest query values remain in an app-owned transport
+  adapter so existing feed/navigation state remains readable without retaining the old interactor.
+- Questionable actions or decisions: Anime Download Cache is constructed while type runtime modules are installed,
+  before the root Catalogue Feature can be resolved. It therefore holds a lazy Feature accessor and resolves it only
+  when cache renewal runs, after composition is complete. The cache still has no raw Catalogue path. The neutral
+  `EntrySourceDescriptionResolutionPort` also remains for Domain source assembly, but application consumers cannot use
+  it and build enforcement reserves it for that assembly seam. No answer is needed unless either boundary should be
+  redesigned.
+- Validation performed: `spotlessCheck`; full FOSS unit tests; focused Catalogue Feature, filter-loader, and smart
+  Migration tests; Entry interaction boundary enforcement and its build-logic tests; SQLDelight migration verification;
+  FOSS and telemetry/updater Release Kotlin compilation; production contract validation; developer-report and
+  content-type-reference generation/verification. The report contains 3 content types, 41 Features, 14 execution
+  points, 381 evaluated integrations, all selected contracts passing, and 0 obligations.
+- Known failures or intentionally broken compilation: none. One combined validation command incorrectly applied the
+  telemetry property to FOSS documentation generation and failed at `processFossGoogleServices`; rerunning the FOSS
+  and Release validations separately passed.
+- Manifesto comparison: installing an unknown future `EntryCatalogueSource` makes it discoverable through the same
+  Feature without edits to screens, search models, feeds, Migration, cache recovery, or `SourceManager`. Provider
+  absence remains valid missing/unsupported availability. Returned Entry types remain authoritative, shared Catalogue
+  contracts execute through the Feature for every graph-selected content type, and build validation rejects future
+  direct or indirect raw provider dispatch. Availability, behavior, presentation facts, failure normalization, and
+  source documentation now derive from one Feature authority rather than parallel wrappers and repositories. R6 is
+  aligned with the manifesto.
+- Documentation impact: the SDK capability guide now states that one Catalogue provider registration derives all
+  application discovery surfaces; the generated content-type reference remains current. The detailed general Feature
+  contributor workflow remains scheduled for R8 after the remaining Download policy migration stabilizes.
+- Expected user action: review only the lazy Anime cache boundary and retained Domain assembly port described under
+  questionable actions. No decision or additional feedback is required if both are acceptable. Respond
+  `commit and continue` to commit R6 and begin R7, or identify the boundary that should change.
 
 ## Milestone Template
 

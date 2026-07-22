@@ -100,14 +100,6 @@ class AndroidSourceManager(
         return sourcesMap.values.toList()
     }
 
-    override fun getCatalogueSources(): List<UnifiedSource> {
-        return sourcesMap.values.filterIsInstance<EntryCatalogueSource>()
-    }
-
-    override fun getCatalogueSource(sourceKey: Long): EntryCatalogueSource? {
-        return sourcesMap[sourceKey] as? EntryCatalogueSource
-    }
-
     override fun getStubSources(): List<UnifiedSource> {
         val installedSourceIds = sourcesMap.keys
         return stubSourcesMap.values

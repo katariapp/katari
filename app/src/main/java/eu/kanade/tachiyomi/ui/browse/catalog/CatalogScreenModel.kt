@@ -16,6 +16,8 @@ import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.core.preference.asState
 import eu.kanade.domain.source.interactor.GetIncognitoState
+import eu.kanade.domain.source.model.CATALOGUE_LATEST_QUERY
+import eu.kanade.domain.source.model.CATALOGUE_POPULAR_QUERY
 import eu.kanade.domain.source.model.FeedListingMode
 import eu.kanade.domain.source.model.FilterStateNode
 import eu.kanade.domain.source.model.SourceFeedPreset
@@ -33,7 +35,6 @@ import eu.kanade.tachiyomi.source.entry.EntryFilterList
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.sourceNotInstalledName
-import eu.kanade.tachiyomi.source.toCatalogSource
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,7 +49,10 @@ import logcat.LogPriority
 import mihon.core.common.CustomPreferences
 import mihon.core.common.browseLongPressActionPriorityForSource
 import mihon.core.common.sanitizeBrowseLongPressActionPriority
+import mihon.entry.interactions.EntryCatalogueBrowseRequest
 import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntryCatalogueListing
+import mihon.entry.interactions.EntryCatalogueSourceResolution
 import mihon.entry.interactions.EntryImmersiveAvailability
 import mihon.entry.interactions.EntryImmersiveContext
 import mihon.entry.interactions.EntryImmersiveFeature
@@ -89,10 +93,8 @@ import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.library.service.DuplicatePreferences
 import tachiyomi.domain.library.service.LibraryPreferences
-import tachiyomi.domain.source.interactor.GetRemoteCatalog
 import tachiyomi.domain.source.model.CatalogListItem
 import tachiyomi.domain.source.model.SourceDisplayInfo
-import tachiyomi.domain.source.service.CatalogSource
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.i18n.MR
 import uy.kohesive.injekt.Injekt
@@ -113,7 +115,6 @@ class CatalogScreenModel(
     customPreferences: CustomPreferences = Injekt.get(),
     private val browseFeedService: BrowseFeedService = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
-    private val getRemoteCatalog: GetRemoteCatalog = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val entryLibraryMembershipFeature: EntryLibraryMembershipFeature = Injekt.get(),
     private val entryMergeFeature: EntryMergeFeature = Injekt.get(),
@@ -144,19 +145,20 @@ class CatalogScreenModel(
             overrides = browseLongPressActionOverrides,
         )
 
-    private val filterLoader = CatalogFilterLoader(sourceManager)
-    private val presetHelper = CatalogPresetHelper(sourceId, sourceManager, browseFeedService, entryCatalogueFeature)
+    private val filterLoader = CatalogFilterLoader(entryCatalogueFeature)
+    private val presetHelper = CatalogPresetHelper(sourceId, browseFeedService, entryCatalogueFeature)
 
-    val catalogSource = sourceManager.get(sourceId)?.toCatalogSource()
+    val catalogSource =
+        (entryCatalogueFeature.source(sourceId) as? EntryCatalogueSourceResolution.Available)?.source
     val isImmersiveSourceAvailable: Boolean
-        get() = entryImmersiveFeature.sourceAvailability(catalogSource?.source) is
+        get() = entryImmersiveFeature.sourceAvailability(sourceManager.get(sourceId)) is
             EntryImmersiveSourceAvailability.Available
 
     init {
         if (catalogSource == null) {
             mutableState.update { it.copy(filterState = FilterUiState.Unavailable) }
         } else {
-            if (filterLoader.hasAsyncFilters(sourceId) && state.value.listing is Listing.Search) {
+            if (filterLoader.usesAsyncFilters(sourceId) && state.value.listing is Listing.Search) {
                 mutableState.update {
                     it.copy(
                         filterState = FilterUiState.Loading,
@@ -170,9 +172,7 @@ class CatalogScreenModel(
             }
 
             if (!getIncognitoState.await(sourceId)) {
-                when (catalogSource) {
-                    is CatalogSource.Mixed -> sourcePreferences.lastUsedSource.set(sourceId)
-                }
+                sourcePreferences.lastUsedSource.set(sourceId)
             }
         }
     }
@@ -186,7 +186,9 @@ class CatalogScreenModel(
                 emptyFlow()
             } else {
                 Pager(PagingConfig(pageSize = 25)) {
-                    getRemoteCatalog(sourceId, listing.query ?: "", listing.filters)
+                    entryCatalogueFeature.paging(
+                        EntryCatalogueBrowseRequest(sourceId, listing.toFeatureListing()),
+                    )
                 }.flow.map { pagingData ->
                     pagingData.map { item ->
                         val entryItem = item as CatalogListItem.EntryItem
@@ -212,7 +214,7 @@ class CatalogScreenModel(
         .stateIn(ioCoroutineScope, SharingStarted.Lazily, emptyFlow())
 
     val sourceName: String
-        get() = catalogSource?.source?.name ?: ""
+        get() = catalogSource?.name ?: ""
 
     val sourceDisplayInfo: SourceDisplayInfo
         get() = sourceManager.getDisplayInfo(sourceId)
@@ -224,8 +226,7 @@ class CatalogScreenModel(
         get() = state.value.filterState !is FilterUiState.Unavailable
 
     val sourceItemOrientation: EntryItemOrientation
-        get() = catalogSource?.source?.let(entryCatalogueFeature::describe)?.itemOrientation
-            ?: EntryItemOrientation.VERTICAL
+        get() = catalogSource?.itemOrientation ?: EntryItemOrientation.VERTICAL
 
     val homeUrl: String?
         get() = (entrySourceHomeFeature.resolve(sourceId) as? EntrySourceHomeResolution.Available)?.url
@@ -951,8 +952,8 @@ class CatalogScreenModel(
     }
 
     sealed class Listing(open val query: String?, open val filters: EntryFilterList) {
-        data object Popular : Listing(query = GetRemoteCatalog.QUERY_POPULAR, filters = EntryFilterList())
-        data object Latest : Listing(query = GetRemoteCatalog.QUERY_LATEST, filters = EntryFilterList())
+        data object Popular : Listing(query = CATALOGUE_POPULAR_QUERY, filters = EntryFilterList())
+        data object Latest : Listing(query = CATALOGUE_LATEST_QUERY, filters = EntryFilterList())
         data class Search(
             override val query: String?,
             override val filters: EntryFilterList,
@@ -961,8 +962,8 @@ class CatalogScreenModel(
         companion object {
             fun valueOf(query: String?): Listing {
                 return when (query) {
-                    GetRemoteCatalog.QUERY_POPULAR -> Popular
-                    GetRemoteCatalog.QUERY_LATEST -> Latest
+                    CATALOGUE_POPULAR_QUERY -> Popular
+                    CATALOGUE_LATEST_QUERY -> Latest
                     else -> Search(query = query, filters = EntryFilterList())
                 }
             }
@@ -1040,6 +1041,14 @@ class CatalogScreenModel(
     ) {
         val isUserQuery get() = listing is Listing.Search && !listing.query.isNullOrEmpty()
         val hasFilterCapability get() = filterState !is FilterUiState.Unavailable
+    }
+}
+
+private fun CatalogScreenModel.Listing.toFeatureListing(): EntryCatalogueListing {
+    return when (this) {
+        CatalogScreenModel.Listing.Popular -> EntryCatalogueListing.Popular
+        CatalogScreenModel.Listing.Latest -> EntryCatalogueListing.Latest
+        is CatalogScreenModel.Listing.Search -> EntryCatalogueListing.Search(query.orEmpty(), filters)
     }
 }
 

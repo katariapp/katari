@@ -593,7 +593,9 @@ class EntryScreen(
         }
 
         val previousController = navigator.items[navigator.size - 2]
-        val hasCatalogue = source?.let { Injekt.get<EntryCatalogueFeature>().describe(it).catalogue != null } == true
+        val hasCatalogue = source?.let {
+            Injekt.get<EntryCatalogueFeature>().description(it.id).catalogue != null
+        } == true
         if (previousController is CatalogScreen && hasCatalogue) {
             navigator.pop()
             previousController.searchGenre(genreName)

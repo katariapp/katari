@@ -99,8 +99,12 @@ internal class AnimeDownloadProvider(
     }
 
     fun getSourceDirName(source: UnifiedSource): String {
+        return getSourceDirName(source.name)
+    }
+
+    fun getSourceDirName(sourceName: String): String {
         return DiskUtil.buildValidFilename(
-            source.name + " [anime]",
+            sourceName + " [anime]",
             disallowNonAscii = libraryPreferences.disallowNonAsciiFilenames.get(),
         )
     }

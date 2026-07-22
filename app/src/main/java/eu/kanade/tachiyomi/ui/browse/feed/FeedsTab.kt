@@ -92,7 +92,6 @@ import eu.kanade.presentation.entry.components.DuplicateEntryDialog
 import eu.kanade.presentation.more.settings.screen.BrowseLongPressActionsScreen
 import eu.kanade.presentation.util.animateItemFastScroll
 import eu.kanade.tachiyomi.source.entry.EntryItemOrientation
-import eu.kanade.tachiyomi.source.toCatalogSource
 import eu.kanade.tachiyomi.ui.browse.catalog.BrowseLongPressOutcome
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreen
 import eu.kanade.tachiyomi.ui.browse.catalog.CatalogScreenModel
@@ -105,6 +104,7 @@ import eu.kanade.tachiyomi.ui.webview.WebViewScreen
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntryCatalogueSourceResolution
 import mihon.entry.interactions.EntryImmersiveFeature
 import mihon.entry.interactions.EntryImmersiveSourceAvailability
 import mihon.entry.interactions.EntrySourceHomeFeature
@@ -297,7 +297,6 @@ private fun Screen.FeedsTabContent(
             modifier = Modifier.pointerInput(Unit) {},
         ) {
             key(activeProfileId, activeFeed.id) {
-                val catalogSourceManager = remember { Injekt.get<SourceManager>() }
                 val actionModel = rememberScreenModel(
                     tag = "feed-actions-$activeProfileId-${activeFeed.id}",
                 ) {
@@ -326,9 +325,11 @@ private fun Screen.FeedsTabContent(
                 ) {
                     EntryImmersiveScreenModel()
                 }
-                val catalogSource = catalogSourceManager.get(activeSource.id)?.toCatalogSource()
                 val catalogueFeature = remember { Injekt.get<EntryCatalogueFeature>() }
-                val sourceItemOrientation = catalogSource?.source?.let(catalogueFeature::describe)?.itemOrientation
+                val catalogSource = remember(activeSource.id) {
+                    (catalogueFeature.source(activeSource.id) as? EntryCatalogueSourceResolution.Available)?.source
+                }
+                val sourceItemOrientation = catalogSource?.itemOrientation
                     ?: EntryItemOrientation.VERTICAL
                 val columns = remember(activeDisplayMode) {
                     val isLandscape = context.resources.configuration.orientation ==
@@ -388,10 +389,9 @@ private fun Screen.FeedsTabContent(
                                     bottom = contentPadding.calculateBottomPadding(),
                                 ),
                                 onWebViewClick = {
-                                    val source = catalogSource?.source
-                                    val home = source?.let {
-                                        Injekt.get<EntrySourceHomeFeature>().resolve(it.id)
-                                    } as? EntrySourceHomeResolution.Available
+                                    val source = catalogSource
+                                    val home = source?.let { Injekt.get<EntrySourceHomeFeature>().resolve(it.id) }
+                                        as? EntrySourceHomeResolution.Available
                                     if (source != null && home != null) {
                                         navigator.push(
                                             WebViewScreen(

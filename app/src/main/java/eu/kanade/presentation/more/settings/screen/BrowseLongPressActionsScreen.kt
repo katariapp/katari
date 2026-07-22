@@ -72,7 +72,7 @@ data class BrowseLongPressActionsScreen(
         val allSources by sourceRepository.getSources().collectFlowAsState(initial = emptyList())
         val catalogueSources = remember(allSources) {
             allSources
-                .filter { sourceManager.getCatalogueSource(it.id) != null }
+                .filter { it.catalogue != null }
                 .distinctBy(Source::id)
                 .sortedBy { it.visualName.lowercase() }
         }

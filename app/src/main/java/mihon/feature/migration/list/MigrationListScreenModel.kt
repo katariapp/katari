@@ -4,7 +4,6 @@ import androidx.annotation.FloatRange
 import cafe.adriel.voyager.core.model.StateScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import eu.kanade.domain.source.service.SourcePreferences
-import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -20,6 +19,7 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
 import mihon.entry.interactions.EntryCatalogueFeature
+import mihon.entry.interactions.EntryCatalogueSourceInfo
 import mihon.entry.interactions.EntryMigrationExecuteIntent
 import mihon.entry.interactions.EntryMigrationExecutionResult
 import mihon.entry.interactions.EntryMigrationFeature
@@ -58,7 +58,7 @@ class MigrationListScreenModel(
     private val catalogueFeature: EntryCatalogueFeature = Injekt.get(),
 ) : StateScreenModel<MigrationListScreenModel.State>(State()) {
 
-    private val smartSearchEngine = SmartSourceSearchEngine(extraSearchQuery)
+    private val smartSearchEngine = SmartSourceSearchEngine(extraSearchQuery, catalogueFeature)
 
     val items
         inline get() = state.value.items
@@ -131,9 +131,8 @@ class MigrationListScreenModel(
         val prioritizeByChapters = preferences.migrationPrioritizeByChapters.get()
         val deepSearchMode = preferences.migrationDeepSearchMode.get()
 
-        val sources = preferences.migrationSources.get()
-            .mapNotNull(sourceManager::get)
-            .filter { catalogueFeature.describe(it).catalogue != null }
+        val sourcesById = catalogueFeature.sources().associateBy { it.id }
+        val sources = preferences.migrationSources.get().mapNotNull(sourcesById::get)
 
         for (entry in entries) {
             if (!currentCoroutineContext().isActive) break
@@ -206,7 +205,7 @@ class MigrationListScreenModel(
 
     private suspend fun searchSource(
         entry: Entry,
-        source: UnifiedSource,
+        source: EntryCatalogueSourceInfo,
         deepSearchMode: Boolean,
     ): Pair<Entry, ChapterInfo>? {
         return try {
