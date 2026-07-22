@@ -5,9 +5,9 @@ import mihon.entry.interactions.documentation.entryContentTypeReferenceContribut
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 
 internal val ENTRY_TRACKING_FEATURE_ID = FeatureId("entry.tracking")
 internal val ENTRY_TRACKING_OWNER = ContributionOwner("entry-tracking")
@@ -32,9 +32,9 @@ internal enum class EntryTrackingIntegration(
     STATS(FeatureIntegrationId("entry.tracking.stats")),
 }
 
-internal enum class EntryTrackingConsequence(
+internal enum class EntryTrackingBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     SERVICE_REGISTRY(FeatureArtifactId("entry.tracking.service-registry")),
     SERVICE_PRESENTATION(FeatureArtifactId("entry.tracking.service-presentation")),
     ACCOUNT_SETTINGS(FeatureArtifactId("entry.tracking.account-settings")),

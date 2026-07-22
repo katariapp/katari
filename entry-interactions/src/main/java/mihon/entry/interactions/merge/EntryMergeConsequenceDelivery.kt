@@ -58,9 +58,9 @@ internal class EntryMergeConsequenceDelivery(
         val entry = host.profile(consequence.profileId).entries(listOf(consequence.entryId)).singleOrNull()
             ?: return
         when (consequence.artifactId) {
-            EntryMergeLibraryInitializationConsequence.id.value -> tracking().bindAutomatically(entry)
-            EntryMergeCoverCleanupConsequence.id.value -> coverCleanup(entry)
-            EntryMergeDownloadRemovalConsequence.id.value -> {
+            EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION -> tracking().bindAutomatically(entry)
+            EntryMergeConsequenceArtifact.COVER_CLEANUP -> coverCleanup(entry)
+            EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL -> {
                 check(
                     downloadMaintenance().removeEntryDownloads(entry) == EntryDownloadMaintenanceResult.Performed,
                 ) { "Merge download removal was not verified" }
@@ -73,4 +73,11 @@ internal class EntryMergeConsequenceDelivery(
         const val DEFAULT_BATCH_SIZE = 100
         const val RETRY_DELAY_MILLIS = 60_000L
     }
+}
+
+/** Stable keys for the legacy durable Merge delivery queue; these are not Feature Graph behavior projections. */
+internal object EntryMergeConsequenceArtifact {
+    const val LIBRARY_INITIALIZATION = "entry.merge.library-initialization"
+    const val COVER_CLEANUP = "entry.merge.cover-cleanup"
+    const val DOWNLOAD_REMOVAL = "entry.merge.download-removal"
 }

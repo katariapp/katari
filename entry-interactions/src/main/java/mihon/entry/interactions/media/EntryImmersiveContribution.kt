@@ -16,6 +16,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -25,7 +26,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
@@ -48,9 +48,9 @@ internal val ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID = FeatureIntegrationId
 internal val ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.first-reading-child")
 internal val ENTRY_IMMERSIVE_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.open-target")
 
-internal enum class EntryImmersiveConsequence(
+internal enum class EntryImmersiveBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     SOURCE_AVAILABILITY(FeatureArtifactId("entry.immersive.source-availability")),
     ENTRY_AVAILABILITY(FeatureArtifactId("entry.immersive.entry-availability")),
     CATALOGUE_SURFACE(FeatureArtifactId("entry.immersive.catalogue-surface")),
@@ -63,21 +63,21 @@ internal enum class EntryImmersiveConsequence(
     LIFECYCLE(FeatureArtifactId("entry.immersive.lifecycle")),
 }
 
-internal val ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES = setOf(
-    EntryImmersiveConsequence.SOURCE_AVAILABILITY,
-    EntryImmersiveConsequence.CATALOGUE_SURFACE,
-    EntryImmersiveConsequence.FEED_SURFACE,
-    EntryImmersiveConsequence.LONG_PRESS,
+internal val ENTRY_IMMERSIVE_SOURCE_BEHAVIORS = setOf(
+    EntryImmersiveBehavior.SOURCE_AVAILABILITY,
+    EntryImmersiveBehavior.CATALOGUE_SURFACE,
+    EntryImmersiveBehavior.FEED_SURFACE,
+    EntryImmersiveBehavior.LONG_PRESS,
 )
-internal val ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES = setOf(
-    EntryImmersiveConsequence.ENTRY_AVAILABILITY,
-    EntryImmersiveConsequence.LOAD,
-    EntryImmersiveConsequence.RENDER,
-    EntryImmersiveConsequence.PROGRESS,
-    EntryImmersiveConsequence.LIFECYCLE,
+internal val ENTRY_IMMERSIVE_ENTRY_BEHAVIORS = setOf(
+    EntryImmersiveBehavior.ENTRY_AVAILABILITY,
+    EntryImmersiveBehavior.LOAD,
+    EntryImmersiveBehavior.RENDER,
+    EntryImmersiveBehavior.PROGRESS,
+    EntryImmersiveBehavior.LIFECYCLE,
 )
 
-internal object EntryImmersiveProviderDispatchConsequence : SharedFeatureConsequence {
+internal object EntryImmersiveProviderDispatchBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.immersive.provider-dispatch")
 }
 
@@ -107,15 +107,15 @@ private val ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE = FeatureContextBlocker(
     listOf(ENTRY_IMMERSIVE_DECLARED_COMPATIBILITY_CONTEXT),
 )
 
-internal object EntryImmersiveChildConsequence : SharedFeatureConsequence {
+internal object EntryImmersiveChildBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.immersive.first-reading-child.selection")
 }
 
-internal object EntryImmersiveChildRefreshConsequence : SharedFeatureConsequence {
+internal object EntryImmersiveChildRefreshBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.immersive.first-reading-child.refresh")
 }
 
-internal object EntryImmersiveOpenConsequence : SharedFeatureConsequence {
+internal object EntryImmersiveOpenBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.immersive.open-target.dispatch")
 }
 
@@ -151,9 +151,9 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryImmersiveCapability.definition),
-                        sharedConsequences = listOf(
-                            EntryImmersiveProviderDispatchConsequence,
-                            EntryImmersiveConsequence.PRELOAD,
+                        behaviorProjections = listOf(
+                            EntryImmersiveProviderDispatchBehavior,
+                            EntryImmersiveBehavior.PRELOAD,
                         ),
                         behavioralContracts = listOf(EntryImmersiveProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_IMMERSIVE_REFERENCE.requirement),
@@ -183,7 +183,7 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                             ENTRY_IMMERSIVE_SOURCE_OPTED_OUT,
                             ENTRY_IMMERSIVE_DECLARED_TYPE_INCOMPATIBLE,
                         ),
-                        sharedConsequences = ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES.toList(),
+                        behaviorProjections = ENTRY_IMMERSIVE_SOURCE_BEHAVIORS.toList(),
                         behavioralContracts = listOf(EntryImmersiveSourceBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -206,7 +206,7 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                             ENTRY_IMMERSIVE_SOURCE_UNAVAILABLE,
                             ENTRY_IMMERSIVE_SOURCE_OPTED_OUT,
                         ),
-                        sharedConsequences = ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES.toList(),
+                        behaviorProjections = ENTRY_IMMERSIVE_ENTRY_BEHAVIORS.toList(),
                         behavioralContracts = listOf(EntryImmersiveBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -215,9 +215,9 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryImmersiveCapability.definition),
                             CapabilityExpression.Provided(EntryChildListCapability.definition),
                         ),
-                        sharedConsequences = listOf(
-                            EntryImmersiveChildConsequence,
-                            EntryImmersiveChildRefreshConsequence,
+                        behaviorProjections = listOf(
+                            EntryImmersiveChildBehavior,
+                            EntryImmersiveChildRefreshBehavior,
                         ),
                         behavioralContracts = listOf(EntryImmersiveChildBehaviorContract),
                     ),
@@ -227,7 +227,7 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryImmersiveCapability.definition),
                             CapabilityExpression.Provided(EntryOpenCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryImmersiveOpenConsequence),
+                        behaviorProjections = listOf(EntryImmersiveOpenBehavior),
                         behavioralContracts = listOf(EntryImmersiveOpenBehaviorContract),
                     ),
                 ),

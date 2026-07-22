@@ -9,6 +9,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
@@ -17,7 +18,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
@@ -42,27 +42,27 @@ internal val ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION =
 internal val ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION =
     FeatureIntegrationId("entry.library-filtering.outside-release-period")
 
-private object EntryLibraryFilterParticipationConsequence : SharedFeatureConsequence {
+private object EntryLibraryFilterParticipationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.library-filtering.type-participation")
 }
 
-private enum class EntryLibraryFilterContextConsequence(
+private enum class EntryLibraryFilterContextBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     POLICY(FeatureArtifactId("entry.library-filtering.policy")),
     MATCHING(FeatureArtifactId("entry.library-filtering.matching")),
     ACTIVE_STATE(FeatureArtifactId("entry.library-filtering.active-state")),
 }
 
-private object EntryLibraryFilterBookmarkControlConsequence : SharedFeatureConsequence {
+private object EntryLibraryFilterBookmarkControlBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.library-filtering.bookmark-control")
 }
 
-private object EntryLibraryFilterProgressControlConsequence : SharedFeatureConsequence {
+private object EntryLibraryFilterProgressControlBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.library-filtering.progress-controls")
 }
 
-private object EntryLibraryFilterReleasePeriodConsequence : SharedFeatureConsequence {
+private object EntryLibraryFilterReleasePeriodBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.library-filtering.outside-release-period")
 }
 
@@ -124,7 +124,7 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_FILTER_PARTICIPATION_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
-                        sharedConsequences = listOf(EntryLibraryFilterParticipationConsequence),
+                        behaviorProjections = listOf(EntryLibraryFilterParticipationBehavior),
                         behavioralContracts = listOf(EntryLibraryFilterBehaviorContract),
                         projectionRequirements = listOf(ENTRY_LIBRARY_FILTER_REFERENCE.requirement),
                         projections = listOf(ENTRY_LIBRARY_FILTER_REFERENCE.projection),
@@ -138,13 +138,13 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
                             ENTRY_LIBRARY_FILTER_TRACKING_CONTEXT,
                         ),
                         contextRule = featureContextRule(owner) { FeatureContextDecision.Applicable },
-                        sharedConsequences = EntryLibraryFilterContextConsequence.entries,
+                        behaviorProjections = EntryLibraryFilterContextBehavior.entries,
                         behavioralContracts = listOf(EntryLibraryFilterContextBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION,
                         prerequisites = CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
-                        sharedConsequences = listOf(EntryLibraryFilterProgressControlConsequence),
+                        behaviorProjections = listOf(EntryLibraryFilterProgressControlBehavior),
                         behavioralContracts = listOf(EntryLibraryFilterProgressBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -153,7 +153,7 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                             CapabilityExpression.Provided(EntryBookmarkCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryLibraryFilterBookmarkControlConsequence),
+                        behaviorProjections = listOf(EntryLibraryFilterBookmarkControlBehavior),
                         behavioralContracts = listOf(EntryLibraryFilterBookmarkBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -161,7 +161,7 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Provided(
                             EntryOutsideReleasePeriodFilterCapability.definition,
                         ),
-                        sharedConsequences = listOf(EntryLibraryFilterReleasePeriodConsequence),
+                        behaviorProjections = listOf(EntryLibraryFilterReleasePeriodBehavior),
                         behavioralContracts = listOf(EntryLibraryFilterReleasePeriodBehaviorContract),
                     ),
                 ),
@@ -181,22 +181,22 @@ internal fun FeatureGraphEvaluation.libraryFilterSelection(): EntryLibraryFilter
     return EntryLibraryFilterGraphSelection(
         participatingContentTypes = selectedContentTypes(
             ENTRY_LIBRARY_FILTER_PARTICIPATION_INTEGRATION,
-            EntryLibraryFilterParticipationConsequence.id,
+            EntryLibraryFilterParticipationBehavior.id,
         ),
         bookmarkTypes = applicableProviderTypes<EntryBookmarkProcessor>(
             feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
             integration = ENTRY_LIBRARY_FILTER_BOOKMARK_INTEGRATION,
-            consequence = EntryLibraryFilterBookmarkControlConsequence.id,
+            behaviorProjection = EntryLibraryFilterBookmarkControlBehavior.id,
         ),
         progressTypes = applicableProviderTypes<EntryLibraryProgressProvider>(
             feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
             integration = ENTRY_LIBRARY_FILTER_PROGRESS_INTEGRATION,
-            consequence = EntryLibraryFilterProgressControlConsequence.id,
+            behaviorProjection = EntryLibraryFilterProgressControlBehavior.id,
         ),
         releasePeriodTypes = applicableProviderTypes<EntryOutsideReleasePeriodFilterProvider>(
             feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
             integration = ENTRY_LIBRARY_FILTER_RELEASE_PERIOD_INTEGRATION,
-            consequence = EntryLibraryFilterReleasePeriodConsequence.id,
+            behaviorProjection = EntryLibraryFilterReleasePeriodBehavior.id,
         ),
     )
 }
@@ -212,7 +212,9 @@ internal fun FeatureGraphEvaluation.requireLibraryFilterContext(
             type = type,
             feature = ENTRY_LIBRARY_FILTER_FEATURE_ID,
             integration = ENTRY_LIBRARY_FILTER_CONTEXT_INTEGRATION,
-            consequences = EntryLibraryFilterContextConsequence.entries.map(EntryLibraryFilterContextConsequence::id),
+            behaviorProjections = EntryLibraryFilterContextBehavior.entries.map(
+                EntryLibraryFilterContextBehavior::id,
+            ),
             evidence = listOf(
                 contextEvidence(ENTRY_LIBRARY_FILTER_POLICY_CONTEXT, policy),
                 contextEvidence(ENTRY_LIBRARY_FILTER_STATE_CONTEXT, state),
@@ -225,14 +227,14 @@ internal fun FeatureGraphEvaluation.requireLibraryFilterContext(
 
 private fun FeatureGraphEvaluation.selectedContentTypes(
     integration: FeatureIntegrationId,
-    consequence: FeatureArtifactId,
+    behaviorProjection: FeatureArtifactId,
 ): Set<ContentTypeId> {
-    return sharedConsequences
+    return behaviorProjections
         .asSequence()
         .filter { applicability ->
             applicability.subject.feature == ENTRY_LIBRARY_FILTER_FEATURE_ID &&
                 applicability.subject.integration == integration &&
-                applicability.consequence.id == consequence
+                applicability.projection.id == behaviorProjection
         }
         .mapTo(mutableSetOf()) { it.subject.contentType }
 }

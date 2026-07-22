@@ -24,6 +24,7 @@ import mihon.feature.graph.selectFeatureArtifacts
 
 data class FeatureContractValidationPlan(
     val executions: List<FeatureContractExecutionSelection>,
+    val executionParticipantExecutions: List<FeatureExecutionContractExecutionSelection>,
     val issues: List<FeatureContractPlanIssue>,
 ) {
     val isComplete: Boolean
@@ -101,13 +102,19 @@ fun planFeatureContractValidation(
 ): FeatureContractValidationPlan {
     val declaredContracts = graph.declaredContracts()
     validateContributions(graph, declaredContracts, contributions)
+    val executionPlan = planFeatureExecutionContractValidation(graph, evaluation, contributions)
     val verifiersByContract = contributions.verifiers.associateBy { it.verifier.contract }
     val scenariosByContractIntegration = contributions.scenarios.groupBy {
         it.scenario.contract to it.scenario.integration
     }
     val staticArtifacts = selectFeatureArtifacts(graph, evaluation)
     val conditional = evaluation.integrations.filterIsInstance<ConditionalFeatureIntegration>()
-    val graphObligations = mutableListOf<FeatureObligation>().apply { addAll(staticArtifacts.obligations) }
+    val graphObligations = mutableListOf<FeatureObligation>().apply {
+        addAll(evaluation.obligations)
+        addAll(evaluation.executionObligations)
+        addAll(staticArtifacts.obligations)
+        addAll(executionPlan.graphObligations)
+    }
     val validationObligations = mutableListOf<FeatureContractValidationObligation>()
 
     val requiredSubjects = buildMap<FeatureContractReference, MutableList<FeatureIntegrationSubject>> {
@@ -221,9 +228,11 @@ fun planFeatureContractValidation(
                 { it.scenario?.scenario?.id?.value.orEmpty() },
             ),
         ),
+        executionParticipantExecutions = executionPlan.executions,
         issues = buildList {
             graphObligations.normalized().mapTo(this, ::GraphFeatureContractPlanIssue)
             validationObligations.distinct().mapTo(this, ::ValidationFeatureContractPlanIssue)
+            executionPlan.obligations.mapTo(this) { ValidationFeatureContractPlanIssue(it) }
         },
     )
 }

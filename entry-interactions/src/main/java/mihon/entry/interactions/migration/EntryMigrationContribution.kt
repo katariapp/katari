@@ -6,13 +6,13 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.anyOf
 
@@ -37,9 +37,9 @@ private val ENTRY_MIGRATION_REFERENCE = entryContentTypeReferenceContribution(
     order = 900,
 )
 
-internal enum class EntryMigrationBaseConsequence(
+internal enum class EntryMigrationBaseBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     PROVIDER_DISPATCH(FeatureArtifactId("entry.migration.provider-dispatch")),
     TARGET_SEARCH(FeatureArtifactId("entry.migration.target-search")),
     CONFIGURATION(FeatureArtifactId("entry.migration.configuration")),
@@ -52,39 +52,39 @@ internal enum class EntryMigrationBaseConsequence(
     MERGE_REPLACEMENT(FeatureArtifactId("entry.migration.merge-replacement")),
 }
 
-internal enum class EntryMigrationConsumptionConsequence(
+internal enum class EntryMigrationConsumptionBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     TRANSFER(FeatureArtifactId("entry.migration.consumption-transfer")),
 }
 
-internal enum class EntryMigrationBookmarkConsequence(
+internal enum class EntryMigrationBookmarkBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     TRANSFER(FeatureArtifactId("entry.migration.bookmark-transfer")),
 }
 
-internal enum class EntryMigrationProgressConsequence(
+internal enum class EntryMigrationProgressBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     COPY(FeatureArtifactId("entry.migration.progress-copy")),
 }
 
-internal enum class EntryMigrationPlaybackPreferencesConsequence(
+internal enum class EntryMigrationPlaybackPreferencesBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     COPY(FeatureArtifactId("entry.migration.playback-preferences-copy")),
 }
 
-internal enum class EntryMigrationViewerSettingsConsequence(
+internal enum class EntryMigrationViewerSettingsBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     COPY(FeatureArtifactId("entry.migration.viewer-settings-copy")),
 }
 
-internal enum class EntryMigrationDownloadConsequence(
+internal enum class EntryMigrationDownloadBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     PARTICIPATION(FeatureArtifactId("entry.migration.download-participation")),
     CLEANUP(FeatureArtifactId("entry.migration.download-cleanup")),
 }
@@ -128,7 +128,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_BASE_INTEGRATION_ID,
                         prerequisites = migration,
-                        sharedConsequences = EntryMigrationBaseConsequence.entries,
+                        behaviorProjections = EntryMigrationBaseBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.PROVIDER),
                         projectionRequirements = listOf(ENTRY_MIGRATION_REFERENCE.requirement),
                         projections = listOf(ENTRY_MIGRATION_REFERENCE.projection),
@@ -138,19 +138,19 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID,
                         prerequisites = allOf(migration, consumption),
-                        sharedConsequences = EntryMigrationConsumptionConsequence.entries,
+                        behaviorProjections = EntryMigrationConsumptionBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.CONSUMPTION),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID,
                         prerequisites = allOf(migration, bookmark),
-                        sharedConsequences = EntryMigrationBookmarkConsequence.entries,
+                        behaviorProjections = EntryMigrationBookmarkBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.BOOKMARK),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID,
                         prerequisites = allOf(migration, anyOf(consumption, bookmark)),
-                        sharedConsequences = listOf(EntryMigrationChildStateOptionConsequence),
+                        behaviorProjections = listOf(EntryMigrationChildStateOptionBehavior),
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.CHILD_STATE_OPTION),
                     ),
                     FeatureIntegration(
@@ -159,7 +159,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                             migration,
                             CapabilityExpression.Provided(EntryProgressCapability.definition),
                         ),
-                        sharedConsequences = EntryMigrationProgressConsequence.entries,
+                        behaviorProjections = EntryMigrationProgressBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.PROGRESS),
                     ),
                     FeatureIntegration(
@@ -168,7 +168,7 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                             migration,
                             CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
                         ),
-                        sharedConsequences = EntryMigrationPlaybackPreferencesConsequence.entries,
+                        behaviorProjections = EntryMigrationPlaybackPreferencesBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.PLAYBACK_PREFERENCES),
                     ),
                     FeatureIntegration(
@@ -177,13 +177,13 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                             migration,
                             CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
                         ),
-                        sharedConsequences = EntryMigrationViewerSettingsConsequence.entries,
+                        behaviorProjections = EntryMigrationViewerSettingsBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.VIEWER_SETTINGS),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID,
                         prerequisites = migrationDownload,
-                        sharedConsequences = EntryMigrationDownloadConsequence.entries,
+                        behaviorProjections = EntryMigrationDownloadBehavior.entries,
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.DOWNLOAD),
                     ),
                 ) +

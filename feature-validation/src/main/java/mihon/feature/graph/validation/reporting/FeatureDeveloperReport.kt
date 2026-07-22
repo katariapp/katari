@@ -40,7 +40,12 @@ data class FeatureDeveloperExecutionParticipant(
     val contextInputs: List<FeatureDeveloperOwnedReference>,
     val after: List<String>,
     val before: List<String>,
-    val contracts: List<String>,
+    val contracts: List<FeatureDeveloperExecutionContract>,
+)
+
+data class FeatureDeveloperExecutionContract(
+    val id: String,
+    val validations: List<FeatureDeveloperContractValidation>,
 )
 
 data class FeatureDeveloperOwnedReference(
@@ -61,7 +66,7 @@ data class FeatureDeveloperIntegration(
     val pendingSpecializedRequirements: List<FeatureDeveloperOwnedReference>,
     val contextInputs: List<FeatureDeveloperOwnedReference>,
     val declaredBlockers: List<FeatureDeveloperBlocker>,
-    val consequences: List<FeatureDeveloperArtifact>,
+    val behaviors: List<FeatureDeveloperArtifact>,
     val contracts: List<FeatureDeveloperContract>,
     val projections: List<FeatureDeveloperProjection>,
 )

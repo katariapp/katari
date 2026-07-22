@@ -7,6 +7,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -14,7 +15,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
@@ -32,14 +32,14 @@ internal val ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID =
 private val ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID =
     FeatureIntegrationId("entry.playback-preferences-transfer.migration")
 
-internal enum class EntryPlaybackPreferencesConsequence(
+internal enum class EntryPlaybackPreferencesBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     BACKUP_SNAPSHOT(FeatureArtifactId("entry.playback-preferences-transfer.backup-snapshot")),
     BACKUP_RESTORE(FeatureArtifactId("entry.playback-preferences-transfer.backup-restore")),
 }
 
-private object EntryPlaybackPreferencesMigrationConsequence : SharedFeatureConsequence {
+private object EntryPlaybackPreferencesMigrationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.playback-preferences-transfer.migration-copy")
 }
 
@@ -59,7 +59,7 @@ internal object EntryPlaybackPreferencesFeatureContributor : FeatureGraphContrib
                     FeatureIntegration(
                         id = ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
-                        sharedConsequences = EntryPlaybackPreferencesConsequence.entries,
+                        behaviorProjections = EntryPlaybackPreferencesBehavior.entries,
                         behavioralContracts = listOf(EntryPlaybackPreferencesBehaviorContract),
                         projectionRequirements = listOf(ENTRY_PLAYBACK_PREFERENCES_REFERENCE.requirement),
                         projections = listOf(ENTRY_PLAYBACK_PREFERENCES_REFERENCE.projection),
@@ -70,7 +70,7 @@ internal object EntryPlaybackPreferencesFeatureContributor : FeatureGraphContrib
                             CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
                             CapabilityExpression.Provided(EntryMigrationCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryPlaybackPreferencesMigrationConsequence),
+                        behaviorProjections = listOf(EntryPlaybackPreferencesMigrationBehavior),
                     ),
                 ),
             ),
@@ -82,19 +82,19 @@ internal class DefaultEntryPlaybackPreferencesFeature(
     evaluation: FeatureGraphEvaluation,
     private val interaction: EntryPlaybackPreferencesInteraction,
 ) : EntryPlaybackPreferencesFeature {
-    private val applicableTypesByConsequence =
-        EntryPlaybackPreferencesConsequence.entries.associateWith { consequence ->
+    private val applicableTypesByBehavior =
+        EntryPlaybackPreferencesBehavior.entries.associateWith { behavior ->
             evaluation.applicableProviderTypes<EntryPlaybackPreferencesProcessor>(
                 feature = ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID,
                 integration = ENTRY_PLAYBACK_PREFERENCES_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
             )
         }
 
-    private val applicableTypes = applicableTypesByConsequence.values
+    private val applicableTypes = applicableTypesByBehavior.values
         .also { selectedTypes ->
             check(selectedTypes.distinct().size <= 1) {
-                "Playback-preference consequences selected different provider sets: $applicableTypesByConsequence"
+                "Playback-preference behaviors selected different provider sets: $applicableTypesByBehavior"
             }
         }
         .firstOrNull()
@@ -102,7 +102,7 @@ internal class DefaultEntryPlaybackPreferencesFeature(
     private val migrationTypes = evaluation.applicableProviderTypes<EntryPlaybackPreferencesProcessor>(
         feature = ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID,
         integration = ENTRY_PLAYBACK_PREFERENCES_MIGRATION_INTEGRATION_ID,
-        consequence = EntryPlaybackPreferencesMigrationConsequence.id,
+        behaviorProjection = EntryPlaybackPreferencesMigrationBehavior.id,
     )
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes

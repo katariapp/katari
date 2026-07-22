@@ -8,6 +8,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -17,7 +18,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -47,18 +47,18 @@ internal object EntryBookmarkMutationBehaviorContract : FeatureBehaviorContract 
     override val id = FeatureArtifactId("entry.bookmarking.mutation-behavior")
 }
 
-private enum class EntryBookmarkProviderConsequence(
+private enum class EntryBookmarkProviderBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     TYPE_APPLICABILITY(FeatureArtifactId("entry.bookmarking.type-applicability")),
     PROVIDER_DISPATCH(FeatureArtifactId("entry.bookmarking.provider-dispatch")),
 }
 
-private object EntryBookmarkAvailabilityConsequence : SharedFeatureConsequence {
+private object EntryBookmarkAvailabilityBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.bookmarking.eligibility")
 }
 
-private object EntryBookmarkMutationConsequence : SharedFeatureConsequence {
+private object EntryBookmarkMutationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.bookmarking.mutation")
 }
 
@@ -92,7 +92,7 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_BOOKMARK_PROVIDER_INTEGRATION,
                         prerequisites = bookmark,
-                        sharedConsequences = EntryBookmarkProviderConsequence.entries,
+                        behaviorProjections = EntryBookmarkProviderBehavior.entries,
                         behavioralContracts = listOf(EntryBookmarkProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_BOOKMARK_REFERENCE.requirement),
                         projections = listOf(ENTRY_BOOKMARK_REFERENCE.projection),
@@ -109,7 +109,7 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(SELECTION_NO_CHANGE_BLOCKER),
-                        sharedConsequences = listOf(EntryBookmarkAvailabilityConsequence),
+                        behaviorProjections = listOf(EntryBookmarkAvailabilityBehavior),
                         behavioralContracts = listOf(EntryBookmarkAvailabilityBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -124,7 +124,7 @@ internal object EntryBookmarkFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(MUTATION_NO_CHANGE_BLOCKER),
-                        sharedConsequences = listOf(EntryBookmarkMutationConsequence),
+                        behaviorProjections = listOf(EntryBookmarkMutationBehavior),
                         behavioralContracts = listOf(EntryBookmarkMutationBehaviorContract),
                     ),
                 ),
@@ -137,7 +137,7 @@ internal fun FeatureGraphEvaluation.bookmarkTypes(): Set<EntryType> =
     applicableProviderTypes<EntryBookmarkProcessor>(
         feature = ENTRY_BOOKMARK_FEATURE_ID,
         integration = ENTRY_BOOKMARK_PROVIDER_INTEGRATION,
-        consequence = EntryBookmarkProviderConsequence.PROVIDER_DISPATCH.id,
+        behaviorProjection = EntryBookmarkProviderBehavior.PROVIDER_DISPATCH.id,
     )
 
 internal fun FeatureGraphEvaluation.requireBookmarkAvailabilityContext(type: EntryType, canChange: Boolean) {
@@ -145,7 +145,7 @@ internal fun FeatureGraphEvaluation.requireBookmarkAvailabilityContext(type: Ent
         type = type,
         feature = ENTRY_BOOKMARK_FEATURE_ID,
         integration = ENTRY_BOOKMARK_AVAILABILITY_INTEGRATION,
-        consequences = listOf(EntryBookmarkAvailabilityConsequence.id),
+        behaviorProjections = listOf(EntryBookmarkAvailabilityBehavior.id),
         evidence = listOf(contextEvidence(ENTRY_BOOKMARK_SELECTION_CHANGE_CONTEXT, canChange)),
         applicable = canChange,
     )
@@ -156,7 +156,7 @@ internal fun FeatureGraphEvaluation.requireBookmarkMutationContext(type: EntryTy
         type = type,
         feature = ENTRY_BOOKMARK_FEATURE_ID,
         integration = ENTRY_BOOKMARK_MUTATION_INTEGRATION,
-        consequences = listOf(EntryBookmarkMutationConsequence.id),
+        behaviorProjections = listOf(EntryBookmarkMutationBehavior.id),
         evidence = listOf(contextEvidence(ENTRY_BOOKMARK_MUTATION_CHANGE_CONTEXT, canChange)),
         applicable = canChange,
     )

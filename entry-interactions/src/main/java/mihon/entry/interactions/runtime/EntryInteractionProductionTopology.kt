@@ -15,47 +15,47 @@ internal fun productionEntryTypeRuntimeModules(
     bookEntryTypeRuntimeModule(profilePreferenceOwners),
 )
 
-/**
- * The application composition boundary for feature-owned contributions.
- *
- * This list installs independent contributors. It does not describe type support or contract applicability; those are
- * discovered from the contributors and the installed type modules by graph evaluation.
- */
-fun productionEntryFeatureContributors(): List<FeatureGraphContributor> = listOf(
-    EntryOpenFeatureContributor,
-    EntryContinueFeatureContributor,
-    EntryDownloadRuntimeFeatureContributor,
-    EntryDownloadActionFeatureContributor,
-    EntryAutomaticDownloadFeatureContributor,
-    EntryDownloadLifecycleFeatureContributor,
-    EntryDownloadConfigurationFeatureContributor,
-    EntryDownloadMaintenanceFeatureContributor,
-    EntryConsumptionFeatureContributor,
-    EntryBookmarkFeatureContributor,
-    EntryUpdateEligibilityFeatureContributor,
-    EntryProgressFeatureContributor,
-    EntryPlaybackPreferencesFeatureContributor,
-    EntryChildListFeatureContributor,
-    EntryLibraryFilterFeatureContributor,
-    EntryChildGroupFilterFeatureContributor,
-    EntryPreviewFeatureContributor,
-    EntryImmersiveFeatureContributor,
-    EntryRelatedEntriesFeatureContributor,
-    EntryLibraryProgressFeatureContributor,
-    EntryLibraryUpdateRefreshFeatureContributor,
-    EntryTypePresentationFeatureContributor,
-    EntryLibraryUpdateNotificationFeatureContributor,
-    EntryViewerSettingsFeatureContributor,
-    EntryMediaCacheFeatureContributor,
-    EntryMergeFeatureContributor,
-    EntryMigrationFeatureContributor,
-    EntryCatalogueFeatureContributor,
-    EntrySourceSettingsFeatureContributor,
-    EntrySourceHomeFeatureContributor,
-    EntryCoverNetworkFeatureContributor,
-    EntrySourceRefreshFeatureContributor,
-    EntryWebViewFeatureContributor,
-    EntryDeepLinkFeatureContributor,
-    EntryTrackerSourceAdapterFeatureContributor,
-    EntryTrackingFeatureContributor,
+/** The sole production installation boundary for Feature graph declarations and their runtime artifacts. */
+internal fun productionEntryFeatureRuntimeModules(): List<EntryFeatureRuntimeModule> = listOf(
+    EntryOpenFeatureRuntimeModule,
+    EntryContinueFeatureRuntimeModule,
+    EntryDownloadRuntimeFeatureRuntimeModule,
+    EntryDownloadActionFeatureRuntimeModule,
+    EntryAutomaticDownloadFeatureRuntimeModule,
+    EntryDownloadLifecycleFeatureRuntimeModule,
+    EntryDownloadConfigurationFeatureRuntimeModule,
+    EntryDownloadMaintenanceFeatureRuntimeModule,
+    EntryConsumptionFeatureRuntimeModule,
+    EntryBookmarkFeatureRuntimeModule,
+    EntryUpdateEligibilityFeatureRuntimeModule,
+    EntryProgressFeatureRuntimeModule,
+    EntryPlaybackPreferencesFeatureRuntimeModule,
+    EntryChildListFeatureRuntimeModule,
+    EntryLibraryFilterFeatureRuntimeModule,
+    EntryChildGroupFilterFeatureRuntimeModule,
+    EntryPreviewFeatureRuntimeModule,
+    EntryImmersiveFeatureRuntimeModule,
+    EntryRelatedEntriesFeatureRuntimeModule,
+    EntryLibraryProgressFeatureRuntimeModule,
+    EntryLibraryUpdateRefreshFeatureRuntimeModule,
+    EntryTypePresentationFeatureRuntimeModule,
+    EntryLibraryUpdateNotificationFeatureRuntimeModule,
+    EntryViewerSettingsFeatureRuntimeModule,
+    EntryMediaCacheFeatureRuntimeModule,
+    EntryMergeFeatureRuntimeModule,
+    EntryMigrationFeatureRuntimeModule,
+    EntryCatalogueFeatureRuntimeModule,
+    EntrySourceSettingsFeatureRuntimeModule,
+    EntrySourceHomeFeatureRuntimeModule,
+    EntryCoverNetworkFeatureRuntimeModule,
+    EntrySourceRefreshFeatureRuntimeModule,
+    EntryWebViewFeatureRuntimeModule,
+    EntryDeepLinkFeatureRuntimeModule,
+    EntryTrackerSourceAdapterFeatureRuntimeModule,
+    EntryTrackingFeatureRuntimeModule,
 )
+
+/** Graph-only view for cross-module content-type validation. Production runtime must install the modules themselves. */
+fun productionEntryFeatureGraphForValidation(): List<FeatureGraphContributor> {
+    return productionEntryFeatureRuntimeModules().map(EntryFeatureRuntimeModule::contributor)
+}

@@ -9,6 +9,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -18,7 +19,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -37,17 +37,17 @@ internal val ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION =
 internal val ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION =
     FeatureIntegrationId("entry.update-eligibility.decision")
 
-private enum class EntryUpdateEligibilityPolicyConsequence(
+private enum class EntryUpdateEligibilityPolicyBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     TYPE_PARTICIPATION(FeatureArtifactId("entry.update-eligibility.type-participation")),
     POLICY_AVAILABILITY(FeatureArtifactId("entry.update-eligibility.policy-availability")),
     SMART_UPDATE_SETTINGS(FeatureArtifactId("entry.update-eligibility.smart-update-settings")),
 }
 
-private enum class EntryUpdateEligibilityDecisionConsequence(
+private enum class EntryUpdateEligibilityDecisionBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     POLICY_DECISION(FeatureArtifactId("entry.update-eligibility.policy")),
     LIBRARY_UPDATE(FeatureArtifactId("entry.update-eligibility.library-update")),
     STATS(FeatureArtifactId("entry.update-eligibility.stats")),
@@ -134,7 +134,7 @@ internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContribut
                     FeatureIntegration(
                         id = ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION,
                         prerequisites = CapabilityExpression.Always,
-                        sharedConsequences = EntryUpdateEligibilityPolicyConsequence.entries,
+                        behaviorProjections = EntryUpdateEligibilityPolicyBehavior.entries,
                         behavioralContracts = listOf(EntryUpdateEligibilityBehaviorContract),
                         projectionRequirements = listOf(ENTRY_UPDATE_ELIGIBILITY_REFERENCE.requirement),
                         projections = listOf(ENTRY_UPDATE_ELIGIBILITY_REFERENCE.projection),
@@ -177,7 +177,7 @@ internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContribut
                             NOT_STARTED_BLOCKER,
                             OUTSIDE_RELEASE_PERIOD_BLOCKER,
                         ),
-                        sharedConsequences = EntryUpdateEligibilityDecisionConsequence.entries,
+                        behaviorProjections = EntryUpdateEligibilityDecisionBehavior.entries,
                         behavioralContracts = listOf(EntryUpdateEligibilityDecisionBehaviorContract),
                     ),
                 ),
@@ -187,12 +187,12 @@ internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContribut
 }
 
 internal fun FeatureGraphEvaluation.updateEligibilityContentTypes(): Set<ContentTypeId> =
-    sharedConsequences
+    behaviorProjections
         .asSequence()
         .filter { applicability ->
             applicability.subject.feature == ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID &&
                 applicability.subject.integration == ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION &&
-                applicability.consequence.id == EntryUpdateEligibilityPolicyConsequence.TYPE_PARTICIPATION.id
+                applicability.projection.id == EntryUpdateEligibilityPolicyBehavior.TYPE_PARTICIPATION.id
         }
         .mapTo(mutableSetOf()) { it.subject.contentType }
 
@@ -206,8 +206,8 @@ internal fun FeatureGraphEvaluation.requireUpdateEligibilityContext(
         type = type,
         feature = ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID,
         integration = ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION,
-        consequences = EntryUpdateEligibilityDecisionConsequence.entries.map(
-            EntryUpdateEligibilityDecisionConsequence::id,
+        behaviorProjections = EntryUpdateEligibilityDecisionBehavior.entries.map(
+            EntryUpdateEligibilityDecisionBehavior::id,
         ),
         evidence = listOf(
             contextEvidence(ENTRY_UPDATE_ELIGIBILITY_POLICY_CONTEXT, policy),

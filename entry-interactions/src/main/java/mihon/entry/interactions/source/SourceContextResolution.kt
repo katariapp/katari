@@ -13,7 +13,7 @@ import mihon.feature.graph.resolveFeatureContext
 internal fun FeatureGraphEvaluation.requireSourceContextState(
     feature: FeatureId,
     integration: FeatureIntegrationId,
-    consequence: FeatureArtifactId,
+    behaviorProjection: FeatureArtifactId,
     evidence: List<ContextEvidence<*>>,
     applicable: Boolean,
     contentType: EntryType? = null,
@@ -32,15 +32,15 @@ internal fun FeatureGraphEvaluation.requireSourceContextState(
             integration = integration,
             evidence = evidence,
         )
-        val hasConsequence = resolution.sharedConsequences.any { it.consequence.id == consequence }
+        val hasBehavior = resolution.behaviorProjections.any { it.projection.id == behaviorProjection }
         val matches = if (applicable) {
-            resolution.integration is ApplicableFeatureContext && hasConsequence
+            resolution.integration is ApplicableFeatureContext && hasBehavior
         } else {
-            resolution.integration is BlockedFeatureContext && !hasConsequence
+            resolution.integration is BlockedFeatureContext && !hasBehavior
         }
         check(matches) {
             "Source integration $feature:$integration resolved inconsistently for ${subject.contentType}: " +
-                "${resolution.integration}, consequences=${resolution.sharedConsequences}"
+                "${resolution.integration}, behaviors=${resolution.behaviorProjections}"
         }
     }
 }

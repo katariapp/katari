@@ -15,26 +15,26 @@ internal class DefaultEntryMediaCacheFeature(
     private val preferencesById: Map<EntryMediaCacheId, Preference<Boolean>>
 
     init {
-        val typesByConsequence = listOf(
-            ENTRY_MEDIA_CACHE_DISCOVERY_CONSEQUENCE_ID,
-            ENTRY_MEDIA_CACHE_SETTINGS_CONSEQUENCE_ID,
-            ENTRY_MEDIA_CACHE_MANUAL_CLEAR_CONSEQUENCE_ID,
-            ENTRY_MEDIA_CACHE_LAUNCH_CLEAR_CONSEQUENCE_ID,
-            ENTRY_MEDIA_CACHE_PREFERENCES_CONSEQUENCE_ID,
-            ENTRY_MEDIA_CACHE_INVALIDATION_CONSEQUENCE_ID,
-            ENTRY_MEDIA_CACHE_ERRORS_CONSEQUENCE_ID,
-        ).associateWith { consequence ->
+        val typesByBehavior = listOf(
+            ENTRY_MEDIA_CACHE_DISCOVERY_BEHAVIOR_ID,
+            ENTRY_MEDIA_CACHE_SETTINGS_BEHAVIOR_ID,
+            ENTRY_MEDIA_CACHE_MANUAL_CLEAR_BEHAVIOR_ID,
+            ENTRY_MEDIA_CACHE_LAUNCH_CLEAR_BEHAVIOR_ID,
+            ENTRY_MEDIA_CACHE_PREFERENCES_BEHAVIOR_ID,
+            ENTRY_MEDIA_CACHE_INVALIDATION_BEHAVIOR_ID,
+            ENTRY_MEDIA_CACHE_ERRORS_BEHAVIOR_ID,
+        ).associateWith { behavior ->
             evaluation.applicableProviderTypes<EntryMediaCacheProvider>(
                 feature = ENTRY_MEDIA_CACHE_FEATURE_ID,
                 integration = ENTRY_MEDIA_CACHE_INTEGRATION_ID,
-                consequence = consequence,
+                behaviorProjection = behavior,
             )
         }
-        check(typesByConsequence.values.toSet().size == 1) {
-            "Media-cache consequences selected different provider sets: ${typesByConsequence.describe()}"
+        check(typesByBehavior.values.toSet().size == 1) {
+            "Media-cache behaviors selected different provider sets: ${typesByBehavior.describe()}"
         }
 
-        val applicableTypes = typesByConsequence.getValue(ENTRY_MEDIA_CACHE_DISCOVERY_CONSEQUENCE_ID)
+        val applicableTypes = typesByBehavior.getValue(ENTRY_MEDIA_CACHE_DISCOVERY_BEHAVIOR_ID)
         val providers = applicableTypes.sortedBy { it.ordinal }.map { type ->
             checkNotNull(interaction.provider(type)) {
                 "Media-cache graph selected $type without an operational provider"
@@ -100,7 +100,7 @@ internal class DefaultEntryMediaCacheFeature(
 }
 
 private fun Map<FeatureArtifactId, Set<*>>.describe(): String =
-    entries.joinToString { (consequence, types) -> "${consequence.value}=$types" }
+    entries.joinToString { (behavior, types) -> "${behavior.value}=$types" }
 
 private fun Map<EntryMediaCacheId, Int>.duplicates(): Set<EntryMediaCacheId> =
     filterValues { it > 1 }.keys

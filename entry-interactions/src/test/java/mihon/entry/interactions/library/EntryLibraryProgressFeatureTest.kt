@@ -25,7 +25,7 @@ class EntryLibraryProgressFeatureTest {
     }
 
     @Test
-    fun `provider activates shared counts Continue and Bookmark consequences`() = runTest {
+    fun `provider activates shared counts Continue and Bookmark behaviors`() = runTest {
         val next = chapter(id = 12L)
         val features = features(
             plugin(

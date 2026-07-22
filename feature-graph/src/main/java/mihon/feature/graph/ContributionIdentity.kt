@@ -52,7 +52,7 @@ value class FeatureIntegrationId(val value: String) {
     override fun toString(): String = value
 }
 
-/** Stable identity within the consequence, contract, or projection namespace of a feature. */
+/** Stable identity within the behavior, contract, or projection namespace of a feature. */
 @JvmInline
 value class FeatureArtifactId(val value: String) {
     init {

@@ -5,12 +5,12 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -18,11 +18,11 @@ import mihon.feature.graph.featureContextRule
 internal val ENTRY_MIGRATION_PAIR_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.pair-context")
 internal val ENTRY_MIGRATION_INSPECTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.inspection-context")
 
-private object EntryMigrationPairConsequence : SharedFeatureConsequence {
+private object EntryMigrationPairBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.migration.target-acceptance")
 }
 
-private object EntryMigrationInspectionConsequence : SharedFeatureConsequence {
+private object EntryMigrationInspectionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.migration.preparation")
 }
 
@@ -124,7 +124,7 @@ internal fun entryMigrationPreparationContextIntegrations(
             TYPE_MISMATCH_BLOCKER,
             SAME_ENTRY_BLOCKER,
         ),
-        sharedConsequences = listOf(EntryMigrationPairConsequence),
+        behaviorProjections = listOf(EntryMigrationPairBehavior),
         behavioralContracts = listOf(EntryMigrationBehaviorContract.PAIR_CONTEXT),
     ),
     FeatureIntegration(
@@ -141,7 +141,7 @@ internal fun entryMigrationPreparationContextIntegrations(
             }
         },
         contextBlockers = listOf(PAIR_MISSING_BLOCKER, IDENTITY_CHANGED_BLOCKER),
-        sharedConsequences = listOf(EntryMigrationInspectionConsequence),
+        behaviorProjections = listOf(EntryMigrationInspectionBehavior),
         behavioralContracts = listOf(EntryMigrationBehaviorContract.INSPECTION_CONTEXT),
     ),
 )
@@ -159,7 +159,7 @@ internal fun FeatureGraphEvaluation.requireMigrationPairContext(
         type = sourceType,
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_PAIR_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryMigrationPairConsequence.id),
+        behaviorProjections = listOf(EntryMigrationPairBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_PERSISTED_CONTEXT, sourcePersisted),
             contextEvidence(ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT, sourceInLibrary),
@@ -181,7 +181,7 @@ internal fun FeatureGraphEvaluation.requireMigrationInspectionContext(
         type = sourceType,
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_INSPECTION_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryMigrationInspectionConsequence.id),
+        behaviorProjections = listOf(EntryMigrationInspectionBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_INSPECTED_PAIR_CONTEXT, pairPresent),
             contextEvidence(ENTRY_MIGRATION_IDENTITY_STABLE_CONTEXT, identityStable),

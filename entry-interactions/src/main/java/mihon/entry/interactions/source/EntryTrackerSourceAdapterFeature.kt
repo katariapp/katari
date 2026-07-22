@@ -15,6 +15,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -24,7 +25,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -73,7 +73,7 @@ private val TRACKER_SOURCE_IMAGE_CLIENT_UNAVAILABLE = FeatureContextBlocker(
     FeatureArtifactId("entry.tracker-source-adapter.image-client-unavailable"),
     listOf(TRACKER_SOURCE_IMAGE_CLIENT_CONTEXT),
 )
-private object TrackerSourceAdapterConsequence : SharedFeatureConsequence {
+private object TrackerSourceAdapterBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.tracker-source-adapter.connection")
 }
 
@@ -117,7 +117,7 @@ internal object EntryTrackerSourceAdapterFeatureContributor : FeatureGraphContri
                             TRACKER_SOURCE_HOME_UNAVAILABLE,
                             TRACKER_SOURCE_IMAGE_CLIENT_UNAVAILABLE,
                         ),
-                        sharedConsequences = listOf(TrackerSourceAdapterConsequence),
+                        behaviorProjections = listOf(TrackerSourceAdapterBehavior),
                         behavioralContracts = listOf(EntryTrackerSourceAdapterBehaviorContract),
                         projectionRequirements = listOf(TRACKER_SOURCE_ADAPTER_REFERENCE.requirement),
                         projections = listOf(TRACKER_SOURCE_ADAPTER_REFERENCE.projection),
@@ -144,7 +144,7 @@ internal class DefaultEntryTrackerSourceAdapterFeature(
         evaluation.requireSourceContextState(
             feature = TRACKER_SOURCE_ADAPTER_FEATURE_ID,
             integration = TRACKER_SOURCE_ADAPTER_INTEGRATION_ID,
-            consequence = TrackerSourceAdapterConsequence.id,
+            behaviorProjection = TrackerSourceAdapterBehavior.id,
             evidence = listOf(
                 contextEvidence(
                     TRACKER_SOURCE_SETTINGS_CONTEXT,

@@ -6,11 +6,11 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.DiscoveredFeatureGraphContributions
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -105,7 +105,7 @@ class EntrySourceSdkConsumerCoveragePlannerTest {
                             contextRule = featureContextRule(FUTURE_FEATURE_OWNER) {
                                 mihon.feature.graph.FeatureContextDecision.Applicable
                             },
-                            sharedConsequences = listOf(FutureConsequence),
+                            behaviorProjections = listOf(FutureBehavior),
                         ),
                     ),
                 ),
@@ -115,8 +115,8 @@ class EntrySourceSdkConsumerCoveragePlannerTest {
 
     private interface FutureSourceContract
 
-    private object FutureConsequence : SharedFeatureConsequence {
-        override val id = FeatureArtifactId("future.consequence")
+    private object FutureBehavior : FeatureBehaviorProjection {
+        override val id = FeatureArtifactId("future.behavior")
     }
 
     private companion object {

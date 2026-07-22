@@ -157,7 +157,7 @@ class EntryMergeFeatureTest {
         transition.preparations.single().categoryIds shouldContainExactly listOf(4L, 5L)
         transition.expected.entries.single { it.persistedEntryId == null }.entry.url shouldBe remote.url
         transition.consequenceRequests.map { it.artifactId } shouldContainExactly
-            listOf(EntryMergeLibraryInitializationConsequence.id.value)
+            listOf(EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION)
     }
 
     @Test
@@ -237,7 +237,7 @@ class EntryMergeFeatureTest {
 
         host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
             .consequenceRequests.map { it.artifactId } shouldContainExactly
-            listOf(EntryMergeCoverCleanupConsequence.id.value)
+            listOf(EntryMergeConsequenceArtifact.COVER_CLEANUP)
     }
 
     @Test

@@ -14,6 +14,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -23,7 +24,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -76,9 +76,9 @@ private val ENTRY_DEEP_LINK_NO_MATCH = FeatureContextBlocker(
     FeatureArtifactId("entry.deep-link.no-match"),
     listOf(ENTRY_DEEP_LINK_CONTEXT),
 )
-private enum class EntryDeepLinkConsequence(
+private enum class EntryDeepLinkBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     SOURCE_DISCOVERY(FeatureArtifactId("entry.deep-link.source-discovery")),
     URI_CLASSIFICATION(FeatureArtifactId("entry.deep-link.uri-classification")),
     ENTRY_RESOLUTION(FeatureArtifactId("entry.deep-link.entry-resolution")),
@@ -111,7 +111,7 @@ internal object EntryDeepLinkFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(ENTRY_DEEP_LINK_NO_RESOLVER, ENTRY_DEEP_LINK_NO_MATCH),
-                        sharedConsequences = EntryDeepLinkConsequence.entries,
+                        behaviorProjections = EntryDeepLinkBehavior.entries,
                         behavioralContracts = listOf(EntryDeepLinkBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DEEP_LINK_REFERENCE.requirement),
                         projections = listOf(ENTRY_DEEP_LINK_REFERENCE.projection),
@@ -207,11 +207,11 @@ internal class DefaultEntryDeepLinkFeature(
         matchState: EntryDeepLinkMatchState,
         applicable: Boolean,
     ) {
-        EntryDeepLinkConsequence.entries.forEach { consequence ->
+        EntryDeepLinkBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = ENTRY_DEEP_LINK_FEATURE_ID,
                 integration = ENTRY_DEEP_LINK_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(
                     contextEvidence(ENTRY_DEEP_LINK_CONTEXT, EntryDeepLinkContext(hasResolver, matchState)),
                 ),

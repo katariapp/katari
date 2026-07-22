@@ -6,6 +6,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -13,7 +14,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 
 internal val ENTRY_CHILD_GROUP_FILTER_FEATURE_ID = FeatureId("entry.child-group-filter")
 private val FEATURE_OWNER = ContributionOwner("entry-child-group-filter")
@@ -30,9 +30,9 @@ internal object EntryChildGroupFilterBehaviorContract : FeatureBehaviorContract 
     override val id = FeatureArtifactId("entry.child-group-filter.behavior")
 }
 
-private enum class EntryChildGroupFilterConsequence(
+private enum class EntryChildGroupFilterBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     STATE(FeatureArtifactId("entry.child-group-filter.state")),
     APPLY(FeatureArtifactId("entry.child-group-filter.apply")),
     PERSISTENCE(FeatureArtifactId("entry.child-group-filter.persistence")),
@@ -52,7 +52,7 @@ internal object EntryChildGroupFilterFeatureContributor : FeatureGraphContributo
                     FeatureIntegration(
                         id = ENTRY_CHILD_GROUP_FILTER_PROVIDER_INTEGRATION,
                         prerequisites = CapabilityExpression.Provided(EntryChildGroupFilterCapability.definition),
-                        sharedConsequences = EntryChildGroupFilterConsequence.entries,
+                        behaviorProjections = EntryChildGroupFilterBehavior.entries,
                         behavioralContracts = listOf(EntryChildGroupFilterBehaviorContract),
                         projectionRequirements = listOf(ENTRY_CHILD_GROUP_FILTER_REFERENCE.requirement),
                         projections = listOf(ENTRY_CHILD_GROUP_FILTER_REFERENCE.projection),
@@ -64,13 +64,13 @@ internal object EntryChildGroupFilterFeatureContributor : FeatureGraphContributo
 }
 
 internal fun FeatureGraphEvaluation.childGroupFilterProviderTypes() =
-    EntryChildGroupFilterConsequence.entries
-        .mapTo(mutableSetOf()) { consequence ->
+    EntryChildGroupFilterBehavior.entries
+        .mapTo(mutableSetOf()) { behavior ->
             applicableProviderTypes<EntryChildGroupFilterProcessor>(
                 feature = ENTRY_CHILD_GROUP_FILTER_FEATURE_ID,
                 integration = ENTRY_CHILD_GROUP_FILTER_PROVIDER_INTEGRATION,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
             )
         }
         .singleOrNull()
-        ?: error("Child-group filtering consequences selected different provider sets")
+        ?: error("Child-group filtering behaviors selected different provider sets")

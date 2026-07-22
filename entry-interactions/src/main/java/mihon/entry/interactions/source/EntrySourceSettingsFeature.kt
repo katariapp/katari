@@ -11,6 +11,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,7 +21,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -57,9 +57,9 @@ private val SOURCE_SETTINGS_UNSUPPORTED = FeatureContextBlocker(
     FeatureArtifactId("entry.source-settings.unsupported"),
     listOf(SOURCE_SETTINGS_CONTEXT),
 )
-private enum class SourceSettingsConsequence(
+private enum class SourceSettingsBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.source-settings.availability")),
     PREFERENCE_SCREEN(FeatureArtifactId("entry.source-settings.preference-screen")),
     BACKUP(FeatureArtifactId("entry.source-settings.backup")),
@@ -89,7 +89,7 @@ internal object EntrySourceSettingsFeatureContributor : FeatureGraphContributor 
                             }
                         },
                         contextBlockers = listOf(SOURCE_SETTINGS_MISSING, SOURCE_SETTINGS_UNSUPPORTED),
-                        sharedConsequences = SourceSettingsConsequence.entries,
+                        behaviorProjections = SourceSettingsBehavior.entries,
                         behavioralContracts = listOf(EntrySourceSettingsBehaviorContract),
                         projectionRequirements = listOf(SOURCE_SETTINGS_REFERENCE.requirement),
                         projections = listOf(SOURCE_SETTINGS_REFERENCE.projection),
@@ -130,11 +130,11 @@ internal class DefaultEntrySourceSettingsFeature(
     }
 
     private fun requireState(installed: Boolean, configurable: Boolean) {
-        SourceSettingsConsequence.entries.forEach { consequence ->
+        SourceSettingsBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = SOURCE_SETTINGS_FEATURE_ID,
                 integration = SOURCE_SETTINGS_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(
                     contextEvidence(SOURCE_SETTINGS_CONTEXT, SourceSettingsContext(installed, configurable)),
                 ),

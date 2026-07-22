@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 class UnknownContributionAcceptanceTest {
 
     @Test
-    fun `unknown contributions enter consequences obligations contracts and projections without curated edits`() {
+    fun `unknown contributions enter behaviors obligations contracts and projections without curated edits`() {
         val contractOwner = ContributionOwner("example.contract")
         val typesOwner = ContributionOwner("example.types")
         val featureOwner = ContributionOwner("example.feature")
@@ -17,7 +17,7 @@ class UnknownContributionAcceptanceTest {
             id = SpecializedAdapterId("example.adapter"),
             owner = featureOwner,
         )
-        val consequence = consequence("example.consequence")
+        val behavior = behavior("example.projection")
         val contract = RecordingContract()
         val projectionDefinition = featureProjectionDefinition<RecordingProjection>(
             id = FeatureArtifactId("example.projection"),
@@ -40,7 +40,7 @@ class UnknownContributionAcceptanceTest {
                             id = FeatureIntegrationId("example.integration"),
                             prerequisites = CapabilityExpression.Provided(alpha),
                             specializedRequirements = listOf(adapterDefinition),
-                            sharedConsequences = listOf(consequence),
+                            behaviorProjections = listOf(behavior),
                             behavioralContracts = listOf(contract),
                             projectionRequirements = listOf(projectionDefinition),
                             projections = listOf(projection),
@@ -53,7 +53,7 @@ class UnknownContributionAcceptanceTest {
 
         val initial = discoverAndAssembleFeatureGraph(contributors)
             .let { graph -> graph to evaluateFeatureGraph(graph) }
-        initial.second.sharedConsequences.map { it.subject.contentType.value } shouldContainExactly listOf("existing")
+        initial.second.behaviorProjections.map { it.subject.contentType.value } shouldContainExactly listOf("existing")
         initial.second.obligations shouldBe emptyList()
 
         types += contentType("future-complete", typesOwner, alpha, adapterDefinition)
@@ -67,11 +67,11 @@ class UnknownContributionAcceptanceTest {
         val expandedEvaluation = evaluateFeatureGraph(expandedGraph)
         val selected = selectFeatureArtifacts(expandedGraph, expandedEvaluation)
 
-        expandedEvaluation.sharedConsequences.map { it.subject.contentType.value } shouldContainExactly listOf(
+        expandedEvaluation.behaviorProjections.map { it.subject.contentType.value } shouldContainExactly listOf(
             "existing",
             "future-complete",
         )
-        expandedEvaluation.sharedConsequences.all { it.consequence === consequence } shouldBe true
+        expandedEvaluation.behaviorProjections.all { it.projection === behavior } shouldBe true
         expandedEvaluation.obligations.map { it.subject.contentType.value } shouldContainExactly listOf(
             "future-incomplete",
         )
@@ -106,7 +106,7 @@ class UnknownContributionAcceptanceTest {
             SpecializedAdapterId("future.adapter"),
             featureOwner,
         )
-        val consequence = consequence("future.consequence")
+        val behavior = behavior("future.projection")
         val blocker = FeatureContextBlocker(FeatureArtifactId("future.disabled"), listOf(context))
         val types = mutableListOf<ContentTypeContribution>()
         val features = mutableListOf<FeatureContribution>()
@@ -123,7 +123,7 @@ class UnknownContributionAcceptanceTest {
                 FeatureIntegration(
                     id = FeatureIntegrationId("future.baseline"),
                     prerequisites = CapabilityExpression.Always,
-                    sharedConsequences = listOf(consequence("future.baseline")),
+                    behaviorProjections = listOf(behavior("future.baseline")),
                 ),
             ),
         )
@@ -157,22 +157,22 @@ class UnknownContributionAcceptanceTest {
                     },
                     contextBlockers = listOf(blocker),
                     specializedRequirements = listOf(adapter),
-                    sharedConsequences = listOf(consequence),
+                    behaviorProjections = listOf(behavior),
                 ),
             ),
         )
 
         val graph = discoverAndAssembleFeatureGraph(contributors)
         val evaluation = evaluateFeatureGraph(graph)
-        evaluation.candidateConsequences
+        evaluation.candidateBehaviorProjections
             .filter { it.subject.feature == FeatureId("future.conditional") }
             .map { it.subject.contentType } shouldContainExactly listOf(
             ContentTypeId("future.complete"),
             ContentTypeId("future.incomplete"),
         )
-        evaluation.candidateConsequences
+        evaluation.candidateBehaviorProjections
             .filter { it.subject.feature == FeatureId("future.conditional") }
-            .all { it.consequence === consequence } shouldBe true
+            .all { it.projection === behavior } shouldBe true
 
         resolveFeatureContext(
             evaluation,
@@ -195,7 +195,7 @@ class UnknownContributionAcceptanceTest {
             feature = FeatureId("future.conditional"),
             integration = FeatureIntegrationId("future.conditional"),
             evidence = listOf(contextEvidence(context, FutureContext(enabled = true))),
-        ).sharedConsequences.map { it.consequence } shouldContainExactly listOf(consequence)
+        ).behaviorProjections.map { it.projection } shouldContainExactly listOf(behavior)
 
         val incomplete = resolveFeatureContext(
             evaluation = evaluation,
@@ -223,7 +223,7 @@ class UnknownContributionAcceptanceTest {
         )
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

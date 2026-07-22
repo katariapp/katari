@@ -10,6 +10,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -19,7 +20,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
@@ -33,22 +33,22 @@ internal class DefaultEntryPreviewFeature(
     private val previewTypes = evaluation.applicableProviderTypes<EntryPreviewProcessor>(
         feature = ENTRY_PREVIEW_FEATURE_ID,
         integration = ENTRY_PREVIEW_PROVIDER_INTEGRATION_ID,
-        consequence = EntryPreviewProviderDispatchConsequence.id,
+        behaviorProjection = EntryPreviewProviderDispatchBehavior.id,
     )
     private val configuredTypes = evaluation.applicableProviderTypes<EntryPreviewConfigurationProvider>(
         feature = ENTRY_PREVIEW_FEATURE_ID,
         integration = ENTRY_PREVIEW_CONFIGURATION_INTEGRATION_ID,
-        consequence = EntryPreviewConfigurationConsequence.id,
+        behaviorProjection = EntryPreviewConfigurationBehavior.id,
     )
     private val childTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_PREVIEW_FEATURE_ID,
         integration = ENTRY_PREVIEW_CHILD_INTEGRATION_ID,
-        consequence = EntryPreviewChildConsequence.id,
+        behaviorProjection = EntryPreviewChildBehavior.id,
     )
     private val openTypes = evaluation.applicableProviderTypes<EntryOpenProcessor>(
         feature = ENTRY_PREVIEW_FEATURE_ID,
         integration = ENTRY_PREVIEW_OPEN_INTEGRATION_ID,
-        consequence = EntryPreviewOpenConsequence.id,
+        behaviorProjection = EntryPreviewOpenBehavior.id,
     )
 
     override val settings: List<EntryPreviewSettings> = configuredTypes
@@ -199,7 +199,7 @@ internal class DefaultEntryPreviewFeature(
             type = processor.type,
             feature = ENTRY_PREVIEW_FEATURE_ID,
             integration = ENTRY_PREVIEW_CONTEXT_INTEGRATION_ID,
-            consequences = EntryPreviewConsequence.entries.map(EntryPreviewConsequence::id),
+            behaviorProjections = EntryPreviewBehavior.entries.map(EntryPreviewBehavior::id),
             evidence = listOf(
                 contextEvidence(ENTRY_PREVIEW_SOURCE_REQUIREMENT_CONTEXT, processor.sourceRequirement),
                 contextEvidence(ENTRY_PREVIEW_SOURCE_SUPPORT_CONTEXT, sourceSupported),

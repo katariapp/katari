@@ -9,6 +9,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -17,7 +18,6 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -79,38 +79,38 @@ internal object EntryDownloadBookmarkProtectionContextBehaviorContract : Feature
     override val id = FeatureArtifactId("entry.download.lifecycle.bookmark-protection.context-behavior")
 }
 
-internal enum class EntryDownloadLifecycleProviderConsequence(
+internal enum class EntryDownloadLifecycleProviderBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     TYPE_APPLICABILITY(FeatureArtifactId("entry.download.lifecycle.type-applicability")),
     EVENT_ACCEPTANCE(FeatureArtifactId("entry.download.lifecycle.events")),
     PROVIDER_DISPATCH(FeatureArtifactId("entry.download.lifecycle.provider-dispatch")),
 }
 
-internal object EntryDownloadLifecycleMarkedConsumedConsequence : SharedFeatureConsequence {
+internal object EntryDownloadLifecycleMarkedConsumedBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.lifecycle.marked-consumed-cleanup")
 }
 
-internal object EntryDownloadLifecycleCompletionConsequence : SharedFeatureConsequence {
+internal object EntryDownloadLifecycleCompletionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.lifecycle.completion-cleanup")
 }
 
-internal object EntryDownloadLifecycleDownloadAheadConsequence : SharedFeatureConsequence {
+internal object EntryDownloadLifecycleDownloadAheadBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.lifecycle.download-ahead")
 }
 
-internal enum class EntryDownloadLifecycleCleanupConsequence(
+internal enum class EntryDownloadLifecycleCleanupBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     CATEGORY_POLICY(FeatureArtifactId("entry.download.lifecycle.category-exclusions")),
     PHYSICAL_DISPATCH(FeatureArtifactId("entry.download.lifecycle.physical-dispatch")),
 }
 
-internal object EntryDownloadLifecycleBookmarkProtectionProviderConsequence : SharedFeatureConsequence {
+internal object EntryDownloadLifecycleBookmarkProtectionProviderBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.lifecycle.bookmark-protection.provider")
 }
 
-internal object EntryDownloadLifecycleBookmarkProtectionConsequence : SharedFeatureConsequence {
+internal object EntryDownloadLifecycleBookmarkProtectionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.lifecycle.bookmark-protection")
 }
 
@@ -181,7 +181,7 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_LIFECYCLE_PROVIDER_INTEGRATION,
                         prerequisites = download,
-                        sharedConsequences = EntryDownloadLifecycleProviderConsequence.entries,
+                        behaviorProjections = EntryDownloadLifecycleProviderBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadLifecycleProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_CONSUMED_CLEANUP_REFERENCE.requirement),
                         projections = listOf(ENTRY_DOWNLOAD_CONSUMED_CLEANUP_REFERENCE.projection),
@@ -196,7 +196,7 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                             MARKED_CONSUMED_DISABLED,
                         ),
                         contextBlockers = listOf(MARKED_CONSUMED_DISABLED),
-                        sharedConsequences = listOf(EntryDownloadLifecycleMarkedConsumedConsequence),
+                        behaviorProjections = listOf(EntryDownloadLifecycleMarkedConsumedBehavior),
                         behavioralContracts = listOf(EntryDownloadMarkedConsumedBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -209,7 +209,7 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                             COMPLETION_DISABLED,
                         ),
                         contextBlockers = listOf(COMPLETION_DISABLED),
-                        sharedConsequences = listOf(EntryDownloadLifecycleCompletionConsequence),
+                        behaviorProjections = listOf(EntryDownloadLifecycleCompletionBehavior),
                         behavioralContracts = listOf(EntryDownloadCompletionBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -226,7 +226,7 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                             }
                         },
                         contextBlockers = listOf(VIEWER_PROGRESS_INELIGIBLE, DOWNLOAD_AHEAD_DISABLED),
-                        sharedConsequences = listOf(EntryDownloadLifecycleDownloadAheadConsequence),
+                        behaviorProjections = listOf(EntryDownloadLifecycleDownloadAheadBehavior),
                         behavioralContracts = listOf(EntryDownloadAheadBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -239,13 +239,13 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                             CATEGORY_EXCLUDED,
                         ),
                         contextBlockers = listOf(CATEGORY_EXCLUDED),
-                        sharedConsequences = EntryDownloadLifecycleCleanupConsequence.entries,
+                        behaviorProjections = EntryDownloadLifecycleCleanupBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadCleanupOwnerBehaviorContract),
                     ),
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_BOOKMARK_PROTECTION_PROVIDER_INTEGRATION,
                         prerequisites = downloadAndBookmark,
-                        sharedConsequences = listOf(EntryDownloadLifecycleBookmarkProtectionProviderConsequence),
+                        behaviorProjections = listOf(EntryDownloadLifecycleBookmarkProtectionProviderBehavior),
                         behavioralContracts = listOf(EntryDownloadBookmarkProtectionProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_BOOKMARK_PROTECTION_REFERENCE.requirement),
                         projections = listOf(ENTRY_DOWNLOAD_BOOKMARK_PROTECTION_REFERENCE.projection),
@@ -262,7 +262,7 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                             }
                         },
                         contextBlockers = listOf(BOOKMARK_PROTECTION_OVERRIDDEN),
-                        sharedConsequences = listOf(EntryDownloadLifecycleBookmarkProtectionConsequence),
+                        behaviorProjections = listOf(EntryDownloadLifecycleBookmarkProtectionBehavior),
                         behavioralContracts = listOf(EntryDownloadBookmarkProtectionContextBehaviorContract),
                     ),
                 ),

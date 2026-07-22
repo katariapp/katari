@@ -9,6 +9,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -17,7 +18,6 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -94,48 +94,48 @@ internal object EntryDownloadNotificationContextBehaviorContract : FeatureBehavi
     override val id = FeatureArtifactId("entry.download.actions.notification.context-behavior")
 }
 
-internal object EntryDownloadIndividualProviderConsequence : SharedFeatureConsequence {
+internal object EntryDownloadIndividualProviderBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.actions.individual.provider-dispatch")
 }
 
-internal object EntryDownloadBulkProviderConsequence : SharedFeatureConsequence {
+internal object EntryDownloadBulkProviderBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.actions.bulk.provider-dispatch")
 }
 
-internal object EntryDownloadBookmarkedBulkProviderConsequence : SharedFeatureConsequence {
+internal object EntryDownloadBookmarkedBulkProviderBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.actions.bulk.bookmarked.provider-dispatch")
 }
 
-internal enum class EntryDownloadIndividualConsequence(
+internal enum class EntryDownloadIndividualBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.download.actions.individual.availability")),
     CANCEL(FeatureArtifactId("entry.download.actions.individual.cancel")),
     RETRY(FeatureArtifactId("entry.download.actions.individual.retry")),
 }
 
-internal enum class EntryDownloadIndividualOperationConsequence(
+internal enum class EntryDownloadIndividualOperationBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     DOWNLOAD(FeatureArtifactId("entry.download.actions.individual.download")),
     DELETE(FeatureArtifactId("entry.download.actions.individual.delete")),
 }
 
-internal enum class EntryDownloadBulkConsequence(
+internal enum class EntryDownloadBulkBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.download.actions.bulk.availability")),
     RESOLUTION(FeatureArtifactId("entry.download.actions.bulk.resolve")),
 }
 
-internal enum class EntryDownloadBookmarkedBulkConsequence(
+internal enum class EntryDownloadBookmarkedBulkBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.download.actions.bulk.bookmarked.availability")),
     RESOLUTION(FeatureArtifactId("entry.download.actions.bulk.bookmarked.resolve")),
 }
 
-internal object EntryDownloadNotificationConsequence : SharedFeatureConsequence {
+internal object EntryDownloadNotificationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.actions.notification.action")
 }
 
@@ -218,7 +218,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_INDIVIDUAL_PROVIDER_INTEGRATION,
                         prerequisites = download,
-                        sharedConsequences = listOf(EntryDownloadIndividualProviderConsequence),
+                        behaviorProjections = listOf(EntryDownloadIndividualProviderBehavior),
                         behavioralContracts = listOf(EntryDownloadIndividualProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_INDIVIDUAL_REFERENCE.requirement),
                         projections = listOf(ENTRY_DOWNLOAD_INDIVIDUAL_REFERENCE.projection),
@@ -226,7 +226,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_BULK_PROVIDER_INTEGRATION,
                         prerequisites = bulk,
-                        sharedConsequences = listOf(EntryDownloadBulkProviderConsequence),
+                        behaviorProjections = listOf(EntryDownloadBulkProviderBehavior),
                         behavioralContracts = listOf(EntryDownloadBulkProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_BULK_REFERENCE.requirement),
                         projections = listOf(ENTRY_DOWNLOAD_BULK_REFERENCE.projection),
@@ -234,7 +234,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_BOOKMARKED_BULK_PROVIDER_INTEGRATION,
                         prerequisites = bookmarkedBulk,
-                        sharedConsequences = listOf(EntryDownloadBookmarkedBulkProviderConsequence),
+                        behaviorProjections = listOf(EntryDownloadBookmarkedBulkProviderBehavior),
                         behavioralContracts = listOf(EntryDownloadBookmarkedBulkProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_BOOKMARKED_BULK_REFERENCE.requirement),
                         projections = listOf(ENTRY_DOWNLOAD_BOOKMARKED_BULK_REFERENCE.projection),
@@ -245,7 +245,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                         contextInputs = listOf(ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT),
                         contextRule = sourceAccessRule(owner),
                         contextBlockers = listOf(LOCAL_OR_STUB_BLOCKER),
-                        sharedConsequences = EntryDownloadIndividualConsequence.entries,
+                        behaviorProjections = EntryDownloadIndividualBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadIndividualContextBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -254,7 +254,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                         contextInputs = listOf(ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT, ENTRY_DOWNLOAD_SELECTION_CONTEXT),
                         contextRule = sourceAndNonEmptySelectionRule(owner),
                         contextBlockers = listOf(LOCAL_OR_STUB_BLOCKER, EMPTY_SELECTION_BLOCKER),
-                        sharedConsequences = EntryDownloadIndividualOperationConsequence.entries,
+                        behaviorProjections = EntryDownloadIndividualOperationBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadIndividualOperationBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -263,7 +263,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                         contextInputs = listOf(ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT),
                         contextRule = sourceAccessRule(owner),
                         contextBlockers = listOf(LOCAL_OR_STUB_BLOCKER),
-                        sharedConsequences = EntryDownloadBulkConsequence.entries,
+                        behaviorProjections = EntryDownloadBulkBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadBulkContextBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -272,7 +272,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                         contextInputs = listOf(ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT),
                         contextRule = sourceAccessRule(owner),
                         contextBlockers = listOf(LOCAL_OR_STUB_BLOCKER),
-                        sharedConsequences = EntryDownloadBookmarkedBulkConsequence.entries,
+                        behaviorProjections = EntryDownloadBookmarkedBulkBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadBookmarkedBulkContextBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -285,7 +285,7 @@ internal object EntryDownloadActionFeatureContributor : FeatureGraphContributor 
                             EMPTY_SELECTION_BLOCKER,
                             NOTIFICATION_SELECTION_TOO_LARGE_BLOCKER,
                         ),
-                        sharedConsequences = listOf(EntryDownloadNotificationConsequence),
+                        behaviorProjections = listOf(EntryDownloadNotificationBehavior),
                         behavioralContracts = listOf(EntryDownloadNotificationContextBehaviorContract),
                     ),
                 ),

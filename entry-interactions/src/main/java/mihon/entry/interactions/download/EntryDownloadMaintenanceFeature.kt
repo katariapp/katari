@@ -8,6 +8,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -15,7 +16,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID = FeatureId("entry.download.maintenance")
@@ -34,29 +34,29 @@ internal object EntryDownloadMaintenanceBehaviorContract : FeatureBehaviorContra
     override val id = FeatureArtifactId("entry.download.maintenance.provider-behavior")
 }
 
-private val ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID =
+private val ENTRY_DOWNLOAD_CACHE_MAINTENANCE_BEHAVIOR_ID =
     FeatureArtifactId("entry.download.maintenance.cache")
-private val ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_CONSEQUENCE_ID =
+private val ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_BEHAVIOR_ID =
     FeatureArtifactId("entry.download.maintenance.source")
-private val ENTRY_DOWNLOAD_TITLE_MAINTENANCE_CONSEQUENCE_ID =
+private val ENTRY_DOWNLOAD_TITLE_MAINTENANCE_BEHAVIOR_ID =
     FeatureArtifactId("entry.download.maintenance.title")
-private val ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_CONSEQUENCE_ID =
+private val ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_BEHAVIOR_ID =
     FeatureArtifactId("entry.download.maintenance.removal")
 
-private object EntryDownloadCacheMaintenanceConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID
+private object EntryDownloadCacheMaintenanceBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_DOWNLOAD_CACHE_MAINTENANCE_BEHAVIOR_ID
 }
 
-private object EntryDownloadSourceMaintenanceConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_CONSEQUENCE_ID
+private object EntryDownloadSourceMaintenanceBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_BEHAVIOR_ID
 }
 
-private object EntryDownloadTitleMaintenanceConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_TITLE_MAINTENANCE_CONSEQUENCE_ID
+private object EntryDownloadTitleMaintenanceBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_DOWNLOAD_TITLE_MAINTENANCE_BEHAVIOR_ID
 }
 
-private object EntryDownloadRemovalMaintenanceConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_CONSEQUENCE_ID
+private object EntryDownloadRemovalMaintenanceBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_BEHAVIOR_ID
 }
 
 internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContributor {
@@ -71,11 +71,11 @@ internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContrib
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                        sharedConsequences = listOf(
-                            EntryDownloadCacheMaintenanceConsequence,
-                            EntryDownloadSourceMaintenanceConsequence,
-                            EntryDownloadTitleMaintenanceConsequence,
-                            EntryDownloadRemovalMaintenanceConsequence,
+                        behaviorProjections = listOf(
+                            EntryDownloadCacheMaintenanceBehavior,
+                            EntryDownloadSourceMaintenanceBehavior,
+                            EntryDownloadTitleMaintenanceBehavior,
+                            EntryDownloadRemovalMaintenanceBehavior,
                         ),
                         behavioralContracts = listOf(EntryDownloadMaintenanceBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_MAINTENANCE_REFERENCE.requirement),
@@ -95,27 +95,27 @@ internal class DefaultEntryDownloadMaintenanceFeature(
     private val cacheTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_CACHE_MAINTENANCE_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_DOWNLOAD_CACHE_MAINTENANCE_BEHAVIOR_ID,
     )
     private val sourceTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_DOWNLOAD_SOURCE_MAINTENANCE_BEHAVIOR_ID,
     )
     private val titleTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_TITLE_MAINTENANCE_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_DOWNLOAD_TITLE_MAINTENANCE_BEHAVIOR_ID,
     )
     private val removalTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID,
-        consequence = ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_DOWNLOAD_REMOVAL_MAINTENANCE_BEHAVIOR_ID,
     )
 
     init {
         check(setOf(cacheTypes, sourceTypes, titleTypes, removalTypes).size == 1) {
-            "Download maintenance consequences selected different provider sets"
+            "Download maintenance behaviors selected different provider sets"
         }
     }
 

@@ -74,28 +74,28 @@ data class SpecializedFeatureObligation(
 ) : FeatureObligation
 
 /**
- * An applicability edge from one content type to one feature-owned shared consequence.
+ * An applicability edge from one content type to one feature-owned behavior projection.
  *
- * The consequence object is not copied or instantiated per content type. Multiple edges may reference the same object;
- * a later composition phase can therefore install a single shared coordinator while retaining every applicable type.
+ * The projection object is not copied or instantiated per content type. It only describes behavior already owned by
+ * the Feature coordinator.
  */
-data class SharedConsequenceApplicability(
+data class BehaviorProjectionApplicability(
     val subject: FeatureIntegrationSubject,
-    val consequence: SharedFeatureConsequence,
+    val projection: FeatureBehaviorProjection,
 )
 
-/** A conditional consequence discovered statically and installed without granting runtime applicability. */
-data class SharedConsequenceCandidate(
+/** A conditional behavior projection discovered statically without granting runtime applicability. */
+data class BehaviorProjectionCandidate(
     val subject: FeatureIntegrationSubject,
-    val consequence: SharedFeatureConsequence,
+    val projection: FeatureBehaviorProjection,
 )
 
 /** Deterministic derived evaluation of an assembled [FeatureGraph]. */
 data class FeatureGraphEvaluation internal constructor(
     val integrations: List<FeatureIntegrationEvaluation>,
     val obligations: List<SpecializedFeatureObligation>,
-    val sharedConsequences: List<SharedConsequenceApplicability>,
-    val candidateConsequences: List<SharedConsequenceCandidate>,
+    val behaviorProjections: List<BehaviorProjectionApplicability>,
+    val candidateBehaviorProjections: List<BehaviorProjectionCandidate>,
     val executionParticipants: List<FeatureExecutionParticipantEvaluation>,
     val executionObligations: List<SpecializedExecutionParticipantObligation>,
 )
@@ -117,19 +117,19 @@ fun evaluateFeatureGraph(graph: FeatureGraph): FeatureGraphEvaluation {
         obligations = evaluations
             .filterIsInstance<IncompleteFeatureIntegration>()
             .flatMap { it.obligations },
-        sharedConsequences = evaluations
+        behaviorProjections = evaluations
             .filterIsInstance<ApplicableFeatureIntegration>()
             .flatMap { evaluation ->
-                evaluation.integration.sharedConsequences
+                evaluation.integration.behaviorProjections
                     .sortedBy { it.id.value }
-                    .map { consequence -> SharedConsequenceApplicability(evaluation.subject, consequence) }
+                    .map { projection -> BehaviorProjectionApplicability(evaluation.subject, projection) }
             },
-        candidateConsequences = evaluations
+        candidateBehaviorProjections = evaluations
             .filterIsInstance<ConditionalFeatureIntegration>()
             .flatMap { evaluation ->
-                evaluation.integration.sharedConsequences
+                evaluation.integration.behaviorProjections
                     .sortedBy { it.id.value }
-                    .map { consequence -> SharedConsequenceCandidate(evaluation.subject, consequence) }
+                    .map { projection -> BehaviorProjectionCandidate(evaluation.subject, projection) }
             },
         executionParticipants = executionParticipants,
         executionObligations = executionParticipants

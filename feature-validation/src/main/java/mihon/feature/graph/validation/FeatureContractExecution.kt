@@ -45,10 +45,27 @@ data class FeatureContractExecutionSelection(
 data class FeatureContractValidationResult(
     val plan: FeatureContractValidationPlan,
     val executions: List<FeatureContractExecutionResult>,
+    val executionParticipantExecutions: List<FeatureExecutionContractExecutionResult> = emptyList(),
 ) {
     val isSuccessful: Boolean
-        get() = plan.isComplete && executions.all(FeatureContractExecutionResult::isSuccessful)
+        get() = plan.isComplete &&
+            executions.all(FeatureContractExecutionResult::isSuccessful) &&
+            executionParticipantExecutions.all(FeatureExecutionContractExecutionResult::isSuccessful)
 }
+
+sealed interface FeatureExecutionContractExecutionResult {
+    val selection: FeatureExecutionContractExecutionSelection
+}
+
+data class CompletedFeatureExecutionContractExecution(
+    override val selection: FeatureExecutionContractExecutionSelection,
+    val verification: FeatureContractVerificationResult,
+) : FeatureExecutionContractExecutionResult
+
+data class CrashedFeatureExecutionContractExecution(
+    override val selection: FeatureExecutionContractExecutionSelection,
+    val cause: Throwable,
+) : FeatureExecutionContractExecutionResult
 
 suspend fun validateFeatureContracts(
     plan: FeatureContractValidationPlan,
@@ -65,9 +82,26 @@ suspend fun validateFeatureContracts(
             CrashedFeatureContractExecution(selection, error)
         }
     }
-    return FeatureContractValidationResult(plan, executions)
+    val executionParticipantExecutions = plan.executionParticipantExecutions.map { selection ->
+        try {
+            CompletedFeatureExecutionContractExecution(
+                selection = selection,
+                verification = selection.verifier.verifier.verification.verify(
+                    FeatureExecutionContractExecutionInput(selection.contractSelection),
+                ),
+            )
+        } catch (error: Throwable) {
+            CrashedFeatureExecutionContractExecution(selection, error)
+        }
+    }
+    return FeatureContractValidationResult(plan, executions, executionParticipantExecutions)
 }
 
 private fun FeatureContractExecutionResult.isSuccessful(): Boolean {
     return this is CompletedFeatureContractExecution && verification == FeatureContractVerificationResult.Passed
+}
+
+private fun FeatureExecutionContractExecutionResult.isSuccessful(): Boolean {
+    return this is CompletedFeatureExecutionContractExecution &&
+        verification == FeatureContractVerificationResult.Passed
 }

@@ -13,6 +13,7 @@ import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.DiscoveredFeatureGraphContributions
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContractScenarioId
@@ -26,7 +27,6 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.FeatureProjection
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.capabilityDefinition
 import mihon.feature.graph.contextEvidence
@@ -39,6 +39,8 @@ import mihon.feature.graph.validation.FeatureContractFailure
 import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerificationResult
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributor
 import mihon.feature.graph.validation.featureValidationContributor
 import mihon.feature.graph.validation.planFeatureContractValidation
@@ -61,7 +63,7 @@ class FeatureDeveloperReportTest {
     private val contract = object : FeatureBehaviorContract {
         override val id = FeatureArtifactId("future.queue.behavior")
     }
-    private val consequence = object : SharedFeatureConsequence {
+    private val behavior = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId("future.queue.action")
     }
 
@@ -83,7 +85,7 @@ class FeatureDeveloperReportTest {
                 }
             },
             contextBlockers = listOf(blocker),
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
             behavioralContracts = listOf(contract),
             projectionRequirements = listOf(projectionDefinition),
             projections = listOf(FeatureProjection(projectionDefinition, FutureProjection)),
@@ -112,7 +114,7 @@ class FeatureDeveloperReportTest {
         report.integrations.first().apply {
             contextInputs.map { it.id } shouldContainExactly listOf("future.environment.ready")
             declaredBlockers.map { it.id } shouldContainExactly listOf("future.environment.unavailable")
-            consequences.single().availability shouldBe FeatureDeveloperArtifactAvailability.CONDITIONAL
+            behaviors.single().availability shouldBe FeatureDeveloperArtifactAvailability.CONDITIONAL
             contracts.single().validations.single().apply {
                 scenario shouldBe "future.queue.applicable"
                 outcome shouldBe FeatureDeveloperContractValidationOutcome.PASSED
@@ -140,7 +142,7 @@ class FeatureDeveloperReportTest {
         val integration = FeatureIntegration(
             id = integrationId,
             prerequisites = CapabilityExpression.Provided(provider),
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
             behavioralContracts = listOf(contract),
             projectionRequirements = listOf(projectionDefinition),
         )
@@ -175,7 +177,7 @@ class FeatureDeveloperReportTest {
             prerequisites = CapabilityExpression.Provided(provider),
             contextInputs = listOf(context),
             contextRule = featureContextRule(featureOwner) { FeatureContextDecision.Applicable },
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
             behavioralContracts = listOf(contract),
             projectionRequirements = listOf(projectionDefinition),
         )
@@ -210,7 +212,7 @@ class FeatureDeveloperReportTest {
         val integration = FeatureIntegration(
             id = integrationId,
             prerequisites = CapabilityExpression.Provided(provider),
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
             behavioralContracts = listOf(contract),
         )
         val graph = graph(listOf(type("audio", providesCapability = true)), integration)
@@ -280,8 +282,17 @@ class FeatureDeveloperReportTest {
             ),
         )
         val evaluation = evaluateFeatureGraph(graph)
+        val participantValidation = featureValidationContributor(participantOwner) {
+            add(
+                FeatureExecutionContractVerifier(
+                    FeatureExecutionContractReference(participant.id, executionContract),
+                ) {
+                    FeatureContractVerificationResult.Passed
+                },
+            )
+        }
         val validation = validateFeatureContracts(
-            planFeatureContractValidation(graph, evaluation, emptyList()),
+            planFeatureContractValidation(graph, evaluation, listOf(participantValidation)),
         )
 
         val report = buildFeatureDeveloperReport(graph, evaluation, validation)
@@ -294,7 +305,10 @@ class FeatureDeveloperReportTest {
             FeatureDeveloperIntegrationState.APPLICABLE,
             FeatureDeveloperIntegrationState.INAPPLICABLE,
         )
-        report.executionParticipants.first().contracts shouldContainExactly listOf("future.cleanup.behavior")
+        report.executionParticipants.first().contracts.map { it.id } shouldContainExactly
+            listOf("future.cleanup.behavior")
+        report.executionParticipants.first().contracts.single().validations.single().outcome shouldBe
+            FeatureDeveloperContractValidationOutcome.PASSED
         renderFeatureDeveloperReport(report) shouldContain
             "audio -> future.lifecycle.removed/future.cleanup.cover [applicable]"
         Unit

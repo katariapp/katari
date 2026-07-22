@@ -37,7 +37,7 @@ class EntryImmersiveFeatureTest {
     }
 
     @Test
-    fun `entry level provider with zero preload activates every common lifecycle consequence`() = runTest {
+    fun `entry level provider with zero preload activates every common lifecycle behavior`() = runTest {
         val processor = RecordingImmersiveProcessor(preloadRadius = 0)
         val feature = featureFor(EntryImmersiveCapability.bind(processor))
 

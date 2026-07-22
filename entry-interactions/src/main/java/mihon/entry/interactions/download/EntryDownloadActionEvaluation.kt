@@ -10,28 +10,28 @@ internal fun FeatureGraphEvaluation.downloadIndividualTypes(): Set<EntryType> =
     applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_INDIVIDUAL_PROVIDER_INTEGRATION,
-        consequence = EntryDownloadIndividualProviderConsequence.id,
+        behaviorProjection = EntryDownloadIndividualProviderBehavior.id,
     )
 
 internal fun FeatureGraphEvaluation.downloadBulkTypes(): Set<EntryType> =
     applicableProviderTypes<EntryBulkDownloadCandidateProcessor>(
         feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_BULK_PROVIDER_INTEGRATION,
-        consequence = EntryDownloadBulkProviderConsequence.id,
+        behaviorProjection = EntryDownloadBulkProviderBehavior.id,
     )
 
 internal fun FeatureGraphEvaluation.downloadBookmarkedBulkTypes(): Set<EntryType> =
     applicableProviderTypes<EntryBookmarkProcessor>(
         feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
         integration = ENTRY_DOWNLOAD_BOOKMARKED_BULK_PROVIDER_INTEGRATION,
-        consequence = EntryDownloadBookmarkedBulkProviderConsequence.id,
+        behaviorProjection = EntryDownloadBookmarkedBulkProviderBehavior.id,
     )
 
 internal fun FeatureGraphEvaluation.requireDownloadIndividualContext(target: EntryDownloadActionTarget) {
     requireDownloadActionContext(
         target = target,
         integration = ENTRY_DOWNLOAD_INDIVIDUAL_CONTEXT_INTEGRATION,
-        consequences = EntryDownloadIndividualConsequence.entries.map(EntryDownloadIndividualConsequence::id),
+        behaviorProjections = EntryDownloadIndividualBehavior.entries.map(EntryDownloadIndividualBehavior::id),
     )
 }
 
@@ -42,8 +42,8 @@ internal fun FeatureGraphEvaluation.requireDownloadIndividualOperationContext(
     requireDownloadActionContext(
         target = target,
         integration = ENTRY_DOWNLOAD_INDIVIDUAL_OPERATION_INTEGRATION,
-        consequences = EntryDownloadIndividualOperationConsequence.entries.map(
-            EntryDownloadIndividualOperationConsequence::id,
+        behaviorProjections = EntryDownloadIndividualOperationBehavior.entries.map(
+            EntryDownloadIndividualOperationBehavior::id,
         ),
         selectionState = selectionState,
     )
@@ -57,10 +57,10 @@ internal fun FeatureGraphEvaluation.requireDownloadBulkContext(target: EntryDown
         } else {
             ENTRY_DOWNLOAD_BULK_CONTEXT_INTEGRATION
         },
-        consequences = if (bookmarked) {
-            EntryDownloadBookmarkedBulkConsequence.entries.map(EntryDownloadBookmarkedBulkConsequence::id)
+        behaviorProjections = if (bookmarked) {
+            EntryDownloadBookmarkedBulkBehavior.entries.map(EntryDownloadBookmarkedBulkBehavior::id)
         } else {
-            EntryDownloadBulkConsequence.entries.map(EntryDownloadBulkConsequence::id)
+            EntryDownloadBulkBehavior.entries.map(EntryDownloadBulkBehavior::id)
         },
     )
 }
@@ -72,7 +72,7 @@ internal fun FeatureGraphEvaluation.requireDownloadNotificationContext(
     requireDownloadActionContext(
         target = target,
         integration = ENTRY_DOWNLOAD_NOTIFICATION_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryDownloadNotificationConsequence.id),
+        behaviorProjections = listOf(EntryDownloadNotificationBehavior.id),
         selectionState = selectionState,
     )
 }
@@ -80,14 +80,14 @@ internal fun FeatureGraphEvaluation.requireDownloadNotificationContext(
 private fun FeatureGraphEvaluation.requireDownloadActionContext(
     target: EntryDownloadActionTarget,
     integration: FeatureIntegrationId,
-    consequences: Collection<FeatureArtifactId>,
+    behaviorProjections: Collection<FeatureArtifactId>,
     selectionState: EntryDownloadSelectionState? = null,
 ) {
     requireEntryContextState(
         type = target.type,
         feature = ENTRY_DOWNLOAD_ACTION_FEATURE_ID,
         integration = integration,
-        consequences = consequences,
+        behaviorProjections = behaviorProjections,
         evidence = buildList {
             add(contextEvidence(ENTRY_DOWNLOAD_SOURCE_ACCESS_CONTEXT, target.sourceAccess))
             selectionState?.let { add(contextEvidence(ENTRY_DOWNLOAD_SELECTION_CONTEXT, it)) }

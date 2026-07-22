@@ -9,6 +9,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -16,7 +17,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
@@ -30,10 +30,10 @@ private val ENTRY_OPEN_REFERENCE = entryContentTypeReferenceContribution(
     label = "Open entries in their media experience",
     order = 50,
 )
-private val ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID = FeatureArtifactId("entry.open.dispatch")
+private val ENTRY_OPEN_DISPATCH_BEHAVIOR_ID = FeatureArtifactId("entry.open.dispatch")
 
-private object EntryOpenDispatchConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID
+private object EntryOpenDispatchBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_OPEN_DISPATCH_BEHAVIOR_ID
 }
 
 internal object EntryOpenBehaviorContract : FeatureBehaviorContract {
@@ -52,7 +52,7 @@ internal object EntryOpenFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_OPEN_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryOpenCapability.definition),
-                        sharedConsequences = listOf(EntryOpenDispatchConsequence),
+                        behaviorProjections = listOf(EntryOpenDispatchBehavior),
                         behavioralContracts = listOf(EntryOpenBehaviorContract),
                         projectionRequirements = listOf(ENTRY_OPEN_REFERENCE.requirement),
                         projections = listOf(ENTRY_OPEN_REFERENCE.projection),
@@ -70,7 +70,7 @@ internal class DefaultEntryOpenFeature(
     private val applicableTypes = evaluation.applicableProviderTypes<EntryOpenProcessor>(
         feature = ENTRY_OPEN_FEATURE_ID,
         integration = ENTRY_OPEN_INTEGRATION_ID,
-        consequence = ENTRY_OPEN_DISPATCH_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_OPEN_DISPATCH_BEHAVIOR_ID,
     )
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes

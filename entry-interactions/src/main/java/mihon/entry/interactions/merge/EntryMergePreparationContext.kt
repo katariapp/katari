@@ -5,12 +5,12 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -22,15 +22,15 @@ internal val ENTRY_MERGE_AUTHORITY_CONTEXT_INTEGRATION =
 internal val ENTRY_MERGE_MEMBERSHIP_CONTEXT_INTEGRATION =
     FeatureIntegrationId("entry.merge.preparation-membership-context")
 
-private object EntryMergeSelectionConsequence : SharedFeatureConsequence {
+private object EntryMergeSelectionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.merge.preparation-selection")
 }
 
-private object EntryMergeAuthorityConsequence : SharedFeatureConsequence {
+private object EntryMergeAuthorityBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.merge.preparation-authority")
 }
 
-private object EntryMergeEditorConsequence : SharedFeatureConsequence {
+private object EntryMergeEditorBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.merge.editor")
 }
 
@@ -115,7 +115,7 @@ internal fun entryMergePreparationContextIntegrations(owner: ContributionOwner):
             }
         },
         contextBlockers = listOf(MIXED_TYPES_BLOCKER, MIXED_PROFILES_BLOCKER),
-        sharedConsequences = listOf(EntryMergeSelectionConsequence),
+        behaviorProjections = listOf(EntryMergeSelectionBehavior),
         behavioralContracts = listOf(EntryMergeBehaviorContract.PREPARATION_SELECTION),
     ),
     FeatureIntegration(
@@ -142,7 +142,7 @@ internal fun entryMergePreparationContextIntegrations(owner: ContributionOwner):
             AUTHORITATIVE_TYPE_CHANGED_BLOCKER,
             AUTHORITATIVE_PROFILE_CHANGED_BLOCKER,
         ),
-        sharedConsequences = listOf(EntryMergeAuthorityConsequence),
+        behaviorProjections = listOf(EntryMergeAuthorityBehavior),
         behavioralContracts = listOf(EntryMergeBehaviorContract.PREPARATION_AUTHORITY),
     ),
     FeatureIntegration(
@@ -169,7 +169,7 @@ internal fun entryMergePreparationContextIntegrations(owner: ContributionOwner):
             INCOMPLETE_EXISTING_GROUP_BLOCKER,
             TOO_FEW_EDITOR_MEMBERS_BLOCKER,
         ),
-        sharedConsequences = listOf(EntryMergeEditorConsequence),
+        behaviorProjections = listOf(EntryMergeEditorBehavior),
         behavioralContracts = listOf(EntryMergeBehaviorContract.PREPARATION_MEMBERSHIP),
     ),
 )
@@ -184,7 +184,7 @@ internal fun FeatureGraphEvaluation.requireMergeSelectionContext(
             type = type,
             feature = ENTRY_MERGE_FEATURE_ID,
             integration = ENTRY_MERGE_SELECTION_CONTEXT_INTEGRATION,
-            consequences = listOf(EntryMergeSelectionConsequence.id),
+            behaviorProjections = listOf(EntryMergeSelectionBehavior.id),
             evidence = listOf(
                 contextEvidence(ENTRY_MERGE_HOMOGENEOUS_TYPE_CONTEXT, homogeneousType),
                 contextEvidence(ENTRY_MERGE_HOMOGENEOUS_PROFILE_CONTEXT, homogeneousProfile),
@@ -204,7 +204,7 @@ internal fun FeatureGraphEvaluation.requireMergeAuthorityContext(
         type = type,
         feature = ENTRY_MERGE_FEATURE_ID,
         integration = ENTRY_MERGE_AUTHORITY_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryMergeAuthorityConsequence.id),
+        behaviorProjections = listOf(EntryMergeAuthorityBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_MERGE_AUTHORITATIVE_SELECTION_CONTEXT, authoritativeSelectionPresent),
             contextEvidence(ENTRY_MERGE_AUTHORITATIVE_TYPE_CONTEXT, typeStable),
@@ -224,7 +224,7 @@ internal fun FeatureGraphEvaluation.requireMergeMembershipContext(
         type = type,
         feature = ENTRY_MERGE_FEATURE_ID,
         integration = ENTRY_MERGE_MEMBERSHIP_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryMergeEditorConsequence.id),
+        behaviorProjections = listOf(EntryMergeEditorBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_MERGE_SINGLE_EXISTING_GROUP_CONTEXT, singleExistingGroup),
             contextEvidence(ENTRY_MERGE_COMPLETE_EXISTING_GROUP_CONTEXT, completeExistingGroup),

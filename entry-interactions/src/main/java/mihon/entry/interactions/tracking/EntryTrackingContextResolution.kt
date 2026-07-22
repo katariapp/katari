@@ -13,9 +13,9 @@ internal fun FeatureGraphEvaluation.requireTrackingAvailability(
         type = entryType,
         feature = ENTRY_TRACKING_FEATURE_ID,
         integration = EntryTrackingIntegration.AVAILABILITY.id,
-        consequences = listOf(
-            EntryTrackingConsequence.ENTRY_ACTION.id,
-            EntryTrackingConsequence.DOCUMENTATION.id,
+        behaviorProjections = listOf(
+            EntryTrackingBehavior.ENTRY_ACTION.id,
+            EntryTrackingBehavior.DOCUMENTATION.id,
         ),
         evidence = listOf(contextEvidence(ENTRY_TRACKING_REGISTERED_SUPPORT, registered)),
         applicable = registered,
@@ -32,9 +32,9 @@ internal fun FeatureGraphEvaluation.requireTrackingSession(
         type = entryType,
         feature = ENTRY_TRACKING_FEATURE_ID,
         integration = EntryTrackingIntegration.SESSION.id,
-        consequences = listOf(
-            EntryTrackingConsequence.ENTRY_SESSION.id,
-            EntryTrackingConsequence.ENTRY_OPERATIONS.id,
+        behaviorProjections = listOf(
+            EntryTrackingBehavior.ENTRY_SESSION.id,
+            EntryTrackingBehavior.ENTRY_OPERATIONS.id,
         ),
         evidence = listOf(
             contextEvidence(ENTRY_TRACKING_REGISTERED_SUPPORT, registered),
@@ -55,7 +55,7 @@ internal fun FeatureGraphEvaluation.requireTrackingAutomaticBinding(
         type = entryType,
         feature = ENTRY_TRACKING_FEATURE_ID,
         integration = EntryTrackingIntegration.AUTOMATIC_BINDING.id,
-        consequences = listOf(EntryTrackingConsequence.AUTOMATIC_BINDING.id),
+        behaviorProjections = listOf(EntryTrackingBehavior.AUTOMATIC_BINDING.id),
         evidence = listOf(
             contextEvidence(ENTRY_TRACKING_REGISTERED_SUPPORT, registered),
             contextEvidence(ENTRY_TRACKING_AUTHENTICATED_SUPPORT, authenticated),
@@ -75,7 +75,7 @@ internal fun FeatureGraphEvaluation.requireTrackingSynchronization(
         type = entryType,
         feature = ENTRY_TRACKING_FEATURE_ID,
         integration = EntryTrackingIntegration.SYNCHRONIZATION.id,
-        consequences = listOf(EntryTrackingConsequence.PROGRESS_SYNCHRONIZATION.id),
+        behaviorProjections = listOf(EntryTrackingBehavior.PROGRESS_SYNCHRONIZATION.id),
         evidence = listOf(
             contextEvidence(ENTRY_TRACKING_REGISTERED_SUPPORT, registered),
             contextEvidence(ENTRY_TRACKING_AUTHENTICATED_SUPPORT, authenticated),

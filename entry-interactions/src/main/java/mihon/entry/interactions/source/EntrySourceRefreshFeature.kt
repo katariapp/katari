@@ -12,6 +12,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -21,7 +22,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -50,9 +50,9 @@ private val ENTRY_SOURCE_REFRESH_SOURCE_MISSING = FeatureContextBlocker(
     FeatureArtifactId("entry.source-refresh.source-missing"),
     listOf(ENTRY_SOURCE_REFRESH_SOURCE_CONTEXT),
 )
-private enum class EntrySourceRefreshConsequence(
+private enum class EntrySourceRefreshBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     SOURCE_ACCESS(FeatureArtifactId("entry.source-refresh.source-access")),
     DETAILS(FeatureArtifactId("entry.source-refresh.details")),
     CHILDREN(FeatureArtifactId("entry.source-refresh.children")),
@@ -85,7 +85,7 @@ internal object EntrySourceRefreshFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(ENTRY_SOURCE_REFRESH_SOURCE_MISSING),
-                        sharedConsequences = EntrySourceRefreshConsequence.entries,
+                        behaviorProjections = EntrySourceRefreshBehavior.entries,
                         behavioralContracts = listOf(EntrySourceRefreshBehaviorContract),
                         projectionRequirements = listOf(ENTRY_SOURCE_REFRESH_REFERENCE.requirement),
                         projections = listOf(ENTRY_SOURCE_REFRESH_REFERENCE.projection),
@@ -132,11 +132,11 @@ internal class DefaultEntrySourceRefreshFeature(
     }
 
     private fun requireState(request: EntrySourceRefreshRequest, sourceInstalled: Boolean) {
-        EntrySourceRefreshConsequence.entries.forEach { consequence ->
+        EntrySourceRefreshBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = ENTRY_SOURCE_REFRESH_FEATURE_ID,
                 integration = ENTRY_SOURCE_REFRESH_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(contextEvidence(ENTRY_SOURCE_REFRESH_SOURCE_CONTEXT, sourceInstalled)),
                 applicable = sourceInstalled,
                 contentType = request.entry.type,

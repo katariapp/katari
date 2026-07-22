@@ -4,6 +4,7 @@ import mihon.feature.graph.ContextEvidence
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureContractScenarioId
+import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegrationId
 import java.util.ServiceLoader
@@ -24,6 +25,24 @@ class FeatureContractReference(
     override fun toString(): String = "FeatureContractReference(feature=$feature, contract=${contract.id})"
 }
 
+/** Identity reference to a behavioral contract declared by one executable participant. */
+class FeatureExecutionContractReference(
+    val participant: FeatureExecutionParticipantId,
+    val contract: FeatureBehaviorContract,
+) {
+    override fun equals(other: Any?): Boolean {
+        return other is FeatureExecutionContractReference &&
+            participant == other.participant &&
+            contract === other.contract
+    }
+
+    override fun hashCode(): Int = 31 * participant.hashCode() + System.identityHashCode(contract)
+
+    override fun toString(): String {
+        return "FeatureExecutionContractReference(participant=$participant, contract=${contract.id})"
+    }
+}
+
 /** Framework-neutral executable validation owned by the feature that declared [contract]. */
 data class FeatureContractVerifier(
     val contract: FeatureContractReference,
@@ -32,6 +51,15 @@ data class FeatureContractVerifier(
 
 fun interface FeatureContractVerification {
     suspend fun verify(input: FeatureContractExecutionInput): FeatureContractVerificationResult
+}
+
+data class FeatureExecutionContractVerifier(
+    val contract: FeatureExecutionContractReference,
+    val verification: FeatureExecutionContractVerification,
+)
+
+fun interface FeatureExecutionContractVerification {
+    suspend fun verify(input: FeatureExecutionContractExecutionInput): FeatureContractVerificationResult
 }
 
 /** Typed evidence factory for one context in which a conditional contract must become applicable. */
@@ -43,6 +71,12 @@ data class FeatureContractScenario(
     val id: FeatureContractScenarioId,
     val contract: FeatureContractReference,
     val integration: FeatureIntegrationId,
+    val evidenceFactory: FeatureContractEvidenceFactory,
+)
+
+data class FeatureExecutionContractScenario(
+    val id: FeatureContractScenarioId,
+    val contract: FeatureExecutionContractReference,
     val evidenceFactory: FeatureContractEvidenceFactory,
 )
 
@@ -71,6 +105,8 @@ class FeatureValidationContributionSink internal constructor(
 ) {
     private val verifiers = mutableListOf<OwnedFeatureContractVerifier>()
     private val scenarios = mutableListOf<OwnedFeatureContractScenario>()
+    private val executionVerifiers = mutableListOf<OwnedFeatureExecutionContractVerifier>()
+    private val executionScenarios = mutableListOf<OwnedFeatureExecutionContractScenario>()
 
     fun add(verifier: FeatureContractVerifier) {
         verifiers += OwnedFeatureContractVerifier(owner, verifier)
@@ -80,8 +116,21 @@ class FeatureValidationContributionSink internal constructor(
         scenarios += OwnedFeatureContractScenario(owner, scenario)
     }
 
+    fun add(verifier: FeatureExecutionContractVerifier) {
+        executionVerifiers += OwnedFeatureExecutionContractVerifier(owner, verifier)
+    }
+
+    fun add(scenario: FeatureExecutionContractScenario) {
+        executionScenarios += OwnedFeatureExecutionContractScenario(owner, scenario)
+    }
+
     internal fun snapshot(): DiscoveredFeatureValidationContributions {
-        return DiscoveredFeatureValidationContributions(verifiers.toList(), scenarios.toList())
+        return DiscoveredFeatureValidationContributions(
+            verifiers = verifiers.toList(),
+            scenarios = scenarios.toList(),
+            executionVerifiers = executionVerifiers.toList(),
+            executionScenarios = executionScenarios.toList(),
+        )
     }
 }
 
@@ -95,9 +144,21 @@ data class OwnedFeatureContractScenario(
     val scenario: FeatureContractScenario,
 )
 
+data class OwnedFeatureExecutionContractVerifier(
+    val owner: ContributionOwner,
+    val verifier: FeatureExecutionContractVerifier,
+)
+
+data class OwnedFeatureExecutionContractScenario(
+    val owner: ContributionOwner,
+    val scenario: FeatureExecutionContractScenario,
+)
+
 data class DiscoveredFeatureValidationContributions(
     val verifiers: List<OwnedFeatureContractVerifier>,
     val scenarios: List<OwnedFeatureContractScenario>,
+    val executionVerifiers: List<OwnedFeatureExecutionContractVerifier> = emptyList(),
+    val executionScenarios: List<OwnedFeatureExecutionContractScenario> = emptyList(),
 )
 
 fun discoverFeatureValidationContributions(
@@ -111,6 +172,8 @@ fun discoverFeatureValidationContributions(
     return DiscoveredFeatureValidationContributions(
         verifiers = snapshots.flatMap { it.verifiers },
         scenarios = snapshots.flatMap { it.scenarios },
+        executionVerifiers = snapshots.flatMap { it.executionVerifiers },
+        executionScenarios = snapshots.flatMap { it.executionScenarios },
     )
 }
 

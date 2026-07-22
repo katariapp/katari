@@ -9,11 +9,11 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
     FeatureIntegration(
         id = EntryTrackingIntegration.REGISTRY.id,
         prerequisites = CapabilityExpression.Always,
-        sharedConsequences = listOf(
-            EntryTrackingConsequence.SERVICE_REGISTRY,
-            EntryTrackingConsequence.SERVICE_PRESENTATION,
-            EntryTrackingConsequence.ACCOUNT_SETTINGS,
-            EntryTrackingConsequence.BACKUP_DIAGNOSTICS,
+        behaviorProjections = listOf(
+            EntryTrackingBehavior.SERVICE_REGISTRY,
+            EntryTrackingBehavior.SERVICE_PRESENTATION,
+            EntryTrackingBehavior.ACCOUNT_SETTINGS,
+            EntryTrackingBehavior.BACKUP_DIAGNOSTICS,
         ),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.REGISTRY),
     ),
@@ -29,9 +29,9 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
             }
         },
         contextBlockers = listOf(NO_REGISTERED_TRACKER),
-        sharedConsequences = listOf(
-            EntryTrackingConsequence.ENTRY_ACTION,
-            EntryTrackingConsequence.DOCUMENTATION,
+        behaviorProjections = listOf(
+            EntryTrackingBehavior.ENTRY_ACTION,
+            EntryTrackingBehavior.DOCUMENTATION,
         ),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.AVAILABILITY),
         projectionRequirements = listOf(ENTRY_TRACKING_REFERENCE.requirement),
@@ -57,9 +57,9 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
             }
         },
         contextBlockers = listOf(NO_REGISTERED_TRACKER, NO_AUTHENTICATED_TRACKER, SOURCE_NOT_ACCEPTED),
-        sharedConsequences = listOf(
-            EntryTrackingConsequence.ENTRY_SESSION,
-            EntryTrackingConsequence.ENTRY_OPERATIONS,
+        behaviorProjections = listOf(
+            EntryTrackingBehavior.ENTRY_SESSION,
+            EntryTrackingBehavior.ENTRY_OPERATIONS,
         ),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.SESSION),
     ),
@@ -83,7 +83,7 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
             }
         },
         contextBlockers = listOf(NO_REGISTERED_TRACKER, NO_AUTHENTICATED_TRACKER, NO_AUTOMATIC_TRACKER),
-        sharedConsequences = listOf(EntryTrackingConsequence.AUTOMATIC_BINDING),
+        behaviorProjections = listOf(EntryTrackingBehavior.AUTOMATIC_BINDING),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.AUTOMATIC_BINDING),
     ),
     FeatureIntegration(
@@ -106,33 +106,33 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
             }
         },
         contextBlockers = listOf(NO_REGISTERED_TRACKER, NO_AUTHENTICATED_TRACKER, NO_AUTHENTICATED_TRACK),
-        sharedConsequences = listOf(EntryTrackingConsequence.PROGRESS_SYNCHRONIZATION),
+        behaviorProjections = listOf(EntryTrackingBehavior.PROGRESS_SYNCHRONIZATION),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.SYNCHRONIZATION),
     ),
     FeatureIntegration(
         id = EntryTrackingIntegration.MIGRATION_PREPARATION.id,
         prerequisites = CapabilityExpression.Always,
-        sharedConsequences = listOf(EntryTrackingConsequence.MIGRATION_PREPARATION),
+        behaviorProjections = listOf(EntryTrackingBehavior.MIGRATION_PREPARATION),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.MIGRATION_PREPARATION),
     ),
     authenticatedTypeIntegration(
         integration = EntryTrackingIntegration.LIBRARY,
-        consequences = listOf(
-            EntryTrackingConsequence.LIBRARY_FILTER_EVIDENCE,
-            EntryTrackingConsequence.LIBRARY_SCORE_EVIDENCE,
+        behaviorProjections = listOf(
+            EntryTrackingBehavior.LIBRARY_FILTER_EVIDENCE,
+            EntryTrackingBehavior.LIBRARY_SCORE_EVIDENCE,
         ),
         contract = EntryTrackingBehaviorContract.LIBRARY,
     ),
     authenticatedTypeIntegration(
         integration = EntryTrackingIntegration.STATS,
-        consequences = listOf(EntryTrackingConsequence.STATS_EVIDENCE),
+        behaviorProjections = listOf(EntryTrackingBehavior.STATS_EVIDENCE),
         contract = EntryTrackingBehaviorContract.STATS,
     ),
 )
 
 private fun authenticatedTypeIntegration(
     integration: EntryTrackingIntegration,
-    consequences: List<EntryTrackingConsequence>,
+    behaviorProjections: List<EntryTrackingBehavior>,
     contract: EntryTrackingBehaviorContract,
 ): FeatureIntegration = FeatureIntegration(
     id = integration.id,
@@ -151,6 +151,6 @@ private fun authenticatedTypeIntegration(
         }
     },
     contextBlockers = listOf(NO_REGISTERED_TRACKER, NO_AUTHENTICATED_TRACKER),
-    sharedConsequences = consequences,
+    behaviorProjections = behaviorProjections,
     behavioralContracts = listOf(contract),
 )

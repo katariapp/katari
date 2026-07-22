@@ -54,7 +54,7 @@ class EntryDownloadConfigurationFeatureTest {
     }
 
     @Test
-    fun `specialized setting consequences compose independently without a core downloader`() {
+    fun `specialized setting behaviors compose independently without a core downloader`() {
         val provider = settingProvider()
         val features = featuresFor(
             EntryDownloadArchivePackagingCapability.bind(provider),

@@ -8,12 +8,12 @@ import mihon.feature.graph.ContentTypeId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.DiscoveredFeatureGraphContributions
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.FeatureProjection
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.featureProjectionDefinition
 import mihon.feature.graph.featureProjectionExclusion
@@ -106,7 +106,7 @@ class FeatureProjectionParticipationTest {
     private fun effectfulIntegration(id: String) = FeatureIntegration(
         id = FeatureIntegrationId(id),
         prerequisites = CapabilityExpression.Always,
-        sharedConsequences = listOf(object : SharedFeatureConsequence {
+        behaviorProjections = listOf(object : FeatureBehaviorProjection {
             override val id = FeatureArtifactId("$id.effect")
         }),
     )

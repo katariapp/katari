@@ -24,6 +24,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContractScenarioId
@@ -32,7 +33,6 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.FeatureProjection
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.capabilityDefinition
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.discoverAndAssembleFeatureGraph
@@ -215,7 +215,7 @@ class UnknownEntryFeatureContractValidationAcceptanceTest {
                 FeatureIntegration(
                     id = staticIntegrationId,
                     prerequisites = CapabilityExpression.Provided(capability),
-                    sharedConsequences = listOf(consequence("future.queue.static-action")),
+                    behaviorProjections = listOf(behavior("future.queue.static-action")),
                     behavioralContracts = listOf(staticContract),
                     projectionRequirements = listOf(staticProjection.definition),
                     projections = listOf(staticProjection),
@@ -232,7 +232,7 @@ class UnknownEntryFeatureContractValidationAcceptanceTest {
                         }
                     },
                     contextBlockers = listOf(unavailable),
-                    sharedConsequences = listOf(consequence("future.queue.contextual-action")),
+                    behaviorProjections = listOf(behavior("future.queue.contextual-action")),
                     behavioralContracts = listOf(contextualContract),
                     projectionRequirements = listOf(contextualProjection.definition),
                     projections = listOf(contextualProjection),
@@ -276,7 +276,7 @@ class UnknownEntryFeatureContractValidationAcceptanceTest {
         override val id = FeatureArtifactId(id)
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

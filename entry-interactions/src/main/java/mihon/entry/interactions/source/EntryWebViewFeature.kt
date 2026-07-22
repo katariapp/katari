@@ -13,6 +13,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -22,7 +23,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -91,9 +91,9 @@ private val ENTRY_CHILD_WEB_VIEW_UNSUPPORTED = FeatureContextBlocker(
     FeatureArtifactId("entry.web-view.child-unsupported"),
     listOf(ENTRY_CHILD_WEB_VIEW_CONTEXT),
 )
-private enum class EntryWebViewConsequence(
+private enum class EntryWebViewBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.web-view.availability")),
     CANONICAL_URL(FeatureArtifactId("entry.web-view.canonical-url")),
     NAVIGATION(FeatureArtifactId("entry.web-view.navigation")),
@@ -101,9 +101,9 @@ private enum class EntryWebViewConsequence(
     ASSIST(FeatureArtifactId("entry.web-view.assist")),
     RUNTIME_HEADERS(FeatureArtifactId("entry.web-view.runtime-headers")),
 }
-private enum class EntryChildWebViewConsequence(
+private enum class EntryChildWebViewBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.web-view.child-availability")),
     CANONICAL_URL(FeatureArtifactId("entry.web-view.child-canonical-url")),
     NAVIGATION(FeatureArtifactId("entry.web-view.child-navigation")),
@@ -134,7 +134,7 @@ internal object EntryWebViewFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(ENTRY_WEB_VIEW_MISSING, ENTRY_WEB_VIEW_UNSUPPORTED),
-                        sharedConsequences = EntryWebViewConsequence.entries,
+                        behaviorProjections = EntryWebViewBehavior.entries,
                         behavioralContracts = listOf(EntryWebViewBehaviorContract),
                         projectionRequirements = listOf(ENTRY_WEB_VIEW_REFERENCE.requirement),
                         projections = listOf(ENTRY_WEB_VIEW_REFERENCE.projection),
@@ -158,7 +158,7 @@ internal object EntryWebViewFeatureContributor : FeatureGraphContributor {
                             ENTRY_CHILD_WEB_VIEW_UNSUPPORTED,
                         ),
                         specializedPrerequisites = listOf(EntryChildWebViewHostContribution.definition),
-                        sharedConsequences = EntryChildWebViewConsequence.entries,
+                        behaviorProjections = EntryChildWebViewBehavior.entries,
                         behavioralContracts = listOf(EntryChildWebViewBehaviorContract),
                         projectionRequirements = listOf(ENTRY_CHILD_WEB_VIEW_REFERENCE.requirement),
                         projections = listOf(ENTRY_CHILD_WEB_VIEW_REFERENCE.projection),
@@ -216,11 +216,11 @@ internal class DefaultEntryWebViewFeature(
     }
 
     private fun requireState(installed: Boolean, supported: Boolean) {
-        EntryWebViewConsequence.entries.forEach { consequence ->
+        EntryWebViewBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = ENTRY_WEB_VIEW_FEATURE_ID,
                 integration = ENTRY_WEB_VIEW_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(contextEvidence(ENTRY_WEB_VIEW_CONTEXT, EntryWebViewContext(installed, supported))),
                 applicable = installed && supported,
             )
@@ -228,11 +228,11 @@ internal class DefaultEntryWebViewFeature(
     }
 
     private fun requireChildState(ownerType: EntryType, installed: Boolean, supported: Boolean) {
-        EntryChildWebViewConsequence.entries.forEach { consequence ->
+        EntryChildWebViewBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = ENTRY_WEB_VIEW_FEATURE_ID,
                 integration = ENTRY_CHILD_WEB_VIEW_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(
                     contextEvidence(
                         ENTRY_CHILD_WEB_VIEW_CONTEXT,

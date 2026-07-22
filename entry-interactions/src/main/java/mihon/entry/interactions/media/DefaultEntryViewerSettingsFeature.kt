@@ -11,6 +11,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -18,7 +19,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
@@ -38,17 +38,17 @@ internal class DefaultEntryViewerSettingsFeature(
     private val legacyMangaViewerFlagsReset: EntryLegacyMangaViewerFlagsReset,
     private val migrationStore: EntryViewerFlagsMigrationStore,
 ) : EntryViewerSettingsFeature {
-    private val applicableTypes = EntryViewerSettingsConsequence.entries
-        .map { consequence ->
+    private val applicableTypes = EntryViewerSettingsBehavior.entries
+        .map { behavior ->
             evaluation.applicableProviderTypes<EntryViewerSettingsProvider>(
                 feature = ENTRY_VIEWER_SETTINGS_FEATURE_ID,
                 integration = ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
             )
         }
         .also { selected ->
             check(selected.distinct().size <= 1) {
-                "Viewer Settings consequences selected different provider sets: $selected"
+                "Viewer Settings behaviors selected different provider sets: $selected"
             }
         }
         .firstOrNull()
@@ -56,7 +56,7 @@ internal class DefaultEntryViewerSettingsFeature(
     private val migrationTypes = evaluation.applicableProviderTypes<EntryViewerSettingsProvider>(
         feature = ENTRY_VIEWER_SETTINGS_FEATURE_ID,
         integration = ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID,
-        consequence = EntryViewerSettingsMigrationConsequence.id,
+        behaviorProjection = EntryViewerSettingsMigrationBehavior.id,
     )
 
     private val providersByType = applicableTypes.associateWith { type ->

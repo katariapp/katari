@@ -18,31 +18,31 @@ internal class DefaultEntryLibraryUpdateNotificationFeature(
 ) : EntryLibraryUpdateNotificationFeature {
     private val participatingTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_BASE_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_ROUTE_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_ROUTE_BEHAVIOR_ID,
     )
     private val renderTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_BASE_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_RENDER_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_RENDER_BEHAVIOR_ID,
     )
     private val queueWarningTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_BASE_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_QUEUE_WARNING_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_QUEUE_WARNING_BEHAVIOR_ID,
     )
     private val contributedPresentationTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_PRESENTATION_BEHAVIOR_ID,
     )
     private val openTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_OPEN_BEHAVIOR_ID,
     )
     private val consumptionTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_CONSUMPTION_BEHAVIOR_ID,
     )
     private val downloadTypes = evaluation.libraryUpdateNotificationTypes(
         ENTRY_LIBRARY_UPDATE_NOTIFICATION_DOWNLOAD_INTEGRATION_ID,
-        ENTRY_LIBRARY_UPDATE_NOTIFICATION_DOWNLOAD_CONSEQUENCE_ID,
+        ENTRY_LIBRARY_UPDATE_NOTIFICATION_DOWNLOAD_BEHAVIOR_ID,
     )
     private val routesByType = participatingTypes
         .associateWith(::createRoute)

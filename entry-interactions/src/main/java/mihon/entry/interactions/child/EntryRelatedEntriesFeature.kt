@@ -16,6 +16,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -25,7 +26,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -51,9 +51,9 @@ private val ENTRY_RELATED_ENTRIES_REFERENCE = entryContentTypeReferenceContribut
     project = { EntryContentTypeReferenceStatus.SOURCE_DEPENDENT },
 )
 
-private enum class EntryRelatedEntriesConsequence(
+private enum class EntryRelatedEntriesBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.related-entries.availability")),
     FETCH(FeatureArtifactId("entry.related-entries.fetch")),
     PERSISTENCE(FeatureArtifactId("entry.related-entries.persistence")),
@@ -113,7 +113,7 @@ internal object EntryRelatedEntriesFeatureContributor : FeatureGraphContributor 
                             ENTRY_RELATED_ENTRIES_SOURCE_MISSING,
                             ENTRY_RELATED_ENTRIES_SOURCE_UNSUPPORTED,
                         ),
-                        sharedConsequences = EntryRelatedEntriesConsequence.entries,
+                        behaviorProjections = EntryRelatedEntriesBehavior.entries,
                         behavioralContracts = listOf(EntryRelatedEntriesBehaviorContract),
                         projectionRequirements = listOf(ENTRY_RELATED_ENTRIES_REFERENCE.requirement),
                         projections = listOf(ENTRY_RELATED_ENTRIES_REFERENCE.projection),
@@ -169,7 +169,7 @@ internal class DefaultEntryRelatedEntriesFeature(
             type = type,
             feature = ENTRY_RELATED_ENTRIES_FEATURE_ID,
             integration = ENTRY_RELATED_ENTRIES_INTEGRATION_ID,
-            consequences = EntryRelatedEntriesConsequence.entries.map(EntryRelatedEntriesConsequence::id),
+            behaviorProjections = EntryRelatedEntriesBehavior.entries.map(EntryRelatedEntriesBehavior::id),
             evidence = listOf(
                 contextEvidence(ENTRY_RELATED_ENTRIES_SOURCE_INSTALLED_CONTEXT, installed),
                 contextEvidence(ENTRY_RELATED_ENTRIES_SOURCE_SUPPORT_CONTEXT, supported),

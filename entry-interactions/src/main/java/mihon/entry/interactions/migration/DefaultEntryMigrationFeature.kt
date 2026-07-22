@@ -34,27 +34,27 @@ internal class DefaultEntryMigrationFeature(
     private val migrationTypes = evaluation.applicableProviderTypes<EntryMigrationProvider>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_BASE_INTEGRATION_ID,
-        consequence = EntryMigrationBaseConsequence.PROVIDER_DISPATCH.id,
+        behaviorProjection = EntryMigrationBaseBehavior.PROVIDER_DISPATCH.id,
     )
     private val consumptionTypes = evaluation.applicableProviderTypes<EntryConsumptionProcessor>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID,
-        consequence = EntryMigrationConsumptionConsequence.TRANSFER.id,
+        behaviorProjection = EntryMigrationConsumptionBehavior.TRANSFER.id,
     )
     private val bookmarkTypes = evaluation.applicableProviderTypes<EntryBookmarkProcessor>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID,
-        consequence = EntryMigrationBookmarkConsequence.TRANSFER.id,
+        behaviorProjection = EntryMigrationBookmarkBehavior.TRANSFER.id,
     )
     private val childStateOptionTypes = evaluation.applicableProviderTypes<EntryMigrationProvider>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID,
-        consequence = EntryMigrationChildStateOptionConsequence.id,
+        behaviorProjection = EntryMigrationChildStateOptionBehavior.id,
     )
     private val downloadTypes = evaluation.applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID,
-        consequence = EntryMigrationDownloadConsequence.PARTICIPATION.id,
+        behaviorProjection = EntryMigrationDownloadBehavior.PARTICIPATION.id,
     )
 
     override fun availability(entry: Entry): EntryMigrationAvailability {

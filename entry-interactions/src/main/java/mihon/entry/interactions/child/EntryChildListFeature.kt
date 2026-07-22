@@ -7,6 +7,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -14,7 +15,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -38,30 +38,30 @@ private val ENTRY_MISSING_CHILD_GAP_REFERENCE = entryContentTypeReferenceContrib
 internal val ENTRY_CHILD_LIST_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.provider")
 private val ENTRY_CHILD_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.progress")
 private val ENTRY_MISSING_CHILD_GAP_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.missing-gaps")
-private val ENTRY_CHILD_LIST_ORDER_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.order")
-private val ENTRY_CHILD_LIST_FIRST_CHILD_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.first-reading-child")
-private val ENTRY_CHILD_LIST_DISPLAY_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.display")
-private val ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.progress-labels")
-private val ENTRY_MISSING_CHILD_GAP_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.missing-gap-display")
+private val ENTRY_CHILD_LIST_ORDER_BEHAVIOR_ID = FeatureArtifactId("entry.child-list.order")
+private val ENTRY_CHILD_LIST_FIRST_CHILD_BEHAVIOR_ID = FeatureArtifactId("entry.child-list.first-reading-child")
+private val ENTRY_CHILD_LIST_DISPLAY_BEHAVIOR_ID = FeatureArtifactId("entry.child-list.display")
+private val ENTRY_CHILD_PROGRESS_BEHAVIOR_ID = FeatureArtifactId("entry.child-list.progress-labels")
+private val ENTRY_MISSING_CHILD_GAP_BEHAVIOR_ID = FeatureArtifactId("entry.child-list.missing-gap-display")
 
-private object EntryChildListOrderConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_CHILD_LIST_ORDER_CONSEQUENCE_ID
+private object EntryChildListOrderBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_CHILD_LIST_ORDER_BEHAVIOR_ID
 }
 
-private object EntryChildListDisplayConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_CHILD_LIST_DISPLAY_CONSEQUENCE_ID
+private object EntryChildListDisplayBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_CHILD_LIST_DISPLAY_BEHAVIOR_ID
 }
 
-private object EntryChildListFirstChildConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_CHILD_LIST_FIRST_CHILD_CONSEQUENCE_ID
+private object EntryChildListFirstChildBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_CHILD_LIST_FIRST_CHILD_BEHAVIOR_ID
 }
 
-private object EntryChildProgressConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID
+private object EntryChildProgressBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_CHILD_PROGRESS_BEHAVIOR_ID
 }
 
-private object EntryMissingChildGapConsequence : SharedFeatureConsequence {
-    override val id = ENTRY_MISSING_CHILD_GAP_CONSEQUENCE_ID
+private object EntryMissingChildGapBehavior : FeatureBehaviorProjection {
+    override val id = ENTRY_MISSING_CHILD_GAP_BEHAVIOR_ID
 }
 
 internal object EntryChildListBehaviorContract : FeatureBehaviorContract {
@@ -80,10 +80,10 @@ internal object EntryChildListFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_CHILD_LIST_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryChildListCapability.definition),
-                        sharedConsequences = listOf(
-                            EntryChildListOrderConsequence,
-                            EntryChildListFirstChildConsequence,
-                            EntryChildListDisplayConsequence,
+                        behaviorProjections = listOf(
+                            EntryChildListOrderBehavior,
+                            EntryChildListFirstChildBehavior,
+                            EntryChildListDisplayBehavior,
                         ),
                         behavioralContracts = listOf(EntryChildListBehaviorContract),
                     ),
@@ -93,7 +93,7 @@ internal object EntryChildListFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryChildListCapability.definition),
                             CapabilityExpression.Provided(EntryChildProgressCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryChildProgressConsequence),
+                        behaviorProjections = listOf(EntryChildProgressBehavior),
                         projectionRequirements = listOf(ENTRY_CHILD_PROGRESS_REFERENCE.requirement),
                         projections = listOf(ENTRY_CHILD_PROGRESS_REFERENCE.projection),
                     ),
@@ -103,7 +103,7 @@ internal object EntryChildListFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryChildListCapability.definition),
                             CapabilityExpression.Provided(EntryMissingChildGapCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryMissingChildGapConsequence),
+                        behaviorProjections = listOf(EntryMissingChildGapBehavior),
                         projectionRequirements = listOf(ENTRY_MISSING_CHILD_GAP_REFERENCE.requirement),
                         projections = listOf(ENTRY_MISSING_CHILD_GAP_REFERENCE.projection),
                     ),
@@ -122,32 +122,32 @@ internal class DefaultEntryChildListFeature(
     private val orderTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
         integration = ENTRY_CHILD_LIST_INTEGRATION_ID,
-        consequence = ENTRY_CHILD_LIST_ORDER_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_CHILD_LIST_ORDER_BEHAVIOR_ID,
     )
     private val displayTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
         integration = ENTRY_CHILD_LIST_INTEGRATION_ID,
-        consequence = ENTRY_CHILD_LIST_DISPLAY_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_CHILD_LIST_DISPLAY_BEHAVIOR_ID,
     )
     private val firstChildTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
         integration = ENTRY_CHILD_LIST_INTEGRATION_ID,
-        consequence = ENTRY_CHILD_LIST_FIRST_CHILD_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_CHILD_LIST_FIRST_CHILD_BEHAVIOR_ID,
     )
     private val progressTypes = evaluation.applicableProviderTypes<EntryChildProgressProcessor>(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
         integration = ENTRY_CHILD_PROGRESS_INTEGRATION_ID,
-        consequence = ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_CHILD_PROGRESS_BEHAVIOR_ID,
     )
     private val missingGapTypes = evaluation.applicableProviderTypes<EntryMissingChildGapProcessor>(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
         integration = ENTRY_MISSING_CHILD_GAP_INTEGRATION_ID,
-        consequence = ENTRY_MISSING_CHILD_GAP_CONSEQUENCE_ID,
+        behaviorProjection = ENTRY_MISSING_CHILD_GAP_BEHAVIOR_ID,
     )
 
     init {
         check(setOf(orderTypes, firstChildTypes, displayTypes).size == 1) {
-            "Child-list order, first-child, and display consequences selected different provider sets"
+            "Child-list order, first-child, and display behaviors selected different provider sets"
         }
     }
 

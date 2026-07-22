@@ -51,7 +51,7 @@ data class FeatureExecutionOrder(
 }
 
 /**
- * One independently owned executable consequence.
+ * One independently owned executable participant.
  *
  * Applicability is evaluated directly from the same content-type providers, contextual evidence, and specialized
  * adapters used by Feature integrations. The target execution point remains owned by its coordinator.

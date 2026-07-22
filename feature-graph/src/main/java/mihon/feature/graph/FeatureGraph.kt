@@ -307,12 +307,12 @@ private fun validateReachability(discovered: DiscoveredFeatureGraphContributions
         feature.integrations.forEach { integration ->
             val hasEffect = integration.specializedPrerequisites.isNotEmpty() ||
                 integration.specializedRequirements.isNotEmpty() ||
-                integration.sharedConsequences.isNotEmpty() ||
+                integration.behaviorProjections.isNotEmpty() ||
                 integration.behavioralContracts.isNotEmpty() ||
                 integration.projectionRequirements.isNotEmpty()
             check(hasEffect) {
                 "Unreachable feature integration ${integration.id} on ${feature.feature}: " +
-                    "it contributes no consequence, specialized requirement, contract, or projection"
+                    "it contributes no behavior projection, specialized requirement, contract, or projection"
             }
         }
     }

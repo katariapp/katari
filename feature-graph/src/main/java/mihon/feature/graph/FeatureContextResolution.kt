@@ -78,11 +78,11 @@ data class ApplicableFeatureContext internal constructor(
     val suppliedAdapters: List<SpecializedAdapter<*>>,
 ) : ContextualFeatureIntegrationEvaluation
 
-/** Runtime resolution and the obligations or consequences activated by that exact evidence snapshot. */
+/** Runtime resolution and the obligations or descriptive behavior projections activated by exact context evidence. */
 data class FeatureContextEvaluation internal constructor(
     val integration: ContextualFeatureIntegrationEvaluation,
     val obligations: List<SpecializedFeatureObligation>,
-    val sharedConsequences: List<SharedConsequenceApplicability>,
+    val behaviorProjections: List<BehaviorProjectionApplicability>,
 )
 
 fun resolveFeatureContext(
@@ -135,7 +135,7 @@ internal fun resolveFeatureContext(
                 missingInputs = missing,
             ),
             obligations = emptyList(),
-            sharedConsequences = emptyList(),
+            behaviorProjections = emptyList(),
         )
     }
 
@@ -171,7 +171,7 @@ private fun ConditionalFeatureIntegration.resolveBlocked(
             blockers = blockers,
         ),
         obligations = emptyList(),
-        sharedConsequences = emptyList(),
+        behaviorProjections = emptyList(),
     )
 }
 
@@ -200,7 +200,7 @@ private fun ConditionalFeatureIntegration.resolveApplicable(
                 obligations = obligations,
             ),
             obligations = obligations,
-            sharedConsequences = emptyList(),
+            behaviorProjections = emptyList(),
         )
     }
 
@@ -213,9 +213,9 @@ private fun ConditionalFeatureIntegration.resolveApplicable(
             suppliedAdapters = selectedAdapters,
         ),
         obligations = emptyList(),
-        sharedConsequences = integration.sharedConsequences
+        behaviorProjections = integration.behaviorProjections
             .sortedBy { it.id.value }
-            .map { consequence -> SharedConsequenceApplicability(subject, consequence) },
+            .map { projection -> BehaviorProjectionApplicability(subject, projection) },
     )
 }
 

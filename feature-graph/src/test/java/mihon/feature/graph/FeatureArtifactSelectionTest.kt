@@ -20,7 +20,7 @@ class FeatureArtifactSelectionTest {
             integration = FeatureIntegration(
                 id = FeatureIntegrationId("example.integration"),
                 prerequisites = CapabilityExpression.Always,
-                sharedConsequences = listOf(consequence("example.consequence")),
+                behaviorProjections = listOf(behavior("example.projection")),
             ),
         )
 
@@ -278,7 +278,7 @@ class FeatureArtifactSelectionTest {
         return FeatureProjection(definition, RecordingProjection())
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

@@ -14,7 +14,7 @@ internal fun FeatureGraphEvaluation.requireEntryContextState(
     type: EntryType,
     feature: FeatureId,
     integration: FeatureIntegrationId,
-    consequences: Collection<FeatureArtifactId>,
+    behaviorProjections: Collection<FeatureArtifactId>,
     evidence: List<ContextEvidence<*>>,
     applicable: Boolean,
 ) {
@@ -25,15 +25,15 @@ internal fun FeatureGraphEvaluation.requireEntryContextState(
         integration = integration,
         evidence = evidence,
     )
-    val resolvedConsequences = resolution.sharedConsequences.mapTo(mutableSetOf()) { it.consequence.id }
-    val expectedConsequences = consequences.toSet()
+    val resolvedBehavior = resolution.behaviorProjections.mapTo(mutableSetOf()) { it.projection.id }
+    val expectedBehavior = behaviorProjections.toSet()
     val matches = if (applicable) {
-        resolution.integration is ApplicableFeatureContext && resolvedConsequences == expectedConsequences
+        resolution.integration is ApplicableFeatureContext && resolvedBehavior == expectedBehavior
     } else {
-        resolution.integration is BlockedFeatureContext && resolvedConsequences.isEmpty()
+        resolution.integration is BlockedFeatureContext && resolvedBehavior.isEmpty()
     }
     check(matches) {
         "Entry integration $feature:$integration resolved inconsistently for $type: " +
-            "${resolution.integration}, consequences=$resolvedConsequences, expected=$expectedConsequences"
+            "${resolution.integration}, behavior=$resolvedBehavior, expected=$expectedBehavior"
     }
 }

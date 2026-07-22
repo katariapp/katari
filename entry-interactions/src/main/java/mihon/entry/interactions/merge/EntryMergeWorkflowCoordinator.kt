@@ -22,11 +22,11 @@ internal class EntryMergeWorkflowCoordinator(
 ) : EntryMergeFeature {
     private val applicableTypes = evaluation.mergeTypes(
         ENTRY_MERGE_BASE_INTEGRATION_ID,
-        EntryMergeBaseConsequence.WORKFLOW_COORDINATION.id,
+        EntryMergeBaseBehavior.WORKFLOW_COORDINATION.id,
     )
     private val downloadTypes = evaluation.mergeTypes(
         ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
-        EntryMergeDownloadConsequence.OWNERSHIP.id,
+        EntryMergeDownloadBehavior.OWNERSHIP.id,
     )
 
     override suspend fun prepare(intent: EntryMergePrepareIntent): EntryMergePreparationResult {
@@ -235,7 +235,7 @@ internal class EntryMergeWorkflowCoordinator(
             return rejectedExecution(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
         }
 
-        evaluation.requireMergeExecutionConsequenceContext(
+        evaluation.requireMergeFollowUpBehaviorContext(
             type = edit.type,
             libraryInitializationRequired = edit.preparations.isNotEmpty(),
             coverCleanupRequired = libraryRemoved.isNotEmpty(),
@@ -243,12 +243,12 @@ internal class EntryMergeWorkflowCoordinator(
         )
         val operationId = UUID.randomUUID().toString()
         val consequenceRequests = edit.preparations.map { preparation ->
-            consequence(preparation.key, EntryMergeLibraryInitializationConsequence.id.value)
+            consequence(preparation.key, EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION)
         } + libraryRemoved.flatMap { key ->
             buildList {
-                add(consequence(key, EntryMergeCoverCleanupConsequence.id.value))
+                add(consequence(key, EntryMergeConsequenceArtifact.COVER_CLEANUP))
                 if (edit.type in downloadTypes) {
-                    add(consequence(key, EntryMergeDownloadRemovalConsequence.id.value))
+                    add(consequence(key, EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL))
                 }
             }
         }
@@ -324,7 +324,7 @@ internal class EntryMergeWorkflowCoordinator(
         check(type in applicableTypes) { "Entry type $type was not composed into the Merge feature" }
         val downloadRemovalRequired = removeDownloads &&
             (expected.orderedEntryIds.toSet() - replacementIds).isNotEmpty()
-        evaluation.requireMergeExecutionConsequenceContext(
+        evaluation.requireMergeFollowUpBehaviorContext(
             type = type,
             libraryInitializationRequired = false,
             coverCleanupRequired = libraryRemovalIds.isNotEmpty(),
@@ -333,9 +333,9 @@ internal class EntryMergeWorkflowCoordinator(
         val operationId = UUID.randomUUID().toString()
         val consequenceRequests = libraryRemovalIds.flatMap { entryId ->
             buildList {
-                add(consequence(entryId, EntryMergeCoverCleanupConsequence.id.value))
+                add(consequence(entryId, EntryMergeConsequenceArtifact.COVER_CLEANUP))
                 if (removeDownloads && type in downloadTypes) {
-                    add(consequence(entryId, EntryMergeDownloadRemovalConsequence.id.value))
+                    add(consequence(entryId, EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL))
                 }
             }
         } + if (!removeDownloads || type !in downloadTypes) {
@@ -343,7 +343,7 @@ internal class EntryMergeWorkflowCoordinator(
         } else {
             (expected.orderedEntryIds.toSet() - libraryRemovalIds)
                 .filter { it !in replacementIds }
-                .map { consequence(it, EntryMergeDownloadRemovalConsequence.id.value) }
+                .map { consequence(it, EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL) }
         }
         val replacementTarget = when {
             replacementIds.size < 2 -> null

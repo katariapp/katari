@@ -67,7 +67,7 @@ class FeatureGraphEvaluationTest {
         result.matchedProviders shouldBe emptyList()
         result.unmetPrerequisites shouldContainExactly listOf(CapabilityExpression.Provided(beta))
         evaluation.obligations shouldBe emptyList()
-        evaluation.sharedConsequences shouldBe emptyList()
+        evaluation.behaviorProjections shouldBe emptyList()
     }
 
     @Test
@@ -95,7 +95,7 @@ class FeatureGraphEvaluationTest {
         result.obligations.single().subject.feature shouldBe FeatureId("example")
         result.obligations.single().requirement shouldBe adapter
         evaluation.obligations shouldContainExactly result.obligations
-        evaluation.sharedConsequences shouldBe emptyList()
+        evaluation.behaviorProjections shouldBe emptyList()
     }
 
     @Test
@@ -121,7 +121,7 @@ class FeatureGraphEvaluationTest {
         result.unmetPrerequisites shouldBe emptyList()
         result.unmetSpecializedPrerequisites shouldContainExactly listOf(adapter)
         evaluation.obligations shouldBe emptyList()
-        evaluation.sharedConsequences shouldBe emptyList()
+        evaluation.behaviorProjections shouldBe emptyList()
     }
 
     @Test
@@ -189,8 +189,8 @@ class FeatureGraphEvaluationTest {
         result.suppliedAdapters shouldBe emptyList()
         result.pendingSpecializedRequirements shouldContainExactly listOf(adapter)
         evaluation.obligations shouldBe emptyList()
-        evaluation.sharedConsequences shouldBe emptyList()
-        evaluation.candidateConsequences shouldHaveSize 1
+        evaluation.behaviorProjections shouldBe emptyList()
+        evaluation.candidateBehaviorProjections shouldHaveSize 1
     }
 
     @Test
@@ -220,12 +220,12 @@ class FeatureGraphEvaluationTest {
         val result = evaluation.integrations.single() as ApplicableFeatureIntegration
         result.suppliedAdapters shouldContainExactly listOf(supplied)
         evaluation.obligations shouldBe emptyList()
-        evaluation.sharedConsequences shouldHaveSize 1
+        evaluation.behaviorProjections shouldHaveSize 1
     }
 
     @Test
-    fun `compatible types create edges to one shared consequence instance`() {
-        val consequence = consequence("example.shared-gate")
+    fun `compatible types create edges to one behavior projection instance`() {
+        val behavior = behavior("example.shared-gate")
         val evaluation = evaluate(
             contentTypes = listOf(
                 contentType("zeta", CapabilityProvider(alpha, AlphaProvider())),
@@ -235,13 +235,13 @@ class FeatureGraphEvaluationTest {
                 integration(
                     id = "example.integration",
                     prerequisites = CapabilityExpression.Provided(alpha),
-                    consequence = consequence,
+                    behavior = behavior,
                 ),
             ),
         )
 
-        evaluation.sharedConsequences.map { it.subject.contentType.value } shouldContainExactly listOf("alpha", "zeta")
-        evaluation.sharedConsequences.all { it.consequence === consequence } shouldBe true
+        evaluation.behaviorProjections.map { it.subject.contentType.value } shouldContainExactly listOf("alpha", "zeta")
+        evaluation.behaviorProjections.all { it.projection === behavior } shouldBe true
     }
 
     @Test
@@ -304,7 +304,7 @@ class FeatureGraphEvaluationTest {
         contextInputs: List<ContextInputDefinition<*>> = emptyList(),
         specializedPrerequisites: List<SpecializedAdapterDefinition<*>> = emptyList(),
         specializedRequirements: List<SpecializedAdapterDefinition<*>> = emptyList(),
-        consequence: SharedFeatureConsequence = consequence("$id.consequence"),
+        behavior: FeatureBehaviorProjection = behavior("$id.projection"),
     ): FeatureIntegration {
         return FeatureIntegration(
             id = FeatureIntegrationId(id),
@@ -317,11 +317,11 @@ class FeatureGraphEvaluationTest {
             },
             specializedPrerequisites = specializedPrerequisites,
             specializedRequirements = specializedRequirements,
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
         )
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

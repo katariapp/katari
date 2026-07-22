@@ -18,6 +18,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -27,7 +28,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -116,9 +116,9 @@ private val LEGACY_SOURCE_UNAVAILABLE_BLOCKER = FeatureContextBlocker(
     inputs = listOf(LEGACY_SOURCE_REGISTERED_SUPPORT_CONTEXT),
 )
 
-private enum class EntryCatalogueConsequence(
+private enum class EntryCatalogueBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     SOURCE_DESCRIPTION(FeatureArtifactId("entry.catalogue.source-description.projection")),
     CATALOGUE_AVAILABILITY(FeatureArtifactId("entry.catalogue.availability.projection")),
     LATEST_AVAILABILITY(FeatureArtifactId("entry.catalogue.latest.projection")),
@@ -138,7 +138,7 @@ internal object EntryCatalogueFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Always,
                         contextInputs = listOf(SOURCE_DESCRIPTION_CONTEXT),
                         contextRule = featureContextRule(owner) { FeatureContextDecision.Applicable },
-                        sharedConsequences = listOf(EntryCatalogueConsequence.SOURCE_DESCRIPTION),
+                        behaviorProjections = listOf(EntryCatalogueBehavior.SOURCE_DESCRIPTION),
                         behavioralContracts = listOf(EntrySourceDescriptionBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -153,7 +153,7 @@ internal object EntryCatalogueFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(CATALOGUE_UNAVAILABLE_BLOCKER),
-                        sharedConsequences = listOf(EntryCatalogueConsequence.CATALOGUE_AVAILABILITY),
+                        behaviorProjections = listOf(EntryCatalogueBehavior.CATALOGUE_AVAILABILITY),
                         behavioralContracts = listOf(EntryCatalogueAvailabilityBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -170,7 +170,7 @@ internal object EntryCatalogueFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(LATEST_UNAVAILABLE_BLOCKER),
-                        sharedConsequences = listOf(EntryCatalogueConsequence.LATEST_AVAILABILITY),
+                        behaviorProjections = listOf(EntryCatalogueBehavior.LATEST_AVAILABILITY),
                         behavioralContracts = listOf(EntryLatestAvailabilityBehaviorContract),
                     ),
                     sourceReferenceIntegration(
@@ -228,19 +228,19 @@ internal class DefaultEntryCatalogueFeature(
 
         requireUniformState(
             SOURCE_DESCRIPTION_INTEGRATION_ID,
-            EntryCatalogueConsequence.SOURCE_DESCRIPTION,
+            EntryCatalogueBehavior.SOURCE_DESCRIPTION,
             evidence,
             applicable = true,
         )
         requireUniformState(
             CATALOGUE_AVAILABILITY_INTEGRATION_ID,
-            EntryCatalogueConsequence.CATALOGUE_AVAILABILITY,
+            EntryCatalogueBehavior.CATALOGUE_AVAILABILITY,
             evidence,
             applicable = catalogue != null,
         )
         requireUniformState(
             LATEST_AVAILABILITY_INTEGRATION_ID,
-            EntryCatalogueConsequence.LATEST_AVAILABILITY,
+            EntryCatalogueBehavior.LATEST_AVAILABILITY,
             evidence,
             applicable = catalogue?.supportsLatest == true,
         )
@@ -250,7 +250,7 @@ internal class DefaultEntryCatalogueFeature(
 
     private fun requireUniformState(
         integration: FeatureIntegrationId,
-        consequence: EntryCatalogueConsequence,
+        behaviorProjection: EntryCatalogueBehavior,
         evidence: mihon.feature.graph.ContextEvidence<SourceDescriptionEvidence>,
         applicable: Boolean,
     ) {
@@ -268,16 +268,16 @@ internal class DefaultEntryCatalogueFeature(
                 evidence = listOf(evidence),
             )
             val resolved = resolution.integration
-            val hasConsequence = resolution.sharedConsequences.any { it.consequence.id == consequence.id }
+            val hasBehavior = resolution.behaviorProjections.any { it.projection.id == behaviorProjection.id }
             check(
                 if (applicable) {
-                    resolved is ApplicableFeatureContext && hasConsequence
+                    resolved is ApplicableFeatureContext && hasBehavior
                 } else {
-                    resolved is BlockedFeatureContext && !hasConsequence
+                    resolved is BlockedFeatureContext && !hasBehavior
                 },
             ) {
                 "Entry Catalogue integration $integration resolved inconsistently for ${subject.contentType}: " +
-                    "$resolved, consequences=${resolution.sharedConsequences}"
+                    "$resolved, behaviors=${resolution.behaviorProjections}"
             }
         }
     }

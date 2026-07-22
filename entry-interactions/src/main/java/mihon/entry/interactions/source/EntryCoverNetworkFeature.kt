@@ -11,6 +11,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,7 +21,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -57,9 +57,9 @@ private val ENTRY_COVER_NETWORK_UNSUPPORTED = FeatureContextBlocker(
     FeatureArtifactId("entry.cover-network.unsupported"),
     listOf(ENTRY_COVER_NETWORK_CONTEXT),
 )
-private enum class EntryCoverNetworkConsequence(
+private enum class EntryCoverNetworkBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     CALL_FACTORY(FeatureArtifactId("entry.cover-network.call-factory")),
     REQUEST_HEADERS(FeatureArtifactId("entry.cover-network.request-headers")),
 }
@@ -91,7 +91,7 @@ internal object EntryCoverNetworkFeatureContributor : FeatureGraphContributor {
                             ENTRY_COVER_NETWORK_SOURCE_MISSING,
                             ENTRY_COVER_NETWORK_UNSUPPORTED,
                         ),
-                        sharedConsequences = EntryCoverNetworkConsequence.entries,
+                        behaviorProjections = EntryCoverNetworkBehavior.entries,
                         behavioralContracts = listOf(EntryCoverNetworkBehaviorContract),
                         projectionRequirements = listOf(ENTRY_COVER_NETWORK_REFERENCE.requirement),
                         projections = listOf(ENTRY_COVER_NETWORK_REFERENCE.projection),
@@ -124,11 +124,11 @@ internal class DefaultEntryCoverNetworkFeature(
     }
 
     private fun requireState(installed: Boolean, supported: Boolean) {
-        EntryCoverNetworkConsequence.entries.forEach { consequence ->
+        EntryCoverNetworkBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = ENTRY_COVER_NETWORK_FEATURE_ID,
                 integration = ENTRY_COVER_NETWORK_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(
                     contextEvidence(
                         ENTRY_COVER_NETWORK_CONTEXT,

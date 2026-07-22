@@ -5,12 +5,12 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -18,16 +18,16 @@ import mihon.feature.graph.featureContextRule
 internal val ENTRY_MIGRATION_SOURCE_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.source-context")
 internal val ENTRY_MIGRATION_SELECTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.selection-context")
 
-private enum class EntryMigrationSourceConsequence(
+private enum class EntryMigrationSourceBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.migration.availability")),
     ENTRY_ACTION(FeatureArtifactId("entry.migration.entry-action")),
     BROWSE_SOURCE_LIST(FeatureArtifactId("entry.migration.browse-source-list")),
     SOURCE_ENTRY_SELECTION(FeatureArtifactId("entry.migration.source-entry-selection")),
 }
 
-private object EntryMigrationSelectionConsequence : SharedFeatureConsequence {
+private object EntryMigrationSelectionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.migration.library-selection")
 }
 
@@ -75,7 +75,7 @@ internal fun entryMigrationSourceContextIntegration(
         }
     },
     contextBlockers = listOf(UNPERSISTED_BLOCKER, NOT_IN_LIBRARY_BLOCKER),
-    sharedConsequences = EntryMigrationSourceConsequence.entries,
+    behaviorProjections = EntryMigrationSourceBehavior.entries,
     behavioralContracts = listOf(EntryMigrationBehaviorContract.SOURCE_CONTEXT),
 )
 
@@ -103,7 +103,7 @@ internal fun entryMigrationSelectionContextIntegration(
         }
     },
     contextBlockers = listOf(MIXED_PROFILES_BLOCKER, UNPERSISTED_BLOCKER, NOT_IN_LIBRARY_BLOCKER),
-    sharedConsequences = listOf(EntryMigrationSelectionConsequence),
+    behaviorProjections = listOf(EntryMigrationSelectionBehavior),
     behavioralContracts = listOf(EntryMigrationBehaviorContract.SELECTION_CONTEXT),
 )
 
@@ -116,7 +116,7 @@ internal fun FeatureGraphEvaluation.requireMigrationSourceContext(
         type = type,
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_SOURCE_CONTEXT_INTEGRATION,
-        consequences = EntryMigrationSourceConsequence.entries.map(EntryMigrationSourceConsequence::id),
+        behaviorProjections = EntryMigrationSourceBehavior.entries.map(EntryMigrationSourceBehavior::id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_PERSISTED_CONTEXT, persisted),
             contextEvidence(ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT, inLibrary),
@@ -135,7 +135,7 @@ internal fun FeatureGraphEvaluation.requireMigrationSelectionContext(
         type = type,
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_SELECTION_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryMigrationSelectionConsequence.id),
+        behaviorProjections = listOf(EntryMigrationSelectionBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_PERSISTED_CONTEXT, persisted),
             contextEvidence(ENTRY_MIGRATION_LIBRARY_MEMBERSHIP_CONTEXT, inLibrary),

@@ -22,14 +22,21 @@ import mihon.feature.graph.SpecializedAdapterDefinition
 import mihon.feature.graph.SpecializedExecutionParticipantObligation
 import mihon.feature.graph.SpecializedFeatureObligation
 import mihon.feature.graph.validation.CompletedFeatureContractExecution
+import mihon.feature.graph.validation.CompletedFeatureExecutionContractExecution
 import mihon.feature.graph.validation.CrashedFeatureContractExecution
+import mihon.feature.graph.validation.CrashedFeatureExecutionContractExecution
 import mihon.feature.graph.validation.FeatureContractExecutionResult
 import mihon.feature.graph.validation.FeatureContractValidationResult
 import mihon.feature.graph.validation.FeatureContractVerificationResult
+import mihon.feature.graph.validation.FeatureExecutionContractExecutionResult
 import mihon.feature.graph.validation.GraphFeatureContractPlanIssue
 import mihon.feature.graph.validation.InvalidFeatureContractScenarioObligation
+import mihon.feature.graph.validation.InvalidFeatureExecutionContractScenarioObligation
 import mihon.feature.graph.validation.MissingFeatureContractScenarioObligation
 import mihon.feature.graph.validation.MissingFeatureContractVerifierObligation
+import mihon.feature.graph.validation.MissingFeatureExecutionContractFixtureObligation
+import mihon.feature.graph.validation.MissingFeatureExecutionContractScenarioObligation
+import mihon.feature.graph.validation.MissingFeatureExecutionContractVerifierObligation
 import mihon.feature.graph.validation.ValidationFeatureContractPlanIssue
 
 fun buildFeatureDeveloperReport(
@@ -47,6 +54,20 @@ fun buildFeatureDeveloperReport(
         .filterIsInstance<InvalidFeatureContractScenarioObligation>()
         .groupBy { obligation ->
             ContractKey(obligation.subject, obligation.scenario.scenario.contract.contract.id.value)
+        }
+    val executionContractExecutions = validation.executionParticipantExecutions.groupBy { execution ->
+        val selection = execution.selection.contractSelection
+        ExecutionContractKey(selection.subject, selection.contract.id.value)
+    }
+    val invalidExecutionScenarios = validation.plan.issues
+        .filterIsInstance<ValidationFeatureContractPlanIssue>()
+        .map { it.obligation }
+        .filterIsInstance<InvalidFeatureExecutionContractScenarioObligation>()
+        .groupBy { obligation ->
+            ExecutionContractKey(
+                obligation.subject,
+                obligation.scenario.scenario.contract.contract.id.value,
+            )
         }
 
     return FeatureDeveloperReport(
@@ -116,7 +137,22 @@ fun buildFeatureDeveloperReport(
                     }.sortedBy(FeatureDeveloperOwnedReference::id),
                     after = evaluated.participant.order.after.map { it.value }.sorted(),
                     before = evaluated.participant.order.before.map { it.value }.sorted(),
-                    contracts = evaluated.participant.behavioralContracts.map { it.id.value }.sorted(),
+                    contracts = evaluated.participant.behavioralContracts.map { contract ->
+                        val key = ExecutionContractKey(evaluated.subject, contract.id.value)
+                        FeatureDeveloperExecutionContract(
+                            id = contract.id.value,
+                            validations = buildList {
+                                executionContractExecutions[key].orEmpty().mapTo(this) { it.report() }
+                                invalidExecutionScenarios[key].orEmpty().mapTo(this) { invalid ->
+                                    FeatureDeveloperContractValidation(
+                                        scenario = invalid.scenario.scenario.id.value,
+                                        outcome = FeatureDeveloperContractValidationOutcome.INVALID_SCENARIO,
+                                        details = listOf(invalid.reason),
+                                    )
+                                }
+                            },
+                        )
+                    }.sortedBy(FeatureDeveloperExecutionContract::id),
                 )
             },
         integrations = evaluation.integrations
@@ -212,8 +248,8 @@ private fun FeatureIntegrationEvaluation.report(
                 }.sortedBy(FeatureDeveloperOwnedReference::id),
             )
         }.sortedBy(FeatureDeveloperBlocker::id),
-        consequences = integration.sharedConsequences.map { consequence ->
-            FeatureDeveloperArtifact(consequence.id.value, artifactAvailability)
+        behaviors = integration.behaviorProjections.map { behavior ->
+            FeatureDeveloperArtifact(behavior.id.value, artifactAvailability)
         }.sortedBy(FeatureDeveloperArtifact::id),
         contracts = integration.behavioralContracts.map { contract ->
             val key = ContractKey(subject, contract.id.value)
@@ -280,6 +316,29 @@ private fun FeatureContractExecutionResult.report(): FeatureDeveloperContractVal
     }
 }
 
+private fun FeatureExecutionContractExecutionResult.report(): FeatureDeveloperContractValidation {
+    val scenario = selection.scenario?.scenario?.id?.value
+    return when (this) {
+        is CompletedFeatureExecutionContractExecution -> when (val result = verification) {
+            FeatureContractVerificationResult.Passed -> FeatureDeveloperContractValidation(
+                scenario = scenario,
+                outcome = FeatureDeveloperContractValidationOutcome.PASSED,
+                details = emptyList(),
+            )
+            is FeatureContractVerificationResult.Failed -> FeatureDeveloperContractValidation(
+                scenario = scenario,
+                outcome = FeatureDeveloperContractValidationOutcome.FAILED,
+                details = result.failures.map { it.message },
+            )
+        }
+        is CrashedFeatureExecutionContractExecution -> FeatureDeveloperContractValidation(
+            scenario = scenario,
+            outcome = FeatureDeveloperContractValidationOutcome.CRASHED,
+            details = listOfNotNull(cause::class.qualifiedName, cause.message),
+        )
+    }
+}
+
 private fun mihon.feature.graph.validation.FeatureContractPlanIssue.report(): List<FeatureDeveloperObligation> {
     return when (this) {
         is GraphFeatureContractPlanIssue -> listOf(obligation.report())
@@ -309,6 +368,43 @@ private fun mihon.feature.graph.validation.FeatureContractPlanIssue.report(): Li
                     subjects = listOf(missing.subject.report()),
                     artifact = missing.scenario.scenario.id.value,
                     details = missing.reason,
+                ),
+            )
+            is MissingFeatureExecutionContractVerifierObligation -> listOf(
+                FeatureDeveloperObligation(
+                    responsibleOwner = missing.responsibleOwner.value,
+                    category = FeatureDeveloperObligationCategory.CONTRACT_VERIFIER,
+                    subjects = missing.affectedSubjects.map { it.report() },
+                    artifact = missing.contract.contract.id.value,
+                    details = "No discovered verifier implements the selected execution-participant contract",
+                ),
+            )
+            is MissingFeatureExecutionContractScenarioObligation -> listOf(
+                FeatureDeveloperObligation(
+                    responsibleOwner = missing.responsibleOwner.value,
+                    category = FeatureDeveloperObligationCategory.CONTRACT_SCENARIO,
+                    subjects = missing.affectedSubjects.map { it.report() },
+                    artifact = missing.contract.contract.id.value,
+                    details = "No discovered scenario establishes applicable execution context",
+                ),
+            )
+            is InvalidFeatureExecutionContractScenarioObligation -> listOf(
+                FeatureDeveloperObligation(
+                    responsibleOwner = missing.responsibleOwner.value,
+                    category = FeatureDeveloperObligationCategory.INVALID_CONTRACT_SCENARIO,
+                    subjects = listOf(missing.subject.report()),
+                    artifact = missing.scenario.scenario.id.value,
+                    details = missing.reason,
+                ),
+            )
+            is MissingFeatureExecutionContractFixtureObligation -> listOf(
+                FeatureDeveloperObligation(
+                    responsibleOwner = missing.responsibleOwner.value,
+                    category = FeatureDeveloperObligationCategory.CONTRACT_FIXTURE,
+                    subjects = listOf(missing.subject.report()),
+                    artifact = missing.requirement.id.value,
+                    details = "Missing fixture for execution contracts: " +
+                        missing.affectedContracts.joinToString { it.id.value },
                 ),
             )
         }
@@ -393,6 +489,14 @@ private fun FeatureIntegrationSubject.report(): FeatureDeveloperSubject {
     )
 }
 
+private fun mihon.feature.graph.FeatureExecutionParticipantSubject.report(): FeatureDeveloperSubject {
+    return FeatureDeveloperSubject(
+        contentType = contentType.value,
+        feature = "execution.${point.value}",
+        integration = participant.value,
+    )
+}
+
 private fun FeatureIntegrationSubject.sortKey(): String =
     "${contentType.value}:${feature.value}:${integration.value}"
 
@@ -400,5 +504,10 @@ private fun FeatureDeveloperSubject.sortKey(): String = "$contentType:$feature:$
 
 private data class ContractKey(
     val subject: FeatureIntegrationSubject,
+    val contract: String,
+)
+
+private data class ExecutionContractKey(
+    val subject: mihon.feature.graph.FeatureExecutionParticipantSubject,
     val contract: String,
 )

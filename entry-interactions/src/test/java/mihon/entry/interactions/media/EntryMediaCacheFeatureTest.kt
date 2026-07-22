@@ -23,7 +23,7 @@ class EntryMediaCacheFeatureTest {
     }
 
     @Test
-    fun `one provider activates every shared cache consequence`() {
+    fun `one provider activates every shared cache behavior`() {
         val artifact = TestArtifact(
             id = EntryMediaCacheId("future.cache"),
             autoClearPreference = EntryMediaCacheAutoClearPreference("future_auto_clear"),

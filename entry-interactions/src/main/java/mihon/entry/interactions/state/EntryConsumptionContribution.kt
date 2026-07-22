@@ -8,6 +8,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -17,7 +18,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -54,16 +54,16 @@ internal object EntryConsumptionLifecycleBehaviorContract : FeatureBehaviorContr
     override val id = FeatureArtifactId("entry.consumption.lifecycle-behavior")
 }
 
-private enum class EntryConsumptionProviderConsequence(
+private enum class EntryConsumptionProviderBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     TYPE_APPLICABILITY(FeatureArtifactId("entry.consumption.type-applicability")),
     PROVIDER_DISPATCH(FeatureArtifactId("entry.consumption.provider-dispatch")),
 }
 
-private enum class EntryConsumptionEligibilityConsequence(
+private enum class EntryConsumptionEligibilityBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     ENTRY_ACTIONS(FeatureArtifactId("entry.consumption.entry-actions")),
     LIBRARY_ACTIONS(FeatureArtifactId("entry.consumption.library-actions")),
     UPDATE_ACTIONS(FeatureArtifactId("entry.consumption.update-actions")),
@@ -71,11 +71,11 @@ private enum class EntryConsumptionEligibilityConsequence(
     TRACKING_SYNC(FeatureArtifactId("entry.consumption.tracking-sync")),
 }
 
-private object EntryConsumptionLifecycleConsequence : SharedFeatureConsequence {
+private object EntryConsumptionLifecycleBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.consumption.download-lifecycle-event")
 }
 
-private object EntryConsumptionMutationConsequence : SharedFeatureConsequence {
+private object EntryConsumptionMutationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.consumption.mutation")
 }
 
@@ -117,7 +117,7 @@ internal object EntryConsumptionFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_CONSUMPTION_PROVIDER_INTEGRATION,
                         prerequisites = consumption,
-                        sharedConsequences = EntryConsumptionProviderConsequence.entries,
+                        behaviorProjections = EntryConsumptionProviderBehavior.entries,
                         behavioralContracts = listOf(EntryConsumptionProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_CONSUMPTION_REFERENCE.requirement),
                         projections = listOf(ENTRY_CONSUMPTION_REFERENCE.projection),
@@ -134,7 +134,7 @@ internal object EntryConsumptionFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(STATE_NO_CHANGE_BLOCKER),
-                        sharedConsequences = EntryConsumptionEligibilityConsequence.entries,
+                        behaviorProjections = EntryConsumptionEligibilityBehavior.entries,
                         behavioralContracts = listOf(EntryConsumptionEligibilityBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -149,7 +149,7 @@ internal object EntryConsumptionFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(NO_CHANGED_CHILDREN_BLOCKER),
-                        sharedConsequences = listOf(EntryConsumptionMutationConsequence),
+                        behaviorProjections = listOf(EntryConsumptionMutationBehavior),
                         behavioralContracts = listOf(EntryConsumptionMutationBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -169,7 +169,7 @@ internal object EntryConsumptionFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(NO_CHANGED_CHILDREN_BLOCKER, LIFECYCLE_REQUIRES_CONSUMED_BLOCKER),
-                        sharedConsequences = listOf(EntryConsumptionLifecycleConsequence),
+                        behaviorProjections = listOf(EntryConsumptionLifecycleBehavior),
                         behavioralContracts = listOf(EntryConsumptionLifecycleBehaviorContract),
                     ),
                 ),
@@ -182,7 +182,7 @@ internal fun FeatureGraphEvaluation.consumptionTypes(): Set<EntryType> =
     applicableProviderTypes<EntryConsumptionProcessor>(
         feature = ENTRY_CONSUMPTION_FEATURE_ID,
         integration = ENTRY_CONSUMPTION_PROVIDER_INTEGRATION,
-        consequence = EntryConsumptionProviderConsequence.PROVIDER_DISPATCH.id,
+        behaviorProjection = EntryConsumptionProviderBehavior.PROVIDER_DISPATCH.id,
     )
 
 internal fun FeatureGraphEvaluation.requireConsumptionEligibilityContext(type: EntryType, canChange: Boolean) {
@@ -190,7 +190,9 @@ internal fun FeatureGraphEvaluation.requireConsumptionEligibilityContext(type: E
         type = type,
         feature = ENTRY_CONSUMPTION_FEATURE_ID,
         integration = ENTRY_CONSUMPTION_ELIGIBILITY_INTEGRATION,
-        consequences = EntryConsumptionEligibilityConsequence.entries.map(EntryConsumptionEligibilityConsequence::id),
+        behaviorProjections = EntryConsumptionEligibilityBehavior.entries.map(
+            EntryConsumptionEligibilityBehavior::id,
+        ),
         evidence = listOf(contextEvidence(ENTRY_CONSUMPTION_STATE_CHANGE_CONTEXT, canChange)),
         applicable = canChange,
     )
@@ -205,7 +207,7 @@ internal fun FeatureGraphEvaluation.requireConsumptionLifecycleContext(
         type = type,
         feature = ENTRY_CONSUMPTION_FEATURE_ID,
         integration = ENTRY_CONSUMPTION_LIFECYCLE_INTEGRATION,
-        consequences = listOf(EntryConsumptionLifecycleConsequence.id),
+        behaviorProjections = listOf(EntryConsumptionLifecycleBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_CONSUMPTION_CHANGED_CHILDREN_CONTEXT, changed),
             contextEvidence(ENTRY_CONSUMPTION_REQUESTED_CONSUMED_CONTEXT, consumed),
@@ -219,7 +221,7 @@ internal fun FeatureGraphEvaluation.requireConsumptionMutationContext(type: Entr
         type = type,
         feature = ENTRY_CONSUMPTION_FEATURE_ID,
         integration = ENTRY_CONSUMPTION_MUTATION_RESULT_INTEGRATION,
-        consequences = listOf(EntryConsumptionMutationConsequence.id),
+        behaviorProjections = listOf(EntryConsumptionMutationBehavior.id),
         evidence = listOf(contextEvidence(ENTRY_CONSUMPTION_CHANGED_CHILDREN_CONTEXT, changed)),
         applicable = changed,
     )

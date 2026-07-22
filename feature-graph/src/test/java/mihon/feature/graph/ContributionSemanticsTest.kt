@@ -63,7 +63,7 @@ class ContributionSemanticsTest {
             id = SpecializedAdapterId("combination.adapter"),
             owner = featureOwner,
         )
-        val consequence = consequence("combination.shared-policy")
+        val behavior = behavior("combination.shared-policy")
         val contract = contract("combination.behavior")
         val projectionDefinition = featureProjectionDefinition<ExampleProjection>(
             id = FeatureArtifactId("combination.reference"),
@@ -79,7 +79,7 @@ class ContributionSemanticsTest {
             contextInputs = listOf(context),
             contextRule = featureContextRule(featureOwner) { FeatureContextDecision.Applicable },
             specializedRequirements = listOf(adapter),
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
             behavioralContracts = listOf(contract),
             projectionRequirements = listOf(projectionDefinition),
             projections = listOf(projection),
@@ -95,7 +95,7 @@ class ContributionSemanticsTest {
         feature.integrations.single().contextInputs shouldContainExactly listOf(context)
         feature.integrations.single().contextRule shouldBe integration.contextRule
         feature.integrations.single().specializedRequirements shouldContainExactly listOf(adapter)
-        feature.integrations.single().sharedConsequences shouldContainExactly listOf(consequence)
+        feature.integrations.single().behaviorProjections shouldContainExactly listOf(behavior)
         feature.integrations.single().behavioralContracts shouldContainExactly listOf(contract)
         feature.integrations.single().projectionRequirements shouldContainExactly listOf(projectionDefinition)
         feature.integrations.single().projections shouldContainExactly listOf(projection)
@@ -160,7 +160,7 @@ class ContributionSemanticsTest {
                         contextRule = featureContextRule(ContributionOwner("other.feature")) {
                             FeatureContextDecision.Applicable
                         },
-                        sharedConsequences = listOf(consequence("example.consequence")),
+                        behaviorProjections = listOf(behavior("example.projection")),
                     ),
                 ),
             )
@@ -177,7 +177,7 @@ class ContributionSemanticsTest {
                         inputs = listOf(otherContext),
                     ),
                 ),
-                sharedConsequences = listOf(consequence("example.consequence")),
+                behaviorProjections = listOf(behavior("example.projection")),
             )
         }
     }
@@ -293,7 +293,7 @@ class ContributionSemanticsTest {
         shouldThrow<IllegalArgumentException> { FeatureExecutionParticipantId("Entry.cleanup") }
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

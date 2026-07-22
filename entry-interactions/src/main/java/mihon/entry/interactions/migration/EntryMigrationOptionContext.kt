@@ -6,30 +6,30 @@ import mihon.feature.graph.ContextInputDefinition
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
-internal object EntryMigrationChildStateOptionConsequence : SharedFeatureConsequence {
+internal object EntryMigrationChildStateOptionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.migration.child-state-option-availability")
 }
 
 internal enum class EntryMigrationContextualOption(
     val integration: FeatureIntegrationId,
-    val consequence: FeatureArtifactId,
+    val behaviorProjection: FeatureArtifactId,
     val input: ContextInputDefinition<Boolean>,
     val blockerId: FeatureArtifactId,
     val contract: EntryMigrationBehaviorContract,
 ) {
     CATEGORIES(
         integration = FeatureIntegrationId("entry.migration.categories-option-context"),
-        consequence = FeatureArtifactId("entry.migration.categories-option-availability"),
+        behaviorProjection = FeatureArtifactId("entry.migration.categories-option-availability"),
         input = contextInputDefinition(
             ContextInputId("entry.migration.has-categories"),
             ContributionOwner("entry-category-state"),
@@ -39,7 +39,7 @@ internal enum class EntryMigrationContextualOption(
     ),
     NOTES(
         integration = FeatureIntegrationId("entry.migration.notes-option-context"),
-        consequence = FeatureArtifactId("entry.migration.notes-option-availability"),
+        behaviorProjection = FeatureArtifactId("entry.migration.notes-option-availability"),
         input = contextInputDefinition(
             ContextInputId("entry.migration.has-notes"),
             ContributionOwner("entry-state"),
@@ -49,7 +49,7 @@ internal enum class EntryMigrationContextualOption(
     ),
     CUSTOM_COVER(
         integration = FeatureIntegrationId("entry.migration.custom-cover-option-context"),
-        consequence = FeatureArtifactId("entry.migration.custom-cover-option-availability"),
+        behaviorProjection = FeatureArtifactId("entry.migration.custom-cover-option-availability"),
         input = contextInputDefinition(
             ContextInputId("entry.migration.has-custom-cover"),
             ContributionOwner("entry-cover-state"),
@@ -59,7 +59,7 @@ internal enum class EntryMigrationContextualOption(
     ),
     DOWNLOADS(
         integration = FeatureIntegrationId("entry.migration.download-option-context"),
-        consequence = FeatureArtifactId("entry.migration.download-option-availability"),
+        behaviorProjection = FeatureArtifactId("entry.migration.download-option-availability"),
         input = contextInputDefinition(
             ContextInputId("entry.migration.has-downloads"),
             ContributionOwner("entry-download-state"),
@@ -100,9 +100,9 @@ internal fun entryMigrationOptionContextIntegrations(
             }
         },
         contextBlockers = listOf(definition.blocker),
-        sharedConsequences = listOf(
-            object : SharedFeatureConsequence {
-                override val id = option.consequence
+        behaviorProjections = listOf(
+            object : FeatureBehaviorProjection {
+                override val id = option.behaviorProjection
             },
         ),
         behavioralContracts = listOf(option.contract),
@@ -118,7 +118,7 @@ internal fun FeatureGraphEvaluation.requireMigrationOptionContext(
         type = type,
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = option.integration,
-        consequences = listOf(option.consequence),
+        behaviorProjections = listOf(option.behaviorProjection),
         evidence = listOf(contextEvidence(option.input, available)),
         applicable = available,
     )

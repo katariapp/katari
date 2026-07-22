@@ -10,6 +10,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -19,7 +20,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
@@ -35,22 +35,22 @@ internal class DefaultEntryImmersiveFeature(
     private val immersiveTypes = evaluation.applicableProviderTypes<EntryImmersiveProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
         integration = ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID,
-        consequence = EntryImmersiveProviderDispatchConsequence.id,
+        behaviorProjection = EntryImmersiveProviderDispatchBehavior.id,
     )
     private val childTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
         integration = ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID,
-        consequence = EntryImmersiveChildConsequence.id,
+        behaviorProjection = EntryImmersiveChildBehavior.id,
     )
     private val childRefreshTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
         integration = ENTRY_IMMERSIVE_CHILD_INTEGRATION_ID,
-        consequence = EntryImmersiveChildRefreshConsequence.id,
+        behaviorProjection = EntryImmersiveChildRefreshBehavior.id,
     )
     private val openTypes = evaluation.applicableProviderTypes<EntryOpenProcessor>(
         feature = ENTRY_IMMERSIVE_FEATURE_ID,
         integration = ENTRY_IMMERSIVE_OPEN_INTEGRATION_ID,
-        consequence = EntryImmersiveOpenConsequence.id,
+        behaviorProjection = EntryImmersiveOpenBehavior.id,
     )
 
     init {
@@ -225,7 +225,7 @@ internal class DefaultEntryImmersiveFeature(
                 type = type,
                 feature = ENTRY_IMMERSIVE_FEATURE_ID,
                 integration = ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID,
-                consequences = ENTRY_IMMERSIVE_SOURCE_CONSEQUENCES.map(EntryImmersiveConsequence::id),
+                behaviorProjections = ENTRY_IMMERSIVE_SOURCE_BEHAVIORS.map(EntryImmersiveBehavior::id),
                 evidence = listOf(
                     contextEvidence(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT, installed),
                     contextEvidence(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT, optedIn),
@@ -243,7 +243,7 @@ internal class DefaultEntryImmersiveFeature(
             type = type,
             feature = ENTRY_IMMERSIVE_FEATURE_ID,
             integration = ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID,
-            consequences = ENTRY_IMMERSIVE_ENTRY_CONSEQUENCES.map(EntryImmersiveConsequence::id),
+            behaviorProjections = ENTRY_IMMERSIVE_ENTRY_BEHAVIORS.map(EntryImmersiveBehavior::id),
             evidence = listOf(
                 contextEvidence(ENTRY_IMMERSIVE_SOURCE_INSTALLED_CONTEXT, installed),
                 contextEvidence(ENTRY_IMMERSIVE_SOURCE_OPT_IN_CONTEXT, optedIn),

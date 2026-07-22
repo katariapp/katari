@@ -25,6 +25,13 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
                 reason = finding.reason,
             )
         }
+        findings += checkEntryFeatureRuntimeModuleBoundaries(featureRuntimeModuleSources(root)).map { finding ->
+            Finding(
+                relativePath = finding.relativePath,
+                lineNumber = finding.lineNumber,
+                reason = finding.reason,
+            )
+        }
 
         if (findings.isNotEmpty()) {
             val maxFindings = 80
@@ -69,6 +76,21 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
             .filterNot { it.invariantSeparatorsPath.contains("/build/") }
             .map { file ->
                 EntryContractValidationBoundarySource(
+                    relativePath = file.relativeTo(root).invariantSeparatorsPath,
+                    content = file.readText(),
+                )
+            }
+            .toList()
+    }
+
+    private fun featureRuntimeModuleSources(root: File): List<EntryFeatureRuntimeModuleBoundarySource> {
+        val entryInteractions = root.resolve("entry-interactions")
+        if (!entryInteractions.isDirectory) return emptyList()
+        return entryInteractions.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .filterNot { it.invariantSeparatorsPath.contains("/build/") }
+            .map { file ->
+                EntryFeatureRuntimeModuleBoundarySource(
                     relativePath = file.relativeTo(root).invariantSeparatorsPath,
                     content = file.readText(),
                 )
@@ -492,7 +514,7 @@ private class EntryInteractionBoundaryRules(
             "domain/src/main/java/tachiyomi/domain/entry/service/EntryLibraryProgressResolution.kt",
             "domain/src/main/java/tachiyomi/domain/entry/interactor/GetLibraryEntries.kt",
             "entry-interactions/api/src/main/java/mihon/entry/interactions/library/EntryLibraryProgressFeature.kt",
-            "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt",
+            "entry-interactions/src/main/java/mihon/entry/interactions/library/EntryLibraryRuntimeModules.kt",
         )
         if (file.relativePath in allowedPaths) return
 

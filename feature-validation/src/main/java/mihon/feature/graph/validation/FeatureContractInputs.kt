@@ -7,6 +7,7 @@ import mihon.feature.graph.ContextEvidence
 import mihon.feature.graph.ContextInputDefinition
 import mihon.feature.graph.ContractFixture
 import mihon.feature.graph.ContractFixtureDefinition
+import mihon.feature.graph.FeatureExecutionParticipantSubject
 import mihon.feature.graph.FeatureIntegrationSubject
 import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.SpecializedAdapterDefinition
@@ -51,7 +52,30 @@ class FeatureContractExecutionInput internal constructor(
     fun <C : Any> evidence(definition: ContextInputDefinition<C>): C = inputs.evidence(definition)
 }
 
-private class FeatureContractInputs(
+/** Exact graph-selected inputs supplied to one executable-participant verifier. */
+class FeatureExecutionContractExecutionInput internal constructor(
+    selection: FeatureExecutionBehavioralContractSelection,
+) {
+    val subject: FeatureExecutionParticipantSubject = selection.subject
+    private val inputs = FeatureContractInputs(
+        selection.matchedProviders,
+        selection.suppliedAdapters,
+        selection.fixtures,
+        selection.contextEvidence,
+    )
+
+    fun <P : Any> provider(definition: CapabilityDefinition<P>): P = inputs.provider(definition)
+
+    fun <P : Any> providerOrNull(definition: CapabilityDefinition<P>): P? = inputs.providerOrNull(definition)
+
+    fun <A : Any> adapter(definition: SpecializedAdapterDefinition<A>): A = inputs.adapter(definition)
+
+    fun <F : Any> fixture(definition: ContractFixtureDefinition<F>): F = inputs.fixture(definition)
+
+    fun <C : Any> evidence(definition: ContextInputDefinition<C>): C = inputs.evidence(definition)
+}
+
+internal class FeatureContractInputs(
     providers: List<CapabilityProvider<*>>,
     adapters: List<SpecializedAdapter<*>>,
     fixtures: List<ContractFixture<*>>,

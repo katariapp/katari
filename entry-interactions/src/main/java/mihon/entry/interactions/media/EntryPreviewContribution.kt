@@ -14,6 +14,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -23,7 +24,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
@@ -49,9 +49,9 @@ internal val ENTRY_PREVIEW_CONFIGURATION_INTEGRATION_ID = FeatureIntegrationId("
 internal val ENTRY_PREVIEW_CHILD_INTEGRATION_ID = FeatureIntegrationId("entry.preview.first-reading-child")
 internal val ENTRY_PREVIEW_OPEN_INTEGRATION_ID = FeatureIntegrationId("entry.preview.open-target")
 
-internal enum class EntryPreviewConsequence(
+internal enum class EntryPreviewBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     AVAILABILITY(FeatureArtifactId("entry.preview.availability")),
     LOAD(FeatureArtifactId("entry.preview.load")),
     PAGE_LOAD(FeatureArtifactId("entry.preview.page-load")),
@@ -60,15 +60,15 @@ internal enum class EntryPreviewConsequence(
     BROWSE_SURFACE(FeatureArtifactId("entry.preview.browse-surface")),
 }
 
-internal object EntryPreviewConfigurationConsequence : SharedFeatureConsequence {
+internal object EntryPreviewConfigurationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.preview.configuration.settings")
 }
 
-internal object EntryPreviewChildConsequence : SharedFeatureConsequence {
+internal object EntryPreviewChildBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.preview.first-reading-child.selection")
 }
 
-internal object EntryPreviewOpenConsequence : SharedFeatureConsequence {
+internal object EntryPreviewOpenBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.preview.open-target.dispatch")
 }
 
@@ -92,7 +92,7 @@ internal object EntryPreviewOpenBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.preview.open-target-behavior")
 }
 
-internal object EntryPreviewProviderDispatchConsequence : SharedFeatureConsequence {
+internal object EntryPreviewProviderDispatchBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.preview.provider-dispatch")
 }
 
@@ -129,7 +129,7 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_PREVIEW_PROVIDER_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryPreviewCapability.definition),
-                        sharedConsequences = listOf(EntryPreviewProviderDispatchConsequence),
+                        behaviorProjections = listOf(EntryPreviewProviderDispatchBehavior),
                         behavioralContracts = listOf(EntryPreviewProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_PREVIEW_REFERENCE.requirement),
                         projections = listOf(ENTRY_PREVIEW_REFERENCE.projection),
@@ -154,7 +154,7 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(ENTRY_PREVIEW_SOURCE_UNSUPPORTED, ENTRY_PREVIEW_DISABLED),
-                        sharedConsequences = EntryPreviewConsequence.entries,
+                        behaviorProjections = EntryPreviewBehavior.entries,
                         behavioralContracts = listOf(EntryPreviewBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -163,7 +163,7 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryPreviewCapability.definition),
                             CapabilityExpression.Provided(EntryPreviewConfigurationCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryPreviewConfigurationConsequence),
+                        behaviorProjections = listOf(EntryPreviewConfigurationBehavior),
                         behavioralContracts = listOf(EntryPreviewConfigurationBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -172,7 +172,7 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryPreviewCapability.definition),
                             CapabilityExpression.Provided(EntryChildListCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryPreviewChildConsequence),
+                        behaviorProjections = listOf(EntryPreviewChildBehavior),
                         behavioralContracts = listOf(EntryPreviewChildBehaviorContract),
                     ),
                     FeatureIntegration(
@@ -181,7 +181,7 @@ internal object EntryPreviewFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryPreviewCapability.definition),
                             CapabilityExpression.Provided(EntryOpenCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryPreviewOpenConsequence),
+                        behaviorProjections = listOf(EntryPreviewOpenBehavior),
                         behavioralContracts = listOf(EntryPreviewOpenBehaviorContract),
                     ),
                 ),

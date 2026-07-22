@@ -19,7 +19,7 @@ class EntryDownloadMaintenanceFeatureTest {
     private val entry = Entry.create().copy(id = 7L, type = EntryType.BOOK)
 
     @Test
-    fun `a core Download provider activates every maintenance consequence`() = runTest {
+    fun `a core Download provider activates every maintenance behavior`() = runTest {
         val processor = processor()
         val oldSource = mockk<UnifiedSource>()
         val newSource = mockk<UnifiedSource>()

@@ -23,7 +23,7 @@ class FeatureContextResolutionTest {
         SpecializedAdapterId("example.adapter"),
         featureOwner,
     )
-    private val consequence = consequence("example.consequence")
+    private val behavior = behavior("example.projection")
     private val sourceUnsupported = blocker("example.source-unsupported", source)
     private val disabled = blocker("example.disabled", preference)
 
@@ -42,7 +42,7 @@ class FeatureContextResolutionTest {
         missingResult.missingInputs shouldContainExactly listOf(preference)
         missingResult.evidence.map { it.input } shouldContainExactly listOf(source)
         missing.obligations shouldBe emptyList()
-        missing.sharedConsequences shouldBe emptyList()
+        missing.behaviorProjections shouldBe emptyList()
 
         val blocked = resolveFeatureContext(
             candidate,
@@ -57,7 +57,7 @@ class FeatureContextResolutionTest {
         blockedResult.blockers.single().inputs shouldContainExactly listOf(preference)
         blockedResult.evidence.map { it.input } shouldContainExactly listOf(preference, source)
         blocked.obligations shouldBe emptyList()
-        blocked.sharedConsequences shouldBe emptyList()
+        blocked.behaviorProjections shouldBe emptyList()
     }
 
     @Test
@@ -72,11 +72,11 @@ class FeatureContextResolutionTest {
         result.obligations.single().responsibleOwner shouldBe ContributionOwner("example.type")
         result.obligations.single().requirement shouldBe adapter
         evaluated.obligations shouldContainExactly result.obligations
-        evaluated.sharedConsequences shouldBe emptyList()
+        evaluated.behaviorProjections shouldBe emptyList()
     }
 
     @Test
-    fun `applicable context activates shared consequences with supplied adapters`() {
+    fun `applicable context activates behavior projections with supplied adapters`() {
         val suppliedAdapter = SpecializedAdapter(adapter, ExampleAdapter())
         val candidate = candidate(contentType(adapters = listOf(suppliedAdapter)))
 
@@ -86,8 +86,8 @@ class FeatureContextResolutionTest {
         result.suppliedAdapters shouldContainExactly listOf(suppliedAdapter)
         result.evidence.map { it.input } shouldContainExactly listOf(preference, source)
         evaluated.obligations shouldBe emptyList()
-        evaluated.sharedConsequences.map { it.consequence } shouldContainExactly listOf(consequence)
-        evaluated.sharedConsequences.single().subject shouldBe candidate.subject
+        evaluated.behaviorProjections.map { it.projection } shouldContainExactly listOf(behavior)
+        evaluated.behaviorProjections.single().subject shouldBe candidate.subject
     }
 
     @Test
@@ -172,8 +172,8 @@ class FeatureContextResolutionTest {
             ),
         )
         val evaluation = evaluateFeatureGraph(graph)
-        evaluation.candidateConsequences.map { it.consequence } shouldContainExactly listOf(consequence)
-        evaluation.sharedConsequences shouldBe emptyList()
+        evaluation.candidateBehaviorProjections.map { it.projection } shouldContainExactly listOf(behavior)
+        evaluation.behaviorProjections shouldBe emptyList()
         evaluation.obligations shouldBe emptyList()
         return evaluation.integrations.single() as ConditionalFeatureIntegration
     }
@@ -194,7 +194,7 @@ class FeatureContextResolutionTest {
             contextRule = rule,
             contextBlockers = listOf(sourceUnsupported, disabled),
             specializedRequirements = listOf(adapter),
-            sharedConsequences = listOf(consequence),
+            behaviorProjections = listOf(behavior),
         )
     }
 
@@ -219,8 +219,8 @@ class FeatureContextResolutionTest {
         vararg inputs: ContextInputDefinition<*>,
     ): FeatureContextBlocker = FeatureContextBlocker(FeatureArtifactId(value), inputs.toList())
 
-    private fun consequence(value: String): SharedFeatureConsequence {
-        return object : SharedFeatureConsequence {
+    private fun behavior(value: String): FeatureBehaviorProjection {
+        return object : FeatureBehaviorProjection {
             override val id = FeatureArtifactId(value)
         }
     }

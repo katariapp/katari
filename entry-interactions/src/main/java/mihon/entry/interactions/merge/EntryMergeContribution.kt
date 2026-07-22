@@ -7,6 +7,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -14,7 +15,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 
 internal val ENTRY_MERGE_FEATURE_ID = FeatureId("entry.merge")
 internal val ENTRY_MERGE_BASE_INTEGRATION_ID = FeatureIntegrationId("entry.merge.shared-workflow")
@@ -30,9 +30,9 @@ private val ENTRY_MERGE_REFERENCE = entryContentTypeReferenceContribution(
     order = 500,
 )
 
-internal enum class EntryMergeBaseConsequence(
+internal enum class EntryMergeBaseBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     WORKFLOW_COORDINATION(FeatureArtifactId("entry.merge.workflow-coordination")),
     CANDIDATES(FeatureArtifactId("entry.merge.candidates")),
     NAVIGATION(FeatureArtifactId("entry.merge.navigation")),
@@ -48,13 +48,13 @@ internal enum class EntryMergeBaseConsequence(
     CONSEQUENCE_STATUS(FeatureArtifactId("entry.merge.consequence-status")),
 }
 
-internal enum class EntryMergeDownloadConsequence(
+internal enum class EntryMergeDownloadBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     OWNERSHIP(FeatureArtifactId("entry.merge.download-ownership")),
 }
 
-private object EntryMergeMigrationReplacementConsequence : SharedFeatureConsequence {
+private object EntryMergeMigrationReplacementBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.merge.migration-replacement")
 }
 
@@ -85,7 +85,7 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_MERGE_BASE_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Always,
-                        sharedConsequences = EntryMergeBaseConsequence.entries,
+                        behaviorProjections = EntryMergeBaseBehavior.entries,
                         behavioralContracts = listOf(EntryMergeBehaviorContract.WORKFLOW),
                         projectionRequirements = listOf(ENTRY_MERGE_REFERENCE.requirement),
                         projections = listOf(ENTRY_MERGE_REFERENCE.projection),
@@ -93,13 +93,13 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                        sharedConsequences = EntryMergeDownloadConsequence.entries,
+                        behaviorProjections = EntryMergeDownloadBehavior.entries,
                         behavioralContracts = listOf(EntryMergeBehaviorContract.DOWNLOAD_OWNERSHIP),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MERGE_MIGRATION_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryMigrationCapability.definition),
-                        sharedConsequences = listOf(EntryMergeMigrationReplacementConsequence),
+                        behaviorProjections = listOf(EntryMergeMigrationReplacementBehavior),
                         behavioralContracts = listOf(EntryMergeBehaviorContract.MIGRATION_REPLACEMENT),
                     ),
                 ) + entryMergePreparationContextIntegrations(owner) + entryMergeExecutionContextIntegrations(owner),
@@ -110,13 +110,13 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
 
 internal fun FeatureGraphEvaluation.mergeTypes(
     integration: FeatureIntegrationId,
-    consequence: FeatureArtifactId,
+    behaviorProjection: FeatureArtifactId,
 ): Set<EntryType> {
-    val contentTypes = sharedConsequences.asSequence()
+    val contentTypes = behaviorProjections.asSequence()
         .filter { applicability ->
             applicability.subject.feature == ENTRY_MERGE_FEATURE_ID &&
                 applicability.subject.integration == integration &&
-                applicability.consequence.id == consequence
+                applicability.projection.id == behaviorProjection
         }
         .mapTo(mutableSetOf()) { it.subject.contentType }
     return EntryType.entries.filterTo(mutableSetOf()) { it.toContentTypeId() in contentTypes }

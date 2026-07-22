@@ -20,6 +20,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.DiscoveredFeatureGraphContributions
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -27,7 +28,6 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.FeatureProjection
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.capabilityDefinition
 import mihon.feature.graph.contextEvidence
@@ -176,7 +176,7 @@ class EntryContentTypeReferencePlannerTest {
                         FeatureIntegration(
                             id = FeatureIntegrationId("future.excluded.integration"),
                             prerequisites = CapabilityExpression.Always,
-                            sharedConsequences = listOf(consequence("future.excluded.effect")),
+                            behaviorProjections = listOf(behavior("future.excluded.effect")),
                         ),
                     ),
                     projectionExclusions = listOf(
@@ -190,7 +190,7 @@ class EntryContentTypeReferencePlannerTest {
                         FeatureIntegration(
                             id = FeatureIntegrationId("future.unclassified.integration"),
                             prerequisites = CapabilityExpression.Always,
-                            sharedConsequences = listOf(consequence("future.unclassified.effect")),
+                            behaviorProjections = listOf(behavior("future.unclassified.effect")),
                         ),
                     ),
                 ),
@@ -291,7 +291,7 @@ class EntryContentTypeReferencePlannerTest {
         return FeatureProjection(definition, implementation)
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

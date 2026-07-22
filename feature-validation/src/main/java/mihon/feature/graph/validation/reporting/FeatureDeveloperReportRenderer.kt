@@ -63,7 +63,15 @@ fun renderFeatureDeveloperReport(report: FeatureDeveloperReport): String = build
             appendReferences("context inputs", participant.contextInputs, indent = "  ")
             if (participant.after.isNotEmpty()) appendLine("  after: ${participant.after.joinToString()}")
             if (participant.before.isNotEmpty()) appendLine("  before: ${participant.before.joinToString()}")
-            if (participant.contracts.isNotEmpty()) appendLine("  contracts: ${participant.contracts.joinToString()}")
+            if (participant.contracts.isNotEmpty()) {
+                appendLine("  contracts:")
+                participant.contracts.forEach { contract ->
+                    appendLine("    - ${contract.id}")
+                    contract.validations.forEach { validation ->
+                        appendContractValidation(validation, indent = "      ")
+                    }
+                }
+            }
         }
     }
 
@@ -98,20 +106,14 @@ fun renderFeatureDeveloperReport(report: FeatureDeveloperReport): String = build
                 },
             )
         }
-        appendArtifacts("consequences", integration.consequences)
+        appendArtifacts("behaviors", integration.behaviors)
         if (integration.contracts.isNotEmpty()) {
             appendLine("  contracts:")
             integration.contracts.forEach { contract ->
                 appendLine("    - ${contract.id} [${contract.availability.name.lowercase()}]")
                 appendReferences("fixtures", contract.fixtureRequirements, indent = "      ")
                 contract.validations.forEach { validation ->
-                    val scenario = validation.scenario?.let { " scenario=$it" }.orEmpty()
-                    val details = validation.details.takeIf { it.isNotEmpty() }
-                        ?.joinToString(prefix = "; details=", separator = " | ")
-                        .orEmpty()
-                    appendLine(
-                        "      validation:$scenario ${validation.outcome.name.lowercase()}$details",
-                    )
+                    appendContractValidation(validation, indent = "      ")
                 }
             }
         }
@@ -153,6 +155,17 @@ private fun StringBuilder.appendReferences(
     if (references.isNotEmpty()) {
         appendLine("$indent$label: ${references.joinToString { "${it.id} (${it.owner})" }}")
     }
+}
+
+private fun StringBuilder.appendContractValidation(
+    validation: FeatureDeveloperContractValidation,
+    indent: String,
+) {
+    val scenario = validation.scenario?.let { " scenario=$it" }.orEmpty()
+    val details = validation.details.takeIf { it.isNotEmpty() }
+        ?.joinToString(prefix = "; details=", separator = " | ")
+        .orEmpty()
+    appendLine("${indent}validation:$scenario ${validation.outcome.name.lowercase()}$details")
 }
 
 private fun StringBuilder.appendRequirements(

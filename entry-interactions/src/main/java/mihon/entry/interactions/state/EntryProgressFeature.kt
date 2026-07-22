@@ -7,6 +7,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -14,7 +15,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
@@ -30,15 +30,15 @@ private val ENTRY_PROGRESS_REFERENCE = entryContentTypeReferenceContribution(
     order = 350,
 )
 
-internal enum class EntryProgressConsequence(
+internal enum class EntryProgressBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     DISPATCH(FeatureArtifactId("entry.progress-transfer.dispatch")),
     BACKUP_CREATE(FeatureArtifactId("entry.progress-transfer.backup-create")),
     BACKUP_RESTORE(FeatureArtifactId("entry.progress-transfer.backup-restore")),
 }
 
-private object EntryProgressMigrationConsequence : SharedFeatureConsequence {
+private object EntryProgressMigrationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.progress-transfer.migration-copy")
 }
 
@@ -58,7 +58,7 @@ internal object EntryProgressFeatureContributor : FeatureGraphContributor {
                     FeatureIntegration(
                         id = ENTRY_PROGRESS_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryProgressCapability.definition),
-                        sharedConsequences = EntryProgressConsequence.entries,
+                        behaviorProjections = EntryProgressBehavior.entries,
                         behavioralContracts = listOf(EntryProgressBehaviorContract),
                         projectionRequirements = listOf(ENTRY_PROGRESS_REFERENCE.requirement),
                         projections = listOf(ENTRY_PROGRESS_REFERENCE.projection),
@@ -69,7 +69,7 @@ internal object EntryProgressFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryProgressCapability.definition),
                             CapabilityExpression.Provided(EntryMigrationCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryProgressMigrationConsequence),
+                        behaviorProjections = listOf(EntryProgressMigrationBehavior),
                     ),
                 ),
             ),
@@ -81,17 +81,17 @@ internal class DefaultEntryProgressFeature(
     evaluation: FeatureGraphEvaluation,
     private val interaction: EntryProgressInteraction,
 ) : EntryProgressFeature {
-    private val applicableTypes = EntryProgressConsequence.entries
-        .map { consequence ->
+    private val applicableTypes = EntryProgressBehavior.entries
+        .map { behavior ->
             evaluation.applicableProviderTypes<EntryProgressProcessor>(
                 feature = ENTRY_PROGRESS_FEATURE_ID,
                 integration = ENTRY_PROGRESS_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
             )
         }
         .also { selectedTypes ->
             check(selectedTypes.distinct().size <= 1) {
-                "Progress-transfer consequences selected different provider sets: $selectedTypes"
+                "Progress-transfer behaviors selected different provider sets: $selectedTypes"
             }
         }
         .firstOrNull()
@@ -99,7 +99,7 @@ internal class DefaultEntryProgressFeature(
     private val migrationTypes = evaluation.applicableProviderTypes<EntryProgressProcessor>(
         feature = ENTRY_PROGRESS_FEATURE_ID,
         integration = ENTRY_PROGRESS_MIGRATION_INTEGRATION_ID,
-        consequence = EntryProgressMigrationConsequence.id,
+        behaviorProjection = EntryProgressMigrationBehavior.id,
     )
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes

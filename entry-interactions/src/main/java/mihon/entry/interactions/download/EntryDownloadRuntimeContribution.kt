@@ -6,13 +6,13 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 
 internal val ENTRY_DOWNLOAD_RUNTIME_FEATURE_ID = FeatureId("entry.download.runtime")
 internal val ENTRY_DOWNLOAD_RUNTIME_INTEGRATION_ID = FeatureIntegrationId("entry.download.runtime.provider")
@@ -29,9 +29,9 @@ internal object EntryDownloadRuntimeBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.download.runtime.provider-behavior")
 }
 
-internal enum class EntryDownloadRuntimeConsequence(
+internal enum class EntryDownloadRuntimeBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     STATUS(FeatureArtifactId("entry.download.runtime.status")),
     QUEUE(FeatureArtifactId("entry.download.runtime.queue")),
     LIBRARY_COUNTS(FeatureArtifactId("entry.download.runtime.library-counts")),
@@ -52,7 +52,7 @@ internal object EntryDownloadRuntimeFeatureContributor : FeatureGraphContributor
                     FeatureIntegration(
                         id = ENTRY_DOWNLOAD_RUNTIME_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryDownloadCapability.definition),
-                        sharedConsequences = EntryDownloadRuntimeConsequence.entries,
+                        behaviorProjections = EntryDownloadRuntimeBehavior.entries,
                         behavioralContracts = listOf(EntryDownloadRuntimeBehaviorContract),
                         projectionRequirements = listOf(ENTRY_DOWNLOAD_RUNTIME_REFERENCE.requirement),
                         projections = listOf(ENTRY_DOWNLOAD_RUNTIME_REFERENCE.projection),

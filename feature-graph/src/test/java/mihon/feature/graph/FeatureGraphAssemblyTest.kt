@@ -263,13 +263,13 @@ class FeatureGraphAssemblyTest {
                 FeatureIntegration(
                     id = FeatureIntegrationId("$id.integration"),
                     prerequisites = CapabilityExpression.Provided(capability),
-                    sharedConsequences = listOf(consequence("$id.consequence")),
+                    behaviorProjections = listOf(behavior("$id.projection")),
                 ),
             ),
         )
     }
 
-    private fun consequence(id: String) = object : SharedFeatureConsequence {
+    private fun behavior(id: String) = object : FeatureBehaviorProjection {
         override val id = FeatureArtifactId(id)
     }
 

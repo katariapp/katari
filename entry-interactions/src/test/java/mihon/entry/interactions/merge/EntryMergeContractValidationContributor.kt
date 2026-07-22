@@ -104,7 +104,7 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
         )
         val requests = (host.transitions.single() as EntryMergeHostTransition.CommitEditor).consequenceRequests
         contractExpectation(
-            requests.any { it.artifactId == EntryMergeLibraryInitializationConsequence.id.value },
+            requests.any { it.artifactId == EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION },
             "Merge must request initialization for a new library member",
         )
     }
@@ -138,12 +138,12 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
         val ids = (host.transitions.single() as EntryMergeHostTransition.CommitEditor)
             .consequenceRequests.map { it.artifactId }
         contractExpectation(
-            EntryMergeCoverCleanupConsequence.id.value in ids,
+            EntryMergeConsequenceArtifact.COVER_CLEANUP in ids,
             "Merge must request cover cleanup for library removal",
         )
         if (includeDownloads) {
             contractExpectation(
-                EntryMergeDownloadRemovalConsequence.id.value in ids,
+                EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL in ids,
                 "Merge must request download cleanup when Download is selected",
             )
         }

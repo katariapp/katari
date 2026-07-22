@@ -40,8 +40,14 @@ private fun requireTerms(label: String, terms: List<CapabilityExpression>) {
     }
 }
 
-/** Shared executable behavior supplied by a feature when an integration applies. */
-interface SharedFeatureConsequence {
+/**
+ * Describes observable behavior supplied by the owning Feature when an integration applies.
+ *
+ * This projection is reportable metadata for behavior the owning Feature coordinator already guarantees. Its id is not
+ * a runtime dispatch key or implementation binding. Independently contributed executable work must be declared through
+ * a [FeatureExecutionParticipantDefinition].
+ */
+interface FeatureBehaviorProjection {
     val id: FeatureArtifactId
 }
 
@@ -94,7 +100,7 @@ inline fun <reified P : Any> featureProjectionExclusion(reason: String): Feature
     FeatureProjectionExclusion(P::class, reason)
 
 /**
- * One feature-owned relationship between provider-backed prerequisites and their consequences.
+ * One feature-owned relationship between provider-backed prerequisites and their behavior projections.
  *
  * Context inputs describe additional runtime information that later evaluation must retain. Specialized prerequisites
  * make the relationship inapplicable when the affected type has not contributed that media-specific participation.
@@ -108,7 +114,7 @@ data class FeatureIntegration(
     val contextBlockers: List<FeatureContextBlocker> = emptyList(),
     val specializedPrerequisites: List<SpecializedAdapterDefinition<*>> = emptyList(),
     val specializedRequirements: List<SpecializedAdapterDefinition<*>> = emptyList(),
-    val sharedConsequences: List<SharedFeatureConsequence> = emptyList(),
+    val behaviorProjections: List<FeatureBehaviorProjection> = emptyList(),
     val behavioralContracts: List<FeatureBehaviorContract> = emptyList(),
     val projectionRequirements: List<FeatureProjectionDefinition<*>> = emptyList(),
     val projections: List<FeatureProjection<*>> = emptyList(),
@@ -136,7 +142,7 @@ data class FeatureIntegration(
         ) {
             "Feature integration $id cannot use one specialized adapter as both a prerequisite and a requirement"
         }
-        requireUnique("Shared consequences for $id", sharedConsequences.map { it.id.value })
+        requireUnique("Behavior projections for $id", behaviorProjections.map { it.id.value })
         requireUnique("Behavioral contracts for $id", behavioralContracts.map { it.id.value })
         behavioralContracts.forEach { contract ->
             requireUnique(
@@ -158,7 +164,8 @@ data class FeatureIntegration(
 /**
  * Feature-owned integration knowledge.
  *
- * Content types never enumerate these integrations. Nested consequences, contracts, and projections inherit this
+ * Content types never enumerate these integrations. Nested behavior projections, contracts, and projections inherit
+ * this
  * contribution's owner; specialized adapter contracts must be defined by the same owner.
  */
 data class FeatureContribution(

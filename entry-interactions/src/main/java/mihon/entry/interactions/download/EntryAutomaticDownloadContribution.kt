@@ -8,6 +8,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -17,7 +18,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -43,13 +43,13 @@ internal object EntryAutomaticDownloadContextBehaviorContract : FeatureBehaviorC
     override val id = FeatureArtifactId("entry.download.automatic.context-behavior")
 }
 
-private object EntryAutomaticDownloadProviderConsequence : SharedFeatureConsequence {
+private object EntryAutomaticDownloadProviderBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.download.automatic.provider-dispatch")
 }
 
-private enum class EntryAutomaticDownloadConsequence(
+private enum class EntryAutomaticDownloadBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     POLICY(FeatureArtifactId("entry.download.automatic.policy")),
     LIBRARY_UPDATE(FeatureArtifactId("entry.download.automatic.library-update")),
     ENTRY_REFRESH(FeatureArtifactId("entry.download.automatic.entry-refresh")),
@@ -114,7 +114,7 @@ internal object EntryAutomaticDownloadFeatureContributor : FeatureGraphContribut
                     FeatureIntegration(
                         id = ENTRY_AUTOMATIC_DOWNLOAD_PROVIDER_INTEGRATION,
                         prerequisites = download,
-                        sharedConsequences = listOf(EntryAutomaticDownloadProviderConsequence),
+                        behaviorProjections = listOf(EntryAutomaticDownloadProviderBehavior),
                         behavioralContracts = listOf(EntryAutomaticDownloadProviderBehaviorContract),
                         projectionRequirements = listOf(ENTRY_AUTOMATIC_DOWNLOAD_REFERENCE.requirement),
                         projections = listOf(ENTRY_AUTOMATIC_DOWNLOAD_REFERENCE.projection),
@@ -153,7 +153,7 @@ internal object EntryAutomaticDownloadFeatureContributor : FeatureGraphContribut
                             CATEGORY_POLICY_BLOCKER,
                             NO_UNREAD_CANDIDATES_BLOCKER,
                         ),
-                        sharedConsequences = EntryAutomaticDownloadConsequence.entries,
+                        behaviorProjections = EntryAutomaticDownloadBehavior.entries,
                         behavioralContracts = listOf(EntryAutomaticDownloadContextBehaviorContract),
                     ),
                 ),
@@ -166,7 +166,7 @@ internal fun FeatureGraphEvaluation.automaticDownloadTypes(): Set<EntryType> =
     applicableProviderTypes<EntryDownloadProcessor>(
         feature = ENTRY_AUTOMATIC_DOWNLOAD_FEATURE_ID,
         integration = ENTRY_AUTOMATIC_DOWNLOAD_PROVIDER_INTEGRATION,
-        consequence = EntryAutomaticDownloadProviderConsequence.id,
+        behaviorProjection = EntryAutomaticDownloadProviderBehavior.id,
     )
 
 internal fun FeatureGraphEvaluation.requireAutomaticDownloadContext(
@@ -177,7 +177,7 @@ internal fun FeatureGraphEvaluation.requireAutomaticDownloadContext(
         type = type,
         feature = ENTRY_AUTOMATIC_DOWNLOAD_FEATURE_ID,
         integration = ENTRY_AUTOMATIC_DOWNLOAD_CONTEXT_INTEGRATION,
-        consequences = EntryAutomaticDownloadConsequence.entries.map(EntryAutomaticDownloadConsequence::id),
+        behaviorProjections = EntryAutomaticDownloadBehavior.entries.map(EntryAutomaticDownloadBehavior::id),
         evidence = listOf(
             contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_NEW_CHILDREN_CONTEXT, decision.hasNewChapters),
             contextEvidence(ENTRY_AUTOMATIC_DOWNLOAD_ENABLED_CONTEXT, decision.enabled),

@@ -10,14 +10,14 @@ import mihon.feature.graph.FeatureIntegrationId
 internal inline fun <reified P : EntryInteractionProvider> FeatureGraphEvaluation.applicableProviderTypes(
     feature: FeatureId,
     integration: FeatureIntegrationId,
-    consequence: FeatureArtifactId,
+    behaviorProjection: FeatureArtifactId,
 ): Set<EntryType> {
-    val applicableSubjects = sharedConsequences
+    val applicableSubjects = behaviorProjections
         .asSequence()
         .filter { applicability ->
             applicability.subject.feature == feature &&
                 applicability.subject.integration == integration &&
-                applicability.consequence.id == consequence
+                applicability.projection.id == behaviorProjection
         }
         .map { it.subject }
         .toSet()

@@ -19,17 +19,17 @@ internal class DefaultEntryDownloadRuntimeFeature(
     evaluation: FeatureGraphEvaluation,
     private val interaction: EntryDownloadInteraction,
 ) : EntryDownloadRuntimeCoordinator {
-    private val applicableTypes = EntryDownloadRuntimeConsequence.entries
-        .map { consequence ->
+    private val applicableTypes = EntryDownloadRuntimeBehavior.entries
+        .map { behavior ->
             evaluation.applicableProviderTypes<EntryDownloadProcessor>(
                 feature = ENTRY_DOWNLOAD_RUNTIME_FEATURE_ID,
                 integration = ENTRY_DOWNLOAD_RUNTIME_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
             )
         }
         .also { selectedTypes ->
             check(selectedTypes.distinct().size <= 1) {
-                "Download runtime consequences selected different provider sets: $selectedTypes"
+                "Download runtime behaviors selected different provider sets: $selectedTypes"
             }
         }
         .firstOrNull()

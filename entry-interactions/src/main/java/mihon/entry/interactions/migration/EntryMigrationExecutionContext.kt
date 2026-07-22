@@ -5,19 +5,19 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
 
 internal val ENTRY_MIGRATION_EXECUTION_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.migration.execution-context")
 
-private object EntryMigrationExecutionConsequence : SharedFeatureConsequence {
+private object EntryMigrationExecutionBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.migration.execution")
 }
 
@@ -58,7 +58,7 @@ internal fun entryMigrationExecutionContextIntegration(
         }
     },
     contextBlockers = listOf(PAIR_MISSING_BLOCKER, AUTHORIZATION_CHANGED_BLOCKER),
-    sharedConsequences = listOf(EntryMigrationExecutionConsequence),
+    behaviorProjections = listOf(EntryMigrationExecutionBehavior),
     behavioralContracts = listOf(EntryMigrationBehaviorContract.EXECUTION_CONTEXT),
 )
 
@@ -71,7 +71,7 @@ internal fun FeatureGraphEvaluation.requireMigrationExecutionContext(
         type = type,
         feature = ENTRY_MIGRATION_FEATURE_ID,
         integration = ENTRY_MIGRATION_EXECUTION_CONTEXT_INTEGRATION,
-        consequences = listOf(EntryMigrationExecutionConsequence.id),
+        behaviorProjections = listOf(EntryMigrationExecutionBehavior.id),
         evidence = listOf(
             contextEvidence(ENTRY_MIGRATION_EXECUTION_PAIR_PRESENT_CONTEXT, pairPresent),
             contextEvidence(ENTRY_MIGRATION_AUTHORIZATION_STABLE_CONTEXT, authorizationStable),

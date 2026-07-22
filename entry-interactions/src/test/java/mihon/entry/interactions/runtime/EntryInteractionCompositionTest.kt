@@ -13,12 +13,12 @@ import mihon.feature.graph.CapabilityDefinition
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.featureGraphContributor
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -169,9 +169,9 @@ class EntryInteractionCompositionTest {
                         FeatureIntegration(
                             id = FeatureIntegrationId("test.$suffix.integration"),
                             prerequisites = CapabilityExpression.Provided(capability),
-                            sharedConsequences = listOf(
-                                object : SharedFeatureConsequence {
-                                    override val id = FeatureArtifactId("test.$suffix.consequence")
+                            behaviorProjections = listOf(
+                                object : FeatureBehaviorProjection {
+                                    override val id = FeatureArtifactId("test.$suffix.behavior")
                                 },
                             ),
                         ),

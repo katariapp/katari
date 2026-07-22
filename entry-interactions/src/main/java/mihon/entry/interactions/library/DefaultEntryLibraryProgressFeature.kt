@@ -69,7 +69,7 @@ internal class DefaultEntryLibraryProgressFeature(
         val bookmarkCount = if (entryType in selection.bookmarkTypes) {
             members.sumOf { member ->
                 checkNotNull(member.bookmarkCount) {
-                    "Library progress Bookmark consequence selected $entryType without bookmark summary evidence"
+                    "Library progress Bookmark behavior selected $entryType without bookmark summary evidence"
                 }
             }
         } else {

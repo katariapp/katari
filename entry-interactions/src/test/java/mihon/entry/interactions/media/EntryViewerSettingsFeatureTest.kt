@@ -28,7 +28,7 @@ class EntryViewerSettingsFeatureTest {
     private val target = Entry.create().copy(id = 12L, type = EntryType.BOOK)
 
     @Test
-    fun `provider absence is valid and owns no consequences`() = runTest {
+    fun `provider absence is valid and owns no behaviors`() = runTest {
         val feature = featureFor()
 
         feature.isApplicable(EntryType.BOOK) shouldBe false

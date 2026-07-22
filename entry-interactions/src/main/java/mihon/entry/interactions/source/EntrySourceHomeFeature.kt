@@ -11,6 +11,7 @@ import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
@@ -20,7 +21,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -71,9 +71,9 @@ private val SOURCE_HOME_NO_URL = FeatureContextBlocker(
     FeatureArtifactId("entry.source-home.no-url"),
     listOf(SOURCE_HOME_CONTEXT),
 )
-private enum class SourceHomeConsequence(
+private enum class SourceHomeBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     NAVIGATION(FeatureArtifactId("entry.source-home.navigation")),
     SEARCH_MATCHING(FeatureArtifactId("entry.source-home.search-matching")),
     COOKIE_MAINTENANCE(FeatureArtifactId("entry.source-home.cookie-maintenance")),
@@ -104,7 +104,7 @@ internal object EntrySourceHomeFeatureContributor : FeatureGraphContributor {
                             }
                         },
                         contextBlockers = listOf(SOURCE_HOME_MISSING, SOURCE_HOME_UNSUPPORTED, SOURCE_HOME_NO_URL),
-                        sharedConsequences = SourceHomeConsequence.entries,
+                        behaviorProjections = SourceHomeBehavior.entries,
                         behavioralContracts = listOf(EntrySourceHomeBehaviorContract),
                         projectionRequirements = listOf(SOURCE_HOME_REFERENCE.requirement),
                         projections = listOf(SOURCE_HOME_REFERENCE.projection),
@@ -166,11 +166,11 @@ internal class DefaultEntrySourceHomeFeature(
         urlState: SourceHomeUrlState,
         applicable: Boolean,
     ) {
-        SourceHomeConsequence.entries.forEach { consequence ->
+        SourceHomeBehavior.entries.forEach { behavior ->
             evaluation.requireSourceContextState(
                 feature = SOURCE_HOME_FEATURE_ID,
                 integration = SOURCE_HOME_INTEGRATION_ID,
-                consequence = consequence.id,
+                behaviorProjection = behavior.id,
                 evidence = listOf(
                     contextEvidence(SOURCE_HOME_CONTEXT, SourceHomeContext(installed, supported, urlState)),
                 ),

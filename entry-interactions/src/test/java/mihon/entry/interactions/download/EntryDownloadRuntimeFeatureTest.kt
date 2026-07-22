@@ -21,7 +21,7 @@ class EntryDownloadRuntimeFeatureTest {
     private val entry = Entry.create().copy(id = 7L, type = EntryType.BOOK)
 
     @Test
-    fun `a contributed download provider activates every shared runtime consequence`() = runTest {
+    fun `a contributed download provider activates every shared runtime behavior`() = runTest {
         val queueItem = queueItem()
         val processor = processor(queueItem)
         every { processor.getDownloadCount(entry) } returns 3

@@ -13,6 +13,7 @@ import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
@@ -20,7 +21,6 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.SharedFeatureConsequence
 import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
@@ -36,9 +36,9 @@ private val ENTRY_VIEWER_SETTINGS_REFERENCE = entryContentTypeReferenceContribut
 internal val ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.provider")
 internal val ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.migration")
 
-internal enum class EntryViewerSettingsConsequence(
+internal enum class EntryViewerSettingsBehavior(
     override val id: FeatureArtifactId,
-) : SharedFeatureConsequence {
+) : FeatureBehaviorProjection {
     DISCOVERY(FeatureArtifactId("entry.viewer-settings.discovery")),
     SETTINGS_HUB(FeatureArtifactId("entry.viewer-settings.settings-hub")),
     SCREEN_PROJECTION(FeatureArtifactId("entry.viewer-settings.screen-projection")),
@@ -49,7 +49,7 @@ internal enum class EntryViewerSettingsConsequence(
     BACKUP(FeatureArtifactId("entry.viewer-settings.backup")),
 }
 
-internal object EntryViewerSettingsMigrationConsequence : SharedFeatureConsequence {
+internal object EntryViewerSettingsMigrationBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.viewer-settings.migration")
 }
 
@@ -73,7 +73,7 @@ internal object EntryViewerSettingsFeatureContributor : FeatureGraphContributor 
                     FeatureIntegration(
                         id = ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID,
                         prerequisites = CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
-                        sharedConsequences = EntryViewerSettingsConsequence.entries,
+                        behaviorProjections = EntryViewerSettingsBehavior.entries,
                         behavioralContracts = listOf(EntryViewerSettingsBehaviorContract),
                         projectionRequirements = listOf(ENTRY_VIEWER_SETTINGS_REFERENCE.requirement),
                         projections = listOf(ENTRY_VIEWER_SETTINGS_REFERENCE.projection),
@@ -84,7 +84,7 @@ internal object EntryViewerSettingsFeatureContributor : FeatureGraphContributor 
                             CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
                             CapabilityExpression.Provided(EntryMigrationCapability.definition),
                         ),
-                        sharedConsequences = listOf(EntryViewerSettingsMigrationConsequence),
+                        behaviorProjections = listOf(EntryViewerSettingsMigrationBehavior),
                         behavioralContracts = listOf(EntryViewerSettingsMigrationBehaviorContract),
                     ),
                 ),
