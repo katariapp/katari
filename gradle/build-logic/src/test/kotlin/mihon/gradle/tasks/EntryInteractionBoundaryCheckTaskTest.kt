@@ -565,16 +565,34 @@ class EntryInteractionBoundaryCheckTaskTest {
 
                         class ReaderActivity
                     """.trimIndent(),
-                "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/download/DownloadJob.kt" to
-                    """
-                        package mihon.entry.interactions.manga.download
-
-                        class DownloadJob
-                    """.trimIndent(),
             ),
         )
 
         runBoundaryCheck()
+    }
+
+    @Test
+    fun `application composition cannot authorize type-specific interaction behavior`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt" to
+                    """
+                        package eu.kanade.tachiyomi.di
+
+                        import eu.kanade.tachiyomi.source.entry.EntryType
+                        import mihon.entry.interactions.manga.MangaOpenProcessor
+
+                        fun processor(type: EntryType): Any? = when (type) {
+                            EntryType.MANGA -> MangaOpenProcessor()
+                            else -> null
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "suspicious EntryType processing branch reaches across Entry interaction boundaries"
     }
 
     @Test

@@ -31,7 +31,7 @@ Counts below are matching files followed by matching lines where the probe repor
 
 | Probe | Result | Final classification |
 | --- | ---: | --- |
-| `EntryType` repository census | 392 files | 226 files under `src/main`, 128 test, 13 docs, 14 refactor, and 11 other source/layout files, including common-source-set SDK code. Runtime/source matches are classified below as identity/propagation, type-owned behavior, graph projection, external metadata, compatibility/storage, or enforcement. Tests and documentation are either graph-selected validation, owner behavior, compatibility coverage, or historical refactor evidence. |
+| `EntryType` repository census | 393 files | 226 files under `src/main`, 128 test, 13 docs, 15 refactor, and 11 other source/layout files, including common-source-set SDK code. Runtime/source matches are classified below as identity/propagation, type-owned behavior, graph projection, external metadata, compatibility/storage, or enforcement. Tests and documentation are either graph-selected validation, owner behavior, compatibility coverage, or historical refactor evidence. The final count includes this census itself. |
 | Concrete current types or `EntryType.entries` | 81 files / 122 lines | Type modules own type identity and media/storage invariants. The remaining matches are generic enum iteration, wire/legacy conversion, external tracker/source defaults, tooling previews, graph-ID projection, or frozen notification identity compatibility. No generic Feature applicability is inferred from a current-type branch. |
 | Support-like verbs | 127 files / 374 lines | External source/tracker facts, platform/widget state, concrete operation results, and Feature-facing availability queries. The only legacy Merge/Migration names are negative boundary-rule sentinels. No parallel Entry support declaration remains. |
 | Entry-type maps and sets | 52 files / 120 lines | Provider dispatch indexes, evaluated applicability/result sets, source/tracker metadata, repository filters, or UI grouping. None is a handwritten type-to-capability matrix. |
@@ -155,24 +155,24 @@ No contextual fact was flattened into a global Entry capability.
 
 ## Final Cleanup Queue
 
-The next Phase 8 milestone should make these corrections, then rerun this census:
+Phase 8.1 completed this queue:
 
-1. Replace milestone codes in production comments with durable ownership language:
+1. **Completed:** replaced milestone codes in production comments with durable ownership language:
    - `EntryMigrationIntents.kt` refers to “F11 target discovery”;
    - `EntryScreenModel.kt` carries a stale `TODO(Phase 7.5)`;
    - `MainActivity.kt` explains profile routing only as “removed in Phase 4”.
-2. Reconcile `migration-obligations.md`. Its chronological resolved sections remain useful evidence, but the
-   `P5-FEATURE-CONTRIBUTOR-INSTALLATION`, `P5-ENTRY-UI`, and `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS` headings still read as
-   unfinished even though their owners and repository gates are complete. The ledger must state that no active compile
-   obligation remains.
-3. Update the active Phase/status text and the migration-inventory snapshot status so future work does not mistake the
-   pre-Phase-4 counts or the old registry description for current architecture.
-4. Review each exact boundary exception while preserving fail-closed behavior. The current exception sets cover source
-   composition/ports, two media-resolution owners, frozen notification routing, and required public Android entry
-   points. They are narrow ownership or compatibility boundaries, not participation lists. Remove an exception only if
-   its protected path has disappeared; do not broaden any directory exemption.
-5. Rerun all eight probes after cleanup. Any new candidate must receive one of the classifications above or become an
-   explicit removal/migration item before Phase 8 can close.
+2. **Completed:** reconciled `migration-obligations.md`. Its chronological sections remain useful evidence, while
+   `P5-FEATURE-CONTRIBUTOR-INSTALLATION`, `P5-ENTRY-UI`, and `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS` now record their final
+   resolutions and the ledger states that no active compile obligation remains.
+3. **Completed:** updated the active Phase/status text and migration-inventory snapshot status so future work cannot
+   mistake the pre-Phase-4 counts or old registry description for current architecture.
+4. **Completed:** reviewed every exact boundary exception while preserving fail-closed behavior. The live exception
+   sets cover source composition/ports, two media-resolution owners, frozen notification routing, and required public
+   Android entry points. The obsolete Manga `DownloadJob` exception and the unused broad `AppModule` type-branch
+   exception were removed. No directory exemption was broadened.
+5. **Completed:** reran all eight probes after cleanup. The broad `EntryType` count increased only because this census
+   file is now part of the refactor workspace; production and every focused probe count remain unchanged, and no new
+   candidate appeared.
 
 ## Manifesto Comparison
 

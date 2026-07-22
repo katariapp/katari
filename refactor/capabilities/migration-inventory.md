@@ -1,8 +1,8 @@
 # Capability Architecture Migration Inventory
 
-Updated: 2026-07-18
+Updated: 2026-07-22
 
-Status: pre-Phase 4 census complete; classifications approved
+Status: Phase 8 census complete; every register row has a final disposition
 
 ## Purpose
 
@@ -16,8 +16,9 @@ by being represented through an owned content-type contribution, feature contrib
 artifact, compatibility classification, or enforcement rule. New contributions remain discoverable without editing
 this document.
 
-The out-of-boundary findings and proposed classifications below were approved on 2026-07-18. This approval establishes
-migration scope; it does not start Phase 4.
+The out-of-boundary findings and proposed classifications below were approved on 2026-07-18 and executed through
+Phases 4–7. The final Phase 8 probe counts and retained-boundary classifications are recorded in
+[`phase8-census.md`](phase8-census.md).
 
 ## Discovery Standard
 
@@ -33,15 +34,15 @@ The census treats all of the following as migration evidence:
 - tests and boundary checks that enumerate current types, providers, or supported outcomes;
 - independent contribution systems that require another edit when a type, provider, or feature is added.
 
-Snapshot evidence from this census:
+Historical snapshot evidence from the pre-Phase-4 census:
 
-- 14 processor categories are registered by `EntryInteractionRegistry`.
+- 14 processor categories were registered by `EntryInteractionRegistry`.
 - 76 production files reference `EntryType` across the audited app, domain, data, source, and interaction modules.
 - 20 production files outside type-interaction modules contain direct current-type constants.
 - 214 production, test, and boundary-build-logic files reference `EntryType` across the audited modules.
-- One second type-provider registry exists for library progress.
-- Root composition separately enumerates type plugins, type runtime installers, warmups, viewer-setting providers, media
-  cache buckets, and image components.
+- One second type-provider registry existed for library progress.
+- Root composition separately enumerated type plugins, type runtime installers, warmups, viewer-setting providers,
+  media cache buckets, and image components.
 - The public entry-source API exposes 16 focused capability contracts or capability-bearing source contracts, plus
   source-factory and preference infrastructure.
 - Tracker applicability and tracker sub-capabilities are maintained outside the entry-interaction boundary.
@@ -64,8 +65,8 @@ Every discovered item receives one of these outcomes:
 
 ## Phase 4 — Content-Type Composition Register
 
-Phase 4 must migrate the actual provider shape, not mechanically wrap every existing processor. Several current
-processors contain multiple independently meaningful capabilities or registered no-op sub-capabilities.
+Phase 4 migrated the actual provider shape rather than mechanically wrapping every existing processor. Several
+pre-migration processors contained multiple independently meaningful capabilities or registered no-op sub-capabilities.
 
 Migration progress:
 
@@ -124,7 +125,7 @@ Migration progress:
 | `T26` | Media caches and image components | F26 binds optional non-empty cache providers through the ordinary type plugin; image components remain owned runtime artifacts | Provider presence selects shared maintenance projections; no root cache list, hardcoded key map, or empty provider remains. |
 | `T27` | Warmup/startup hooks | Manga warmup, Anime warmup, shared download notifier start | Preserve startup work as selected consequences or owned runtime contributions with explicit lifecycle semantics. |
 
-Phase 4 ends after real type composition and type-owned artifacts conform. It does not migrate the feature consumers
+Phase 4 ended after real type composition and type-owned artifacts conformed. It did not migrate the feature consumers
 below, but every compile failure it exposes must be linked to one of their IDs.
 
 ## Phase 5 — Feature Consequence Register
@@ -353,7 +354,7 @@ application-wide graph through its real owner; it does not mean moving all code 
 | Boundary enforcement contains broad exclusions and a concrete root import allowlist | `EntryInteractionBoundaryCheckTask.kt` | **Include as enforcement work.** Replace lists that require edits for each type/bridge and add rules against new parallel authorities. |
 | Book format processors form a nested media-specific registry | `BookProcessorRegistry.kt`, `BookRuntimeModule.kt`, EPUB/prose processors, Book reader and downloader | **Verified for Phase 6.5.** Keep one internal processor registry as the format/protection authority shared by reader and downloader mechanics. Viewer Settings remains an independent optional F25 provider; a processor without settings is valid. Expose no processor registry or format-support flag across the type boundary. |
 | Child WebView support is composed inside the Manga reader | `ChapterWebViewSource`, `ReaderViewModel.kt`, `ReaderActivity.kt`, legacy adapters | **Resolved in 6.5.2 and reconciled in 7.1.6.** The source contract and legacy adapter remain external; the existing WebView Feature resolves canonical child URL/source identity and selects reader actions only for types that contribute a real media-host adapter. |
-| Settings navigation/search contain curated screen lists | `SettingsMainScreen.kt`, `SettingsSearchScreen.kt`, former viewer settings screen map | **Partially resolved in F25.** Viewer Settings destinations are exact feature-owned projections shared by hubs and search. Global non-feature settings may remain application navigation. |
+| Settings navigation/search contain curated screen lists | `SettingsMainScreen.kt`, `SettingsSearchScreen.kt`, former viewer settings screen map | **Resolved for Entry Features in F25.** Viewer Settings destinations are exact feature-owned projections shared by hubs and search. Global non-feature settings remain application navigation and are not capability participation. |
 
 ## Direct-Type Branch Disposition
 
@@ -372,7 +373,7 @@ Every production direct-type branch found by the census must have one of these d
 
 ## Test, Reporting, and Documentation Register
 
-The following validation surfaces must migrate after their production owners:
+The following validation surfaces were migrated after their production owners:
 
 - Registry and plugin tests retain duplicate detection, dispatch, partial composition, and real behavior; they remove
   support-label matrices and no-op providers.

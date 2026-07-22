@@ -14,7 +14,7 @@ data class EntryMigrationPrepareIntent(
     val target: Entry,
 )
 
-/** Requests source refresh as part of F11 target discovery or explicit target selection. */
+/** Requests source refresh during Migration target discovery or explicit target selection. */
 data class EntryMigrationTargetRefreshIntent(
     val source: Entry,
     val target: Entry,

@@ -113,11 +113,11 @@ Updated: 2026-07-22
 ## Active Work
 
 - Phase: Phase 8 — Legacy Removal, Boundary Enforcement, and Build Completion
-- Milestone: Phase 8.0 audit-only census and final disposition
-- State: The complete census is recorded in `phase8-census.md`. No retired catalog/report authority, raw application
-  interaction consumer, unresolved register row, compile failure, or unfinished production Feature migration remains.
-  Cleanup has not started: the next milestone is limited to the stale migration descriptions, milestone-coded
-  production comments, and exact boundary-exception review identified by the census.
+- Milestone: Phase 8.1 residual cleanup and boundary-exception reconciliation
+- State: The census cleanup queue is complete. Production comments use durable ownership language; historical migration
+  ledgers no longer describe completed work as active; the unused broad `AppModule` type-branch exemption and a stale
+  public Manga `DownloadJob` exception are removed. Every other exact exception resolves to a live, reviewed ownership
+  or compatibility boundary. The next milestone is the full Phase 8 exit-gate validation and final manifesto review.
 
 Focused Phase 6 preparation findings:
 
@@ -1703,6 +1703,6 @@ Focused Phase 7.5 Unknown-Contribution Acceptance findings:
 
 ## Exact Next Action After Review
 
-Review and commit the Phase 8.0 census. Do not remove or refactor production paths as part of that approval. The next
-milestone performs only the cleanup queue in `phase8-census.md`, reruns all probes, and stops before the full Phase 8
-exit-gate validation.
+Review and commit the Phase 8.1 cleanup. The only notable enforcement decision is removal of the unused broad
+`AppModule` type-branch exemption and stale deleted-`DownloadJob` exception; all live exact ownership/compatibility
+exceptions remain fail-closed. After approval, run the full Phase 8 exit-gate validation and final manifesto review.

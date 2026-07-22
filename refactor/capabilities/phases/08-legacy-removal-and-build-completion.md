@@ -12,9 +12,9 @@ match as obsolete code.
 ## Cleanup and Enforcement
 
 - [x] Verify that no superseded catalog, report, or report-query authority survived the Phase 3.5 cut.
-- [ ] Remove residual support APIs, presentation flags, and migration adapters.
+- [x] Remove residual support APIs and presentation flags; retain only verified compatibility adapters.
 - [x] Remove direct type gates and per-type derived behavior from generic feature code.
-- [ ] Strengthen boundaries against curated participation and parallel support declarations.
+- [x] Strengthen boundaries against curated participation and parallel support declarations.
 - [x] Resolve every recorded compile failure through architectural migration.
 - [x] Run an unknown type/capability/feature acceptance scenario across graph evaluation, obligations, contracts,
   reporting, and documentation.

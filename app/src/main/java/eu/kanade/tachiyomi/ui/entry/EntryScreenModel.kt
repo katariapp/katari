@@ -2291,8 +2291,8 @@ class EntryScreenModel(
     }
 
     /**
-     * TODO(Phase 7.5): Build real [LibraryItem]s with merged-member info so the merge-target
-     * picker correctly surfaces already-merged library entries.
+     * TODO: Resolve real [LibraryItem] grouping data so the merge-target picker can surface
+     * already-merged library entries instead of treating these candidates as standalone entries.
      */
     private fun List<Entry>.toLibraryItems(): List<LibraryItem> {
         return map { entry ->

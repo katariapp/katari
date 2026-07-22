@@ -1,16 +1,17 @@
 # Capability Architecture Migration Obligations
 
-Updated: 2026-07-20
+Updated: 2026-07-22
 
-This ledger records production and test code exposed by the Phase 3.5 dependency cut. These failures are expected until
-their owning phases migrate them to feature contributions and evaluated graph results. They must not be hidden with a
-replacement boolean, a recreated capability catalog, an empty graph contribution, or a compatibility report facade.
+This ledger records the historical production and test failures exposed by the Phase 3.5 dependency cut and how their
+owning phases resolved them through feature contributions and evaluated graph results. No active compile obligation
+remains. A future failure must not be hidden with a replacement boolean, a recreated capability catalog, an empty graph
+contribution, or a compatibility report facade.
 
 This is deliberately only a compile-failure ledger. It is not the complete migration scope: code that still compiles,
 code outside `entry-interactions`, and already-generic consumers can still require architectural migration. The
 exhaustive pre-migration register is [`migration-inventory.md`](migration-inventory.md).
 
-## Valid Lower Boundary
+## Historical Lower Boundary
 
 The following checks pass after the cut:
 
@@ -22,7 +23,7 @@ The following checks pass after the cut:
 This proves that the generic kernel and the provider-contract API point in the intended direction. Compilation above the
 SPI boundary is not an exit gate for Phase 3.5.
 
-## Active Obligations
+## Historical Obligation Log
 
 ### Exposed by F12.1: raw Merge authority and host ownership
 
@@ -419,7 +420,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Owning phase: Phase 4
 - Resolution: all registry-method fixtures were removed. Generic composition tests now exercise partial construction,
   binding dispatch, duplicate claims, and type ownership. Type-specific processor behavior remains in the type suites;
-  tests that need real feature contributors remain Phase 5/7 obligations rather than receiving empty placeholders.
+  tests that needed real feature contributors were deferred to Phases 5 and 7 rather than receiving empty placeholders.
 
 ### Resolved in F04: `P5-DOWNLOAD-REGISTRY`
 
@@ -434,17 +435,14 @@ SPI boundary is not an exit gate for Phase 3.5.
   Download-plus-Bulk-Candidate-plus-Bookmark relationships. Shared selection moved into the feature, and raw dispatch
   now resolves only the media-specific candidate pool.
 
-### `P5-FEATURE-CONTRIBUTOR-INSTALLATION` — Remaining feature contributors are not migrated yet
+### Resolved in F11/F12/F27: `P5-FEATURE-CONTRIBUTOR-INSTALLATION`
 
 - Responsible owners: feature modules and application composition
 - Owning phase: Phase 5
 - Affected path: `entry-interactions/src/main/**/EntryInteractionRuntime.kt`
-- Exposed condition: `createEntryInteractionComposition` requires independent feature contributors separately from the
-  content-type plugins that contribute themselves. F01–F10 and F13–F26 now install their contributors; providers
-  belonging to F11, F12, and F27 remain deliberately unreachable rather than receiving empty placeholder
-  contributions.
-- Required outcome: each migrated feature installs its owned contributor through application composition. Feature
-  contributors must not be forced to masquerade as entry-type plugins or be selected from a central feature allowlist.
+- Resolution: every Feature installs its independently owned contributor through the single application composition
+  boundary. Feature contributors do not masquerade as entry-type plugins, and the installation seam repeats no support,
+  consequence, contract, or projection list.
 
 ### Resolved in F06: `P5-DOWNLOAD-LIFECYCLE`
 
@@ -455,7 +453,7 @@ SPI boundary is not an exit gate for Phase 3.5.
 - Resolution: bookmark-aware cleanup is installed from the Download-plus-Bookmarking relationship and receives
   non-optional structured events. The coordinator does not query a type report or contain a concrete type branch.
 
-### Partially resolved in F10/F17/F18/F21: `P5-ENTRY-UI`
+### Resolved in F01/F04/F07/F10/F17/F18/F21: `P5-ENTRY-UI`
 
 - Responsible owner: Entry-screen feature
 - Owning phase: Phase 5
@@ -496,20 +494,22 @@ SPI boundary is not an exit gate for Phase 3.5.
 - F10 resolution: Bookmark actions and mutation consume structured feature selection and provider-derived
   applicability without recreating a type support matrix.
 
-### Partially resolved in F04/F06/F10: `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS`
+### Resolved in Phase 7: `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS`
 
 - Responsible owners: Downloads, Entry UI, Library, and Updates feature tests
 - Owning phase: Phase 7, after their Phase 5 production migrations
-- Affected test paths:
+- Formerly affected test paths:
   - the cleanup portion formerly covered by `entry-interactions/src/test/**/BookmarkDownloadVerticalContractTest.kt`;
-    F06 now covers graph-selected protection, while later contract reporting remains Phase 7 work
-  - `app/src/test/**/UpdatesSelectionActionsTest.kt`
+  - `app/src/test/**/UpdatesSelectionActionsTest.kt`.
 - F04 resolution: `DownloadDropdownMenuTest` now tests only presentation of the feature-selected bookmarked consequence;
   it no longer constructs a support report.
 - F06 resolution: cleanup assertions now use anonymous graph-selected Download and Bookmark providers; the old lifecycle
   manager/report fixture was removed.
 - F10 resolution: Bookmark selection assertions now exercise one graph-selected synthetic provider and valid provider
   absence. The stale report fixture and hardcoded production support expectations were removed.
+- Phase 7 resolution: discovered production contracts, the exact validation host, developer reporting, and projection
+  verification now execute through `verifyEntryFeatureArchitecture`; no per-type support matrix replaced the old
+  fixtures.
 
 ### `P5-PRESENTATION-PROJECTION` — Type vocabulary remains an app-owned concrete-type map
 

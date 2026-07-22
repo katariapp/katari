@@ -1002,8 +1002,7 @@ private class EntryInteractionBoundaryRules(
     }
 
     private fun KotlinSourceFile.isTypeBranchAllowedPath(): Boolean {
-        return isRootOrTypeModuleOrTestPath() ||
-            relativePath == "app/src/main/java/eu/kanade/tachiyomi/di/AppModule.kt"
+        return isRootOrTypeModuleOrTestPath()
     }
 
     private fun KotlinSourceFile.isPublicTypeModuleApiPath(): Boolean {
@@ -1148,7 +1147,6 @@ private class EntryInteractionBoundaryRules(
             "entry-interactions/manga/src/main/java/eu/kanade/tachiyomi/ui/reader/ReaderActivity.kt",
             "entry-interactions/manga/src/main/java/eu/kanade/tachiyomi/ui/reader/ReaderNavigationOverlayView.kt",
             "entry-interactions/manga/src/main/java/eu/kanade/tachiyomi/ui/reader/viewer/ReaderButton.kt",
-            "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/download/DownloadJob.kt",
         )
     }
 }

@@ -727,10 +727,6 @@ class MainActivity : BaseActivity() {
             Constants.SHORTCUT_EXTENSIONS,
             Constants.SHORTCUT_DOWNLOADS,
             -> {
-                if (intent.action == Constants.SHORTCUT_EXTENSIONS) {
-                    // Profile-type routing removed in Phase 4; extensions open in the active profile.
-                }
-
                 val tab = resolveShortcutTab(
                     action = intent.action,
                     entryIdToOpen = intent.extras
