@@ -101,7 +101,7 @@ contributions:
 
 - [x] Integrate unresolved-obligation checks, contract execution, report generation, and documentation verification with
   normal repository validation.
-- [ ] Reconcile every test, reporting, documentation, and boundary surface listed in the migration inventory.
+- [x] Reconcile every test, reporting, documentation, and boundary surface listed in the migration inventory.
 - [ ] Run the unknown type/capability/feature acceptance path across static and contextual contracts, reporting, and
   documentation before handing the branch to Phase 8.
 
@@ -119,8 +119,14 @@ contributions:
   and one narrower documentation aggregate. The architecture aggregate composes existing owner tasks without listing
   types, Features, contracts, projections, rows, or consumers.
 - Decision `0025` is accepted. The two root aggregates and their explicit application/documentation workflow steps are
-  implemented. The remaining work reconciles the complete migration register and runs the unknown-contribution
-  acceptance path.
+  implemented. Register reconciliation followed that wiring; the remaining work is the unknown-contribution acceptance
+  path.
+- The complete register is reconciled in [`../migration-inventory.md`](../migration-inventory.md). Shared relationships
+  enter graph-selected contracts; app projections and compatibility remain app tests; media, storage, wire, and runtime
+  failures after applicability remain focused owner tests rather than capability evidence.
+- Reconciliation corrected two stale app-test expectations without changing production behavior: Updates consumed
+  state no longer pretends to have partial progress, and notification routing recognizes both the modern payload path
+  and its legacy merge-aware fallback.
 
 ## Exit Gate
 

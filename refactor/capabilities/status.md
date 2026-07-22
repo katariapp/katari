@@ -105,9 +105,9 @@ Updated: 2026-07-22
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
 - Milestone: Phase 7.5 Repository Validation and Register Reconciliation
-- State: Decision `0025` is accepted and its repository-validation wiring is implemented. The complete architecture
-  gate now runs in the application workflow, while the narrower projection gate also runs for documentation-only
-  changes. Register reconciliation and the unknown-contribution acceptance path remain.
+- State: Repository-validation wiring and the complete test/reporting/documentation/boundary register reconciliation
+  are implemented. Shared completeness, app-consumer behavior, compatibility, and owner-local mechanics now have
+  explicit non-overlapping validation roles. Only the unknown-contribution acceptance path remains in Phase 7.5.
 
 Focused Phase 6 preparation findings:
 
@@ -1659,7 +1659,23 @@ Focused Phase 7.5 Repository Validation Wiring findings:
 - The complete gate passes, produces the current 3,413-line developer report with no unresolved work, and independently
   verifies both checked-in production projections.
 
+Focused Phase 7.5 Register Reconciliation findings:
+
+- Every migration-inventory validation surface now has an explicit final owner and repository-validation route. The
+  reconciliation record describes validation channels, not a Feature or support allowlist.
+- Generic composition and every shared relationship run through the architecture gate. App menu/selection,
+  presentation, grouping, notification, and backup compatibility tests remain in `testFossUnitTest`; genuine media,
+  storage, wire, and post-applicability failures remain focused owner tests.
+- Type Presentation is the behavioral vocabulary authority. Source indicators remain projections of external
+  repository/source metadata, and Library grouping remains structural enum behavior; neither is treated as Entry
+  Feature support.
+- Focused app reconciliation found and corrected two stale test expectations. Updates now mocks consumed state as
+  non-partial, matching the production status model. Notification boundary coverage now accepts the modern
+  `ACTION_OPEN_CHILD` route and its legacy merge-aware fallback. Production code is unchanged.
+- The focused Download menu, Updates, source indicator, Library grouping, notification action/boundary, backup wire,
+  and restore suites pass together after correction.
+
 ## Exact Next Action After Review
 
-Review and commit the Phase 7.5 repository-validation wiring. Then reconcile every test, reporting, documentation, and
-boundary surface in the migration register before running the unknown-contribution acceptance path.
+Review and commit the Phase 7.5 register reconciliation. Then run the unknown type/capability/Feature acceptance path
+across static and contextual contracts, reporting, and documentation before handing Phase 7 to Phase 8.

@@ -24,8 +24,8 @@ class UpdatesSelectionActionsTest {
 
         val feature = mockk<EntryConsumptionFeature> {
             every { canSetConsumed(any(), EntryConsumptionStatus(false, false), true) } returns true
-            every { canSetConsumed(any(), EntryConsumptionStatus(true, true), true) } returns false
-            every { canSetConsumed(any(), EntryConsumptionStatus(true, true), false) } returns true
+            every { canSetConsumed(any(), EntryConsumptionStatus(true, false), true) } returns false
+            every { canSetConsumed(any(), EntryConsumptionStatus(true, false), false) } returns true
             every { canSetConsumed(any(), EntryConsumptionStatus(false, true), false) } returns true
         }
 

@@ -1,6 +1,9 @@
 # Production Contract Migration Census
 
-Updated: 2026-07-21
+Updated: 2026-07-22
+
+Status: Historical migration record. Phase 7.5 reconciled this census with the production contract gate; it is no
+longer an active completion mechanism.
 
 ## Purpose
 

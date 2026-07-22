@@ -24,13 +24,21 @@ class NotificationReceiverInteractionBoundaryTest {
             "ACTION_OPEN_EPISODE",
             """openLegacyChild\(context, intent\.legacyEpisodeOpenChildPayload\(\)\)""",
         )
-        assertActionRoutesTo(source, "ACTION_OPEN_CHILD", """openChild\(context, intent\.openChildPayload\(\)\)""")
+        assertActionRoutesTo(source, "ACTION_OPEN_CHILD", """openChild\(context, payload\)""")
+        assertActionRoutesTo(
+            source,
+            "ACTION_OPEN_CHILD",
+            """openLegacyChild\(context, intent\.legacyGenericOpenChildPayload\(\)\)""",
+        )
         assertActionRoutesTo(
             source,
             "ACTION_OPEN_CHAPTER",
             """openLegacyChild\(context, intent\.legacyChapterOpenChildPayload\(\)\)""",
         )
-        assertTrue(source.contains("profileId = payload.profileId"))
+        assertTrue(
+            Regex("""entryActionHandler\.openChild\(\s*context,\s*payload\.profileId,""")
+                .containsMatchIn(source),
+        )
         assertTrue(source.contains("entryMergeNavigationFeature.resolveLegacyNotification(payload.ownerEntryId)"))
 
         assertActionRoutesTo(source, "ACTION_MARK_AS_READ", """markConsumed\(intent\.legacyChapterUrlsPayload\(\)\)""")

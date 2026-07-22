@@ -404,6 +404,27 @@ execution results, and owned obligations from the evaluated production graph. Th
 the same production composition and validation host as the contract gate; it does not expose a graph query surface to
 application code or infer unconditional support from applicable validation scenarios.
 
+### Phase 7.5 register reconciliation
+
+| Registered surface | Final ownership and disposition | Repository validation |
+| --- | --- | --- |
+| Registry and plugin tests | `EntryInteractionCompositionTest` proves generic empty/partial composition, dispatch, ownership, and duplicate rejection. Type-module plugin suites retain genuine media behavior; declaration-only Continue/Download registration assertions and no-op providers are removed. | Generic composition runs through `verifyEntryFeatureArchitecture`. Media algorithms remain owner-local tests rather than capability evidence. |
+| Download dropdown, lifecycle, and Updates selection | Download Actions/Lifecycle and Consumption/Bookmarking relationships own graph-selected shared contracts. App tests consume Feature decisions and verify menu/selection rendering without carrying a support matrix. | Contracts run through `verifyEntryFeatureArchitecture`; app consumers run through `testFossUnitTest`. |
+| Backup and Migration | Migration/Merge contracts prove provider-selected coordination and consequences. Backup protobuf, restore, persistence, and transaction suites remain wire/storage compatibility tests. | Shared contracts run through `verifyEntryFeatureArchitecture`; app compatibility runs through `testFossUnitTest`; lower-level storage suites remain owner-local. |
+| Preview, Immersive, source, tracker, settings, cache, notifications, and Library progress | Every shared relationship has a discovered production contract verifier. Context snapshots select conditional behavior without becoming support declarations. Media/network failures after applicability remain with their operational owner. | Production contracts and generic validation run through `verifyEntryFeatureArchitecture`; focused owner behavior remains outside capability completeness. |
+| Type presentation, source indicators, Library grouping, and notification consumers | Type Presentation owns behavioral vocabulary. Source indicators render repository/source metadata only. Library grouping tests structural enum grouping, not Feature support. Notification handlers route through Feature contracts and keep legacy payload compatibility local. | Shared presentation contracts run through `verifyEntryFeatureArchitecture`; app projections and routing run through `testFossUnitTest`. |
+| Static boundary enforcement | `checkEntryInteractionBoundaries` rejects raw provider/application coupling, suspicious type-feature branches, declaration-only contract inspection, concrete types in graph-selected validation, central contract-suite maps, and production-host bypasses. | Runs from both `spotlessCheck` and `verifyEntryFeatureArchitecture`. |
+| Developer report | The neutral report is derived from the exact production composition, selected artifacts, contextual scenarios, executions, and owned obligations. It is a build artifact, not a support authority. | `generateEntryFeatureReport` runs from `verifyEntryFeatureArchitecture`. |
+| Content-type reference | Feature-owned projections generate and independently verify the factual region; handwritten prose cannot authorize support. | `verifyContentTypeReference` runs from both Entry Feature repository gates. |
+| Source SDK capability documentation | Source-owned metadata classifies exact contextual consumers by public contract or justified runtime-state evidence. The generated table and handwritten contract presence are verified separately from Entry support. | `verifySourceSdkConsumerCoverage` runs from both Entry Feature repository gates. |
+
+The reconciliation found two stale app-test expectations: consumed Updates were incorrectly mocked as also having
+partial progress, and the notification boundary test expected the pre-fallback `ACTION_OPEN_CHILD` call shape. Both
+tests now describe the existing Feature-facing behavior; no production behavior or support declaration changed.
+
+This table records ownership and validation routing only. It is not a Feature, contract, content-type, or support
+allowlist. The exact production host and discovered contributions remain the executable completeness authority.
+
 ## Audited Non-Migration Boundaries
 
 The following are not capability authorities by themselves and should not be forced into the graph:
