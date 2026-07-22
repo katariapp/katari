@@ -4,11 +4,11 @@
 
 - Baseline branch: `features-arch-refactor`
 - Baseline commit: `1d962d406` (`chore: planning cleanup`)
-- Current phase: R2 — Production Composition and Enforcement
-- Phase state: complete; awaiting milestone review and commit
+- Current phase: R3 — Library Membership Lifecycle
+- Phase state: in progress
 - Last updated: 2026-07-22
-- Next action: after the R2 milestone is approved and committed, begin R3 by defining the Library Membership execution
-  boundary and moving the first complete membership workflow behind it.
+- Next action: define the Library Membership Feature boundary and inventory every current add/remove mutation and
+  follow-up before moving consumers behind the coordinator.
 
 ## Approved Decisions
 
@@ -24,8 +24,8 @@
 | Phase | State | Milestone commit | Notes |
 | --- | --- | --- | --- |
 | R1 — Executable Participation Architecture | Complete | `76e4341ef` | Architecture first; no app workflow migration |
-| R2 — Production Composition and Enforcement | Complete, awaiting commit | — | One module per production Feature |
-| R3 — Library Membership Lifecycle | Pending | — | Includes current premature Tracking defect |
+| R2 — Production Composition and Enforcement | Complete | `dd58b169e` | One module per production Feature |
+| R3 — Library Membership Lifecycle | In progress | — | Includes current premature Tracking defect |
 | R4 — Entry Lifecycle Operations | Pending | — | Metadata, removal, Profile move |
 | R5 — Backup and Restore Participation | Pending | — | Includes tracker diagnostics defect |
 | R6 — Catalogue Feature Completion | Pending | — | Removes raw provider dispatch |
