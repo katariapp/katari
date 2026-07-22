@@ -43,7 +43,7 @@ import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.registry.default.DefaultRegistrar
 import java.io.File
 
-internal class ProductionEntryInteractionValidationEnvironment(
+class ProductionEntryInteractionValidationEnvironment(
     private val temporaryDirectory: File,
 ) : AutoCloseable {
     private val previousInjekt: InjektScope = Injekt

@@ -105,10 +105,9 @@ Updated: 2026-07-22
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
 - Milestone: Phase 7.4 Documentation Projection
-- State: The production developer report is committed. Documentation projection has started with its generic
-  participation gate: an optional channel now requires every discovered Feature to include requirements or explicitly
-  exclude itself, and missing implementations are reported even before a current type makes the relationship
-  applicable. Product row migration and rendering remain next.
+- State: Feature-owned content-reference projection and its production binding are implemented. The production plan
+  evaluates the exact application composition and resolves external context from the Local-source, legacy-extension,
+  and tracker owners. Deterministic Markdown rendering and generate/verify tasks remain next.
 
 Focused Phase 6 preparation findings:
 
@@ -1592,8 +1591,22 @@ Focused Phase 7.4 Feature-Owned Projection findings:
 - Formatting, boundary and build-logic tests, root Entry-interactions tests, documentation-planner tests, Local-source
   Android and legacy source-compat compilation, and FOSS application compilation pass.
 
+Focused Phase 7.4 Production Projection Binding findings:
+
+- The production interaction validation environment is now an Android test fixture shared by its existing validation
+  suites and the application-owned documentation host. Production graph composition is not copied into the
+  documentation path.
+- The application-owned host derives external evidence from `LOCAL_SOURCE_SUPPORTED_ENTRY_TYPES`,
+  `LEGACY_MANGA_SOURCE_SUPPORTED_ENTRY_TYPES`, and the actual `TrackerManager` registrations. It contains no separate
+  content-type or capability matrix.
+- The reusable host returns the neutral documentation plan that the renderer task will consume. Its production test
+  requires a complete plan without asserting individual rows, cells, or current content-type support declarations.
+- The application unit-test compilation baseline also exposed and restores the accidentally removed `io.mockk.Runs`
+  import from the earlier Entry Consumption migration; no test behavior changes.
+- Formatting, production-plan execution, test-fixture compilation, and FOSS unit-test compilation pass.
+
 ## Exact Next Action After Review
 
-Commit the Phase 7.4 feature-owned projection milestone after review. Then connect the build-only projector to the exact
-production composition and authoritative external registrations, render the deterministic checked-in section, and add
-the approved generate/verify tasks. Do not begin repository-wide Phase 7.5 reconciliation until Phase 7.4 is complete.
+Review and commit the Phase 7.4 production projection binding. Then implement deterministic Markdown rendering of the
+checked-in content-type reference section and the approved generate/verify tasks. Do not begin repository-wide Phase
+7.5 reconciliation until Phase 7.4 is complete.

@@ -333,6 +333,8 @@ dependencies {
 
     // Tests
     testImplementation(libs.bundles.test)
+    testImplementation(projects.entryInteractions.documentation)
+    testImplementation(testFixtures(projects.entryInteractions))
     testRuntimeOnly(libs.junit.platform.launcher)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.uiTestJunit4)

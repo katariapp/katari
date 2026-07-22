@@ -7,6 +7,10 @@ plugins {
 
 android {
     namespace = "mihon.entry.interactions"
+
+    testFixtures {
+        enable = true
+    }
 }
 
 dependencies {
@@ -31,6 +35,13 @@ dependencies {
     testImplementation(libs.unifile)
     testImplementation(projects.featureValidation)
     testRuntimeOnly(libs.junit.platform.launcher)
+
+    testFixturesImplementation(libs.bundles.test)
+    testFixturesImplementation(libs.bundles.serialization)
+    testFixturesImplementation(libs.kotlinx.coroutines.test)
+    testFixturesImplementation(libs.unifile)
+    testFixturesImplementation(platform(libs.androidx.compose.bom))
+    testFixturesApi(projects.entryInteractions.spi)
 }
 
 val entryFeatureReportFile = layout.buildDirectory.file("reports/entry-features/developer-report.txt")

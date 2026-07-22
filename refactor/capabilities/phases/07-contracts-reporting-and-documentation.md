@@ -90,6 +90,8 @@ contributions:
   do not reconstruct applicability.
 - [x] Contribute feature-owned user-facing projections for the capability facts intended for the public content-type
   reference.
+- [x] Bind the production projection plan to the exact production interaction composition and the authoritative Local,
+  legacy-extension, and tracker registrations without copying a type or support matrix.
 - [ ] Generate or verify the deterministic capability section of `docs/features/content-type-reference.md` while
   retaining appropriate explanatory prose.
 - [ ] Verify source SDK contract documentation against contextual consumer coverage without treating descriptive source
