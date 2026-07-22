@@ -80,6 +80,11 @@ class FeatureArtifactSelectionTest {
         selected.behavioralContracts.all { it.contract === contract } shouldBe true
         selected.projections.all { it.projection === projection } shouldBe true
         selected.projections.all { it.projection.implementation === projectionImplementation } shouldBe true
+        selected.projections.all { selection ->
+            selection.matchedProviders.single().capability == alpha &&
+                selection.suppliedAdapters.single().definition == adapterDefinition &&
+                selection.contextEvidence.isEmpty()
+        } shouldBe true
         selected.obligations shouldBe emptyList()
 
         selected.behavioralContracts.forEach { (it.contract as RecordingContract).execute(it.subject) }

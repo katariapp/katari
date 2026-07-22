@@ -78,6 +78,21 @@ data class FeatureProjection<P : Any>(
     }
 }
 
+/** Explicit feature-level exclusion from one optional projection channel. */
+data class FeatureProjectionExclusion(
+    val projectionType: KClass<*>,
+    val reason: String,
+) {
+    init {
+        require(reason.isNotBlank()) {
+            "Projection exclusion for ${projectionType.qualifiedName} requires a reason"
+        }
+    }
+}
+
+inline fun <reified P : Any> featureProjectionExclusion(reason: String): FeatureProjectionExclusion =
+    FeatureProjectionExclusion(P::class, reason)
+
 /**
  * One feature-owned relationship between provider-backed prerequisites and their consequences.
  *
@@ -150,9 +165,14 @@ data class FeatureContribution(
     val feature: FeatureId,
     val owner: ContributionOwner,
     val integrations: List<FeatureIntegration>,
+    val projectionExclusions: List<FeatureProjectionExclusion> = emptyList(),
 ) {
     init {
         requireUnique("Integrations for $feature", integrations.map { it.id.value })
+        requireUnique(
+            "Projection exclusions for $feature",
+            projectionExclusions.map { it.projectionType.qualifiedName ?: it.projectionType.toString() },
+        )
         integrations.mapNotNull { it.contextRule }.forEach { rule ->
             require(rule.owner == owner) {
                 "Feature $feature cannot use context rule owned by ${rule.owner}"
@@ -180,6 +200,15 @@ data class FeatureContribution(
             require(projection.definition.owner == owner) {
                 "Feature $feature cannot supply projection ${projection.definition.id} declared by " +
                     projection.definition.owner
+            }
+        }
+        val requiredProjectionTypes = integrations
+            .flatMap { it.projectionRequirements }
+            .mapTo(mutableSetOf()) { it.projectionType }
+        projectionExclusions.forEach { exclusion ->
+            require(exclusion.projectionType !in requiredProjectionTypes) {
+                "Feature $feature cannot require and exclude projection channel " +
+                    (exclusion.projectionType.qualifiedName ?: exclusion.projectionType.toString())
             }
         }
     }

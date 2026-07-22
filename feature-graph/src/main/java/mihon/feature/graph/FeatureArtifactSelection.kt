@@ -14,6 +14,9 @@ data class BehavioralContractSelection(
 data class FeatureProjectionSelection(
     val subject: FeatureIntegrationSubject,
     val projection: FeatureProjection<*>,
+    val matchedProviders: List<CapabilityProvider<*>>,
+    val suppliedAdapters: List<SpecializedAdapter<*>>,
+    val contextEvidence: List<ContextEvidence<*>>,
 )
 
 sealed interface FeatureArtifactObligation : FeatureObligation
@@ -156,7 +159,15 @@ private fun selectApplicableArtifacts(
     val projectionSelections = applicable.flatMap { evaluated ->
         evaluated.integration.projections
             .sortedBy { it.definition.id.value }
-            .map { projection -> FeatureProjectionSelection(evaluated.subject, projection) }
+            .map { projection ->
+                FeatureProjectionSelection(
+                    subject = evaluated.subject,
+                    projection = projection,
+                    matchedProviders = evaluated.matchedProviders,
+                    suppliedAdapters = evaluated.suppliedAdapters,
+                    contextEvidence = evaluated.contextEvidence,
+                )
+            }
     }
 
     val missingProjectionObligations = applicable

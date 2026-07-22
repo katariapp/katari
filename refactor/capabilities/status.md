@@ -104,9 +104,11 @@ Updated: 2026-07-22
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.3 Developer Reporting
-- State: The production developer report is implemented and validated for review. Documentation projection has not
-  migrated.
+- Milestone: Phase 7.4 Documentation Projection
+- State: The production developer report is committed. Documentation projection has started with its generic
+  participation gate: an optional channel now requires every discovered Feature to include requirements or explicitly
+  exclude itself, and missing implementations are reported even before a current type makes the relationship
+  applicable. Product row migration and rendering remain next.
 
 Focused Phase 6 preparation findings:
 
