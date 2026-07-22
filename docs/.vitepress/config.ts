@@ -74,6 +74,13 @@ const sidebar: DefaultTheme.SidebarItem[] = [
         ],
       },
       {
+        text: 'Application architecture',
+        collapsed: false,
+        items: [
+          { text: 'Entry Features', link: '/developers/feature-architecture' },
+        ],
+      },
+      {
         text: 'Entry SDK',
         collapsed: false,
         items: [

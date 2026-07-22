@@ -68,9 +68,11 @@ private suspend fun verifyViewerSettings(input: FeatureContractExecutionInput) =
             override fun provider(type: eu.kanade.tachiyomi.source.entry.EntryType) =
                 provider.takeIf { type == provider.type }
         },
-        projections = provider.surfaces.map { surface ->
-            object : EntryViewerSettingsScreenProjection {
-                override val surfaceId = surface.id
+        projectionResolver = EntryViewerSettingsScreenProjectionResolver {
+            provider.surfaces.map { surface ->
+                object : EntryViewerSettingsScreenProjection {
+                    override val surfaceId = surface.id
+                }
             }
         },
         overrideRepository = repository,

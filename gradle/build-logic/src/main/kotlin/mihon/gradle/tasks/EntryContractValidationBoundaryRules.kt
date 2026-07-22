@@ -75,7 +75,70 @@ internal fun checkEntryContractValidationBoundaries(
         }
     }
 
+    sources.firstOrNull { it.relativePath == FEATURE_VALIDATION_CONTRIBUTOR_SERVICE }
+        ?.let { registry ->
+            findings += checkFeatureValidationContributorService(sources, registry)
+        }
+
     return findings.distinct()
+}
+
+private fun checkFeatureValidationContributorService(
+    sources: List<EntryContractValidationBoundarySource>,
+    registry: EntryContractValidationBoundarySource,
+): List<EntryContractValidationBoundaryFinding> {
+    val declarations = sources
+        .asSequence()
+        .filter { source -> source.relativePath.endsWith(".kt") }
+        .flatMap { source ->
+            val packageName = PACKAGE_DECLARATION.find(source.content)?.groupValues?.get(1)
+                ?: return@flatMap emptySequence()
+            FEATURE_VALIDATION_CONTRIBUTOR_DECLARATION.findAll(source.content).map { match ->
+                DeclaredValidationContributor(
+                    qualifiedName = "$packageName.${match.groupValues[1]}",
+                    source = source,
+                    offset = match.range.first,
+                )
+            }
+        }
+        .associateBy(DeclaredValidationContributor::qualifiedName)
+    val registrations = registry.content.lineSequence()
+        .mapIndexedNotNull { index, line ->
+            line.substringBefore("#").trim().takeIf(String::isNotEmpty)?.let { name ->
+                RegisteredValidationContributor(name, index + 1)
+            }
+        }
+        .toList()
+    val registrationsByName = registrations.groupBy(RegisteredValidationContributor::qualifiedName)
+    val findings = mutableListOf<EntryContractValidationBoundaryFinding>()
+
+    declarations.values.forEach { declaration ->
+        if (registrationsByName[declaration.qualifiedName].isNullOrEmpty()) {
+            findings += declaration.source.finding(
+                declaration.offset,
+                "Feature validation contributor is missing from the service registry: " +
+                    declaration.qualifiedName,
+            )
+        }
+    }
+    registrationsByName.forEach { (qualifiedName, entries) ->
+        entries.drop(1).forEach { duplicate ->
+            findings += EntryContractValidationBoundaryFinding(
+                relativePath = registry.relativePath,
+                lineNumber = duplicate.lineNumber,
+                reason = "Feature validation contributor is registered more than once: $qualifiedName",
+            )
+        }
+        if (qualifiedName !in declarations) {
+            findings += EntryContractValidationBoundaryFinding(
+                relativePath = registry.relativePath,
+                lineNumber = entries.first().lineNumber,
+                reason = "Feature validation service names no declared contributor: $qualifiedName",
+            )
+        }
+    }
+
+    return findings
 }
 
 private fun EntryContractValidationBoundarySource.finding(
@@ -109,6 +172,26 @@ private const val VALIDATION_HOST_ROOT =
 private const val PRODUCTION_VALIDATION_TEST =
     "entry-interactions/src/test/java/mihon/entry/interactions/validation/" +
         "ProductionEntryInteractionContractValidationTest.kt"
+
+internal const val FEATURE_VALIDATION_CONTRIBUTOR_SERVICE =
+    "entry-interactions/src/test/resources/META-INF/services/" +
+        "mihon.feature.graph.validation.FeatureValidationContributor"
+
+private val PACKAGE_DECLARATION = Regex("""\bpackage\s+([A-Za-z_][A-Za-z0-9_.]*)""")
+private val FEATURE_VALIDATION_CONTRIBUTOR_DECLARATION = Regex(
+    """\b(?:class|object)\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*FeatureValidationContributor\b""",
+)
+
+private data class DeclaredValidationContributor(
+    val qualifiedName: String,
+    val source: EntryContractValidationBoundarySource,
+    val offset: Int,
+)
+
+private data class RegisteredValidationContributor(
+    val qualifiedName: String,
+    val lineNumber: Int,
+)
 
 private val CONCRETE_ENTRY_TYPE = Regex("""\bEntryType\.(?:MANGA|ANIME|BOOK)\b""")
 

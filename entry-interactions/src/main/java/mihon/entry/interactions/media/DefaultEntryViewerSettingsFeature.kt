@@ -33,7 +33,7 @@ internal fun interface EntryViewerFlagsMigrationStore {
 internal class DefaultEntryViewerSettingsFeature(
     evaluation: FeatureGraphEvaluation,
     interaction: EntryViewerSettingsInteraction,
-    projections: Collection<EntryViewerSettingsScreenProjection>,
+    projectionResolver: EntryViewerSettingsScreenProjectionResolver,
     private val overrideRepository: ViewerSettingOverrideRepository,
     private val legacyMangaViewerFlagsReset: EntryLegacyMangaViewerFlagsReset,
     private val migrationStore: EntryViewerFlagsMigrationStore,
@@ -71,7 +71,7 @@ internal class DefaultEntryViewerSettingsFeature(
             check(duplicateIds.isEmpty()) { "Duplicate Viewer Settings surface IDs: $duplicateIds" }
         }
         .associateBy { it.second.id }
-    private val projectionsById = projections
+    private val projectionsById = projectionResolver.resolve(surfacesById.keys)
         .also { values ->
             val duplicateIds = values.groupingBy(EntryViewerSettingsScreenProjection::surfaceId)
                 .eachCount()

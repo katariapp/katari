@@ -75,6 +75,78 @@ class EntryContractValidationBoundaryRulesTest {
         findings.single().reason shouldContain "central suite switch"
     }
 
+    @Test
+    fun `validation contributor service contains every declaration exactly once`() {
+        val contributorPath =
+            "entry-interactions/src/test/java/mihon/entry/interactions/download/EntryDownloadChecks.kt"
+        val findings = checkEntryContractValidationBoundaries(
+            listOf(
+                EntryContractValidationBoundarySource(
+                    contributorPath,
+                    """
+                        package mihon.entry.interactions
+
+                        class EntryDownloadChecks : FeatureValidationContributor
+                    """.trimIndent(),
+                ),
+                EntryContractValidationBoundarySource(
+                    FEATURE_VALIDATION_CONTRIBUTOR_SERVICE,
+                    "mihon.entry.interactions.EntryDownloadChecks",
+                ),
+            ),
+        )
+
+        findings.shouldBeEmpty()
+    }
+
+    @Test
+    fun `validation contributor cannot be omitted from service discovery`() {
+        val findings = checkEntryContractValidationBoundaries(
+            listOf(
+                EntryContractValidationBoundarySource(
+                    "entry-interactions/src/test/java/mihon/entry/interactions/EntryChecks.kt",
+                    """
+                        package mihon.entry.interactions
+
+                        class EntryChecks : FeatureValidationContributor
+                    """.trimIndent(),
+                ),
+                EntryContractValidationBoundarySource(FEATURE_VALIDATION_CONTRIBUTOR_SERVICE, ""),
+            ),
+        )
+
+        assertEquals(1, findings.size)
+        findings.single().reason shouldContain "missing from the service registry"
+    }
+
+    @Test
+    fun `validation service cannot duplicate or invent contributors`() {
+        val findings = checkEntryContractValidationBoundaries(
+            listOf(
+                EntryContractValidationBoundarySource(
+                    "entry-interactions/src/test/java/mihon/entry/interactions/EntryChecks.kt",
+                    """
+                        package mihon.entry.interactions
+
+                        class EntryChecks : FeatureValidationContributor
+                    """.trimIndent(),
+                ),
+                EntryContractValidationBoundarySource(
+                    FEATURE_VALIDATION_CONTRIBUTOR_SERVICE,
+                    """
+                        mihon.entry.interactions.EntryChecks
+                        mihon.entry.interactions.EntryChecks
+                        mihon.entry.interactions.UnknownChecks
+                    """.trimIndent(),
+                ),
+            ),
+        )
+
+        assertEquals(2, findings.size)
+        findings.joinToString { finding -> finding.reason } shouldContain "registered more than once"
+        findings.joinToString { finding -> finding.reason } shouldContain "no declared contributor"
+    }
+
     private fun check(path: String, content: String): List<EntryContractValidationBoundaryFinding> {
         return checkEntryContractValidationBoundaries(
             listOf(EntryContractValidationBoundarySource(path, content)),

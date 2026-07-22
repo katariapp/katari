@@ -9,10 +9,7 @@ import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDatabaseType
 import com.eygraber.sqldelight.androidx.driver.AndroidxSqliteDriver
 import com.eygraber.sqldelight.androidx.driver.FileProvider
 import eu.kanade.domain.track.store.DelayedTrackingStore
-import eu.kanade.presentation.more.settings.screen.SettingsAnimePlayerScreen
-import eu.kanade.presentation.more.settings.screen.SettingsHtmlProseReaderScreen
-import eu.kanade.presentation.more.settings.screen.SettingsMangaReaderScreen
-import eu.kanade.presentation.more.settings.screen.SettingsReadiumEpubReaderScreen
+import eu.kanade.presentation.more.settings.screen.productionEntryViewerSettingsScreenProjectionResolver
 import eu.kanade.tachiyomi.data.cache.CoverCache
 import eu.kanade.tachiyomi.data.cache.MangaPageCache
 import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
@@ -228,12 +225,7 @@ class AppModule(val app: Application) : InjektModule {
                 profilePreferenceOwners = ProfilePreferenceOwnerInstaller(get()) {
                     get<ProfileStore>().profileStore()
                 },
-                viewerSettingsScreenProjections = listOf(
-                    SettingsMangaReaderScreen,
-                    SettingsAnimePlayerScreen,
-                    SettingsReadiumEpubReaderScreen,
-                    SettingsHtmlProseReaderScreen,
-                ),
+                viewerSettingsScreenProjectionResolver = productionEntryViewerSettingsScreenProjectionResolver(),
                 sourceRefreshUpdateLibraryTitles = { profileId ->
                     LibraryPreferences(get<ProfileStore>().profileStore(profileId)).updateMangaTitles.get()
                 },

@@ -44,8 +44,10 @@ object SettingsAudioPlayerScreen : AppEntryViewerSettingsScreenProjection {
 
 Runtime composition supplies the collection of actual projection implementations to `EntryViewerSettingsFeature`.
 This collection is not a support allowlist: the Feature matches it exactly against contributed surfaces and fails with
-the surface ID during runtime warmup when a projection is missing, duplicated, or has no provider. Once matched, the same resolved
-destination automatically feeds the Reader/Player hub and settings search index.
+the surface ID when a projection is missing, duplicated, or has no provider. The production validation environment uses
+the same app projection resolver, and the build rejects a screen implementation omitted from that resolver, duplicate
+entries, unknown entries, or a composition root that bypasses it. Once matched, the same resolved destination
+automatically feeds the Reader/Player hub and settings search index.
 
 Adding a provider without its genuine screen therefore cannot silently ship a working renderer with missing settings
 UI. A type with no provider creates no projection obligation.

@@ -31,6 +31,7 @@ import mihon.entry.interactions.EntryProfileMoveTrackingStateHost
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
 import mihon.entry.interactions.EntryViewerSettingsScreenProjection
+import mihon.entry.interactions.EntryViewerSettingsScreenProjectionResolver
 import mihon.entry.interactions.addEntryInteractionRuntime
 import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.host.EntryMigrationConsequenceHost
@@ -72,6 +73,10 @@ import java.io.File
 
 class ProductionEntryInteractionValidationEnvironment(
     private val temporaryDirectory: File,
+    private val viewerSettingsScreenProjectionResolver: EntryViewerSettingsScreenProjectionResolver =
+        EntryViewerSettingsScreenProjectionResolver { surfaceIds ->
+            surfaceIds.map(::viewerSettingsProjection)
+        },
 ) : AutoCloseable {
     private val previousInjekt: InjektScope = Injekt
 
@@ -98,12 +103,7 @@ class ProductionEntryInteractionValidationEnvironment(
                 readerTracking = mockk<EntryReaderTracking>(relaxed = true),
                 basePreferenceStore = InMemoryPreferenceStore(),
                 profilePreferenceOwners = preferenceOwners,
-                viewerSettingsScreenProjections = listOf(
-                    viewerSettingsProjection("builtin.manga.reader"),
-                    viewerSettingsProjection("builtin.anime.player"),
-                    viewerSettingsProjection("builtin.book.epub.readium"),
-                    viewerSettingsProjection("builtin.book.prose.html"),
-                ),
+                viewerSettingsScreenProjectionResolver = viewerSettingsScreenProjectionResolver,
                 sourceRefreshUpdateLibraryTitles = { false },
                 libraryMembershipHost = mockk<EntryLibraryMembershipHost>(relaxed = true),
                 libraryCustomCoverHost = mockk<EntryLibraryCustomCoverHost>(relaxed = true),
@@ -138,12 +138,6 @@ class ProductionEntryInteractionValidationEnvironment(
         return mockk<Application>(relaxed = true).also { application ->
             every { application.cacheDir } returns temporaryDirectory.resolve("cache").also(File::mkdirs)
             every { application.filesDir } returns temporaryDirectory.resolve("files").also(File::mkdirs)
-        }
-    }
-
-    private fun viewerSettingsProjection(id: String): EntryViewerSettingsScreenProjection {
-        return object : EntryViewerSettingsScreenProjection {
-            override val surfaceId = id
         }
     }
 
@@ -182,5 +176,11 @@ class ProductionEntryInteractionValidationEnvironment(
         Injekt.addSingletonFactory<HistoryRepository> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<GetCategories> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<GetTracks> { mockk(relaxed = true) }
+    }
+}
+
+private fun viewerSettingsProjection(id: String): EntryViewerSettingsScreenProjection {
+    return object : EntryViewerSettingsScreenProjection {
+        override val surfaceId = id
     }
 }

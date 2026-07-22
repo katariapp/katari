@@ -164,7 +164,7 @@ class EntryViewerSettingsFeatureTest {
         return DefaultEntryViewerSettingsFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.viewerSettings,
-            projections = projections,
+            projectionResolver = EntryViewerSettingsScreenProjectionResolver { projections },
             overrideRepository = repository,
             legacyMangaViewerFlagsReset = EntryLegacyMangaViewerFlagsReset { legacyReset() },
             migrationStore = EntryViewerFlagsMigrationStore(migrationStore),

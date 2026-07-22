@@ -113,7 +113,7 @@ internal val EntryViewerSettingsFeatureRuntimeModule = EntryFeatureRuntimeModule
         DefaultEntryViewerSettingsFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.viewerSettings,
-            projections = context.dependencies.viewerSettingsScreenProjections,
+            projectionResolver = context.dependencies.viewerSettingsScreenProjectionResolver,
             overrideRepository = get<ViewerSettingOverrideRepository>(),
             legacyMangaViewerFlagsReset = EntryLegacyMangaViewerFlagsReset {
                 get<EntryRepository>().resetViewerFlags()

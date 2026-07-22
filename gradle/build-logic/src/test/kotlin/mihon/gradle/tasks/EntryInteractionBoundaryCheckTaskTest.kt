@@ -82,6 +82,22 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `application layer cannot declare a parallel Entry Interaction api`() {
+        createBaseFixture(
+            appSource = """
+                package app
+
+                interface EntryRemovalInteraction
+            """.trimIndent(),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "app-local Interaction declarations recreate a parallel application API"
+        error.message shouldContain "EntryRemovalInteraction"
+    }
+
+    @Test
     fun `application consumers cannot bypass Library Progress Feature through domain port`() {
         createBaseFixture(
             appSource = """

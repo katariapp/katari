@@ -1,6 +1,7 @@
 package eu.kanade.tachiyomi.documentation
 
 import eu.kanade.domain.track.service.GlobalTrackPreferences
+import eu.kanade.presentation.more.settings.screen.productionEntryViewerSettingsScreenProjectionResolver
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.source.adapter.LEGACY_MANGA_SOURCE_SUPPORTED_ENTRY_TYPES
 import io.mockk.mockk
@@ -20,7 +21,10 @@ import java.io.File
 class ProductionEntryDocumentationEnvironment(
     temporaryDirectory: File,
 ) : AutoCloseable {
-    private val interactionEnvironment = ProductionEntryInteractionValidationEnvironment(temporaryDirectory)
+    private val interactionEnvironment = ProductionEntryInteractionValidationEnvironment(
+        temporaryDirectory,
+        productionEntryViewerSettingsScreenProjectionResolver(),
+    )
 
     fun contentTypeReferencePlan(): EntryContentTypeReferencePlan {
         val composition = interactionEnvironment.composition()

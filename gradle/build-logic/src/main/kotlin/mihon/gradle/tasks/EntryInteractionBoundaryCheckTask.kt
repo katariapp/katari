@@ -32,6 +32,17 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
                 reason = finding.reason,
             )
         }
+        findings += checkEntryViewerSettingsProjectionBoundaries(
+            sourceIndex.files.map { source ->
+                EntryViewerSettingsProjectionBoundarySource(source.relativePath, source.content)
+            },
+        ).map { finding ->
+            Finding(
+                relativePath = finding.relativePath,
+                lineNumber = finding.lineNumber,
+                reason = finding.reason,
+            )
+        }
 
         if (findings.isNotEmpty()) {
             val maxFindings = 80
@@ -70,7 +81,7 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
     private fun contractValidationSources(root: File): List<EntryContractValidationBoundarySource> {
         val entryInteractions = root.resolve("entry-interactions")
         if (!entryInteractions.isDirectory) return emptyList()
-        return entryInteractions.walkTopDown()
+        val kotlinSources = entryInteractions.walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
             .filter { it.invariantSeparatorsPath.contains("/src/test/") }
             .filterNot { it.invariantSeparatorsPath.contains("/build/") }
@@ -81,6 +92,11 @@ abstract class EntryInteractionBoundaryCheckTask : DefaultTask() {
                 )
             }
             .toList()
+        val serviceRegistry = root.resolve(FEATURE_VALIDATION_CONTRIBUTOR_SERVICE)
+        return kotlinSources + EntryContractValidationBoundarySource(
+            relativePath = FEATURE_VALIDATION_CONTRIBUTOR_SERVICE,
+            content = serviceRegistry.takeIf(File::isFile)?.readText().orEmpty(),
+        )
     }
 
     private fun featureRuntimeModuleSources(root: File): List<EntryFeatureRuntimeModuleBoundarySource> {
@@ -271,6 +287,7 @@ private class EntryInteractionBoundaryRules(
         sourceIndex.files.forEach { file ->
             checkForbiddenImports(file, findings)
             checkRootCompositionTypeModuleImports(file, findings)
+            checkAppLocalInteractionDeclaration(file, findings)
             checkLegacyInteractionApis(file, findings)
             checkInternalApiReferences(file, findings)
             checkLibraryProgressDomainPortReferences(file, findings)
@@ -317,6 +334,26 @@ private class EntryInteractionBoundaryRules(
                 }
 
         return findings
+    }
+
+    private fun checkAppLocalInteractionDeclaration(
+        file: KotlinSourceFile,
+        findings: MutableList<Finding>,
+    ) {
+        if (file.isTestPath() || !file.isApplicationLayer()) return
+
+        file.topLevelDeclarations
+            .filter { declaration ->
+                declaration.name.startsWith("Entry") && declaration.name.endsWith("Interaction")
+            }
+            .forEach { declaration ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = declaration.lineNumber,
+                    reason = "application Entry behavior must expose a Feature boundary; app-local Interaction " +
+                        "declarations recreate a parallel application API: ${declaration.name}",
+                )
+            }
     }
 
     private fun checkApplicationApiDispatchContracts(findings: MutableList<Finding>) {
@@ -1047,6 +1084,10 @@ private class EntryInteractionBoundaryRules(
             "entry-interactions/src/main/java/mihon/entry/interactions/runtime/EntryInteractionRuntime.kt"
     }
 
+    private fun KotlinSourceFile.isApplicationLayer(): Boolean {
+        return APPLICATION_LAYER_ROOTS.any { root -> relativePath.startsWith(root) }
+    }
+
     private fun KotlinSourceFile.isSourceMediaResolutionGuardedPath(): Boolean {
         if (isRootOrTypeModuleOrTestPath()) return false
         if (!SOURCE_MEDIA_RESOLUTION_GUARDED_ROOTS.any { relativePath.startsWith(it) }) return false
@@ -1106,6 +1147,14 @@ private class EntryInteractionBoundaryRules(
             "presentation-widget/src/main/",
             "source-local/src/main/",
             "source-compat/src/main/",
+        )
+
+        private val APPLICATION_LAYER_ROOTS = listOf(
+            "app/src/main/",
+            "data/src/main/",
+            "domain/src/main/",
+            "presentation-core/src/main/",
+            "presentation-widget/src/main/",
         )
 
         private val LEGACY_INTERACTION_APIS = listOf(

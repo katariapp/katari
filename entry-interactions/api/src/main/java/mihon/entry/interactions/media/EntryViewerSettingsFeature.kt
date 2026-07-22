@@ -12,6 +12,11 @@ interface EntryViewerSettingsScreenProjection {
     val surfaceId: String
 }
 
+/** Resolves app-owned screens for the exact viewer surfaces discovered from installed type providers. */
+fun interface EntryViewerSettingsScreenProjectionResolver {
+    fun resolve(surfaceIds: Set<String>): Collection<EntryViewerSettingsScreenProjection>
+}
+
 data class EntryViewerSettingsDestination(
     val type: EntryType,
     val surfaceId: String,

@@ -30,7 +30,7 @@ data class EntryInteractionRuntimeDependencies(
     val readerTracking: EntryReaderTracking,
     val basePreferenceStore: PreferenceStore,
     val profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
-    val viewerSettingsScreenProjections: List<EntryViewerSettingsScreenProjection>,
+    val viewerSettingsScreenProjectionResolver: EntryViewerSettingsScreenProjectionResolver,
     val sourceRefreshUpdateLibraryTitles: (profileId: Long) -> Boolean,
     val libraryMembershipHost: EntryLibraryMembershipHost,
     val libraryCustomCoverHost: EntryLibraryCustomCoverHost,
