@@ -50,6 +50,8 @@ import kotlin.coroutines.Continuation
 import eu.kanade.tachiyomi.source.ConfigurableSource as LegacyConfigurableSource
 import eu.kanade.tachiyomi.source.UnmeteredSource as LegacyUnmeteredSource
 
+val LEGACY_MANGA_SOURCE_SUPPORTED_ENTRY_TYPES: Set<EntryType> = setOf(EntryType.MANGA)
+
 /**
  * Wraps a legacy manga [Source] as a [UnifiedSource].
  *
@@ -67,7 +69,7 @@ open class LegacyMangaSourceAdapter(
 
     override val id: Long get() = source.id
     override val name: String get() = source.name
-    override val supportedEntryTypes: Set<EntryType> = setOf(EntryType.MANGA)
+    override val supportedEntryTypes: Set<EntryType> = LEGACY_MANGA_SOURCE_SUPPORTED_ENTRY_TYPES
     override val itemOrientation: EntryItemOrientation
         get() = source.sourceItemOrientation().toEntryItemOrientation()
 

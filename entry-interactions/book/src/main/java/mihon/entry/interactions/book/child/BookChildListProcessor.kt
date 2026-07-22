@@ -4,10 +4,7 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import mihon.entry.interactions.EntryChildListDisplay
 import mihon.entry.interactions.EntryChildListProcessor
-import mihon.entry.interactions.EntryChildListRequest
-import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryChildProgressProcessor
 import mihon.entry.interactions.EntryChildProgressRequest
@@ -34,28 +31,6 @@ internal class BookChildListProcessor(
         chapters: List<EntryChapter>,
         memberIds: List<Long>,
     ): List<EntryChapter> = chapters.sortedForMergedDisplay(entry, memberIds)
-
-    override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
-        val children = sortedForDisplay(request.entry, request.chapters, request.memberIds)
-        val rows: List<EntryChildListRow> = if (request.memberIds.size <= 1) {
-            children.map(EntryChildListRow::Child)
-        } else {
-            buildList {
-                request.memberIds.forEach { memberId ->
-                    val memberChildren = children.filter { it.entryId == memberId }
-                    if (memberChildren.isEmpty()) return@forEach
-                    add(
-                        EntryChildListRow.MemberHeader(
-                            entryId = memberId,
-                            title = request.memberTitleById[memberId].orEmpty().ifBlank { request.fallbackTitle },
-                        ),
-                    )
-                    addAll(memberChildren.map(EntryChildListRow::Child))
-                }
-            }
-        }
-        return EntryChildListDisplay(rows = rows, aggregateMissingCount = 0)
-    }
 
     override fun progressLabels(request: EntryChildProgressRequest): Flow<Map<Long, EntryChildProgressLabel>> {
         val stateFlows = request.memberIds.distinct().map(entryProgressRepository::getByEntryIdAsFlow)

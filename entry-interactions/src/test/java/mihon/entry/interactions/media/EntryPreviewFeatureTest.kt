@@ -132,6 +132,7 @@ class EntryPreviewFeatureTest {
             evaluation = composition.featureGraphEvaluation,
             childList = composition.interactions.childList,
             childProgress = composition.interactions.childProgress,
+            missingChildGap = composition.interactions.missingChildGap,
         )
         return DefaultEntryPreviewFeature(
             evaluation = composition.featureGraphEvaluation,
@@ -228,8 +229,6 @@ class EntryPreviewFeatureTest {
             chapters: List<EntryChapter>,
             memberIds: List<Long>,
         ) = chapters
-
-        override fun buildDisplayList(request: EntryChildListRequest) = EntryChildListDisplay(emptyList(), 0)
     }
 
     private class RecordingOpenProcessor : EntryOpenProcessor {

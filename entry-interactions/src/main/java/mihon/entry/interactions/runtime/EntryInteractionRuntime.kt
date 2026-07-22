@@ -376,6 +376,7 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             evaluation = composition.featureGraphEvaluation,
             childList = composition.interactions.childList,
             childProgress = composition.interactions.childProgress,
+            missingChildGap = composition.interactions.missingChildGap,
         )
     }
     addSingletonFactory<EntryLibraryFilterFeature> {

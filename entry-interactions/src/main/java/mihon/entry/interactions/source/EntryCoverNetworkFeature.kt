@@ -1,6 +1,10 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryImageSource
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -23,6 +27,15 @@ import tachiyomi.domain.source.service.SourceManager
 
 internal val ENTRY_COVER_NETWORK_FEATURE_ID = FeatureId("entry.cover-network")
 private val ENTRY_COVER_NETWORK_OWNER = ContributionOwner("entry-cover-network")
+private val ENTRY_COVER_NETWORK_REFERENCE = entryContentTypeReferenceContribution(
+    id = "cover-network",
+    owner = ENTRY_COVER_NETWORK_OWNER,
+    section = EntryContentTypeReferenceSection.DISCOVERY_AND_INTEGRATIONS,
+    label = "Load entry covers through source networking",
+    order = 600,
+    selection = EntryContentTypeReferenceSelection.CONDITIONAL_RELATIONSHIP,
+    project = { EntryContentTypeReferenceStatus.SOURCE_DEPENDENT },
+)
 internal val ENTRY_COVER_NETWORK_INTEGRATION_ID = FeatureIntegrationId("entry.cover-network.source")
 
 internal object EntryCoverNetworkBehaviorContract : FeatureBehaviorContract {
@@ -79,6 +92,8 @@ internal object EntryCoverNetworkFeatureContributor : FeatureGraphContributor {
                         ),
                         sharedConsequences = EntryCoverNetworkConsequence.entries,
                         behavioralContracts = listOf(EntryCoverNetworkBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_COVER_NETWORK_REFERENCE.requirement),
+                        projections = listOf(ENTRY_COVER_NETWORK_REFERENCE.projection),
                     ),
                 ),
             ),

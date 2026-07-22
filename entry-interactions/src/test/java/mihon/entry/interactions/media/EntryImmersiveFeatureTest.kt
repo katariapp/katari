@@ -197,6 +197,7 @@ class EntryImmersiveFeatureTest {
             evaluation = composition.featureGraphEvaluation,
             childList = composition.interactions.childList,
             childProgress = composition.interactions.childProgress,
+            missingChildGap = composition.interactions.missingChildGap,
         )
         return DefaultEntryImmersiveFeature(
             evaluation = composition.featureGraphEvaluation,
@@ -296,8 +297,6 @@ class EntryImmersiveFeatureTest {
             chapters: List<EntryChapter>,
             memberIds: List<Long>,
         ) = chapters
-
-        override fun buildDisplayList(request: EntryChildListRequest) = EntryChildListDisplay(emptyList(), 0)
     }
 
     private class RecordingOpenProcessor : EntryOpenProcessor {

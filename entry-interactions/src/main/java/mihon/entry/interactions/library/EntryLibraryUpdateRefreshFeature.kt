@@ -1,5 +1,7 @@
 package mihon.entry.interactions
 
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContentTypeId
 import mihon.feature.graph.ContributionOwner
@@ -16,6 +18,13 @@ import mihon.feature.graph.SharedFeatureConsequence
 
 internal val ENTRY_LIBRARY_UPDATE_REFRESH_FEATURE_ID = FeatureId("entry.library-update-refresh")
 private val FEATURE_OWNER = ContributionOwner("entry-library-update")
+private val ENTRY_LIBRARY_UPDATE_REFRESH_REFERENCE = entryContentTypeReferenceContribution(
+    id = "library-update-refresh",
+    owner = FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.LIBRARY_AND_UPDATES,
+    label = "Refresh entries during library updates",
+    order = 400,
+)
 internal val ENTRY_LIBRARY_UPDATE_REFRESH_INTEGRATION =
     FeatureIntegrationId("entry.library-update-refresh.source-refresh")
 
@@ -44,6 +53,8 @@ internal object EntryLibraryUpdateRefreshFeatureContributor : FeatureGraphContri
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = EntryLibraryUpdateRefreshConsequence.entries,
                         behavioralContracts = listOf(EntryLibraryUpdateRefreshBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_LIBRARY_UPDATE_REFRESH_REFERENCE.requirement),
+                        projections = listOf(ENTRY_LIBRARY_UPDATE_REFRESH_REFERENCE.projection),
                     ),
                 ),
             ),

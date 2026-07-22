@@ -5,6 +5,9 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import eu.kanade.tachiyomi.source.entry.supportedEntryTypes
 import kotlinx.coroutines.CancellationException
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -28,6 +31,14 @@ import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_IMMERSIVE_FEATURE_ID = FeatureId("entry.immersive")
 private val ENTRY_IMMERSIVE_FEATURE_OWNER = ContributionOwner("entry-immersive")
+private val ENTRY_IMMERSIVE_REFERENCE = entryContentTypeReferenceContribution(
+    id = "immersive-browsing",
+    owner = ENTRY_IMMERSIVE_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.DISCOVERY_AND_INTEGRATIONS,
+    label = "Use immersive browsing",
+    order = 200,
+    project = { EntryContentTypeReferenceStatus.SOURCE_DEPENDENT },
+)
 internal val ENTRY_IMMERSIVE_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.provider")
 internal val ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.source-context")
 internal val ENTRY_IMMERSIVE_ENTRY_CONTEXT_INTEGRATION_ID = FeatureIntegrationId("entry.immersive.entry-context")
@@ -141,6 +152,8 @@ internal object EntryImmersiveFeatureContributor : FeatureGraphContributor {
                             EntryImmersiveConsequence.PRELOAD,
                         ),
                         behavioralContracts = listOf(EntryImmersiveProviderBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_IMMERSIVE_REFERENCE.requirement),
+                        projections = listOf(ENTRY_IMMERSIVE_REFERENCE.projection),
                     ),
                     FeatureIntegration(
                         id = ENTRY_IMMERSIVE_SOURCE_CONTEXT_INTEGRATION_ID,

@@ -28,6 +28,10 @@ and cannot authorize any of those product claims.
   presentation and semantics must still be owned.
 - Selected documentation projections receive the same matched providers, specialized adapters, and contextual evidence
   that established applicability. They do not re-evaluate capability expressions or branch on known content types.
+- A conditional relationship may project a source-dependent cell directly from its discovered conditional state. Such
+  a projection must render source-dependent, not supported, and does not use an invented context snapshot. Context that
+  establishes a current type-wide product fact, such as an external registration, must still be resolved from its
+  authoritative owner.
 - External rows consume facts from their actual production owner or registration. Source descriptions do not become
   Entry behavior providers, and successful validation scenarios do not become claims of type-wide support.
 - The generated section discovers content types from the graph and orders them by stable ID. A new type adds a column

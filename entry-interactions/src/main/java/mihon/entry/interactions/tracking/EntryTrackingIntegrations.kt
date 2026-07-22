@@ -34,6 +34,8 @@ internal fun entryTrackingIntegrations(): List<FeatureIntegration> = listOf(
             EntryTrackingConsequence.DOCUMENTATION,
         ),
         behavioralContracts = listOf(EntryTrackingBehaviorContract.AVAILABILITY),
+        projectionRequirements = listOf(ENTRY_TRACKING_REFERENCE.requirement),
+        projections = listOf(ENTRY_TRACKING_REFERENCE.projection),
     ),
     FeatureIntegration(
         id = EntryTrackingIntegration.SESSION.id,

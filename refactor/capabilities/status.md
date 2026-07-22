@@ -1568,7 +1568,32 @@ Focused Phase 7.3 Developer Reporting findings:
 - Formatting, Feature Graph and Feature Validation tests, all Entry-interactions tests, build-logic tests, boundary
   validation, clean/root report-task execution, and FOSS application compilation pass.
 
+Focused Phase 7.4 Feature-Owned Projection findings:
+
+- Review deferred all production exclusions so that the current migration assesses every Feature before deciding that
+  any fact is outside this reference. All 36 production Features currently contribute an implemented projection.
+  Explicit justified exclusions remain valid architecture, and the completeness gate still has no Feature or
+  content-type list.
+- Forty public comparison rows and two derived Download notes are owned by the Feature relationships that establish
+  them. Selected projections receive matched providers, specialized adapters, and resolved context; they do not
+  reconstruct support from Manga, Anime, or Book.
+- Conditional source relationships may contribute only a source-dependent cell from their discovered conditional
+  state. They do not need an invented source snapshot and cannot claim unconditional support. External registrations
+  still require authoritative resolved evidence because they describe current type-wide product facts.
+- The existing missing-child-gap row exposed a real authority mismatch: every Child List provider also implemented the
+  display path even though only Manga supplied missing-gap behavior. Missing-gap behavior is now its own optional
+  provider relationship, while the shared Child List Feature builds the ordinary display for types without it.
+- Local-source, legacy-extension, and tracker availability remain external registration facts. Contextual projection
+  relationships consume evidence from those owners; source metadata and validation scenarios do not become Entry
+  support declarations.
+- A build-only documentation module plans rows, notes, statuses, and owner-attributed issues from graph selection. Its
+  generic tests prove that unknown future types, Features, providers, and contextual evidence participate without a
+  current-type matrix.
+- Formatting, boundary and build-logic tests, root Entry-interactions tests, documentation-planner tests, Local-source
+  Android and legacy source-compat compilation, and FOSS application compilation pass.
+
 ## Exact Next Action After Review
 
-Commit Phase 7.3 after review. Then begin Phase 7.4 documentation projection; do not begin repository-wide Phase 7.5
-reconciliation until that milestone is complete.
+Commit the Phase 7.4 feature-owned projection milestone after review. Then connect the build-only projector to the exact
+production composition and authoritative external registrations, render the deterministic checked-in section, and add
+the approved generate/verify tasks. Do not begin repository-wide Phase 7.5 reconciliation until Phase 7.4 is complete.

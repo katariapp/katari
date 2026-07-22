@@ -37,7 +37,6 @@ val EntryImmersiveCapability = entryInteractionCapability<EntryImmersiveProcesso
 interface EntryChildListProcessor : EntryInteractionProvider {
     fun sortedForReading(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
     fun sortedForDisplay(entry: Entry, chapters: List<EntryChapter>, memberIds: List<Long>): List<EntryChapter>
-    fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay
 }
 
 val EntryChildListCapability = entryInteractionCapability<EntryChildListProcessor>(
@@ -50,6 +49,15 @@ interface EntryChildProgressProcessor : EntryInteractionProvider {
 
 val EntryChildProgressCapability = entryInteractionCapability<EntryChildProgressProcessor>(
     id = CapabilityId("entry.child-progress-labels"),
+)
+
+/** Owns missing-child gap rows and counts when that media has meaningful sequential numbering. */
+interface EntryMissingChildGapProcessor : EntryInteractionProvider {
+    fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay
+}
+
+val EntryMissingChildGapCapability = entryInteractionCapability<EntryMissingChildGapProcessor>(
+    id = CapabilityId("entry.missing-child-gaps"),
 )
 
 interface EntryChildGroupFilterProcessor : EntryInteractionProvider {

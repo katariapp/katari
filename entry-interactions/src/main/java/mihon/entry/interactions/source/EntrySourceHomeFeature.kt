@@ -1,6 +1,10 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.SourceHomePage
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -23,6 +27,15 @@ import tachiyomi.domain.source.service.SourceManager
 
 internal val SOURCE_HOME_FEATURE_ID = FeatureId("entry.source-home")
 private val SOURCE_HOME_OWNER = ContributionOwner("entry-source-home")
+private val SOURCE_HOME_REFERENCE = entryContentTypeReferenceContribution(
+    id = "source-home",
+    owner = SOURCE_HOME_OWNER,
+    section = EntryContentTypeReferenceSection.DISCOVERY_AND_INTEGRATIONS,
+    label = "Open source home pages",
+    order = 800,
+    selection = EntryContentTypeReferenceSelection.CONDITIONAL_RELATIONSHIP,
+    project = { EntryContentTypeReferenceStatus.SOURCE_DEPENDENT },
+)
 internal val SOURCE_HOME_INTEGRATION_ID = FeatureIntegrationId("entry.source-home.navigation")
 
 internal object EntrySourceHomeBehaviorContract : FeatureBehaviorContract {
@@ -92,6 +105,8 @@ internal object EntrySourceHomeFeatureContributor : FeatureGraphContributor {
                         contextBlockers = listOf(SOURCE_HOME_MISSING, SOURCE_HOME_UNSUPPORTED, SOURCE_HOME_NO_URL),
                         sharedConsequences = SourceHomeConsequence.entries,
                         behavioralContracts = listOf(EntrySourceHomeBehaviorContract),
+                        projectionRequirements = listOf(SOURCE_HOME_REFERENCE.requirement),
+                        projections = listOf(SOURCE_HOME_REFERENCE.projection),
                     ),
                 ),
             ),

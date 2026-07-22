@@ -32,7 +32,6 @@ class EntryChildListContractValidationContributor : FeatureValidationContributor
                     val second = EntryChapter.create().copy(id = 92L)
                     val reading = listOf(second, first)
                     val display = listOf(first, second)
-                    val displayList = EntryChildListDisplay(emptyList(), aggregateMissingCount = 0)
                     val feature = DefaultEntryChildListFeature(
                         evaluation = evaluation,
                         childList = object : EntryChildListInteraction {
@@ -47,14 +46,14 @@ class EntryChildListContractValidationContributor : FeatureValidationContributor
                                 chapters: List<EntryChapter>,
                                 memberIds: List<Long>,
                             ): List<EntryChapter> = display
-
-                            override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay =
-                                displayList
                         },
                         childProgress = object : EntryChildProgressInteraction {
                             override fun progressLabels(
                                 request: EntryChildProgressRequest,
                             ): Flow<Map<Long, EntryChildProgressLabel>> = emptyFlow()
+                        },
+                        missingChildGap = EntryMissingChildGapInteraction {
+                            error("Missing-child gaps are not selected by this contract")
                         },
                     )
 

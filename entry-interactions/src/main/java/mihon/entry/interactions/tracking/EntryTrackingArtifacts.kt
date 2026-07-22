@@ -1,5 +1,7 @@
 package mihon.entry.interactions
 
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
@@ -9,6 +11,13 @@ import mihon.feature.graph.SharedFeatureConsequence
 
 internal val ENTRY_TRACKING_FEATURE_ID = FeatureId("entry.tracking")
 internal val ENTRY_TRACKING_OWNER = ContributionOwner("entry-tracking")
+internal val ENTRY_TRACKING_REFERENCE = entryContentTypeReferenceContribution(
+    id = "tracking",
+    owner = ENTRY_TRACKING_OWNER,
+    section = EntryContentTypeReferenceSection.DISCOVERY_AND_INTEGRATIONS,
+    label = "Connect entries to tracking services",
+    order = 500,
+)
 
 internal enum class EntryTrackingIntegration(
     val id: FeatureIntegrationId,

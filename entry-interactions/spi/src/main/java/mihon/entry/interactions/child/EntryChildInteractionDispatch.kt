@@ -28,12 +28,6 @@ internal class ProviderBackedEntryChildListInteraction(
         processor.requireMatchingEntryType("child list", entry, processors.keys)
         return processor.sortedForDisplay(entry, chapters, memberIds)
     }
-
-    override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
-        val processor = processors.requireProcessor("child list", request.entry.type)
-        processor.requireMatchingEntryType("child list", request.entry, processors.keys)
-        return processor.buildDisplayList(request)
-    }
 }
 
 internal class ProviderBackedEntryChildProgressInteraction(
@@ -43,6 +37,16 @@ internal class ProviderBackedEntryChildProgressInteraction(
         val processor = processors.requireProcessor("child progress", request.entry.type)
         processor.requireMatchingEntryType("child progress", request.entry, processors.keys)
         return processor.progressLabels(request)
+    }
+}
+
+internal class ProviderBackedEntryMissingChildGapInteraction(
+    private val processors: Map<EntryType, EntryMissingChildGapProcessor>,
+) : EntryMissingChildGapInteraction {
+    override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
+        val processor = processors.requireProcessor("missing child gaps", request.entry.type)
+        processor.requireMatchingEntryType("missing child gaps", request.entry, processors.keys)
+        return processor.buildDisplayList(request)
     }
 }
 

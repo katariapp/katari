@@ -11,6 +11,7 @@ import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressLabel
 import mihon.entry.interactions.EntryChildProgressProcessor
 import mihon.entry.interactions.EntryChildProgressRequest
+import mihon.entry.interactions.EntryMissingChildGapProcessor
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryProgressRepository
@@ -23,7 +24,7 @@ import kotlin.math.floor
 
 internal class MangaChildListProcessor(
     private val entryProgressRepository: EntryProgressRepository,
-) : EntryChildListProcessor, EntryChildProgressProcessor {
+) : EntryChildListProcessor, EntryChildProgressProcessor, EntryMissingChildGapProcessor {
     override val type: EntryType = EntryType.MANGA
 
     override fun sortedForReading(

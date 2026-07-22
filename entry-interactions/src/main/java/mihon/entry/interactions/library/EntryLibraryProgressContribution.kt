@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
@@ -17,6 +19,13 @@ import mihon.feature.graph.allOf
 
 internal val ENTRY_LIBRARY_PROGRESS_FEATURE_ID = FeatureId("entry.library-progress")
 private val FEATURE_OWNER = ContributionOwner("entry-library-progress")
+private val ENTRY_LIBRARY_PROGRESS_REFERENCE = entryContentTypeReferenceContribution(
+    id = "library-progress",
+    owner = FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.LIBRARY_AND_UPDATES,
+    label = "Aggregate progress across the library",
+    order = 200,
+)
 internal val ENTRY_LIBRARY_PROGRESS_PROVIDER_INTEGRATION = FeatureIntegrationId("entry.library-progress.provider")
 internal val ENTRY_LIBRARY_PROGRESS_CONTINUE_INTEGRATION = FeatureIntegrationId("entry.library-progress.continue")
 internal val ENTRY_LIBRARY_PROGRESS_BOOKMARK_INTEGRATION = FeatureIntegrationId("entry.library-progress.bookmark")
@@ -67,6 +76,8 @@ internal object EntryLibraryProgressFeatureContributor : FeatureGraphContributor
                         prerequisites = CapabilityExpression.Provided(EntryLibraryProgressCapability.definition),
                         sharedConsequences = EntryLibraryProgressConsequence.entries,
                         behavioralContracts = listOf(EntryLibraryProgressBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_LIBRARY_PROGRESS_REFERENCE.requirement),
+                        projections = listOf(ENTRY_LIBRARY_PROGRESS_REFERENCE.projection),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_PROGRESS_CONTINUE_INTEGRATION,

@@ -6,6 +6,10 @@ import eu.kanade.tachiyomi.source.entry.RelatedEntriesSource
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -36,6 +40,15 @@ import tachiyomi.domain.source.service.SourceManager
 internal val ENTRY_RELATED_ENTRIES_FEATURE_ID = FeatureId("entry.related-entries")
 internal val ENTRY_RELATED_ENTRIES_INTEGRATION_ID = FeatureIntegrationId("entry.related-entries.source-context")
 private val ENTRY_RELATED_ENTRIES_FEATURE_OWNER = ContributionOwner("entry-related-entries")
+private val ENTRY_RELATED_ENTRIES_REFERENCE = entryContentTypeReferenceContribution(
+    id = "related-entries",
+    owner = ENTRY_RELATED_ENTRIES_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.DISCOVERY_AND_INTEGRATIONS,
+    label = "Discover related entries from a source",
+    order = 250,
+    selection = EntryContentTypeReferenceSelection.CONDITIONAL_RELATIONSHIP,
+    project = { EntryContentTypeReferenceStatus.SOURCE_DEPENDENT },
+)
 
 private enum class EntryRelatedEntriesConsequence(
     override val id: FeatureArtifactId,
@@ -101,6 +114,8 @@ internal object EntryRelatedEntriesFeatureContributor : FeatureGraphContributor 
                         ),
                         sharedConsequences = EntryRelatedEntriesConsequence.entries,
                         behavioralContracts = listOf(EntryRelatedEntriesBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_RELATED_ENTRIES_REFERENCE.requirement),
+                        projections = listOf(ENTRY_RELATED_ENTRIES_REFERENCE.projection),
                     ),
                 ),
             ),

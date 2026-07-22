@@ -1,5 +1,7 @@
 package mihon.entry.interactions
 
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
@@ -24,6 +26,13 @@ internal val ENTRY_MEDIA_CACHE_INVALIDATION_CONSEQUENCE_ID = FeatureArtifactId("
 internal val ENTRY_MEDIA_CACHE_ERRORS_CONSEQUENCE_ID = FeatureArtifactId("entry.media-cache.errors")
 
 private val ENTRY_MEDIA_CACHE_FEATURE_OWNER = ContributionOwner("entry-media-cache")
+private val ENTRY_MEDIA_CACHE_REFERENCE = entryContentTypeReferenceContribution(
+    id = "media-cache",
+    owner = ENTRY_MEDIA_CACHE_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
+    label = "Clear temporary media cache manually/on app launch",
+    order = 1000,
+)
 private val ENTRY_MEDIA_CACHE_BEHAVIOR_CONTRACT_ID = FeatureArtifactId("entry.media-cache.behavior")
 
 private data class MediaCacheConsequence(override val id: FeatureArtifactId) : SharedFeatureConsequence
@@ -54,6 +63,8 @@ internal object EntryMediaCacheFeatureContributor : FeatureGraphContributor {
                             ENTRY_MEDIA_CACHE_ERRORS_CONSEQUENCE_ID,
                         ).map(::MediaCacheConsequence),
                         behavioralContracts = listOf(EntryMediaCacheBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_MEDIA_CACHE_REFERENCE.requirement),
+                        projections = listOf(ENTRY_MEDIA_CACHE_REFERENCE.projection),
                     ),
                 ),
             ),

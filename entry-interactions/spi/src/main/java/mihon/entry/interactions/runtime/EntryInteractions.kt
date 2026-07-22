@@ -13,6 +13,7 @@ interface EntryInteractions {
     val playbackPreferences: EntryPlaybackPreferencesInteraction
     val childList: EntryChildListInteraction
     val childProgress: EntryChildProgressInteraction
+    val missingChildGap: EntryMissingChildGapInteraction
     val childGroupFilter: EntryChildGroupFilterInteraction
     val libraryProgress: EntryLibraryProgressInteraction
     val typePresentation: EntryTypePresentationInteraction

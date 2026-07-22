@@ -1,6 +1,10 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryImageSource
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSelection
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceStatus
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContextInputId
 import mihon.feature.graph.ContributionOwner
@@ -23,6 +27,15 @@ import tachiyomi.domain.source.service.SourceManager
 
 internal val TRACKER_SOURCE_ADAPTER_FEATURE_ID = FeatureId("entry.tracker-source-adapter")
 private val TRACKER_SOURCE_ADAPTER_OWNER = ContributionOwner("entry-tracker-source-adapter")
+private val TRACKER_SOURCE_ADAPTER_REFERENCE = entryContentTypeReferenceContribution(
+    id = "tracker-source-adapter",
+    owner = TRACKER_SOURCE_ADAPTER_OWNER,
+    section = EntryContentTypeReferenceSection.DISCOVERY_AND_INTEGRATIONS,
+    label = "Use tracking-service sources in discovery",
+    order = 1300,
+    selection = EntryContentTypeReferenceSelection.CONDITIONAL_RELATIONSHIP,
+    project = { EntryContentTypeReferenceStatus.SOURCE_DEPENDENT },
+)
 internal val TRACKER_SOURCE_ADAPTER_INTEGRATION_ID = FeatureIntegrationId("entry.tracker-source-adapter.connection")
 
 internal object EntryTrackerSourceAdapterBehaviorContract : FeatureBehaviorContract {
@@ -99,6 +112,8 @@ internal object EntryTrackerSourceAdapterFeatureContributor : FeatureGraphContri
                         ),
                         sharedConsequences = listOf(TrackerSourceAdapterConsequence),
                         behavioralContracts = listOf(EntryTrackerSourceAdapterBehaviorContract),
+                        projectionRequirements = listOf(TRACKER_SOURCE_ADAPTER_REFERENCE.requirement),
+                        projections = listOf(TRACKER_SOURCE_ADAPTER_REFERENCE.projection),
                     ),
                 ),
             ),

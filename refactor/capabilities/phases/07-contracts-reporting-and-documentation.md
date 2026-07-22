@@ -88,7 +88,7 @@ contributions:
   with automatic missing classification and implementation reporting for an unknown future Feature.
 - [x] Retain matched providers, specialized adapters, and contextual evidence in selected projection inputs so renderers
   do not reconstruct applicability.
-- [ ] Contribute feature-owned user-facing projections for the capability facts intended for the public content-type
+- [x] Contribute feature-owned user-facing projections for the capability facts intended for the public content-type
   reference.
 - [ ] Generate or verify the deterministic capability section of `docs/features/content-type-reference.md` while
   retaining appropriate explanatory prose.

@@ -47,7 +47,7 @@ class EntryChildListFeatureTest {
         feature.displayList(request()) shouldBe EntryChildListResult.Available(
             EntryChildListDisplay(
                 rows = listOf(EntryChildListRow.Child(first), EntryChildListRow.Child(second)),
-                aggregateMissingCount = 3,
+                aggregateMissingCount = 0,
             ),
         )
         feature.progressLabels(progressRequest()) shouldBe EntryChildProgressResult.Inapplicable(entry.type)
@@ -72,6 +72,22 @@ class EntryChildListFeatureTest {
         result.labels.first() shouldBe mapOf(first.id to EntryChildProgressLabel(resource = MR.strings.label_started))
     }
 
+    @Test
+    fun `missing-gap provider owns missing rows and counts`() {
+        val processor = RecordingMissingGapProcessor()
+        val feature = featureFor(
+            EntryChildListCapability.bind(processor),
+            EntryMissingChildGapCapability.bind(processor),
+        )
+
+        feature.displayList(request()) shouldBe EntryChildListResult.Available(
+            EntryChildListDisplay(
+                rows = listOf(EntryChildListRow.MissingCount("gap", 3)),
+                aggregateMissingCount = 3,
+            ),
+        )
+    }
+
     private fun featureFor(
         vararg bindings: EntryInteractionProviderBinding<*>,
     ): EntryChildListFeature {
@@ -83,6 +99,7 @@ class EntryChildListFeatureTest {
             evaluation = composition.featureGraphEvaluation,
             childList = composition.interactions.childList,
             childProgress = composition.interactions.childProgress,
+            missingChildGap = composition.interactions.missingChildGap,
         )
     }
 
@@ -120,13 +137,27 @@ class EntryChildListFeatureTest {
             chapters: List<EntryChapter>,
             memberIds: List<Long>,
         ): List<EntryChapter> = chapters
+    }
 
-        override fun buildDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
-            return EntryChildListDisplay(
-                rows = request.chapters.map(EntryChildListRow::Child),
-                aggregateMissingCount = 3,
-            )
-        }
+    private class RecordingMissingGapProcessor : EntryChildListProcessor, EntryMissingChildGapProcessor {
+        override val type = EntryType.BOOK
+
+        override fun sortedForReading(
+            entry: Entry,
+            chapters: List<EntryChapter>,
+            memberIds: List<Long>,
+        ) = chapters
+
+        override fun sortedForDisplay(
+            entry: Entry,
+            chapters: List<EntryChapter>,
+            memberIds: List<Long>,
+        ) = chapters
+
+        override fun buildDisplayList(request: EntryChildListRequest) = EntryChildListDisplay(
+            rows = listOf(EntryChildListRow.MissingCount("gap", 3)),
+            aggregateMissingCount = 3,
+        )
     }
 
     private class RecordingChildProgressProcessor : EntryChildProgressProcessor {

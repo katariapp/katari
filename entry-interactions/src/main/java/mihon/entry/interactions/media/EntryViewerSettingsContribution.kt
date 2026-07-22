@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.entry.viewer.settings.ViewerSettingDefinition
 import mihon.entry.viewer.settings.ViewerSettingId
 import mihon.entry.viewer.settings.ViewerSettingOverride
@@ -24,6 +26,13 @@ import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_VIEWER_SETTINGS_FEATURE_ID = FeatureId("entry.viewer-settings")
 private val ENTRY_VIEWER_SETTINGS_FEATURE_OWNER = ContributionOwner("entry-viewer-settings")
+private val ENTRY_VIEWER_SETTINGS_REFERENCE = entryContentTypeReferenceContribution(
+    id = "viewer-settings",
+    owner = ENTRY_VIEWER_SETTINGS_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
+    label = "Configure media viewer settings",
+    order = 1200,
+)
 internal val ENTRY_VIEWER_SETTINGS_PROVIDER_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.provider")
 internal val ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.viewer-settings.migration")
 
@@ -66,6 +75,8 @@ internal object EntryViewerSettingsFeatureContributor : FeatureGraphContributor 
                         prerequisites = CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
                         sharedConsequences = EntryViewerSettingsConsequence.entries,
                         behavioralContracts = listOf(EntryViewerSettingsBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_VIEWER_SETTINGS_REFERENCE.requirement),
+                        projections = listOf(ENTRY_VIEWER_SETTINGS_REFERENCE.projection),
                     ),
                     FeatureIntegration(
                         id = ENTRY_VIEWER_SETTINGS_MIGRATION_INTEGRATION_ID,

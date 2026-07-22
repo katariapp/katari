@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
@@ -20,6 +22,13 @@ internal val ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.m
 internal val ENTRY_MERGE_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.merge.migration")
 
 private val ENTRY_MERGE_FEATURE_OWNER = ContributionOwner("entry-merge")
+private val ENTRY_MERGE_REFERENCE = entryContentTypeReferenceContribution(
+    id = "merge",
+    owner = ENTRY_MERGE_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
+    label = "Merge versions from different sources",
+    order = 500,
+)
 
 internal enum class EntryMergeBaseConsequence(
     override val id: FeatureArtifactId,
@@ -78,6 +87,8 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = EntryMergeBaseConsequence.entries,
                         behavioralContracts = listOf(EntryMergeBehaviorContract.WORKFLOW),
+                        projectionRequirements = listOf(ENTRY_MERGE_REFERENCE.requirement),
+                        projections = listOf(ENTRY_MERGE_REFERENCE.projection),
                     ),
                     FeatureIntegration(
                         id = ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,

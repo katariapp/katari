@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContentTypeId
 import mihon.feature.graph.ContextInputId
@@ -23,6 +25,13 @@ import mihon.feature.graph.featureContextRule
 
 internal val ENTRY_LIBRARY_FILTER_FEATURE_ID = FeatureId("entry.library-filtering")
 private val FEATURE_OWNER = ContributionOwner("entry-library-filtering")
+private val ENTRY_LIBRARY_FILTER_REFERENCE = entryContentTypeReferenceContribution(
+    id = "library-filtering",
+    owner = FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.LIBRARY_AND_UPDATES,
+    label = "Filter and group entries in the unified library",
+    order = 100,
+)
 internal val ENTRY_LIBRARY_FILTER_PARTICIPATION_INTEGRATION =
     FeatureIntegrationId("entry.library-filtering.participation")
 internal val ENTRY_LIBRARY_FILTER_CONTEXT_INTEGRATION = FeatureIntegrationId("entry.library-filtering.context")
@@ -117,6 +126,8 @@ internal object EntryLibraryFilterFeatureContributor : FeatureGraphContributor {
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = listOf(EntryLibraryFilterParticipationConsequence),
                         behavioralContracts = listOf(EntryLibraryFilterBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_LIBRARY_FILTER_REFERENCE.requirement),
+                        projections = listOf(ENTRY_LIBRARY_FILTER_REFERENCE.projection),
                     ),
                     FeatureIntegration(
                         id = ENTRY_LIBRARY_FILTER_CONTEXT_INTEGRATION,

@@ -69,7 +69,7 @@ actual class LocalSource(
 
     override val lang: String = "other"
 
-    override val supportedEntryTypes: Set<EntryType> = setOf(EntryType.MANGA)
+    override val supportedEntryTypes: Set<EntryType> = LOCAL_SOURCE_SUPPORTED_ENTRY_TYPES
 
     override fun toString() = name
 

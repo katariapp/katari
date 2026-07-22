@@ -2,6 +2,8 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
@@ -18,6 +20,13 @@ import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_ID = FeatureId("entry.download.maintenance")
 private val ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER = ContributionOwner("entry-download-maintenance")
+private val ENTRY_DOWNLOAD_MAINTENANCE_REFERENCE = entryContentTypeReferenceContribution(
+    id = "download-maintenance",
+    owner = ENTRY_DOWNLOAD_MAINTENANCE_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.DOWNLOADS,
+    label = "Maintain downloads when entries or sources change",
+    order = 700,
+)
 internal val ENTRY_DOWNLOAD_MAINTENANCE_INTEGRATION_ID =
     FeatureIntegrationId("entry.download.maintenance.provider")
 
@@ -69,6 +78,8 @@ internal object EntryDownloadMaintenanceFeatureContributor : FeatureGraphContrib
                             EntryDownloadRemovalMaintenanceConsequence,
                         ),
                         behavioralContracts = listOf(EntryDownloadMaintenanceBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_DOWNLOAD_MAINTENANCE_REFERENCE.requirement),
+                        projections = listOf(ENTRY_DOWNLOAD_MAINTENANCE_REFERENCE.projection),
                     ),
                 ),
             ),

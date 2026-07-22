@@ -44,6 +44,7 @@ fun createEntryInteractionComposition(
             playbackPreferencesProcessors = providers[EntryPlaybackPreferencesCapability],
             childListProcessors = providers[EntryChildListCapability],
             childProgressProcessors = providers[EntryChildProgressCapability],
+            missingChildGapProcessors = providers[EntryMissingChildGapCapability],
             childGroupFilterProcessors = providers[EntryChildGroupFilterCapability],
             previewProcessors = providers[EntryPreviewCapability],
             previewConfigurationProviders = providers[EntryPreviewConfigurationCapability],
@@ -106,6 +107,7 @@ private class DefaultEntryInteractions(
     playbackPreferencesProcessors: Map<EntryType, EntryPlaybackPreferencesProcessor>,
     childListProcessors: Map<EntryType, EntryChildListProcessor>,
     childProgressProcessors: Map<EntryType, EntryChildProgressProcessor>,
+    missingChildGapProcessors: Map<EntryType, EntryMissingChildGapProcessor>,
     childGroupFilterProcessors: Map<EntryType, EntryChildGroupFilterProcessor>,
     previewProcessors: Map<EntryType, EntryPreviewProcessor>,
     previewConfigurationProviders: Map<EntryType, EntryPreviewConfigurationProvider>,
@@ -133,6 +135,8 @@ private class DefaultEntryInteractions(
         ProviderBackedEntryChildListInteraction(childListProcessors)
     override val childProgress: EntryChildProgressInteraction =
         ProviderBackedEntryChildProgressInteraction(childProgressProcessors)
+    override val missingChildGap: EntryMissingChildGapInteraction =
+        ProviderBackedEntryMissingChildGapInteraction(missingChildGapProcessors)
     override val childGroupFilter: EntryChildGroupFilterInteraction =
         ProviderBackedEntryChildGroupFilterInteraction(childGroupFilterProcessors)
     override val preview: EntryPreviewInteraction =

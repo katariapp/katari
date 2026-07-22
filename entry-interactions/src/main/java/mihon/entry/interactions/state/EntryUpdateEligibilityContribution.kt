@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContentTypeId
 import mihon.feature.graph.ContextInputId
@@ -23,6 +25,13 @@ import mihon.feature.graph.featureContextRule
 
 internal val ENTRY_UPDATE_ELIGIBILITY_FEATURE_ID = FeatureId("entry.update-eligibility")
 private val FEATURE_OWNER = ContributionOwner("entry-update-eligibility")
+private val ENTRY_UPDATE_ELIGIBILITY_REFERENCE = entryContentTypeReferenceContribution(
+    id = "smart-library-update",
+    owner = FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
+    label = "Apply smart library-update restrictions",
+    order = 400,
+)
 internal val ENTRY_UPDATE_ELIGIBILITY_POLICY_INTEGRATION =
     FeatureIntegrationId("entry.update-eligibility.shared-policy")
 internal val ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION =
@@ -127,6 +136,8 @@ internal object EntryUpdateEligibilityFeatureContributor : FeatureGraphContribut
                         prerequisites = CapabilityExpression.Always,
                         sharedConsequences = EntryUpdateEligibilityPolicyConsequence.entries,
                         behavioralContracts = listOf(EntryUpdateEligibilityBehaviorContract),
+                        projectionRequirements = listOf(ENTRY_UPDATE_ELIGIBILITY_REFERENCE.requirement),
+                        projections = listOf(ENTRY_UPDATE_ELIGIBILITY_REFERENCE.projection),
                     ),
                     FeatureIntegration(
                         id = ENTRY_UPDATE_ELIGIBILITY_DECISION_INTEGRATION,

@@ -1,6 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.entry.interactions.documentation.EntryContentTypeReferenceSection
+import mihon.entry.interactions.documentation.entryContentTypeReferenceContribution
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
@@ -19,12 +21,28 @@ import tachiyomi.domain.entry.model.EntryChapter
 
 internal val ENTRY_CHILD_LIST_FEATURE_ID = FeatureId("entry.child-list")
 private val ENTRY_CHILD_LIST_FEATURE_OWNER = ContributionOwner("entry-child-list")
+private val ENTRY_CHILD_PROGRESS_REFERENCE = entryContentTypeReferenceContribution(
+    id = "partial-progress",
+    owner = ENTRY_CHILD_LIST_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
+    label = "Show partial progress for individual child items",
+    order = 300,
+)
+private val ENTRY_MISSING_CHILD_GAP_REFERENCE = entryContentTypeReferenceContribution(
+    id = "missing-child-gaps",
+    owner = ENTRY_CHILD_LIST_FEATURE_OWNER,
+    section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
+    label = "Show gaps between missing child items",
+    order = 700,
+)
 internal val ENTRY_CHILD_LIST_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.provider")
 private val ENTRY_CHILD_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.progress")
+private val ENTRY_MISSING_CHILD_GAP_INTEGRATION_ID = FeatureIntegrationId("entry.child-list.missing-gaps")
 private val ENTRY_CHILD_LIST_ORDER_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.order")
 private val ENTRY_CHILD_LIST_FIRST_CHILD_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.first-reading-child")
 private val ENTRY_CHILD_LIST_DISPLAY_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.display")
 private val ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.progress-labels")
+private val ENTRY_MISSING_CHILD_GAP_CONSEQUENCE_ID = FeatureArtifactId("entry.child-list.missing-gap-display")
 
 private object EntryChildListOrderConsequence : SharedFeatureConsequence {
     override val id = ENTRY_CHILD_LIST_ORDER_CONSEQUENCE_ID
@@ -40,6 +58,10 @@ private object EntryChildListFirstChildConsequence : SharedFeatureConsequence {
 
 private object EntryChildProgressConsequence : SharedFeatureConsequence {
     override val id = ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID
+}
+
+private object EntryMissingChildGapConsequence : SharedFeatureConsequence {
+    override val id = ENTRY_MISSING_CHILD_GAP_CONSEQUENCE_ID
 }
 
 internal object EntryChildListBehaviorContract : FeatureBehaviorContract {
@@ -72,6 +94,18 @@ internal object EntryChildListFeatureContributor : FeatureGraphContributor {
                             CapabilityExpression.Provided(EntryChildProgressCapability.definition),
                         ),
                         sharedConsequences = listOf(EntryChildProgressConsequence),
+                        projectionRequirements = listOf(ENTRY_CHILD_PROGRESS_REFERENCE.requirement),
+                        projections = listOf(ENTRY_CHILD_PROGRESS_REFERENCE.projection),
+                    ),
+                    FeatureIntegration(
+                        id = ENTRY_MISSING_CHILD_GAP_INTEGRATION_ID,
+                        prerequisites = allOf(
+                            CapabilityExpression.Provided(EntryChildListCapability.definition),
+                            CapabilityExpression.Provided(EntryMissingChildGapCapability.definition),
+                        ),
+                        sharedConsequences = listOf(EntryMissingChildGapConsequence),
+                        projectionRequirements = listOf(ENTRY_MISSING_CHILD_GAP_REFERENCE.requirement),
+                        projections = listOf(ENTRY_MISSING_CHILD_GAP_REFERENCE.projection),
                     ),
                 ),
             ),
@@ -83,6 +117,7 @@ internal class DefaultEntryChildListFeature(
     evaluation: FeatureGraphEvaluation,
     private val childList: EntryChildListInteraction,
     private val childProgress: EntryChildProgressInteraction,
+    private val missingChildGap: EntryMissingChildGapInteraction,
 ) : EntryChildListFeature {
     private val orderTypes = evaluation.applicableProviderTypes<EntryChildListProcessor>(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
@@ -103,6 +138,11 @@ internal class DefaultEntryChildListFeature(
         feature = ENTRY_CHILD_LIST_FEATURE_ID,
         integration = ENTRY_CHILD_PROGRESS_INTEGRATION_ID,
         consequence = ENTRY_CHILD_PROGRESS_CONSEQUENCE_ID,
+    )
+    private val missingGapTypes = evaluation.applicableProviderTypes<EntryMissingChildGapProcessor>(
+        feature = ENTRY_CHILD_LIST_FEATURE_ID,
+        integration = ENTRY_MISSING_CHILD_GAP_INTEGRATION_ID,
+        consequence = ENTRY_MISSING_CHILD_GAP_CONSEQUENCE_ID,
     )
 
     init {
@@ -144,11 +184,38 @@ internal class DefaultEntryChildListFeature(
 
     override fun displayList(request: EntryChildListRequest): EntryChildListResult {
         if (request.entry.type !in displayTypes) return EntryChildListResult.Inapplicable(request.entry.type)
-        return EntryChildListResult.Available(childList.buildDisplayList(request))
+        val display = if (request.entry.type in missingGapTypes) {
+            missingChildGap.buildDisplayList(request)
+        } else {
+            buildDefaultDisplayList(request)
+        }
+        return EntryChildListResult.Available(display)
     }
 
     override fun progressLabels(request: EntryChildProgressRequest): EntryChildProgressResult {
         if (request.entry.type !in progressTypes) return EntryChildProgressResult.Inapplicable(request.entry.type)
         return EntryChildProgressResult.Available(childProgress.progressLabels(request))
+    }
+
+    private fun buildDefaultDisplayList(request: EntryChildListRequest): EntryChildListDisplay {
+        val sortedChildren = childList.sortedForDisplay(request.entry, request.chapters, request.memberIds)
+        val rows: List<EntryChildListRow> = if (request.memberIds.size <= 1) {
+            sortedChildren.map(EntryChildListRow::Child)
+        } else {
+            buildList<EntryChildListRow> {
+                request.memberIds.forEach { memberId ->
+                    val memberChildren = sortedChildren.filter { it.entryId == memberId }
+                    if (memberChildren.isEmpty()) return@forEach
+                    add(
+                        EntryChildListRow.MemberHeader(
+                            entryId = memberId,
+                            title = request.memberTitleById[memberId].orEmpty().ifBlank { request.fallbackTitle },
+                        ),
+                    )
+                    addAll(memberChildren.map(EntryChildListRow::Child))
+                }
+            }
+        }
+        return EntryChildListDisplay(rows = rows, aggregateMissingCount = 0)
     }
 }

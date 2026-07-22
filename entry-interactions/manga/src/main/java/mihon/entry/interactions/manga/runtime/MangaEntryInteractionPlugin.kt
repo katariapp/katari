@@ -20,6 +20,7 @@ import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryMediaCacheCapability
 import mihon.entry.interactions.EntryMigrationCapability
+import mihon.entry.interactions.EntryMissingChildGapCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryPreviewCapability
@@ -118,6 +119,7 @@ internal fun mangaEntryInteractionPlugin(
                     EntryMigrationCapability.bind(migrationProvider),
                     EntryChildListCapability.bind(childListProcessor),
                     EntryChildProgressCapability.bind(childListProcessor),
+                    EntryMissingChildGapCapability.bind(childListProcessor),
                     EntryLibraryProgressCapability.bind(libraryProgressProvider),
                     EntryChildGroupFilterCapability.bind(childGroupFilterProcessor),
                     EntryOutsideReleasePeriodFilterCapability.bind(outsideReleasePeriodFilterProvider),
