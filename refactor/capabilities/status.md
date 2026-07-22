@@ -104,10 +104,10 @@ Updated: 2026-07-22
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.4 Documentation Projection
-- State: Phase 7.4 documentation projection is complete. Both the content-type reference and source SDK contextual
-  consumer coverage are generated and independently verified from the exact production graph. Phase 7.5 repository
-  validation and register reconciliation are next, but have not started.
+- Milestone: Phase 7.5 Repository Validation and Register Reconciliation
+- State: Existing repository gates and workflow path filters have been audited. Proposed decision `0025` defines one
+  explicit Entry Feature architecture gate and a narrower documentation gate, without changing Gradle or CI wiring
+  before review. Implementation has not started.
 
 Focused Phase 6 preparation findings:
 
@@ -1646,5 +1646,6 @@ Focused Phase 7.4 Source SDK Consumer Coverage findings:
 
 ## Exact Next Action After Review
 
-Review and commit the Phase 7.4 source SDK consumer-coverage milestone. Then begin Phase 7.5 by defining how the existing
-contract, obligation, report, and documentation tasks enter normal repository validation before changing task wiring.
+Review proposed decision `0025`. If approved, implement the two root validation aggregates, wire the complete aggregate
+into the application build workflow and the documentation aggregate into the documentation workflow, then reconcile
+the test, reporting, documentation, and boundary register before running the unknown-contribution acceptance path.

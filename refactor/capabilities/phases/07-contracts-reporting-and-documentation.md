@@ -105,6 +105,23 @@ contributions:
 - [ ] Run the unknown type/capability/feature acceptance path across static and contextual contracts, reporting, and
   documentation before handing the branch to Phase 8.
 
+#### Preparation findings
+
+- `testFossUnitTest` currently executes only the application test task. It does not execute the Feature Graph, Feature
+  Validation, Entry-interactions production validation, or documentation-module tests.
+- `spotlessCheck` already owns the lightweight `checkEntryInteractionBoundaries` dependency. Contract execution,
+  reporting, and production projection verification should remain a separately named validation lifecycle rather than
+  becoming formatting side effects.
+- The application build workflow currently has no Entry Feature architecture step. The documentation workflow builds
+  the site without verifying either graph-derived checked-in document, and documentation-only changes do not enter the
+  application workflow.
+- Decision [`0025`](../decisions/0025-entry-feature-repository-validation.md) proposes one root architecture aggregate
+  and one narrower documentation aggregate. The architecture aggregate composes existing owner tasks without listing
+  types, Features, contracts, projections, rows, or consumers.
+- No task or workflow wiring changes until that decision is reviewed. After approval, implementation begins with the
+  two root aggregates, then wires the application and documentation workflows, then reconciles the complete migration
+  register and unknown-contribution acceptance path.
+
 ## Exit Gate
 
 - Supporting contributions automatically enter every applicable shared behavioral contract.
