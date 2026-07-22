@@ -58,8 +58,9 @@ internal data class TrackProgressSelectorScreen(
         }
 
         fun setProgress() {
+            val selection = state.value.selection
             screenModelScope.launchNonCancellable {
-                trackingFeature.mutate(entry, serviceId, EntryTrackingMutation.Progress(state.value.selection))
+                trackingFeature.mutate(entry, serviceId, EntryTrackingMutation.Progress(selection))
                     .logFailure("progress update")
             }
         }

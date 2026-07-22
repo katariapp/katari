@@ -45,3 +45,20 @@ match as obsolete code.
 
 Review every success criterion explicitly and reject any remaining mechanism that depends on a contributor remembering a
 second list or follow-up integration.
+
+## Completion Result
+
+- The full pre-release gate passes under JDK 21: formatting, Entry Feature architecture, legacy source ABI, FOSS unit
+  tests, and SQLDelight migration verification.
+- The telemetry/updater release assembly and extension runtime ABI verification pass under JDK 21.
+- The Entry Feature documentation projection, both SDK Dokka publications, and the VitePress documentation build pass
+  with the repository-required Node 24 and pnpm 10 toolchain.
+- Exit-gate testing removed a stale test matrix that asserted current type vocabulary directly. Selection action labels
+  are now tested through an injected `EntryTypePresentationFeature`, proving generic versus contributed projection
+  behavior without restating Manga, Anime, and Book declarations.
+- Exit-gate testing also moved the tracking selection boundary proof from the deleted monolithic dialog to the three
+  current selector owners. That audit found and corrected a real race: score, progress, and status selections are
+  captured before non-cancellable dispatch rather than reread after launch.
+- The final manifesto comparison found no parallel support authority, current-type completion matrix, mandatory
+  provider, or curated Feature consequence list. Provider absence remains valid, and unknown contributions continue to
+  enter evaluation, obligations, contracts, reporting, and documentation through their owners.

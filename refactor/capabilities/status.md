@@ -106,6 +106,8 @@ Updated: 2026-07-22
 - Phase 7.5 Validation Design commit: `4897232ca` (`(docs): define entry feature validation gates`)
 - Phase 7.5 Repository Wiring commit: `9869c9038` (`(build): verify entry feature architecture`)
 - Phase 7.5 Register Reconciliation commit: `b82822cdf` (`(test): reconcile entry feature validation register`)
+- Phase 8.0 final census commit: `450da780e` (`(docs): census entry feature legacy surface`)
+- Phase 8.1 residual cleanup commit: `54bc77f2d` (`(refactor): clean entry feature legacy boundaries`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -113,11 +115,11 @@ Updated: 2026-07-22
 ## Active Work
 
 - Phase: Phase 8 — Legacy Removal, Boundary Enforcement, and Build Completion
-- Milestone: Phase 8.1 residual cleanup and boundary-exception reconciliation
-- State: The census cleanup queue is complete. Production comments use durable ownership language; historical migration
-  ledgers no longer describe completed work as active; the unused broad `AppModule` type-branch exemption and a stale
-  public Manga `DownloadJob` exception are removed. Every other exact exception resolves to a live, reviewed ownership
-  or compatibility boundary. The next milestone is the full Phase 8 exit-gate validation and final manifesto review.
+- Milestone: Phase 8 exit gate and final manifesto review
+- State: Complete, pending the closing commit. The complete pre-release, release, architecture, ABI, migration, and
+  documentation gates pass. Exit-gate testing corrected stale selection-presentation and tracking-boundary tests and
+  restored selection snapshotting in the three split tracking selectors. The final comparison found no duplicated
+  support authority, mandatory provider, current-type completion matrix, or curated Feature consequence list.
 
 Focused Phase 6 preparation findings:
 
@@ -1701,8 +1703,23 @@ Focused Phase 7.5 Unknown-Contribution Acceptance findings:
 - Manifesto alignment is complete for Phase 7: provider absence remains valid, artifact channels remain optional,
   scenarios remain conditional evidence, and no central completion list participates in execution or projection.
 
+Focused Phase 8 Exit-Gate findings:
+
+- The full JDK 21 pre-release gate passes: `spotlessCheck`, `verifyEntryFeatureArchitecture`, `verifyLegacySourceAbi`,
+  `testFossUnitTest`, and `verifySqlDelightMigration`.
+- The telemetry/updater release assembly and extension runtime ABI verification pass under JDK 21.
+- Production documentation verification, both SDK Dokka publications, and the VitePress build pass with Node 24 and
+  pnpm 10.
+- Selection action label tests no longer encode the current Manga, Anime, and Book vocabulary as a matrix. They inject
+  `EntryTypePresentationFeature` and prove only generic versus contributed projection behavior.
+- The stale tracking boundary test now follows the score, progress, and status selector owners. Its migration exposed
+  and corrected a real race by capturing each user selection before non-cancellable dispatch.
+- The corrections consume existing Feature ownership and preserve user intent; they add no provider requirement,
+  content-type branch, support declaration, Feature allowlist, or architecture exception.
+- The Phase 8 census and every manifesto rejection rule were reviewed. Provider absence remains valid, downstream
+  participation remains contribution-discovered, and compilation succeeds because consumers follow the architecture.
+
 ## Exact Next Action After Review
 
-Review and commit the Phase 8.1 cleanup. The only notable enforcement decision is removal of the unused broad
-`AppModule` type-branch exemption and stale deleted-`DownloadJob` exception; all live exact ownership/compatibility
-exceptions remain fail-closed. After approval, run the full Phase 8 exit-gate validation and final manifesto review.
+Review and commit the Phase 8 exit-gate corrections and completion record. No implementation phase remains after this
+commit.

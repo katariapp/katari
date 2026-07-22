@@ -11,14 +11,25 @@ class TrackSelectionActionBoundaryTest {
 
     @Test
     fun `tracker selections are captured before non-cancellable dispatch`() {
-        val source = repositoryRoot()
-            .resolve("app/src/main/java/eu/kanade/tachiyomi/ui/entry/track/TrackInfoDialog.kt")
-            .readText()
+        val sources = listOf(
+            "TrackScoreSelectorScreen.kt",
+            "TrackProgressSelectorScreen.kt",
+            "TrackStatusSelectorScreen.kt",
+        ).map { fileName ->
+            repositoryRoot()
+                .resolve("app/src/main/java/eu/kanade/tachiyomi/ui/entry/track/$fileName")
+                .readText()
+        }
 
-        Regex(
-            """val selection = state\.value\.selection\s+screenModelScope\.launchNonCancellable \{""",
-        ).findAll(source).count() shouldBe 3
-        assertFalse(source.contains("track.toDbTrack(), state.value.selection"))
+        sources.forEach { source ->
+            Regex(
+                """val selection = state\.value\.selection\s+screenModelScope\.launchNonCancellable \{""",
+            ).findAll(source).count() shouldBe 1
+            assertFalse(
+                Regex("""EntryTrackingMutation\.(Score|Progress|Status)\(state\.value\.selection\)""")
+                    .containsMatchIn(source),
+            )
+        }
     }
 
     private fun repositoryRoot(): Path {

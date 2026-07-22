@@ -55,8 +55,9 @@ internal data class TrackScoreSelectorScreen(
         }
 
         fun setScore() {
+            val selection = state.value.selection
             screenModelScope.launchNonCancellable {
-                trackingFeature.mutate(entry, service.id, EntryTrackingMutation.Score(state.value.selection))
+                trackingFeature.mutate(entry, service.id, EntryTrackingMutation.Score(selection))
                     .logFailure("score update")
             }
         }

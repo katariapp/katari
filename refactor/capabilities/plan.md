@@ -282,7 +282,7 @@ Exit gate:
 
 See [`phases/07-contracts-reporting-and-documentation.md`](phases/07-contracts-reporting-and-documentation.md).
 
-### Phase 8 — Legacy Removal, Boundary Enforcement, and Build Completion
+### Phase 8 — Legacy Removal, Boundary Enforcement, and Build Completion — Complete
 
 Remove residual compatibility code and complete enforcement after the central catalog/report authority was already
 retired at the Phase 3.5 boundary cut and production contributions and consumers have migrated.

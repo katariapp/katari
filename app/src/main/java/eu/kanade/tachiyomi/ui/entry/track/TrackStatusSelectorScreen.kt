@@ -59,8 +59,9 @@ internal data class TrackStatusSelectorScreen(
         }
 
         fun setStatus() {
+            val selection = state.value.selection
             screenModelScope.launchNonCancellable {
-                trackingFeature.mutate(entry, service.id, EntryTrackingMutation.Status(state.value.selection))
+                trackingFeature.mutate(entry, service.id, EntryTrackingMutation.Status(selection))
                     .logFailure("status update")
             }
         }

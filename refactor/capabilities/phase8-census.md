@@ -158,9 +158,9 @@ No contextual fact was flattened into a global Entry capability.
 Phase 8.1 completed this queue:
 
 1. **Completed:** replaced milestone codes in production comments with durable ownership language:
-   - `EntryMigrationIntents.kt` refers to “F11 target discovery”;
-   - `EntryScreenModel.kt` carries a stale `TODO(Phase 7.5)`;
-   - `MainActivity.kt` explains profile routing only as “removed in Phase 4”.
+   - migration intent comments describe target-discovery ownership without a register code;
+   - the stale Entry screen migration TODO was removed;
+   - the empty Main Activity profile-routing conditional and its migration comment were removed.
 2. **Completed:** reconciled `migration-obligations.md`. Its chronological sections remain useful evidence, while
    `P5-FEATURE-CONTRIBUTOR-INSTALLATION`, `P5-ENTRY-UI`, and `P7-GRAPH-SELECTED-BEHAVIORAL-TESTS` now record their final
    resolutions and the ledger states that no active compile obligation remains.
@@ -192,3 +192,19 @@ Phase 8.1 completed this queue:
 
 The census is aligned with the manifesto. Its cleanup queue removes misleading residue; it does not redefine valid
 partial support or convert legitimate media/context distinctions into central capabilities.
+
+## Exit-Gate Result
+
+- The full pre-release validation gate passes under JDK 21: `spotlessCheck`, `verifyEntryFeatureArchitecture`,
+  `verifyLegacySourceAbi`, `testFossUnitTest`, and `verifySqlDelightMigration`.
+- The release gate passes under JDK 21: `assembleRelease` and `verifyExtensionRuntimeAbi` with telemetry and updater
+  enabled.
+- Documentation validation passes using the repository toolchain: production projection verification, both public SDK
+  Dokka publications, and the VitePress build under Node 24 and pnpm 10.
+- Selection-label coverage now tests the `EntryTypePresentationFeature` projection boundary instead of restating the
+  current content-type vocabulary. This removes a test-level parallel statement of product truth.
+- Tracking selection coverage now follows the three current selector owners. The audit restored the invariant that the
+  user's score, progress, or status selection is captured before asynchronous non-cancellable mutation dispatch.
+
+No exit-gate correction introduced a content-type gate, support flag, Feature allowlist, or provider requirement. The
+application, validation, reporting, and documentation all consume the completed owner-discovered architecture.
