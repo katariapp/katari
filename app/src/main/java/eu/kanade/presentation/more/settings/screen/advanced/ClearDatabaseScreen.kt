@@ -42,13 +42,11 @@ import eu.kanade.presentation.util.Screen
 import eu.kanade.tachiyomi.util.system.toast
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import mihon.entry.interactions.EntryDownloadMaintenanceFeature
+import mihon.entry.interactions.EntryDestructiveRemovalFeature
+import mihon.entry.interactions.EntryDestructiveRemovalResult
 import tachiyomi.core.common.util.lang.launchIO
 import tachiyomi.core.common.util.lang.launchUI
-import tachiyomi.core.common.util.lang.toLong
 import tachiyomi.core.common.util.lang.withNonCancellableContext
-import tachiyomi.data.ActiveProfileProvider
-import tachiyomi.data.Database
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.source.interactor.GetSourcesWithNonLibraryEntries
 import tachiyomi.domain.source.model.Source
@@ -225,10 +223,8 @@ class ClearDatabaseScreen : Screen() {
 
 private class ClearDatabaseScreenModel : StateScreenModel<ClearDatabaseScreenModel.State>(State.Loading) {
     private val getSourcesWithNonLibraryEntries: GetSourcesWithNonLibraryEntries = Injekt.get()
-    private val database: Database = Injekt.get()
-    private val profileProvider: ActiveProfileProvider = Injekt.get()
     private val entryRepository: EntryRepository = Injekt.get()
-    private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get()
+    private val destructiveRemoval: EntryDestructiveRemovalFeature = Injekt.get()
 
     init {
         screenModelScope.launchIO {
@@ -251,15 +247,12 @@ private class ClearDatabaseScreenModel : StateScreenModel<ClearDatabaseScreenMod
             sourceIds = state.selection,
             keepReadEntries = keepReadManga,
         )
-        entries.forEach { entry ->
-            downloadMaintenance.removeEntryDownloads(entry)
+        when (val result = destructiveRemoval.remove(entries)) {
+            is EntryDestructiveRemovalResult.Failed -> throw result.cause
+            EntryDestructiveRemovalResult.NoChange,
+            is EntryDestructiveRemovalResult.Removed,
+            -> Unit
         }
-        database.entriesQueries.deleteNonLibraryEntries(
-            profileProvider.activeProfileId,
-            state.selection,
-            keepReadManga.toLong(),
-        )
-        database.historyQueries.removeResettedHistory()
     }
 
     fun toggleSelection(source: Source) = mutableState.update { state ->

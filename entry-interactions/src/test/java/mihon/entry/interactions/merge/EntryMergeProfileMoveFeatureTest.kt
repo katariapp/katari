@@ -30,17 +30,16 @@ class EntryMergeProfileMoveFeatureTest {
             .shouldBeInstanceOf<EntryMergeProfileMoveDestinationResult.Ready>()
         inspected.mergeAffectedEntryIds shouldBe setOf(20L)
 
-        var moved = false
-        feature.execute(
+        val intent =
             EntryMergeProfileMoveIntent(
                 reference = inspected.reference,
                 destinationProfileId = 9,
                 destinationEntryIdsBySourceEntryId = mapOf(1L to 1L, 2L to 2L),
                 destinationEntryIdsToDetach = setOf(20),
-            ),
-        ) { moved = true } shouldBe EntryMergeProfileMoveExecutionResult.Applied
+            )
+        feature.begin(intent) shouldBe EntryMergeProfileMoveExecutionResult.Applied
+        feature.complete(intent) shouldBe EntryMergeProfileMoveExecutionResult.Applied
 
-        moved shouldBe true
         host.profileMoveTransitions.single().run {
             expectedSourceGroups.single().orderedEntryIds shouldContainExactly listOf(1, 2)
             expectedDestinationGroups.single().orderedEntryIds shouldContainExactly listOf(20, 21)
@@ -59,13 +58,10 @@ class EntryMergeProfileMoveFeatureTest {
             .shouldBeInstanceOf<EntryMergeProfileMovePreparationResult.Ready>()
         val inspected = feature.inspectDestination(prepared.reference, 9, emptyList())
             .shouldBeInstanceOf<EntryMergeProfileMoveDestinationResult.Ready>()
-        var moved = false
-
-        feature.execute(
+        feature.begin(
             EntryMergeProfileMoveIntent(inspected.reference, 9, mapOf(1L to 1L), emptySet()),
-        ) { moved = true } shouldBe EntryMergeProfileMoveExecutionResult.Conflict
+        ) shouldBe EntryMergeProfileMoveExecutionResult.Conflict
 
-        moved shouldBe false
         host.profileMoveTransitions shouldBe emptyList()
     }
 
@@ -82,9 +78,9 @@ class EntryMergeProfileMoveFeatureTest {
         val inspected = feature.inspectDestination(prepared.reference, 9, emptyList())
             .shouldBeInstanceOf<EntryMergeProfileMoveDestinationResult.Ready>()
 
-        feature.execute(
-            EntryMergeProfileMoveIntent(inspected.reference, 9, mapOf(3L to 3L), emptySet()),
-        ) {} shouldBe EntryMergeProfileMoveExecutionResult.Applied
+        val intent = EntryMergeProfileMoveIntent(inspected.reference, 9, mapOf(3L to 3L), emptySet())
+        feature.begin(intent) shouldBe EntryMergeProfileMoveExecutionResult.Applied
+        feature.complete(intent) shouldBe EntryMergeProfileMoveExecutionResult.Applied
 
         host.profileMoveTransitions.single().run {
             expectedSourceEntries.map(Entry::id) shouldContainExactly listOf(3L)

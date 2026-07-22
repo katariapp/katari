@@ -388,39 +388,6 @@ class EntryRepositoryImpl(
         }
     }
 
-    override suspend fun delete(id: Long): Boolean {
-        return try {
-            handler.await {
-                entriesQueries.deleteById(profileProvider.activeProfileId, id)
-            }
-            true
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e)
-            false
-        }
-    }
-
-    override suspend fun deleteNonFavorite(): Boolean {
-        return try {
-            handler.await(inTransaction = true) {
-                val sourceIds = entriesQueries.getSourceIdsWithNonLibraryEntries(
-                    profileProvider.activeProfileId,
-                ).awaitAsList().map { it.source }
-                if (sourceIds.isNotEmpty()) {
-                    entriesQueries.deleteNonLibraryEntries(
-                        profileProvider.activeProfileId,
-                        sourceIds,
-                        keepReadEntries = 0,
-                    )
-                }
-            }
-            true
-        } catch (e: Exception) {
-            logcat(LogPriority.ERROR, e)
-            false
-        }
-    }
-
     override suspend fun getCoverHash(entryId: Long, coverLastModified: Long): Long? {
         return handler.awaitOneOrNull {
             entry_cover_hashesQueries.getCoverHash(

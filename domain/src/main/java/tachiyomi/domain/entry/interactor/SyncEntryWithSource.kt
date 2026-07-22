@@ -16,7 +16,7 @@ import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.ChapterRecognition
-import tachiyomi.domain.entry.service.EntryMetadataUpdateHooks
+import tachiyomi.domain.entry.service.EntryMetadataChangeNotifier
 import tachiyomi.domain.entry.service.FetchInterval
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.model.SourceNotInstalledException
@@ -33,7 +33,7 @@ class SyncEntryWithSource(
     private val sourceManager: SourceManager,
     private val libraryPreferences: LibraryPreferences,
     private val fetchInterval: FetchInterval,
-    private val metadataUpdateHooks: EntryMetadataUpdateHooks,
+    private val metadataChangeNotifier: EntryMetadataChangeNotifier,
     private val now: () -> Long = { Instant.now().toEpochMilli() },
 ) {
 
@@ -121,8 +121,8 @@ class SyncEntryWithSource(
         if (hasMetadataChanges && !entryRepository.updateForSync(updatedEntry, explicitProfileId)) {
             error("Failed to update entry ${entry.id}")
         }
-        if (updatedEntry.title != entry.title) {
-            metadataUpdateHooks.onTitleChanged(entry, updatedEntry.title)
+        if (hasMetadataChanges) {
+            metadataChangeNotifier.changed(entry, updatedEntry)
         }
 
         if (!fetchChapters) {

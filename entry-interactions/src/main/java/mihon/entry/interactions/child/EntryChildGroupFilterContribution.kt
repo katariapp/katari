@@ -16,10 +16,10 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 
 internal val ENTRY_CHILD_GROUP_FILTER_FEATURE_ID = FeatureId("entry.child-group-filter")
-private val FEATURE_OWNER = ContributionOwner("entry-child-group-filter")
+internal val ENTRY_CHILD_GROUP_FILTER_OWNER = ContributionOwner("entry-child-group-filter")
 private val ENTRY_CHILD_GROUP_FILTER_REFERENCE = entryContentTypeReferenceContribution(
     id = "child-release-group-filter",
-    owner = FEATURE_OWNER,
+    owner = ENTRY_CHILD_GROUP_FILTER_OWNER,
     section = EntryContentTypeReferenceSection.ENTRY_INTERACTIONS,
     label = "Filter child items by release group",
     order = 800,
@@ -41,7 +41,7 @@ private enum class EntryChildGroupFilterBehavior(
 }
 
 internal object EntryChildGroupFilterFeatureContributor : FeatureGraphContributor {
-    override val owner = FEATURE_OWNER
+    override val owner = ENTRY_CHILD_GROUP_FILTER_OWNER
 
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(

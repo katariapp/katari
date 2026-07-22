@@ -63,14 +63,14 @@ import mihon.entry.interactions.EntryMergePrepareIntent
 import mihon.entry.interactions.EntryMigrationFeature
 import mihon.entry.interactions.EntryMigrationSelectionResult
 import mihon.entry.interactions.EntryMigrationSubject
+import mihon.entry.interactions.EntryProfileMoveConflictResolution
+import mihon.entry.interactions.EntryProfileMoveFeature
+import mihon.entry.interactions.EntryProfileMovePreview
+import mihon.entry.interactions.EntryProfileMoveRequest
+import mihon.entry.interactions.EntryProfileMoveResult
 import mihon.entry.interactions.EntryTrackingAccount
 import mihon.entry.interactions.EntryTrackingCollectionTrack
 import mihon.entry.interactions.EntryTrackingFeature
-import mihon.feature.profiles.core.EntryProfileMoveConflictResolution
-import mihon.feature.profiles.core.EntryProfileMovePreview
-import mihon.feature.profiles.core.EntryProfileMoveRequest
-import mihon.feature.profiles.core.EntryProfileMoveResult
-import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.Profile
 import mihon.feature.profiles.core.ProfileAwareStore
 import mihon.feature.profiles.core.ProfileDatabase
@@ -127,7 +127,7 @@ class LibraryScreenModel(
     private val profileStore: ProfileAwareStore = Injekt.get(),
     private val profileDatabase: ProfileDatabase = Injekt.get(),
     private val profileManager: ProfileManager = Injekt.get(),
-    private val entryProfileMoveService: EntryProfileMoveService = Injekt.get(),
+    private val entryProfileMoveFeature: EntryProfileMoveFeature = Injekt.get(),
 ) : StateScreenModel<LibraryScreenModel.State>(State()) {
 
     val moveEvents = Channel<MoveEvent>(Channel.BUFFERED)
@@ -927,7 +927,7 @@ class LibraryScreenModel(
                 require(profileStore.currentProfileId == sourceProfileId) {
                     "Active profile changed before the move"
                 }
-                val preview = entryProfileMoveService.preview(
+                val preview = entryProfileMoveFeature.preview(
                     EntryProfileMoveRequest(
                         sourceProfileId = sourceProfileId,
                         destinationProfileId = profile.id,
@@ -977,7 +977,7 @@ class LibraryScreenModel(
         resolutions: Map<Long, EntryProfileMoveConflictResolution>,
     ) {
         try {
-            val result = entryProfileMoveService.execute(preview, resolutions)
+            val result = entryProfileMoveFeature.execute(preview, resolutions)
             clearSelection()
             mutableState.update { it.copy(dialog = null) }
             moveEvents.send(MoveEvent.Success(result))

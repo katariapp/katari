@@ -19,7 +19,7 @@ import eu.kanade.tachiyomi.data.entry.AppEntryChildGroupFilterDataSource
 import eu.kanade.tachiyomi.data.saver.ImageSaver
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
-import eu.kanade.tachiyomi.entry.AppEntryMetadataUpdateHooks
+import eu.kanade.tachiyomi.entry.AppEntryMetadataChangeNotifier
 import eu.kanade.tachiyomi.entry.AppMangaPageImageCache
 import eu.kanade.tachiyomi.entry.AppReaderIncognitoState
 import eu.kanade.tachiyomi.entry.AppReaderTracking
@@ -41,8 +41,15 @@ import mihon.entry.interactions.host.AppEntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.AppEntryMigrationHost
 import mihon.entry.interactions.host.library.AppEntryLibraryCustomCoverHost
 import mihon.entry.interactions.host.library.AppEntryLibraryMembershipHost
+import mihon.entry.interactions.host.lifecycle.profile.AppEntryProfileMoveChildGroupFilterStateHost
+import mihon.entry.interactions.host.lifecycle.profile.AppEntryProfileMoveCoverHashStateHost
+import mihon.entry.interactions.host.lifecycle.profile.AppEntryProfileMoveCustomCoverHost
+import mihon.entry.interactions.host.lifecycle.profile.AppEntryProfileMoveHost
+import mihon.entry.interactions.host.lifecycle.profile.AppEntryProfileMoveSourceVisibilityHost
+import mihon.entry.interactions.host.lifecycle.profile.AppEntryProfileMoveTrackingStateHost
+import mihon.entry.interactions.host.lifecycle.removal.AppEntryDestructiveRemovalCustomCoverHost
+import mihon.entry.interactions.host.lifecycle.removal.AppEntryDestructiveRemovalHost
 import mihon.entry.interactions.host.tracking.AppEntryTrackingHost
-import mihon.feature.profiles.core.EntryProfileMoveService
 import mihon.feature.profiles.core.ProfileDatabase
 import mihon.feature.profiles.core.ProfileManager
 import mihon.feature.profiles.core.ProfileSourcePreferenceProvider
@@ -66,7 +73,7 @@ import tachiyomi.data.StringListColumnAdapter
 import tachiyomi.data.UpdateStrategyColumnAdapter
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.repository.EntryChapterRepository
-import tachiyomi.domain.entry.service.EntryMetadataUpdateHooks
+import tachiyomi.domain.entry.service.EntryMetadataChangeNotifier
 import tachiyomi.domain.library.service.DuplicatePreferences
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
@@ -123,7 +130,6 @@ class AppModule(val app: Application) : InjektModule {
         }
         addSingletonFactory<DatabaseHandler> { AndroidDatabaseHandler(get(), get()) }
         addSingletonFactory { ProfileDatabase(get()) }
-        addSingletonFactory { EntryProfileMoveService(get(), get(), get()) }
         addSingletonFactory { mihon.feature.profiles.core.ProfilePreferenceOwnership(get()) }
         addSingletonFactory {
             ProfileManager(
@@ -160,7 +166,7 @@ class AppModule(val app: Application) : InjektModule {
 
         addSingletonFactory { MangaPageCache(app, get()) }
         addSingletonFactory { CoverCache(app) }
-        addSingletonFactory<EntryMetadataUpdateHooks> { AppEntryMetadataUpdateHooks(get()) }
+        addSingletonFactory<EntryMetadataChangeNotifier> { AppEntryMetadataChangeNotifier(get()) }
         addSingletonFactory { NetworkHelper(app, get()) }
         addSingletonFactory { JavaScriptEngine(app) }
 
@@ -188,6 +194,14 @@ class AppModule(val app: Application) : InjektModule {
         val migrationCustomCoverHost = AppEntryMigrationCustomCoverHost(app, get())
         val libraryMembershipHost = AppEntryLibraryMembershipHost(get(), get<ProfileStore>())
         val libraryCustomCoverHost = AppEntryLibraryCustomCoverHost(get(), get())
+        val destructiveRemovalHost = AppEntryDestructiveRemovalHost(get())
+        val destructiveRemovalCustomCoverHost = AppEntryDestructiveRemovalCustomCoverHost(get())
+        val profileMoveHost = AppEntryProfileMoveHost(get())
+        val profileMoveSourceVisibilityHost = AppEntryProfileMoveSourceVisibilityHost(get())
+        val profileMoveCustomCoverHost = AppEntryProfileMoveCustomCoverHost(get())
+        val profileMoveTrackingStateHost = AppEntryProfileMoveTrackingStateHost(get())
+        val profileMoveChildGroupFilterStateHost = AppEntryProfileMoveChildGroupFilterStateHost(get())
+        val profileMoveCoverHashStateHost = AppEntryProfileMoveCoverHashStateHost(get())
         val trackingHost = AppEntryTrackingHost(
             trackerManager = get(),
             sourceManager = get(),
@@ -224,6 +238,14 @@ class AppModule(val app: Application) : InjektModule {
                 },
                 libraryMembershipHost = libraryMembershipHost,
                 libraryCustomCoverHost = libraryCustomCoverHost,
+                destructiveRemovalHost = destructiveRemovalHost,
+                destructiveRemovalCustomCoverHost = destructiveRemovalCustomCoverHost,
+                profileMoveHost = profileMoveHost,
+                profileMoveSourceVisibilityHost = profileMoveSourceVisibilityHost,
+                profileMoveCustomCoverHost = profileMoveCustomCoverHost,
+                profileMoveTrackingStateHost = profileMoveTrackingStateHost,
+                profileMoveChildGroupFilterStateHost = profileMoveChildGroupFilterStateHost,
+                profileMoveCoverHashStateHost = profileMoveCoverHashStateHost,
                 mergeHost = mergeHost,
                 mergeCoverCleanup = { entry ->
                     libraryCustomCoverHost.cleanupAfterLibraryRemoval(entry)

@@ -12,6 +12,8 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import okhttp3.Headers
@@ -44,6 +46,22 @@ class EntryCoverNetworkContractValidationContributor : FeatureValidationContribu
             },
         )
         sink.add(applicableScenario(reference))
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_COVER_HASH_PROFILE_MOVE_PARTICIPANT.id,
+                    EntryCoverHashProfileMoveBehaviorContract,
+                ),
+            ) {
+                verifyFeatureContract {
+                    var moved: EntryProfileMoveStateRequest? = null
+                    val host = EntryProfileMoveCoverHashStateHost { request -> moved = request }
+                    val request = EntryProfileMoveStateRequest(1L, 2L, listOf(51L))
+                    host.move(request)
+                    contractExpectation(moved == request, "Profile movement must transfer cover-hash state")
+                }
+            },
+        )
     }
 
     private fun applicableScenario(reference: FeatureContractReference) = FeatureContractScenario(

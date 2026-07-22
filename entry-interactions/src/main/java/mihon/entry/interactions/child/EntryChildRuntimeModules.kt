@@ -24,7 +24,8 @@ internal val EntryChildListFeatureRuntimeModule = EntryFeatureRuntimeModule(
 internal val EntryChildGroupFilterFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.child-group-filter",
     contributor = EntryChildGroupFilterFeatureContributor,
-) {
+    additionalContributors = listOf(EntryChildGroupFilterProfileMoveContributor),
+) { context ->
     addSingletonFactory<EntryChildGroupFilterFeature> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryChildGroupFilterFeature(
@@ -34,6 +35,14 @@ internal val EntryChildGroupFilterFeatureRuntimeModule = EntryFeatureRuntimeModu
         )
     }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            mihon.feature.graph.FeatureExecutionParticipantBinding(
+                definition = ENTRY_CHILD_GROUP_FILTER_PROFILE_MOVE_PARTICIPANT,
+                handler = mihon.feature.graph.FeatureExecutionHandler { event ->
+                    context.dependencies.profileMoveChildGroupFilterStateHost.move(event.plan.stateRequest())
+                },
+            ),
+        ),
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryChildGroupFilterFeature>() }),
     )
 }

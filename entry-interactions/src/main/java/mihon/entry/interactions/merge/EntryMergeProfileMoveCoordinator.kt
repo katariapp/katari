@@ -83,17 +83,24 @@ internal class EntryMergeProfileMoveCoordinator(
         )
     }
 
-    override suspend fun execute(
-        intent: EntryMergeProfileMoveIntent,
-        moveEntries: suspend () -> Unit,
-    ): EntryMergeProfileMoveExecutionResult {
+    override suspend fun begin(intent: EntryMergeProfileMoveIntent): EntryMergeProfileMoveExecutionResult {
+        val transition = transition(intent) ?: return EntryMergeProfileMoveExecutionResult.Conflict
+        return host.profile(transition.sourceProfileId).beginProfileMove(transition).toProfileMoveResult()
+    }
+
+    override suspend fun complete(intent: EntryMergeProfileMoveIntent): EntryMergeProfileMoveExecutionResult {
+        val transition = transition(intent) ?: return EntryMergeProfileMoveExecutionResult.Conflict
+        return host.profile(transition.sourceProfileId).completeProfileMove(transition).toProfileMoveResult()
+    }
+
+    private fun transition(intent: EntryMergeProfileMoveIntent): EntryMergeProfileMoveHostTransition? {
         val reference = intent.reference as? FeatureEntryMergeProfileMoveReference
-            ?: return EntryMergeProfileMoveExecutionResult.Conflict
+            ?: return null
         if (reference.destinationProfileId != intent.destinationProfileId) {
-            return EntryMergeProfileMoveExecutionResult.Conflict
+            return null
         }
         if (intent.destinationEntryIdsBySourceEntryId.keys.any { it !in reference.sourceEntries }) {
-            return EntryMergeProfileMoveExecutionResult.Conflict
+            return null
         }
         val movedIds = intent.destinationEntryIdsBySourceEntryId.keys
         if (reference.sourceGroups.any { group ->
@@ -101,10 +108,10 @@ internal class EntryMergeProfileMoveCoordinator(
                 movedMembers.isNotEmpty() && movedMembers.size != group.orderedEntryIds.size
             }
         ) {
-            return EntryMergeProfileMoveExecutionResult.Conflict
+            return null
         }
         if (intent.destinationEntryIdsToDetach.any { it !in reference.inspectedDestinationEntryIds }) {
-            return EntryMergeProfileMoveExecutionResult.Conflict
+            return null
         }
 
         val movedGroups = reference.sourceGroups.filter { group -> group.orderedEntryIds.all(movedIds::contains) }
@@ -114,30 +121,26 @@ internal class EntryMergeProfileMoveCoordinator(
         }
         val expectedStandaloneDestinationIds = reference.standaloneDestinationEntryIds
             .filterTo(mutableSetOf(), intent.destinationEntryIdsToDetach::contains)
-        return when (
-            val result = host.profile(reference.sourceProfileId).applyProfileMove(
-                EntryMergeProfileMoveHostTransition(
-                    sourceProfileId = reference.sourceProfileId,
-                    destinationProfileId = intent.destinationProfileId,
-                    expectedSourceEntries = reference.sourceEntries
-                        .filterKeys(movedIds::contains)
-                        .values
-                        .toList(),
-                    expectedSourceGroups = movedGroups,
-                    expectedStandaloneEntryIds = movedStandaloneIds,
-                    expectedDestinationGroups = expectedDestinationGroups,
-                    expectedStandaloneDestinationEntryIds = expectedStandaloneDestinationIds,
-                    destinationEntryIdsBySourceEntryId = intent.destinationEntryIdsBySourceEntryId,
-                    destinationEntryIdsToDetach = intent.destinationEntryIdsToDetach,
-                ),
-                moveEntries,
-            )
-        ) {
-            is EntryMergeHostTransitionResult.Applied -> EntryMergeProfileMoveExecutionResult.Applied
-            EntryMergeHostTransitionResult.Conflict -> EntryMergeProfileMoveExecutionResult.Conflict
-            is EntryMergeHostTransitionResult.OperationalFailure ->
-                EntryMergeProfileMoveExecutionResult.OperationalFailure(result.retryable)
-        }
+        return EntryMergeProfileMoveHostTransition(
+            sourceProfileId = reference.sourceProfileId,
+            destinationProfileId = intent.destinationProfileId,
+            expectedSourceEntries = reference.sourceEntries.filterKeys(movedIds::contains).values.toList(),
+            expectedSourceGroups = movedGroups,
+            expectedStandaloneEntryIds = movedStandaloneIds,
+            expectedDestinationGroups = expectedDestinationGroups,
+            expectedStandaloneDestinationEntryIds = expectedStandaloneDestinationIds,
+            destinationEntryIdsBySourceEntryId = intent.destinationEntryIdsBySourceEntryId,
+            destinationEntryIdsToDetach = intent.destinationEntryIdsToDetach,
+        )
+    }
+}
+
+private fun EntryMergeHostTransitionResult.toProfileMoveResult(): EntryMergeProfileMoveExecutionResult {
+    return when (this) {
+        is EntryMergeHostTransitionResult.Applied -> EntryMergeProfileMoveExecutionResult.Applied
+        EntryMergeHostTransitionResult.Conflict -> EntryMergeProfileMoveExecutionResult.Conflict
+        is EntryMergeHostTransitionResult.OperationalFailure ->
+            EntryMergeProfileMoveExecutionResult.OperationalFailure(retryable)
     }
 }
 

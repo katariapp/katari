@@ -58,7 +58,6 @@ private fun checkProfileMovePortReferences(
     findings: MutableList<EntryMergeBoundaryFinding>,
 ) {
     if (!source.relativePath.startsWith("app/src/main/")) return
-    if (source.relativePath == PROFILE_MOVE_COORDINATOR_PATH) return
     source.references["EntryMergeProfileMoveFeature"]?.let { lineNumber ->
         findings += EntryMergeBoundaryFinding(
             relativePath = source.relativePath,
@@ -221,9 +220,6 @@ private const val ENTRY_INTERACTION_RUNTIME_PATH =
 
 private const val APPLICATION_ENTRY_INTERACTION_HOST_ROOT =
     "app/src/main/java/mihon/entry/interactions/host/"
-
-private const val PROFILE_MOVE_COORDINATOR_PATH =
-    "app/src/main/java/mihon/feature/profiles/core/EntryProfileMoveService.kt"
 
 private val ENTRY_TYPE_MODULE_ROOT = Regex(
     """entry-interactions/(?!api/|spi/|download-notification/|src/)[^/]+/src/main/.*""",

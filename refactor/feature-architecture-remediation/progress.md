@@ -4,11 +4,10 @@
 
 - Baseline branch: `features-arch-refactor`
 - Baseline commit: `1d962d406` (`chore: planning cleanup`)
-- Current phase: R3 — Library Membership Lifecycle
+- Current phase: R4 — Entry Lifecycle Operations
 - Phase state: complete; awaiting milestone review and commit
 - Last updated: 2026-07-22
-- Next action: after the R3 milestone is approved and committed, begin R4 with separate Metadata, destructive-removal,
-  and Profile-move execution points.
+- Next action: after R4 is approved and committed, begin R5 Backup and Restore participation.
 
 ## Approved Decisions
 
@@ -25,8 +24,8 @@
 | --- | --- | --- | --- |
 | R1 — Executable Participation Architecture | Complete | `76e4341ef` | Architecture first; no app workflow migration |
 | R2 — Production Composition and Enforcement | Complete | `dd58b169e` | One module per production Feature |
-| R3 — Library Membership Lifecycle | Complete, awaiting commit | — | One membership boundary and discovered follow-ups |
-| R4 — Entry Lifecycle Operations | Pending | — | Metadata, removal, Profile move |
+| R3 — Library Membership Lifecycle | Complete | `7984e5608` | One membership boundary and discovered follow-ups |
+| R4 — Entry Lifecycle Operations | Complete, awaiting commit | — | Metadata, removal, Profile move |
 | R5 — Backup and Restore Participation | Pending | — | Includes tracker diagnostics defect |
 | R6 — Catalogue Feature Completion | Pending | — | Removes raw provider dispatch |
 | R7 — Download Policy and Context Ownership | Pending | — | Removes Manga preference leak |
@@ -140,6 +139,44 @@
   lifecycle and persistence APIs stabilize.
 - Expected user action: review only the workflow-boundary decision under questionable actions. No answer is needed if it
   is acceptable; respond `commit and continue` to commit R3 and begin R4, or name the boundary that should change.
+
+### Phase R4 milestone — 2026-07-22
+
+- Outcome: Added three separate lifecycle Features for persisted Metadata transitions, destructive Entry removal, and
+  Profile movement. Source synchronization now publishes every persisted metadata change through a host-neutral port;
+  Clear Database uses the destructive-removal coordinator; and Library profile movement uses the Feature boundary
+  instead of an app service that knows Merge and Feature-owned tables.
+- Notable changes: Download Maintenance contributes Metadata rename, removal preparation/application, and Profile-move
+  cleanup. Merge contributes transactional removal plus Profile-move preparation, destination inspection, detachment,
+  and reconstruction. Tracking, child-group filtering, and cover hashing each move their own profile state. Source
+  visibility and custom covers contribute post-commit consequences. Direct destructive methods were removed from
+  `EntryRepository`, and the bulk SQL deletion path was removed, leaving lifecycle hosts as the application mutation
+  boundary.
+- Questionable actions or decisions: synchronous Profile-move planning now has an explicit `IMMEDIATE` delivery class,
+  because it is neither transactional nor a post-commit/best-effort consequence. Duplicate Entries removed while
+  resolving a Profile-move conflict remain part of the one Profile-move transaction rather than invoking the separate
+  destructive-removal coordinator; the Profile-move plan exposes those removed Entries to discovered Download and
+  custom-cover participants. This preserves atomicity without hiding their consequences. No answer is needed unless
+  either classification should change.
+- Validation performed: `spotlessCheck`; complete FOSS unit tests; SQLDelight migration verification; Entry interaction
+  boundary enforcement; production developer-report generation; telemetry/updater Release Kotlin compilation; focused
+  Domain Metadata and Entry lifecycle tests; and build-logic tests. The report contains 3 content types, 40 Features,
+  11 execution points, 378 evaluated integrations, all selected contracts passing, and 0 obligations.
+- Known failures or intentionally broken compilation: none.
+- Manifesto comparison: a future lifecycle participant is contributed by its owning Feature module and automatically
+  enters applicability, runtime binding, contract validation, reporting, and execution. The lifecycle coordinators no
+  longer name current Feature implementations or their tables. Always-valid lifecycle behavior applies to an unknown
+  content type, Download consequences appear only when its Download provider exists, and child-group state movement
+  appears only when that capability exists. Metadata participants receive the complete persisted transition rather
+  than a title-only signal. R4 therefore removes the fixed integration lists identified in the audit without creating
+  a new type matrix or mandatory capability.
+- Documentation impact: the executable content-type projection now includes Metadata propagation, destructive removal,
+  and Profile movement. The resumable findings and ledger record their ownership and failure semantics. Enduring
+  contributor workflow documentation remains scheduled for R8 after Backup, Catalogue, and Download-policy APIs
+  stabilize.
+- Expected user action: review only the two choices under questionable actions. No response is needed if they are
+  acceptable; respond `commit and continue` to commit R4 and begin R5, or identify the classification that should be
+  changed.
 
 ## Milestone Template
 

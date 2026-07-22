@@ -1,6 +1,7 @@
 package mihon.entry.interactions
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import mihon.entry.interactions.validation.contractExpectation
@@ -65,6 +66,40 @@ class EntryDownloadMaintenanceContractValidationContributor : FeatureValidationC
                 verification = ::verifyLibraryRemovalInspection,
             ),
         )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_DOWNLOAD_METADATA_CHANGE_PARTICIPANT.id,
+                    EntryDownloadMetadataChangeBehaviorContract,
+                ),
+                verification = ::verifyMetadataChange,
+            ),
+        )
+        listOf(
+            ENTRY_DOWNLOAD_DESTRUCTIVE_REMOVAL_PREPARATION_PARTICIPANT,
+            ENTRY_DOWNLOAD_DESTRUCTIVE_REMOVAL_PARTICIPANT,
+        ).forEach { participant ->
+            sink.add(
+                FeatureExecutionContractVerifier(
+                    FeatureExecutionContractReference(
+                        participant.id,
+                        EntryDownloadDestructiveRemovalBehaviorContract,
+                    ),
+                    verification = ::verifyRemovalLifecycle,
+                ),
+            )
+        }
+        listOf(
+            ENTRY_DOWNLOAD_PROFILE_MOVE_PREPARATION_PARTICIPANT,
+            ENTRY_DOWNLOAD_PROFILE_MOVE_PARTICIPANT,
+        ).forEach { participant ->
+            sink.add(
+                FeatureExecutionContractVerifier(
+                    FeatureExecutionContractReference(participant.id, EntryDownloadProfileMoveBehaviorContract),
+                    verification = ::verifyRemovalLifecycle,
+                ),
+            )
+        }
     }
 
     private suspend fun verifyLibraryRemovalInspection(
@@ -93,6 +128,57 @@ class EntryDownloadMaintenanceContractValidationContributor : FeatureValidationC
         contractExpectation(
             feature.inspectEntry(entry) == EntryDownloadMaintenanceInspection.HasDownloads,
             "Library removal must report a Download follow-up only when downloads exist",
+        )
+    }
+
+    private suspend fun verifyMetadataChange(
+        input: FeatureExecutionContractExecutionInput,
+    ) = verifyFeatureContract {
+        val provider = input.provider(EntryDownloadCapability.definition)
+        val entry = Entry.create().copy(id = 77L, type = provider.type, title = "Old")
+        val interaction = recordingDownloadInteraction()
+        val feature = DefaultEntryDownloadMaintenanceFeature(
+            productionSubjectEvaluation(
+                EntryDownloadCapability.bind(provider),
+                EntryDownloadMaintenanceFeatureContributor,
+            ),
+            interaction,
+            mockk(relaxed = true),
+        )
+
+        feature.renameEntry(entry, "New")
+
+        coVerify(exactly = 1) { interaction.renameEntry(entry, "New") }
+    }
+
+    private suspend fun verifyRemovalLifecycle(
+        input: FeatureExecutionContractExecutionInput,
+    ) = verifyFeatureContract {
+        val provider = input.provider(EntryDownloadCapability.definition)
+        val entry = Entry.create().copy(id = 78L, type = provider.type)
+        val interaction = recordingDownloadInteraction()
+        every { interaction.hasDownloads(entry) } returnsMany listOf(true, false)
+        coEvery { interaction.deleteEntryDownloads(entry) } returns true
+        val ownership = mockk<EntryMergeDownloadOwnershipProjection> {
+            coEvery { resolveDownloadOwners(any()) } returns EntryMergeDownloadOwners(
+                profileId = entry.profileId,
+                visibleEntryId = entry.id,
+                orderedOwners = listOf(entry),
+            )
+        }
+        val feature = DefaultEntryDownloadMaintenanceFeature(
+            productionSubjectEvaluation(
+                EntryDownloadCapability.bind(provider),
+                EntryDownloadMaintenanceFeatureContributor,
+            ),
+            interaction,
+            ownership,
+        )
+        val preparation = feature.prepareRemoval(entry)
+        contractExpectation(
+            preparation is EntryDownloadRemovalPreparation.Prepared &&
+                feature.applyRemoval(preparation.plan) == EntryDownloadMaintenanceResult.Performed,
+            "Lifecycle removal must capture and apply concrete Download ownership",
         )
     }
 }

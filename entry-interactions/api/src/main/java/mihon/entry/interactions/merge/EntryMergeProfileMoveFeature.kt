@@ -14,17 +14,12 @@ interface EntryMergeProfileMoveFeature {
         destinationEntryIds: List<Long>,
     ): EntryMergeProfileMoveDestinationResult
 
-    /**
-     * Participates in the Profile Move transaction that invokes this function. The callback performs the non-Merge
-     * database work between Merge's source detachment and destination reconstruction.
-     */
-    suspend fun execute(
-        intent: EntryMergeProfileMoveIntent,
-        moveEntries: suspend () -> Unit,
-    ): EntryMergeProfileMoveExecutionResult
+    suspend fun begin(intent: EntryMergeProfileMoveIntent): EntryMergeProfileMoveExecutionResult
+
+    suspend fun complete(intent: EntryMergeProfileMoveIntent): EntryMergeProfileMoveExecutionResult
 }
 
-interface EntryMergeProfileMoveReference
+interface EntryMergeProfileMoveReference : EntryProfileMoveParticipantReference
 
 data class EntryMergeProfileMoveUnit(
     val entries: List<Entry>,

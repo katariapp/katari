@@ -10,6 +10,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
+import mihon.entry.interactions.EntryDestructiveRemovalCustomCoverHost
+import mihon.entry.interactions.EntryDestructiveRemovalHost
 import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadNotificationActions
 import mihon.entry.interactions.EntryDownloadWorkController
@@ -20,6 +22,12 @@ import mihon.entry.interactions.EntryInteractionRuntimeDependencies
 import mihon.entry.interactions.EntryLibraryCustomCoverHost
 import mihon.entry.interactions.EntryLibraryMembershipHost
 import mihon.entry.interactions.EntryPageImageCache
+import mihon.entry.interactions.EntryProfileMoveChildGroupFilterStateHost
+import mihon.entry.interactions.EntryProfileMoveCoverHashStateHost
+import mihon.entry.interactions.EntryProfileMoveCustomCoverHost
+import mihon.entry.interactions.EntryProfileMoveHost
+import mihon.entry.interactions.EntryProfileMoveSourceVisibilityHost
+import mihon.entry.interactions.EntryProfileMoveTrackingStateHost
 import mihon.entry.interactions.EntryReaderIncognitoState
 import mihon.entry.interactions.EntryReaderTracking
 import mihon.entry.interactions.EntryViewerSettingsScreenProjection
@@ -99,6 +107,14 @@ class ProductionEntryInteractionValidationEnvironment(
                 sourceRefreshUpdateLibraryTitles = { false },
                 libraryMembershipHost = mockk<EntryLibraryMembershipHost>(relaxed = true),
                 libraryCustomCoverHost = mockk<EntryLibraryCustomCoverHost>(relaxed = true),
+                destructiveRemovalHost = mockk<EntryDestructiveRemovalHost>(relaxed = true),
+                destructiveRemovalCustomCoverHost = mockk<EntryDestructiveRemovalCustomCoverHost>(relaxed = true),
+                profileMoveHost = mockk<EntryProfileMoveHost>(relaxed = true),
+                profileMoveSourceVisibilityHost = mockk<EntryProfileMoveSourceVisibilityHost>(relaxed = true),
+                profileMoveCustomCoverHost = mockk<EntryProfileMoveCustomCoverHost>(relaxed = true),
+                profileMoveTrackingStateHost = mockk<EntryProfileMoveTrackingStateHost>(relaxed = true),
+                profileMoveChildGroupFilterStateHost = mockk<EntryProfileMoveChildGroupFilterStateHost>(relaxed = true),
+                profileMoveCoverHashStateHost = mockk<EntryProfileMoveCoverHashStateHost>(relaxed = true),
                 mergeHost = mockk<EntryMergeHost>(relaxed = true),
                 mergeCoverCleanup = {},
                 migrationPreparationHost = mockk<EntryMigrationPreparationHost>(relaxed = true),

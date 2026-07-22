@@ -102,6 +102,39 @@ class EntryLibraryCustomCoverContractValidationContributor : FeatureValidationCo
                 }
             },
         )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_CUSTOM_COVER_DESTRUCTIVE_REMOVAL_PARTICIPANT.id,
+                    EntryDestructiveRemovalCustomCoverBehaviorContract,
+                ),
+            ) {
+                verifyFeatureContract {
+                    val cleaned = mutableListOf<Long>()
+                    val host = EntryDestructiveRemovalCustomCoverHost { entry -> cleaned += entry.id }
+                    host.removeCustomCover(Entry.create().copy(id = 93L))
+                    contractExpectation(
+                        cleaned == listOf(93L),
+                        "Destructive removal must invoke custom-cover cleanup",
+                    )
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_PROFILE_MOVE_CUSTOM_COVER_PARTICIPANT.id,
+                    EntryProfileMoveCustomCoverBehaviorContract,
+                ),
+            ) {
+                verifyFeatureContract {
+                    val cleaned = mutableListOf<Long>()
+                    val host = EntryProfileMoveCustomCoverHost { entries -> cleaned += entries.map(Entry::id) }
+                    host.removeCustomCovers(listOf(Entry.create().copy(id = 94L)))
+                    contractExpectation(cleaned == listOf(94L), "Profile movement must clean removed custom covers")
+                }
+            },
+        )
     }
 }
 

@@ -8,6 +8,8 @@ import mihon.entry.interactions.validation.productionSubjectEvaluation
 import mihon.entry.interactions.validation.verifyFeatureContract
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
@@ -112,6 +114,22 @@ class EntryChildGroupFilterContractValidationContributor : FeatureValidationCont
                             EntryChildGroupFilterResult.Available(listOf(visible)),
                         "Child Group Filter must normalize and exclude matching groups",
                     )
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_CHILD_GROUP_FILTER_PROFILE_MOVE_PARTICIPANT.id,
+                    EntryChildGroupFilterProfileMoveBehaviorContract,
+                ),
+            ) {
+                verifyFeatureContract {
+                    var moved: EntryProfileMoveStateRequest? = null
+                    val host = EntryProfileMoveChildGroupFilterStateHost { request -> moved = request }
+                    val request = EntryProfileMoveStateRequest(1L, 2L, listOf(63L))
+                    host.move(request)
+                    contractExpectation(moved == request, "Profile movement must transfer child-group filter state")
                 }
             },
         )

@@ -343,13 +343,13 @@ class EntryMergeFeatureTest {
                     return EntryMergeHostTransitionResult.Applied(visibleEntryId)
                 }
 
-                override suspend fun applyProfileMove(
+                override suspend fun beginProfileMove(
                     transition: EntryMergeProfileMoveHostTransition,
-                    moveEntries: suspend () -> Unit,
-                ): EntryMergeHostTransitionResult {
-                    moveEntries()
-                    return EntryMergeHostTransitionResult.Applied(null)
-                }
+                ): EntryMergeHostTransitionResult = EntryMergeHostTransitionResult.Applied(null)
+
+                override suspend fun completeProfileMove(
+                    transition: EntryMergeProfileMoveHostTransition,
+                ): EntryMergeHostTransitionResult = EntryMergeHostTransitionResult.Applied(null)
             }
         }
 

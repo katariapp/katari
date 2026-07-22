@@ -36,7 +36,8 @@ internal val EntrySourceHomeFeatureRuntimeModule = EntryFeatureRuntimeModule(
 internal val EntryCoverNetworkFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.cover-network",
     contributor = EntryCoverNetworkFeatureContributor,
-) {
+    additionalContributors = listOf(EntryCoverHashProfileMoveContributor),
+) { context ->
     addSingletonFactory<EntryCoverNetworkFeature> {
         DefaultEntryCoverNetworkFeature(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
@@ -44,6 +45,14 @@ internal val EntryCoverNetworkFeatureRuntimeModule = EntryFeatureRuntimeModule(
         )
     }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            mihon.feature.graph.FeatureExecutionParticipantBinding(
+                definition = ENTRY_COVER_HASH_PROFILE_MOVE_PARTICIPANT,
+                handler = mihon.feature.graph.FeatureExecutionHandler { event ->
+                    context.dependencies.profileMoveCoverHashStateHost.move(event.plan.stateRequest())
+                },
+            ),
+        ),
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryCoverNetworkFeature>() }),
     )
 }

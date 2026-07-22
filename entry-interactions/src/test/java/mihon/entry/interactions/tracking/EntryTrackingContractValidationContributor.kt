@@ -61,6 +61,22 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
                 verification = ::verifyLibraryAddition,
             ),
         )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_TRACKING_PROFILE_MOVE_PARTICIPANT.id,
+                    EntryTrackingProfileMoveBehaviorContract,
+                ),
+            ) {
+                verifyFeatureContract {
+                    var moved: EntryProfileMoveStateRequest? = null
+                    val host = EntryProfileMoveTrackingStateHost { request -> moved = request }
+                    val request = EntryProfileMoveStateRequest(1L, 2L, listOf(41L))
+                    host.move(request)
+                    contractExpectation(moved == request, "Profile movement must transfer Tracking state")
+                }
+            },
+        )
     }
 
     private suspend fun verifyLibraryAddition(

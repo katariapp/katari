@@ -74,6 +74,8 @@ internal enum class EntryMergeBehaviorContract(
     COVER_CLEANUP(FeatureArtifactId("entry.merge.cover-cleanup.behavior")),
     DOWNLOAD_REMOVAL(FeatureArtifactId("entry.merge.download-removal.behavior")),
     LIBRARY_REMOVAL_PARTICIPATION(FeatureArtifactId("entry.merge.library-removal-participation.behavior")),
+    DESTRUCTIVE_REMOVAL_PARTICIPATION(FeatureArtifactId("entry.merge.destructive-removal-participation.behavior")),
+    PROFILE_MOVE_PARTICIPATION(FeatureArtifactId("entry.merge.profile-move-participation.behavior")),
 }
 
 internal val ENTRY_MERGE_LIBRARY_REMOVAL_PARTICIPANT = FeatureExecutionParticipantDefinition(

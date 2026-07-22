@@ -158,15 +158,29 @@ internal class AppEntryMergeHost(
             }
         }
 
-        override suspend fun applyProfileMove(
+        override suspend fun beginProfileMove(
             transition: EntryMergeProfileMoveHostTransition,
-            moveEntries: suspend () -> Unit,
         ): EntryMergeHostTransitionResult {
             require(transition.sourceProfileId == profileId) { "Merge Profile Move source belongs to another profile" }
             return try {
                 handler.await {
-                    applyProfileMove(transition, moveEntries)
+                    beginProfileMove(transition)
                 }
+            } catch (_: MergeTransitionConflict) {
+                EntryMergeHostTransitionResult.Conflict
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                EntryMergeHostTransitionResult.OperationalFailure(retryable = error !is IllegalArgumentException)
+            }
+        }
+
+        override suspend fun completeProfileMove(
+            transition: EntryMergeProfileMoveHostTransition,
+        ): EntryMergeHostTransitionResult {
+            require(transition.sourceProfileId == profileId) { "Merge Profile Move source belongs to another profile" }
+            return try {
+                handler.await { completeProfileMove(transition) }
             } catch (_: MergeTransitionConflict) {
                 EntryMergeHostTransitionResult.Conflict
             } catch (error: CancellationException) {
@@ -426,9 +440,8 @@ internal class AppEntryMergeHost(
             return EntryMergeHostTransitionResult.Applied(transition.targetEntryId)
         }
 
-        private suspend fun Database.applyProfileMove(
+        private suspend fun Database.beginProfileMove(
             transition: EntryMergeProfileMoveHostTransition,
-            moveEntries: suspend () -> Unit,
         ): EntryMergeHostTransitionResult.Applied {
             if (transition.sourceProfileId == transition.destinationProfileId) conflict()
             val expectedSourceIds = transition.expectedSourceGroups.flatMapTo(mutableSetOf()) { it.orderedEntryIds } +
@@ -466,8 +479,13 @@ internal class AppEntryMergeHost(
                 merged_entriesQueries.deleteByTargetId(transition.destinationProfileId, expected.targetEntryId)
             }
 
-            moveEntries()
+            return EntryMergeHostTransitionResult.Applied(null)
+        }
 
+        private suspend fun Database.completeProfileMove(
+            transition: EntryMergeProfileMoveHostTransition,
+        ): EntryMergeHostTransitionResult.Applied {
+            val sourceEntries = transition.expectedSourceEntries.associateBy(Entry::id)
             val destinationIds = transition.destinationEntryIdsBySourceEntryId.values.toList()
             if (destinationIds.distinct().size != destinationIds.size) conflict()
             transition.destinationEntryIdsBySourceEntryId.forEach { (sourceEntryId, destinationEntryId) ->

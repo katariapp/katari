@@ -46,6 +46,31 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
                 verification = ::verifyLibraryRemovalParticipation,
             ),
         )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_MERGE_DESTRUCTIVE_REMOVAL_PARTICIPANT.id,
+                    EntryMergeBehaviorContract.DESTRUCTIVE_REMOVAL_PARTICIPATION,
+                ),
+                verification = ::verifyLibraryRemovalParticipation,
+            ),
+        )
+        listOf(
+            ENTRY_MERGE_PROFILE_MOVE_PREPARATION_PARTICIPANT,
+            ENTRY_MERGE_PROFILE_MOVE_DESTINATION_PARTICIPANT,
+            ENTRY_MERGE_PROFILE_MOVING_PARTICIPANT,
+            ENTRY_MERGE_PROFILE_STATE_MOVED_PARTICIPANT,
+        ).forEach { participant ->
+            sink.add(
+                FeatureExecutionContractVerifier(
+                    FeatureExecutionContractReference(
+                        participant.id,
+                        EntryMergeBehaviorContract.PROFILE_MOVE_PARTICIPATION,
+                    ),
+                    verification = ::verifyProfileMoveParticipation,
+                ),
+            )
+        }
     }
 
     private suspend fun verifyLibraryRemovalParticipation(
@@ -61,6 +86,32 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
         contractExpectation(
             result == EntryMergeLibraryRemovalResult(changedGroupCount = 1, unresolvedGroupCount = 0),
             "Library removal must update Merge membership transactionally",
+        )
+    }
+
+    private suspend fun verifyProfileMoveParticipation(
+        input: FeatureExecutionContractExecutionInput,
+    ) = verifyFeatureContract {
+        val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+        val entries = listOf(entry(1L, type), entry(2L, type))
+        val host = RecordingEntryMergeHost(
+            entries,
+            listOf(EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))),
+        )
+        val feature = EntryMergeProfileMoveCoordinator(host)
+        val prepared = feature.prepare(7L, listOf(1L)) as EntryMergeProfileMovePreparationResult.Ready
+        val inspected = feature.inspectDestination(prepared.reference, 9L, emptyList())
+            as EntryMergeProfileMoveDestinationResult.Ready
+        val intent = EntryMergeProfileMoveIntent(
+            inspected.reference,
+            9L,
+            mapOf(1L to 1L, 2L to 2L),
+            emptySet(),
+        )
+        contractExpectation(
+            feature.begin(intent) == EntryMergeProfileMoveExecutionResult.Applied &&
+                feature.complete(intent) == EntryMergeProfileMoveExecutionResult.Applied,
+            "Merge must preserve complete groups across Profile movement",
         )
     }
 

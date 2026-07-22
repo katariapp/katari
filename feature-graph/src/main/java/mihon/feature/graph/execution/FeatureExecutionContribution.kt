@@ -4,6 +4,9 @@ import kotlin.reflect.KClass
 
 /** Where one coordinator guarantees that contributed work executes relative to its core state change. */
 enum class FeatureExecutionDelivery {
+    /** Synchronous planning or inspection that completes before a coordinator begins persistence. */
+    IMMEDIATE,
+
     TRANSACTIONAL,
     AFTER_COMMIT,
     DURABLE,

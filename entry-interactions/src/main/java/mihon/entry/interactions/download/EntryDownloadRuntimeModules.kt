@@ -120,7 +120,12 @@ internal val EntryDownloadConfigurationFeatureRuntimeModule = EntryFeatureRuntim
 internal val EntryDownloadMaintenanceFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.maintenance",
     contributor = EntryDownloadMaintenanceFeatureContributor,
-    additionalContributors = listOf(EntryDownloadLibraryMembershipContributor),
+    additionalContributors = listOf(
+        EntryDownloadLibraryMembershipContributor,
+        EntryDownloadMetadataLifecycleContributor,
+        EntryDownloadDestructiveRemovalContributor,
+        EntryDownloadProfileMoveContributor,
+    ),
 ) {
     addSingletonFactory<EntryDownloadMaintenanceFeature> {
         val composition = get<EntryInteractionComposition>()
@@ -141,6 +146,75 @@ internal val EntryDownloadMaintenanceFeatureRuntimeModule = EntryFeatureRuntimeM
                         ) {
                             event.outcomes.requireDownloadDecision(entry)
                         }
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_METADATA_CHANGE_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    if (event.previous.title != event.current.title) {
+                        get<EntryDownloadMaintenanceFeature>().renameEntry(event.previous, event.current.title)
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_DESTRUCTIVE_REMOVAL_PREPARATION_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    event.entries.forEach { entry ->
+                        when (val preparation = get<EntryDownloadMaintenanceFeature>().prepareRemoval(entry)) {
+                            is EntryDownloadRemovalPreparation.Prepared -> event.outcomes.addDownloadPlan(
+                                preparation.plan,
+                            )
+                            EntryDownloadRemovalPreparation.NothingToRemove,
+                            is EntryDownloadRemovalPreparation.Inapplicable,
+                            -> Unit
+                        }
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_DESTRUCTIVE_REMOVAL_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val type = event.entries.firstOrNull()?.type ?: return@FeatureExecutionHandler
+                    val owners = event.outcomes.downloadPlans
+                        .flatMap(EntryDownloadRemovalPlan::owners)
+                        .filter { owner -> owner.type == type }
+                        .distinctBy { owner -> owner.profileId to owner.id }
+                    if (owners.isNotEmpty()) {
+                        check(
+                            get<EntryDownloadMaintenanceFeature>().applyRemoval(EntryDownloadRemovalPlan(owners)) ==
+                                EntryDownloadMaintenanceResult.Performed,
+                        ) { "Download cleanup was incomplete after destructive Entry removal" }
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_PROFILE_MOVE_PREPARATION_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    event.plan.removedEntries.forEach { entry ->
+                        when (val preparation = get<EntryDownloadMaintenanceFeature>().prepareRemoval(entry)) {
+                            is EntryDownloadRemovalPreparation.Prepared -> event.outcomes.addDownloadPlan(
+                                preparation.plan,
+                            )
+                            EntryDownloadRemovalPreparation.NothingToRemove,
+                            is EntryDownloadRemovalPreparation.Inapplicable,
+                            -> Unit
+                        }
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_PROFILE_MOVE_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val owners = event.outcomes.downloadPlans
+                        .flatMap(EntryDownloadRemovalPlan::owners)
+                        .filter { owner -> owner.type == event.type }
+                        .distinctBy { owner -> owner.profileId to owner.id }
+                    if (owners.isNotEmpty()) {
+                        check(
+                            get<EntryDownloadMaintenanceFeature>().applyRemoval(EntryDownloadRemovalPlan(owners)) ==
+                                EntryDownloadMaintenanceResult.Performed,
+                        ) { "Download cleanup was incomplete after Profile movement" }
                     }
                 },
             ),

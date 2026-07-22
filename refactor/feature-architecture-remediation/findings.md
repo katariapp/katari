@@ -78,6 +78,24 @@ Metadata changes, destructive deletion, and Profile movement remain fixed integr
 These are separate cohesive lifecycle operations, not one catch-all service. Each must expose discovered transactional,
 post-commit, or durable participants as appropriate.
 
+The R4 implementation inventory identified the following concrete ownership split:
+
+- Metadata title changes are persisted by source synchronization. Download Maintenance is the only current external
+  participant, but it must join through an after-commit Metadata event rather than an app hook that names Downloads.
+- Destructive deletion is currently performed by Clear Database. Entry-row deletion and relational cascade are core
+  persistence; Download artifacts and custom-cover files are independently owned post-commit consequences. Merge must
+  transactionally preserve its grouping invariants before the rows are deleted.
+- Profile movement owns the Entry row and destination Library category assignment. Tracking state, child-group filter
+  state, cover-hash state, and Merge membership are independent transactional participants. Source visibility,
+  Download maintenance, and custom-cover cleanup are post-commit consequences and must not be treated as rollback-safe
+  database work.
+- Conflict resolution during Profile movement can remove a source or destination Entry. Those removals are part of the
+  Profile-move event and must be visible to its participants; they must not become an undiscoverable second destructive
+  deletion workflow.
+
+The existing foreign-key cascades remain valid persistence mechanics. They do not replace lifecycle participation for
+external state or for Feature invariants that require more than deleting rows directly referencing an Entry.
+
 ### Custom covers
 
 Custom-cover behavior participates in Library removal, Merge, Migration, Profile movement, and destructive deletion.
@@ -114,4 +132,3 @@ The following are not evidence of missing Feature ownership by themselves:
 - Source compatibility adapters.
 - Generic Entry notes, categories, display names, and fetch-interval editing.
 - Stored child-state filtering described above.
-

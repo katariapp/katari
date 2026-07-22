@@ -27,7 +27,7 @@ import mihon.feature.graph.featureContextRule
 import tachiyomi.domain.source.service.SourceManager
 
 internal val ENTRY_COVER_NETWORK_FEATURE_ID = FeatureId("entry.cover-network")
-private val ENTRY_COVER_NETWORK_OWNER = ContributionOwner("entry-cover-network")
+internal val ENTRY_COVER_NETWORK_OWNER = ContributionOwner("entry-cover-network")
 private val ENTRY_COVER_NETWORK_REFERENCE = entryContentTypeReferenceContribution(
     id = "cover-network",
     owner = ENTRY_COVER_NETWORK_OWNER,

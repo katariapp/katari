@@ -91,10 +91,6 @@ interface EntryRepository {
 
     suspend fun setUpdateStrategy(id: Long, strategy: EntryUpdateStrategy): Boolean
 
-    suspend fun delete(id: Long): Boolean
-
-    suspend fun deleteNonFavorite(): Boolean
-
     suspend fun getCoverHash(entryId: Long, coverLastModified: Long): Long?
 
     suspend fun upsertCoverHash(entryId: Long, coverLastModified: Long, hash: Long)

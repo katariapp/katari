@@ -14,7 +14,11 @@ import uy.kohesive.injekt.api.get
 internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.merge",
     contributor = EntryMergeFeatureContributor,
-    additionalContributors = listOf(EntryMergeLibraryMembershipContributor),
+    additionalContributors = listOf(
+        EntryMergeLibraryMembershipContributor,
+        EntryMergeDestructiveRemovalContributor,
+        EntryMergeProfileMoveContributor,
+    ),
 ) { context ->
     val dependencies = context.dependencies
     addSingletonFactory {
@@ -67,6 +71,78 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
                     }
                 },
             ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_DESTRUCTIVE_REMOVAL_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val result = get<EntryMergeLibraryLifecycleFeature>().entriesRemovedFromLibrary(event.entries)
+                    check(result.unresolvedGroupCount == 0) {
+                        "Merge membership changed during destructive Entry removal"
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_PROFILE_MOVE_PREPARATION_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    when (
+                        val result = get<EntryMergeProfileMoveFeature>().prepare(
+                            event.request.sourceProfileId,
+                            event.selectedEntries.map { it.id },
+                        )
+                    ) {
+                        is EntryMergeProfileMovePreparationResult.Ready -> {
+                            result.units.forEach { unit -> event.contributions.addAtomicUnit(unit.entries) }
+                            event.contributions.setParticipantReference(
+                                ENTRY_MERGE_PROFILE_MOVE_PARTICIPANT_ID,
+                                event.selectedEntries.first().type,
+                                result.reference,
+                            )
+                        }
+                        EntryMergeProfileMovePreparationResult.Empty -> Unit
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_PROFILE_MOVE_DESTINATION_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val reference = event.contributions.participantReference(
+                        ENTRY_MERGE_PROFILE_MOVE_PARTICIPANT_ID,
+                        event.type,
+                    ) as? EntryMergeProfileMoveReference ?: return@FeatureExecutionHandler
+                    when (
+                        val result = get<EntryMergeProfileMoveFeature>().inspectDestination(
+                            reference,
+                            event.request.destinationProfileId,
+                            event.conflicts.map { it.destinationEntry.id },
+                        )
+                    ) {
+                        is EntryMergeProfileMoveDestinationResult.Ready -> {
+                            event.contributions.setParticipantReference(
+                                ENTRY_MERGE_PROFILE_MOVE_PARTICIPANT_ID,
+                                event.type,
+                                result.reference,
+                            )
+                            event.contributions.markDestinationAffected(result.mergeAffectedEntryIds)
+                        }
+                        EntryMergeProfileMoveDestinationResult.InvalidReference -> {
+                            error("Merge Profile-move destination changed during preparation")
+                        }
+                    }
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_PROFILE_MOVING_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val reference = event.reference.mergeReference(event.type) ?: return@FeatureExecutionHandler
+                    get<EntryMergeProfileMoveFeature>().begin(event.plan.toMergeIntent(reference)).requireApplied()
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_PROFILE_STATE_MOVED_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val reference = event.reference.mergeReference(event.type) ?: return@FeatureExecutionHandler
+                    get<EntryMergeProfileMoveFeature>().complete(event.plan.toMergeIntent(reference)).requireApplied()
+                },
+            ),
         ),
         runtimeBoundaries = listOf(
             entryFeatureRuntimeBoundary { get<EntryMergeFeature>() },
@@ -80,4 +156,10 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
             }
         },
     )
+}
+
+private fun EntryMergeProfileMoveExecutionResult.requireApplied() {
+    check(this == EntryMergeProfileMoveExecutionResult.Applied) {
+        "Merge Profile-move participation failed: $this"
+    }
 }

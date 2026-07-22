@@ -53,8 +53,7 @@ interface EntryMergeProfileHost {
 
     suspend fun applyTransition(transition: EntryMergeHostTransition): EntryMergeHostTransitionResult
 
-    suspend fun applyProfileMove(
-        transition: EntryMergeProfileMoveHostTransition,
-        moveEntries: suspend () -> Unit,
-    ): EntryMergeHostTransitionResult
+    suspend fun beginProfileMove(transition: EntryMergeProfileMoveHostTransition): EntryMergeHostTransitionResult
+
+    suspend fun completeProfileMove(transition: EntryMergeProfileMoveHostTransition): EntryMergeHostTransitionResult
 }

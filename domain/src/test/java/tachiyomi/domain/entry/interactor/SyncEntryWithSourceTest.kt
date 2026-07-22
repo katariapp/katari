@@ -31,7 +31,7 @@ import tachiyomi.domain.entry.model.EntryProgressState
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.entry.service.EntryMetadataUpdateHooks
+import tachiyomi.domain.entry.service.EntryMetadataChangeNotifier
 import tachiyomi.domain.entry.service.FetchInterval
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
@@ -219,7 +219,7 @@ class SyncEntryWithSourceTest {
     }
 
     @Test
-    fun `manual metadata refresh invalidates same url cover but respects title preference`() = runTest {
+    fun `manual metadata refresh publishes persisted cover change while respecting title preference`() = runTest {
         val entry = entry().copy(
             favorite = true,
             title = "Stored title",
@@ -230,35 +230,35 @@ class SyncEntryWithSourceTest {
         val entryRepository = mockEntryRepository()
         val updated = slot<Entry>()
         coEvery { entryRepository.update(capture(updated)) } returns true
-        val hooks = mockk<EntryMetadataUpdateHooks>(relaxed = true)
+        val notifier = mockk<EntryMetadataChangeNotifier>(relaxed = true)
 
         sync(
             source = TestSource(details = details),
             entryRepository = entryRepository,
-            metadataUpdateHooks = hooks,
+            metadataChangeNotifier = notifier,
             now = { 200L },
         )(entry, fetchChapters = false, manualFetch = true)
 
         updated.captured.title shouldBe "Stored title"
         updated.captured.coverLastModified shouldBe 200L
-        coVerify(exactly = 0) { hooks.onTitleChanged(any(), any()) }
+        coVerify(exactly = 1) { notifier.changed(entry, updated.captured) }
     }
 
     @Test
-    fun `allowed source title change invokes metadata hook`() = runTest {
+    fun `allowed source title change publishes metadata transition`() = runTest {
         val preferences = LibraryPreferences(InMemoryPreferenceStore()).also {
             it.updateMangaTitles.set(true)
         }
-        val hooks = mockk<EntryMetadataUpdateHooks>(relaxed = true)
+        val notifier = mockk<EntryMetadataChangeNotifier>(relaxed = true)
         val stored = entry().copy(favorite = true, title = "Stored title")
         val source = TestSource(details = sourceEntry(title = "Remote title"))
 
-        sync(source, libraryPreferences = preferences, metadataUpdateHooks = hooks)(
+        sync(source, libraryPreferences = preferences, metadataChangeNotifier = notifier)(
             stored,
             fetchChapters = false,
         )
 
-        coVerify(exactly = 1) { hooks.onTitleChanged(stored, "Remote title") }
+        coVerify(exactly = 1) { notifier.changed(stored, stored.copy(title = "Remote title", initialized = true)) }
     }
 
     @Test
@@ -426,7 +426,7 @@ class SyncEntryWithSourceTest {
         entryRepository: EntryRepository = mockEntryRepository(),
         libraryPreferences: LibraryPreferences = LibraryPreferences(InMemoryPreferenceStore()),
         fetchInterval: FetchInterval = mockFetchInterval(),
-        metadataUpdateHooks: EntryMetadataUpdateHooks = mockk(relaxed = true),
+        metadataChangeNotifier: EntryMetadataChangeNotifier = mockk(relaxed = true),
         now: () -> Long = { 1000L },
     ): SyncEntryWithSource {
         val sourceManager = mockk<SourceManager> {
@@ -439,7 +439,7 @@ class SyncEntryWithSourceTest {
             sourceManager = sourceManager,
             libraryPreferences = libraryPreferences,
             fetchInterval = fetchInterval,
-            metadataUpdateHooks = metadataUpdateHooks,
+            metadataChangeNotifier = metadataChangeNotifier,
             now = now,
         )
     }

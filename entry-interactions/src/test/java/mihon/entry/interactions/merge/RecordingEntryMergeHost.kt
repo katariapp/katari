@@ -73,14 +73,16 @@ internal class RecordingEntryMergeHost(
                 return transitionResult
             }
 
-            override suspend fun applyProfileMove(
+            override suspend fun beginProfileMove(
                 transition: EntryMergeProfileMoveHostTransition,
-                moveEntries: suspend () -> Unit,
             ): EntryMergeHostTransitionResult {
                 profileMoveTransitions += transition
-                if (transitionResult is EntryMergeHostTransitionResult.Applied) moveEntries()
                 return transitionResult
             }
+
+            override suspend fun completeProfileMove(
+                transition: EntryMergeProfileMoveHostTransition,
+            ): EntryMergeHostTransitionResult = transitionResult
         }
     }
 

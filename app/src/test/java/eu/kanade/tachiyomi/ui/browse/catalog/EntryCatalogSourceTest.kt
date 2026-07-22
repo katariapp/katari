@@ -231,8 +231,6 @@ private class InMemoryEntryRepository(
     override suspend fun setViewerFlags(id: Long, viewerFlags: Long): Boolean = false
     override suspend fun setChapterFlags(id: Long, flags: Long): Boolean = false
     override suspend fun setUpdateStrategy(id: Long, strategy: EntryUpdateStrategy): Boolean = false
-    override suspend fun delete(id: Long): Boolean = false
-    override suspend fun deleteNonFavorite(): Boolean = false
     override suspend fun getCoverHash(entryId: Long, coverLastModified: Long): Long? = null
     override suspend fun upsertCoverHash(entryId: Long, coverLastModified: Long, hash: Long) = Unit
 }
