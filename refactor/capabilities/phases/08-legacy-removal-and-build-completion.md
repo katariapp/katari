@@ -5,18 +5,22 @@
 Remove residual compatibility artifacts and restore the complete build by making remaining production code conform to
 the architecture. The central catalog/report authority must already have been retired at Phase 3.5.
 
+The audit-only entry census and final candidate classifications are recorded in
+[`../phase8-census.md`](../phase8-census.md). Cleanup must follow that disposition rather than treating every search
+match as obsolete code.
+
 ## Cleanup and Enforcement
 
-- [ ] Verify that no superseded catalog, report, or report-query authority survived the Phase 3.5 cut.
+- [x] Verify that no superseded catalog, report, or report-query authority survived the Phase 3.5 cut.
 - [ ] Remove residual support APIs, presentation flags, and migration adapters.
-- [ ] Remove direct type gates and per-type derived behavior from generic feature code.
+- [x] Remove direct type gates and per-type derived behavior from generic feature code.
 - [ ] Strengthen boundaries against curated participation and parallel support declarations.
-- [ ] Resolve every recorded compile failure through architectural migration.
-- [ ] Run an unknown type/capability/feature acceptance scenario across graph evaluation, obligations, contracts,
+- [x] Resolve every recorded compile failure through architectural migration.
+- [x] Run an unknown type/capability/feature acceptance scenario across graph evaluation, obligations, contracts,
   reporting, and documentation.
-- [ ] Review every manifesto failure mode and success criterion.
-- [ ] Rerun every repeatable census probe in `../migration-inventory.md` and classify every remaining candidate.
-- [ ] Verify every `T`, `F`, and `C` register row and every out-of-boundary finding has a final disposition.
+- [x] Review every manifesto failure mode and success criterion.
+- [x] Rerun every repeatable census probe in `../migration-inventory.md` and classify every remaining candidate.
+- [x] Verify every `T`, `F`, and `C` register row and every out-of-boundary finding has a final disposition.
 
 ## Exit Gate
 

@@ -112,11 +112,12 @@ Updated: 2026-07-22
 
 ## Active Work
 
-- Phase: Phase 7 complete — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.5 Unknown-Contribution Acceptance
-- State: All Phase 7 milestones and exit gates are complete. The architecture gate executes production contracts,
-  reporting, and documentation verification, and one cross-channel anonymous contribution proves that static and
-  contextual participation reaches every projection without a curated edit. Phase 8 has not started.
+- Phase: Phase 8 — Legacy Removal, Boundary Enforcement, and Build Completion
+- Milestone: Phase 8.0 audit-only census and final disposition
+- State: The complete census is recorded in `phase8-census.md`. No retired catalog/report authority, raw application
+  interaction consumer, unresolved register row, compile failure, or unfinished production Feature migration remains.
+  Cleanup has not started: the next milestone is limited to the stale migration descriptions, milestone-coded
+  production comments, and exact boundary-exception review identified by the census.
 
 Focused Phase 6 preparation findings:
 
@@ -1702,5 +1703,6 @@ Focused Phase 7.5 Unknown-Contribution Acceptance findings:
 
 ## Exact Next Action After Review
 
-Review and commit the Phase 7.5 acceptance proof and Phase 7 completion state. Do not begin Phase 8 until that milestone
-is accepted; Phase 8 starts by rerunning and classifying every legacy/census probe before removing residual paths.
+Review and commit the Phase 8.0 census. Do not remove or refactor production paths as part of that approval. The next
+milestone performs only the cleanup queue in `phase8-census.md`, reruns all probes, and stops before the full Phase 8
+exit-gate validation.
