@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.data.backup
 
 import android.content.Context
 import android.net.Uri
+import eu.kanade.tachiyomi.data.backup.models.Backup
 import eu.kanade.tachiyomi.source.visualName
 import mihon.entry.interactions.EntryTrackingFeature
 import mihon.entry.interactions.EntryTrackingServiceId
@@ -42,14 +43,8 @@ class BackupFileValidator(
             .distinct()
             .sorted()
 
-        val trackers = buildList {
-            addAll(backup.backupManga.flatMap { it.tracking })
-            addAll(backup.backupProfiles.flatMap { profile -> profile.manga.flatMap { it.tracking } })
-        }
-            .map { it.syncId }
-            .distinct()
         val missingTrackers = trackingFeature.missingLoginNames(
-            trackers.mapTo(mutableSetOf()) { EntryTrackingServiceId(it.toLong()) },
+            backup.trackingServiceIds().mapTo(mutableSetOf(), ::EntryTrackingServiceId),
         )
 
         return Results(missingSources, missingTrackers)
@@ -59,4 +54,8 @@ class BackupFileValidator(
         val missingSources: List<String>,
         val missingTrackers: List<String>,
     )
+}
+
+internal fun Backup.trackingServiceIds(): Set<Long> {
+    return allEntries().flatMap { it.tracking }.mapTo(linkedSetOf()) { it.syncId.toLong() }
 }

@@ -31,12 +31,17 @@ Status meanings:
 | Preserve playback preferences through backup and migration | ✓ | — | — |
 | Configure media viewer settings | ✓ | ✓ | ✓ |
 | Use media-specific terminology and presentation | ✓ | ✓ | ✓ |
+| Propagate persisted metadata changes | ✓ | ✓ | ✓ |
+| Preserve Feature-owned Entry state | ✓ | ✓ | ✓ |
+| Remove entries and their owned state | ✓ | ✓ | ✓ |
 
 ## Library and updates
 
 | Capability | Anime | Book | Manga |
 | --- | :---: | :---: | :---: |
 | Filter and group entries in the unified library | ✓ | ✓ | ✓ |
+| Add to and remove from the Library | ✓ | ✓ | ✓ |
+| Move Library entries between profiles | ✓ | ✓ | ✓ |
 | Aggregate progress across the library | ✓ | ✓ | ✓ |
 | Receive library update notifications | ✓ | ✓ | ✓ |
 | Refresh entries during library updates | ✓ | ✓ | ✓ |

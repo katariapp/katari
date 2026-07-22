@@ -13,6 +13,18 @@ class EntryPlaybackPreferencesContractValidationContributor : FeatureValidationC
     override val owner = EntryPlaybackPreferencesFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContract(
+            ENTRY_PLAYBACK_PREFERENCES_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryPlaybackPreferencesBehaviorContract,
+            EntryPlaybackPreferencesSnapshot.serializer(),
+            EntryPlaybackPreferencesSnapshot(dubKey = "dub"),
+        )
+        sink.addEntryBackupParticipationContract(
+            ENTRY_PLAYBACK_PREFERENCES_BACKUP_RESTORE_PARTICIPANT,
+            EntryPlaybackPreferencesBehaviorContract,
+            EntryPlaybackPreferencesSnapshot.serializer(),
+            EntryPlaybackPreferencesSnapshot(dubKey = "dub"),
+        )
         sink.add(
             FeatureContractVerifier(
                 FeatureContractReference(

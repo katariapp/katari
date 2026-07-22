@@ -362,12 +362,8 @@ class BackupRestorer(
                 notifier.showRestoreProgress(chunk.last().title, restoreProgress.load(), restoreAmount, isSync)
             }
 
-        val mergeResult = entryRestorer.restorePendingMerges(destinationProfileId)
-        mergeResult.skippedGroups.forEach { skipped ->
-            errors.add(
-                Date() to
-                    "Skipped merge ${skipped.target.sourceId}:${skipped.target.url}: ${skipped.reason}",
-            )
+        entryRestorer.finalizeFeatureRestore(destinationProfileId).issues.forEach { issue ->
+            errors.add(Date() to issue.description)
         }
     }
 

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.host.tracking.EntryTrackingAccountHost
 import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
+import mihon.entry.interactions.host.tracking.EntryTrackingBackupHost
 import mihon.entry.interactions.host.tracking.EntryTrackingCollectionHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostCollectionSnapshot
@@ -68,6 +69,7 @@ class EntryTrackingCollectionTest {
             override val collection = object : EntryTrackingCollectionHost {
                 override fun observeCollection() = flowOf(snapshot)
             }
+            override val backup: EntryTrackingBackupHost = EntryTrackingBackupHost.Empty
 
             override fun registeredServices() = snapshot.services
 

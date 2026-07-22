@@ -83,6 +83,18 @@ class EntryChildGroupFilterContractValidationContributor : FeatureValidationCont
     override val owner = EntryChildGroupFilterFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContract(
+            ENTRY_CHILD_GROUP_FILTER_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryChildGroupFilterBehaviorContract,
+            EntryChildGroupFilterBackupState.serializer(),
+            EntryChildGroupFilterBackupState(setOf("group")),
+        )
+        sink.addEntryBackupParticipationContract(
+            ENTRY_CHILD_GROUP_FILTER_BACKUP_RESTORE_PARTICIPANT,
+            EntryChildGroupFilterBehaviorContract,
+            EntryChildGroupFilterBackupState.serializer(),
+            EntryChildGroupFilterBackupState(setOf("group")),
+        )
         sink.add(
             FeatureContractVerifier(
                 FeatureContractReference(

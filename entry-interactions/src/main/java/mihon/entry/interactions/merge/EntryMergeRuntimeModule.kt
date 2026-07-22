@@ -18,6 +18,7 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryMergeLibraryMembershipContributor,
         EntryMergeDestructiveRemovalContributor,
         EntryMergeProfileMoveContributor,
+        EntryMergeBackupContributor,
     ),
 ) { context ->
     val dependencies = context.dependencies
@@ -42,6 +43,7 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
     addSingletonFactory<EntryMergeLibraryGroupingFeature> { get<EntryMergeLibraryGroupingCoordinator>() }
     addSingletonFactory<EntryLibraryGroupingResolutionPort> { get<EntryMergeLibraryGroupingCoordinator>() }
     addSingletonFactory<EntryMergeBackupFeature> { EntryMergeBackupCoordinator(dependencies.mergeHost) }
+    addSingletonFactory { EntryMergeBackupRestoreParticipation(get<EntryMergeBackupFeature>()) }
     addSingletonFactory<EntryMergeLibraryLifecycleFeature> {
         EntryMergeLibraryLifecycleCoordinator(dependencies.mergeHost)
     }
@@ -62,6 +64,39 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
     }
     EntryFeatureRuntimeArtifacts(
         executionBindings = listOf(
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_BACKUP_SNAPSHOT_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val state = get<EntryMergeBackupFeature>().snapshotForBackup(
+                        EntryMergeSubject(event.profileId, event.entry.id),
+                    ) ?: return@FeatureExecutionHandler
+                    event.contributions.add(
+                        entryBackupStateEnvelope(
+                            ENTRY_MERGE_BACKUP_STATE_ID,
+                            ENTRY_MERGE_BACKUP_SCHEMA_VERSION,
+                            EntryMergeBackupMember.serializer(),
+                            state,
+                        ),
+                    )
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_BACKUP_RESTORE_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val state = event.states.decodeEntryBackupState(
+                        ENTRY_MERGE_BACKUP_STATE_ID,
+                        ENTRY_MERGE_BACKUP_SCHEMA_VERSION,
+                        EntryMergeBackupMember.serializer(),
+                    ) ?: return@FeatureExecutionHandler
+                    get<EntryMergeBackupRestoreParticipation>().enqueue(event, state)
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_MERGE_BACKUP_FINALIZE_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    get<EntryMergeBackupRestoreParticipation>().finalize(event)
+                },
+            ),
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_MERGE_LIBRARY_REMOVAL_PARTICIPANT,
                 handler = FeatureExecutionHandler { event ->

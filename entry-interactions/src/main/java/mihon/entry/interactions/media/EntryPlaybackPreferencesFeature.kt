@@ -19,7 +19,7 @@ import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_PLAYBACK_PREFERENCES_FEATURE_ID = FeatureId("entry.playback-preferences-transfer")
-private val ENTRY_PLAYBACK_PREFERENCES_FEATURE_OWNER = ContributionOwner("entry-playback-preferences-transfer")
+internal val ENTRY_PLAYBACK_PREFERENCES_FEATURE_OWNER = ContributionOwner("entry-playback-preferences-transfer")
 private val ENTRY_PLAYBACK_PREFERENCES_REFERENCE = entryContentTypeReferenceContribution(
     id = "playback-preferences-transfer",
     owner = ENTRY_PLAYBACK_PREFERENCES_FEATURE_OWNER,

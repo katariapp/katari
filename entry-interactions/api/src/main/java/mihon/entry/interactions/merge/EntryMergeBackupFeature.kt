@@ -1,6 +1,10 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import kotlinx.serialization.Serializable
+
+const val ENTRY_MERGE_BACKUP_STATE_ID = "entry.merge.backup"
+const val ENTRY_MERGE_BACKUP_SCHEMA_VERSION = 1
 
 interface EntryMergeBackupFeature {
     suspend fun snapshotForBackup(subject: EntryMergeSubject): EntryMergeBackupMember?
@@ -12,11 +16,13 @@ interface EntryMergeBackupFeature {
 }
 
 /** The only Merge facts one Entry needs to serialize its existing wire-compatible backup fields. */
+@Serializable
 data class EntryMergeBackupMember(
     val target: EntryMergeBackupIdentity,
     val position: Int,
 )
 
+@Serializable
 data class EntryMergeBackupIdentity(
     val sourceId: Long,
     val url: String,

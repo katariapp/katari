@@ -36,6 +36,7 @@ internal fun productionEntryFeatureRuntimeModules(): List<EntryFeatureRuntimeMod
     EntryMetadataLifecycleFeatureRuntimeModule,
     EntryDestructiveRemovalFeatureRuntimeModule,
     EntryProfileMoveFeatureRuntimeModule,
+    EntryBackupFeatureRuntimeModule,
     EntryChildGroupFilterFeatureRuntimeModule,
     EntryPreviewFeatureRuntimeModule,
     EntryImmersiveFeatureRuntimeModule,

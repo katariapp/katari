@@ -9,24 +9,13 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.protobuf.ProtoBuf
-import mihon.entry.interactions.EntryChildGroupFilterFeature
-import mihon.entry.interactions.EntryChildGroupFilterSnapshotResult
-import mihon.entry.interactions.EntryMergeBackupFeature
+import mihon.entry.interactions.ENTRY_MERGE_BACKUP_STATE_ID
+import mihon.entry.interactions.EntryBackupFeature
+import mihon.entry.interactions.EntryBackupSelection
+import mihon.entry.interactions.EntryBackupStateCodec
+import mihon.entry.interactions.EntryFeatureStateEnvelope
 import mihon.entry.interactions.EntryMergeBackupIdentity
 import mihon.entry.interactions.EntryMergeBackupMember
-import mihon.entry.interactions.EntryMergeSubject
-import mihon.entry.interactions.EntryPlaybackPreferencesFeature
-import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
-import mihon.entry.interactions.EntryPlaybackPreferencesSnapshotResult
-import mihon.entry.interactions.EntryPlaybackQualityMode
-import mihon.entry.interactions.EntryProgressFeature
-import mihon.entry.interactions.EntryProgressSnapshot
-import mihon.entry.interactions.EntryProgressSnapshotResult
-import mihon.entry.interactions.EntryProgressStateSnapshot
-import mihon.entry.interactions.EntryViewerSettingsFeature
-import mihon.entry.interactions.EntryViewerSettingsSnapshotResult
-import mihon.entry.viewer.settings.ViewerSettingId
-import mihon.entry.viewer.settings.ViewerSettingOverride
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.params.ParameterizedTest
@@ -34,51 +23,54 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
-import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.model.EntryProgressLocator
-import tachiyomi.domain.entry.model.VideoDownloadQualityMode
-import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class EntryBackupCreatorTest {
 
     @Test
-    fun `merge backup fields come from the purpose-specific projection`() = runTest {
+    fun `discovered states are serialized and known state is projected for legacy readers`() = runTest {
         val entry = Entry.create().copy(id = 1L, type = EntryType.BOOK, source = 10L, url = "/entry")
         val fixture = Fixture(entry, EntryChapter.create().copy(id = 2L, entryId = entry.id, url = "/chapter"))
-        coEvery { fixture.mergeBackupFeature.snapshotForBackup(EntryMergeSubject(1L, entry.id)) } returns
-            EntryMergeBackupMember(
-                target = EntryMergeBackupIdentity(20L, "/target", EntryType.BOOK),
-                position = 3,
-            )
+        val merge = EntryMergeBackupMember(
+            target = EntryMergeBackupIdentity(20L, "/target", EntryType.BOOK),
+            position = 3,
+        )
+        coEvery { fixture.entryBackupFeature.snapshot(1L, entry, any()) } returns listOf(
+            EntryFeatureStateEnvelope(
+                participantId = ENTRY_MERGE_BACKUP_STATE_ID,
+                schemaVersion = 1,
+                payload = EntryBackupStateCodec.encode(EntryMergeBackupMember.serializer(), merge),
+            ),
+            EntryFeatureStateEnvelope("future.feature.backup", 7, byteArrayOf(1, 2, 3)),
+        )
 
         val created = fixture.creator.invoke(
             profileId = 1L,
             entries = listOf(entry),
-            options = BackupOptions(
-                categories = false,
-                chapters = false,
-                tracking = false,
-                history = false,
-            ),
+            options = BackupOptions(categories = false, chapters = false, tracking = false, history = false),
         ).single()
+        val decoded = ProtoBuf.decodeFromByteArray(
+            BackupEntry.serializer(),
+            ProtoBuf.encodeToByteArray(BackupEntry.serializer(), created),
+        )
 
-        created.mergeTargetSource shouldBe 20L
-        created.mergeTargetUrl shouldBe "/target"
-        created.mergeTargetType shouldBe EntryType.BOOK
-        created.mergePosition shouldBe 3
+        decoded.featureStates.map { it.participantId to it.schemaVersion } shouldBe listOf(
+            ENTRY_MERGE_BACKUP_STATE_ID to 1,
+            "future.feature.backup" to 7,
+        )
+        decoded.mergeTargetSource shouldBe 20L
+        decoded.mergeTargetUrl shouldBe "/target"
+        decoded.mergeTargetType shouldBe EntryType.BOOK
+        decoded.mergePosition shouldBe 3
     }
 
-    @ParameterizedTest(name = "serializes {0} backup with chapters={1}")
-    @MethodSource("backupCases")
-    fun `portable preferences are serialized without current type gates`(
-        type: EntryType,
-        chaptersEnabled: Boolean,
-    ) = runTest {
-        val entry = Entry.create().copy(id = 1L, type = type, source = 10L, url = "/entry")
+    @ParameterizedTest(name = "passes content selection and serializes core chapters={0}")
+    @MethodSource("chapterCases")
+    fun `creator delegates feature state without enumerating participants`(chaptersEnabled: Boolean) = runTest {
+        val entry = Entry.create().copy(id = 1L, type = EntryType.ANIME, source = 10L, url = "/entry")
         val chapter = EntryChapter.create().copy(id = 2L, entryId = entry.id, url = "/chapter")
         val fixture = Fixture(entry, chapter)
 
@@ -88,138 +80,44 @@ class EntryBackupCreatorTest {
             options = BackupOptions(
                 categories = false,
                 chapters = chaptersEnabled,
-                tracking = false,
+                tracking = true,
                 history = false,
             ),
         ).single()
-        val bytes = ProtoBuf.encodeToByteArray(BackupEntry.serializer(), created)
-        val decoded = ProtoBuf.decodeFromByteArray(BackupEntry.serializer(), bytes)
 
-        decoded.type shouldBe type
-        decoded.chapters.map { it.url } shouldBe if (chaptersEnabled) listOf(chapter.url) else emptyList()
-        decoded.chapters.map { it.lastPageRead } shouldBe if (chaptersEnabled) listOf(0L) else emptyList()
-        decoded.playbackStates shouldBe emptyList()
-        decoded.excludedScanlators shouldBe if (type == EntryType.MANGA) listOf("Group A") else emptyList()
-        decoded.progressStates.map { it.resourceKey } shouldBe if (chaptersEnabled) {
-            listOf(chapter.url)
-        } else {
-            emptyList()
+        created.chapters.map { it.url } shouldBe if (chaptersEnabled) listOf(chapter.url) else emptyList()
+        coVerify(exactly = 1) {
+            fixture.entryBackupFeature.snapshot(
+                1L,
+                entry,
+                EntryBackupSelection(includeContentState = chaptersEnabled, includeTrackingState = true),
+            )
         }
-        decoded.viewerSettingOverrides.single().run {
-            providerId shouldBe "unknown.reader"
-            settingKey shouldBe "appearance"
-            encodedValue shouldBe "sepia"
-            updatedAt shouldBe 30L
-        }
-
-        decoded.playbackPreferences?.dubKey shouldBe "playback-dub"
-        decoded.playbackPreferences?.streamKey shouldBe "playback-stream"
-        decoded.playbackPreferences?.subtitleKey shouldBe "playback-subtitle"
-        decoded.playbackPreferences?.playerQualityMode shouldBe "specific_height"
-        decoded.playbackPreferences?.playerQualityHeight shouldBe 1080
-
-        if (chaptersEnabled) {
-            decoded.downloadPreferences?.dubKey shouldBe "download-dub"
-            decoded.downloadPreferences?.qualityMode shouldBe "data_saving"
-        } else {
-            decoded.downloadPreferences shouldBe null
-        }
-
         coVerify(exactly = if (chaptersEnabled) 1 else 0) {
             fixture.entryChapterRepository.getChaptersByEntryIdAwait(entry.id, applyScanlatorFilter = false)
         }
-        coVerify(exactly = if (chaptersEnabled) 1 else 0) {
-            fixture.downloadPreferencesRepository.getByEntryId(entry.id)
-        }
-        coVerify(exactly = 1) {
-            fixture.playbackPreferencesFeature.snapshot(entry)
-        }
-        coVerify(exactly = 1) {
-            fixture.childGroupFilterFeature.snapshot(1L, entry)
-        }
-        coVerify(exactly = if (chaptersEnabled) 1 else 0) {
-            fixture.progressFeature.snapshot(entry)
-        }
     }
 
-    private fun backupCases(): List<Arguments> = EntryType.entries.flatMap { type ->
-        listOf(false, true).map { chaptersEnabled -> Arguments.of(type, chaptersEnabled) }
-    }
+    private fun chapterCases(): List<Arguments> = listOf(Arguments.of(false), Arguments.of(true))
 
     private class Fixture(entry: Entry, chapter: EntryChapter) {
         private val handler = mockk<DatabaseHandler>()
         private val profileProvider = mockk<ActiveProfileProvider>()
-        val mergeBackupFeature = mockk<EntryMergeBackupFeature>()
+        val entryBackupFeature = mockk<EntryBackupFeature>()
         val entryChapterRepository = mockk<EntryChapterRepository>()
-        val downloadPreferencesRepository = mockk<DownloadPreferencesRepository>()
-        val progressFeature = mockk<EntryProgressFeature>()
-        val playbackPreferencesFeature = mockk<EntryPlaybackPreferencesFeature>()
-        val childGroupFilterFeature = mockk<EntryChildGroupFilterFeature>()
-        private val viewerSettingsFeature = mockk<EntryViewerSettingsFeature>()
 
         val creator = EntryBackupCreator(
             handler = handler,
             profileProvider = profileProvider,
-            mergeBackupFeature = mergeBackupFeature,
+            entryBackupFeature = entryBackupFeature,
             entryChapterRepository = entryChapterRepository,
-            downloadPreferencesRepository = downloadPreferencesRepository,
-            progressFeature = progressFeature,
-            playbackPreferencesFeature = playbackPreferencesFeature,
-            childGroupFilterFeature = childGroupFilterFeature,
-            viewerSettingsFeature = viewerSettingsFeature,
         )
 
         init {
-            coEvery { mergeBackupFeature.snapshotForBackup(EntryMergeSubject(1L, entry.id)) } returns null
+            coEvery { entryBackupFeature.snapshot(any(), any(), any()) } returns emptyList()
             coEvery {
                 entryChapterRepository.getChaptersByEntryIdAwait(entry.id, applyScanlatorFilter = false)
             } returns listOf(chapter)
-            coEvery { downloadPreferencesRepository.getByEntryId(entry.id) } returns DownloadPreferences(
-                entryId = entry.id,
-                dubKey = "download-dub",
-                streamKey = "download-stream",
-                subtitleKey = "download-subtitle",
-                qualityMode = VideoDownloadQualityMode.DATA_SAVING,
-                updatedAt = 20L,
-            )
-            coEvery { playbackPreferencesFeature.snapshot(entry) } returns
-                EntryPlaybackPreferencesSnapshotResult.Captured(
-                    EntryPlaybackPreferencesSnapshot(
-                        dubKey = "playback-dub",
-                        streamKey = "playback-stream",
-                        subtitleKey = "playback-subtitle",
-                        playerQualityMode = EntryPlaybackQualityMode.SPECIFIC_HEIGHT,
-                        playerQualityHeight = 1080,
-                        updatedAt = 10L,
-                    ),
-                )
-            coEvery { progressFeature.snapshot(entry) } returns EntryProgressSnapshotResult.Available(
-                EntryProgressSnapshot(
-                    states = listOf(
-                        EntryProgressStateSnapshot(
-                            resourceKey = chapter.url,
-                            sourceChildKey = chapter.url,
-                            locator = EntryProgressLocator(kind = "page", position = 4),
-                            locatorUpdatedAt = 10,
-                        ),
-                    ),
-                ),
-            )
-            coEvery { childGroupFilterFeature.snapshot(1L, entry) } returns if (entry.type == EntryType.MANGA) {
-                EntryChildGroupFilterSnapshotResult.Available(setOf("Group A"))
-            } else {
-                EntryChildGroupFilterSnapshotResult.Inapplicable(entry.type)
-            }
-            coEvery { viewerSettingsFeature.snapshot(entry) } returns EntryViewerSettingsSnapshotResult.Available(
-                overrides = listOf(
-                    ViewerSettingOverride(
-                        entryId = entry.id,
-                        settingId = ViewerSettingId("unknown.reader", "appearance"),
-                        encodedValue = "sepia",
-                        updatedAt = 30,
-                    ),
-                ),
-            )
             coEvery { handler.awaitList<Any>(false, any()) } returns emptyList()
         }
     }

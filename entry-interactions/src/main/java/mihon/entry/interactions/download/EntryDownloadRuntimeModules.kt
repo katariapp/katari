@@ -98,6 +98,7 @@ internal val EntryDownloadLifecycleFeatureRuntimeModule = EntryFeatureRuntimeMod
 internal val EntryDownloadConfigurationFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.configuration",
     contributor = EntryDownloadConfigurationFeatureContributor,
+    additionalContributors = listOf(EntryDownloadConfigurationBackupContributor),
 ) {
     addSingletonFactory<EntryDownloadOptionsFeature> {
         val composition = get<EntryInteractionComposition>()
@@ -109,10 +110,46 @@ internal val EntryDownloadConfigurationFeatureRuntimeModule = EntryFeatureRuntim
     addSingletonFactory<EntryDownloadSettingsFeature> {
         DefaultEntryDownloadSettingsFeature(get<EntryInteractionComposition>().featureGraphEvaluation)
     }
+    addSingletonFactory<EntryDownloadConfigurationBackupFeature> {
+        DefaultEntryDownloadConfigurationBackupFeature(
+            evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            repository = get(),
+        )
+    }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_SNAPSHOT_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    if (!event.selection.includeContentState) return@FeatureExecutionHandler
+                    val state = get<EntryDownloadConfigurationBackupFeature>().snapshot(event.entry)
+                        ?: return@FeatureExecutionHandler
+                    event.contributions.add(
+                        entryBackupStateEnvelope(
+                            ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_STATE_ID,
+                            ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_SCHEMA_VERSION,
+                            EntryDownloadConfigurationBackupState.serializer(),
+                            state,
+                        ),
+                    )
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_RESTORE_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val state = event.states.decodeEntryBackupState(
+                        ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_STATE_ID,
+                        ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_SCHEMA_VERSION,
+                        EntryDownloadConfigurationBackupState.serializer(),
+                    ) ?: return@FeatureExecutionHandler
+                    get<EntryDownloadConfigurationBackupFeature>().restore(event.entry, state)
+                },
+            ),
+        ),
         runtimeBoundaries = listOf(
             entryFeatureRuntimeBoundary { get<EntryDownloadOptionsFeature>() },
             entryFeatureRuntimeBoundary { get<EntryDownloadSettingsFeature>() },
+            entryFeatureRuntimeBoundary { get<EntryDownloadConfigurationBackupFeature>() },
         ),
     )
 }

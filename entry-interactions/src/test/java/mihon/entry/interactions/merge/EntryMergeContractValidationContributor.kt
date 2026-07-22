@@ -24,6 +24,24 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
     override val owner = EntryMergeFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContractForSubject(
+            ENTRY_MERGE_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryMergeBehaviorContract.WORKFLOW,
+            EntryMergeBackupMember.serializer(),
+            ::backupMemberExample,
+        )
+        sink.addEntryBackupParticipationContractForSubject(
+            ENTRY_MERGE_BACKUP_RESTORE_PARTICIPANT,
+            EntryMergeBehaviorContract.WORKFLOW,
+            EntryMergeBackupMember.serializer(),
+            ::backupMemberExample,
+        )
+        sink.addEntryBackupParticipationContractForSubject(
+            ENTRY_MERGE_BACKUP_FINALIZE_PARTICIPANT,
+            EntryMergeBehaviorContract.WORKFLOW,
+            EntryMergeBackupMember.serializer(),
+            ::backupMemberExample,
+        )
         contracts.forEach { item ->
             val reference = FeatureContractReference(ENTRY_MERGE_FEATURE_ID, item.contract)
             sink.add(FeatureContractVerifier(reference) { input -> verifyMerge(input, item.contract) })
@@ -305,3 +323,12 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
         )
     }
 }
+
+private fun backupMemberExample(contentType: mihon.feature.graph.ContentTypeId) = EntryMergeBackupMember(
+    target = EntryMergeBackupIdentity(
+        1,
+        "/target",
+        EntryType.entries.single { it.toContentTypeId() == contentType },
+    ),
+    position = 0,
+)

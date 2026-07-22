@@ -11,6 +11,7 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
     additionalContributors = listOf(
         EntryTrackingLibraryMembershipContributor,
         EntryTrackingProfileMoveContributor,
+        EntryTrackingBackupContributor,
     ),
 ) { context ->
     addSingletonFactory<EntryTrackingFeature> {
@@ -19,8 +20,38 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
             host = context.dependencies.trackingHost,
         )
     }
+    addSingletonFactory<EntryTrackingBackupFeature> {
+        DefaultEntryTrackingBackupFeature(context.dependencies.trackingHost.backup)
+    }
     EntryFeatureRuntimeArtifacts(
         executionBindings = listOf(
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_TRACKING_BACKUP_SNAPSHOT_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    if (!event.selection.includeTrackingState) return@FeatureExecutionHandler
+                    val state = get<EntryTrackingBackupFeature>().snapshot(event.profileId, event.entry)
+                        ?: return@FeatureExecutionHandler
+                    event.contributions.add(
+                        entryBackupStateEnvelope(
+                            ENTRY_TRACKING_BACKUP_STATE_ID,
+                            ENTRY_TRACKING_BACKUP_SCHEMA_VERSION,
+                            EntryTrackingBackupState.serializer(),
+                            state,
+                        ),
+                    )
+                },
+            ),
+            FeatureExecutionParticipantBinding(
+                definition = ENTRY_TRACKING_BACKUP_RESTORE_PARTICIPANT,
+                handler = FeatureExecutionHandler { event ->
+                    val state = event.states.decodeEntryBackupState(
+                        ENTRY_TRACKING_BACKUP_STATE_ID,
+                        ENTRY_TRACKING_BACKUP_SCHEMA_VERSION,
+                        EntryTrackingBackupState.serializer(),
+                    ) ?: return@FeatureExecutionHandler
+                    get<EntryTrackingBackupFeature>().restore(event.profileId, event.entry, state)
+                },
+            ),
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_TRACKING_LIBRARY_ADDITION_PARTICIPANT,
                 handler = FeatureExecutionHandler { event ->
@@ -34,6 +65,9 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
                 },
             ),
         ),
-        runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryTrackingFeature>() }),
+        runtimeBoundaries = listOf(
+            entryFeatureRuntimeBoundary { get<EntryTrackingFeature>() },
+            entryFeatureRuntimeBoundary { get<EntryTrackingBackupFeature>() },
+        ),
     )
 }

@@ -16,7 +16,7 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 
 internal val ENTRY_DOWNLOAD_CONFIGURATION_FEATURE_ID = FeatureId("entry.download.configuration")
-private val ENTRY_DOWNLOAD_CONFIGURATION_FEATURE_OWNER = ContributionOwner("entry-download-configuration")
+internal val ENTRY_DOWNLOAD_CONFIGURATION_FEATURE_OWNER = ContributionOwner("entry-download-configuration")
 private val ENTRY_DOWNLOAD_CONFIGURATION_REFERENCE = entryContentTypeReferenceContribution(
     id = "download-configuration",
     owner = ENTRY_DOWNLOAD_CONFIGURATION_FEATURE_OWNER,

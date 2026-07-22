@@ -13,6 +13,18 @@ class EntryProgressContractValidationContributor : FeatureValidationContributor 
     override val owner = EntryProgressFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContract(
+            ENTRY_PROGRESS_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryProgressBehaviorContract,
+            EntryProgressSnapshot.serializer(),
+            EntryProgressSnapshot(),
+        )
+        sink.addEntryBackupParticipationContract(
+            ENTRY_PROGRESS_BACKUP_RESTORE_PARTICIPANT,
+            EntryProgressBehaviorContract,
+            EntryProgressSnapshot.serializer(),
+            EntryProgressSnapshot(),
+        )
         sink.add(
             FeatureContractVerifier(
                 FeatureContractReference(ENTRY_PROGRESS_FEATURE_ID, EntryProgressBehaviorContract),

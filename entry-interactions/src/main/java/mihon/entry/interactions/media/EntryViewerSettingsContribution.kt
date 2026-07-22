@@ -25,7 +25,7 @@ import mihon.feature.graph.allOf
 import tachiyomi.domain.entry.model.Entry
 
 internal val ENTRY_VIEWER_SETTINGS_FEATURE_ID = FeatureId("entry.viewer-settings")
-private val ENTRY_VIEWER_SETTINGS_FEATURE_OWNER = ContributionOwner("entry-viewer-settings")
+internal val ENTRY_VIEWER_SETTINGS_FEATURE_OWNER = ContributionOwner("entry-viewer-settings")
 private val ENTRY_VIEWER_SETTINGS_REFERENCE = entryContentTypeReferenceContribution(
     id = "viewer-settings",
     owner = ENTRY_VIEWER_SETTINGS_FEATURE_OWNER,

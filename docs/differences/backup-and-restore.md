@@ -42,6 +42,10 @@ groups from being restored.
 
 A legacy Mihon or fork backup without Katari profiles is restored into the currently active profile. Supported legacy records are converted into typed Entry records.
 
+Per-entry state is restored by the Feature that owns it, such as progress, viewer or playback preferences, tracking,
+merged-entry membership, release-group filters, and download configuration. State from a newer unknown Feature is
+ignored without preventing the Entry and other recognized state from being restored.
+
 Saved BOOK progress includes the processor-neutral reading location needed to resume a publication. Restoring that location requires a compatible reader plus either the corresponding source or an intact BOOK download that has been reindexed.
 
 Extensions and downloaded media are not stored in the backup. Restore reports missing sources and trackers; install the required extensions, sign in to trackers, and reindex existing downloads when necessary. Reindexing can recover intact BOOK packages from the selected downloads location, but the backup itself cannot recreate their media bytes.
@@ -49,6 +53,9 @@ Extensions and downloaded media are not stored in the backup. Restore reports mi
 ## Compatibility limits
 
 Mihon can read its own shared backup data but does not understand Katari-only profile, additional entry-type, merged-entry, feed, or type-specific state. Do not rely on a round trip through Mihon to preserve Katari-specific state.
+
+Katari continues to read the older typed Manga, Anime, and profile backup fields. Current backups also keep compatible
+typed fields for older Katari releases while storing Feature-owned state in independently versioned records.
 
 ::: tip
 

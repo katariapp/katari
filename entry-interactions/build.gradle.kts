@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.androidx.work)
     implementation(libs.injekt)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.bundles.serialization)
     implementation(libs.bundles.coil)
 
     testImplementation(libs.bundles.test)

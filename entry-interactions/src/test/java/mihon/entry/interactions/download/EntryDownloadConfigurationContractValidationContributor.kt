@@ -18,6 +18,18 @@ class EntryDownloadConfigurationContractValidationContributor : FeatureValidatio
     override val owner = EntryDownloadConfigurationFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContract(
+            ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryDownloadOptionsBehaviorContract,
+            EntryDownloadConfigurationBackupState.serializer(),
+            EntryDownloadConfigurationBackupState(dubKey = "dub"),
+        )
+        sink.addEntryBackupParticipationContract(
+            ENTRY_DOWNLOAD_CONFIGURATION_BACKUP_RESTORE_PARTICIPANT,
+            EntryDownloadOptionsBehaviorContract,
+            EntryDownloadConfigurationBackupState.serializer(),
+            EntryDownloadConfigurationBackupState(dubKey = "dub"),
+        )
         configurations.forEach { configuration ->
             sink.add(
                 FeatureContractVerifier(

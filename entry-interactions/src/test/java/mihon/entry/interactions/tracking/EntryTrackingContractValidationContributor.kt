@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import mihon.entry.interactions.host.tracking.EntryTrackingAccountHost
 import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
+import mihon.entry.interactions.host.tracking.EntryTrackingBackupHost
 import mihon.entry.interactions.host.tracking.EntryTrackingCollectionHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostBindingOutcome
@@ -38,6 +39,18 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
     override val owner = EntryTrackingFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContract(
+            ENTRY_TRACKING_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryTrackingBehaviorContract.REGISTRY,
+            EntryTrackingBackupState.serializer(),
+            EntryTrackingBackupState(emptyList()),
+        )
+        sink.addEntryBackupParticipationContract(
+            ENTRY_TRACKING_BACKUP_RESTORE_PARTICIPANT,
+            EntryTrackingBehaviorContract.REGISTRY,
+            EntryTrackingBackupState.serializer(),
+            EntryTrackingBackupState(emptyList()),
+        )
         EntryTrackingIntegration.entries.forEach { integration ->
             val contract = EntryTrackingBehaviorContract.valueOf(integration.name)
             val reference = FeatureContractReference(ENTRY_TRACKING_FEATURE_ID, contract)
@@ -178,6 +191,7 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
                     ),
                 )
             }
+            override val backup: EntryTrackingBackupHost = EntryTrackingBackupHost.Empty
 
             override fun registeredServices() = listOf(service)
             override fun observeEntry(entry: Entry) = flowOf(snapshot)

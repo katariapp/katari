@@ -2,43 +2,20 @@ package eu.kanade.tachiyomi.data.backup.restore.restorers
 
 import eu.kanade.tachiyomi.data.backup.models.BackupCategory
 import eu.kanade.tachiyomi.data.backup.models.BackupChapter
-import eu.kanade.tachiyomi.data.backup.models.BackupDownloadPreferences
 import eu.kanade.tachiyomi.data.backup.models.BackupEntry
-import eu.kanade.tachiyomi.data.backup.models.BackupEntryProgressState
 import eu.kanade.tachiyomi.data.backup.models.BackupHistory
-import eu.kanade.tachiyomi.data.backup.models.BackupPlaybackPreferences
-import eu.kanade.tachiyomi.data.backup.models.BackupPlaybackState
-import eu.kanade.tachiyomi.data.backup.models.BackupTracking
-import eu.kanade.tachiyomi.data.backup.models.toEntryProgressStateSnapshot
+import eu.kanade.tachiyomi.data.backup.models.compatibility.featureStatesWithLegacyFallback
+import eu.kanade.tachiyomi.data.backup.models.compatibility.normalizeLegacyViewerFlags
 import eu.kanade.tachiyomi.source.entry.EntryType
-import mihon.entry.interactions.EntryChildGroupFilterFeature
-import mihon.entry.interactions.EntryMergeBackupFeature
-import mihon.entry.interactions.EntryMergeBackupGroup
-import mihon.entry.interactions.EntryMergeBackupGroupMember
-import mihon.entry.interactions.EntryMergeBackupIdentity
-import mihon.entry.interactions.EntryMergeBackupRestoreResult
-import mihon.entry.interactions.EntryPlaybackPreferencesFeature
-import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
-import mihon.entry.interactions.EntryPlaybackQualityMode
-import mihon.entry.interactions.EntryProgressFeature
-import mihon.entry.interactions.EntryProgressRestoreResult
-import mihon.entry.interactions.EntryProgressSnapshot
-import mihon.entry.interactions.EntryProgressStateSnapshot
-import mihon.entry.interactions.EntryViewerSettingsFeature
-import mihon.entry.interactions.reader.settings.MangaReaderSettingsProvider
-import mihon.entry.interactions.reader.settings.ReaderOrientation
-import mihon.entry.interactions.reader.settings.ReadingMode
-import mihon.entry.viewer.settings.ViewerSettingId
-import mihon.entry.viewer.settings.ViewerSettingOverride
+import mihon.entry.interactions.EntryBackupFeature
+import mihon.entry.interactions.EntryBackupRestoreFinalization
+import mihon.entry.interactions.EntryBackupRestoreSession
+import mihon.entry.interactions.EntryBackupRestoreSessionId
 import tachiyomi.data.ActiveProfileProvider
 import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.category.interactor.GetCategories
-import tachiyomi.domain.entry.model.DownloadPreferences
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryIdentity
-import tachiyomi.domain.entry.model.EntryProgressLocator
-import tachiyomi.domain.entry.model.VideoDownloadQualityMode
-import tachiyomi.domain.entry.repository.DownloadPreferencesRepository
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.FetchInterval
@@ -46,50 +23,12 @@ import tachiyomi.domain.history.interactor.UpsertHistory
 import tachiyomi.domain.history.model.History
 import tachiyomi.domain.history.model.HistoryUpdate
 import tachiyomi.domain.history.repository.HistoryRepository
-import tachiyomi.domain.track.interactor.GetTracks
-import tachiyomi.domain.track.interactor.InsertTrack
-import tachiyomi.domain.track.model.EntryTrack
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.time.ZonedDateTime
 import java.util.Date
+import java.util.UUID
 import kotlin.math.max
-
-private const val LEGACY_MANGA_VIEWER_MASK = 0x3FL
-
-/** Wire-compatibility adapter for the legacy Manga viewer bitfield; it is not current support evidence. */
-internal fun BackupEntry.toViewerSettingOverrides(entry: Entry): List<ViewerSettingOverride> {
-    val overrides = viewerSettingOverrides.mapNotNull { override ->
-        if (override.encodedValue.length > MAX_VIEWER_SETTING_VALUE_LENGTH) return@mapNotNull null
-        runCatching {
-            ViewerSettingOverride(
-                entryId = entry.id,
-                settingId = ViewerSettingId(override.providerId, override.settingKey),
-                encodedValue = override.encodedValue,
-                updatedAt = override.updatedAt,
-            )
-        }.getOrNull()
-    }.toMutableList()
-    if (entry.type != EntryType.MANGA) return overrides
-
-    val restoredIds = overrides.mapTo(mutableSetOf()) { it.settingId }
-    val readingMode = viewerFlags and ReadingMode.MASK.toLong()
-    val readingModeId =
-        ViewerSettingId(MangaReaderSettingsProvider.PROVIDER_ID, MangaReaderSettingsProvider.READING_MODE_KEY)
-    if (readingMode != ReadingMode.DEFAULT.flagValue.toLong() && readingModeId !in restoredIds) {
-        overrides += ViewerSettingOverride(entry.id, readingModeId, readingMode.toString(), updatedAt = 0)
-    }
-
-    val orientation = viewerFlags and ReaderOrientation.MASK.toLong()
-    val orientationId =
-        ViewerSettingId(MangaReaderSettingsProvider.PROVIDER_ID, MangaReaderSettingsProvider.ORIENTATION_KEY)
-    if (orientation != ReaderOrientation.DEFAULT.flagValue.toLong() && orientationId !in restoredIds) {
-        overrides += ViewerSettingOverride(entry.id, orientationId, orientation.toString(), updatedAt = 0)
-    }
-    return overrides
-}
-
-private const val MAX_VIEWER_SETTING_VALUE_LENGTH = 16_384
 
 class EntryRestorer(
     private val handler: DatabaseHandler = Injekt.get(),
@@ -97,22 +36,16 @@ class EntryRestorer(
     private val getCategories: GetCategories = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
-    private val downloadPreferencesRepository: DownloadPreferencesRepository = Injekt.get(),
-    private val progressFeature: EntryProgressFeature = Injekt.get(),
-    private val playbackPreferencesFeature: EntryPlaybackPreferencesFeature = Injekt.get(),
-    private val childGroupFilterFeature: EntryChildGroupFilterFeature = Injekt.get(),
+    private val entryBackupFeature: EntryBackupFeature = Injekt.get(),
     private val upsertHistory: UpsertHistory = Injekt.get(),
     private val historyRepository: HistoryRepository = Injekt.get(),
-    private val getTracks: GetTracks = Injekt.get(),
-    private val insertTrack: InsertTrack = Injekt.get(),
-    private val mergeBackupFeature: EntryMergeBackupFeature = Injekt.get(),
-    private val viewerSettingsFeature: EntryViewerSettingsFeature = Injekt.get(),
     fetchInterval: FetchInterval = Injekt.get(),
 ) {
 
     private var now = ZonedDateTime.now()
     private var currentFetchWindow = fetchInterval.getWindow(now)
-    private val pendingMerges = linkedMapOf<EntryMergeBackupIdentity, PendingMergeGroup>()
+    private val restoreSession = EntryBackupRestoreSession(EntryBackupRestoreSessionId(UUID.randomUUID().toString()))
+    private val restoredTypesByProfile = linkedMapOf<Long, MutableSet<EntryType>>()
 
     init {
         now = ZonedDateTime.now()
@@ -158,30 +91,22 @@ class EntryRestorer(
                 restoreExistingEntry(entry, dbEntry)
             }
 
+            val normalizedEntry = backupEntry.normalizeLegacyViewerFlags(restoredEntry)
             restoreEntryDetails(
-                entry = restoredEntry,
+                entry = normalizedEntry,
                 backupEntry = backupEntry,
                 backupCategories = backupCategories,
             )
-
-            enqueueMerge(restoredEntry, backupEntry)
+            restoredTypesByProfile.getOrPut(profileProvider.activeProfileId, ::linkedSetOf) += normalizedEntry.type
         }
     }
 
-    suspend fun restorePendingMerges(destinationProfileId: Long): EntryMergeBackupRestoreResult {
-        val result = mergeBackupFeature.restore(
-            destinationProfileId = destinationProfileId,
-            groups = pendingMerges.values.map { pending ->
-                EntryMergeBackupGroup(
-                    target = pending.targetIdentity,
-                    members = pending.members.map { member ->
-                        EntryMergeBackupGroupMember(member.identity, member.position)
-                    },
-                )
-            },
+    suspend fun finalizeFeatureRestore(destinationProfileId: Long): EntryBackupRestoreFinalization {
+        return entryBackupFeature.finalizeRestore(
+            restoreSession,
+            destinationProfileId,
+            restoredTypesByProfile.remove(destinationProfileId).orEmpty(),
         )
-        pendingMerges.clear()
-        return result
     }
 
     private suspend fun findExistingEntry(backupEntry: BackupEntry): Entry? {
@@ -226,64 +151,16 @@ class EntryRestorer(
         restoreCategories(entry, backupEntry.categories, backupCategories)
         restoreChapters(entry, backupEntry.chapters)
         restoreHistory(entry, backupEntry.history)
-        restoreTracking(entry, backupEntry.tracking)
-        childGroupFilterFeature.restore(entry, backupEntry.excludedScanlators.toSet())
-        restorePlaybackPreferences(entry, backupEntry.playbackPreferences)
-        val normalizedEntry = restoreViewerSettingOverrides(entry, backupEntry)
-        restoreProgress(
-            entry = normalizedEntry,
-            backupChapters = backupEntry.chapters,
-            backupHistory = backupEntry.history,
-            legacyPlaybackStates = backupEntry.playbackStates,
-            states = backupEntry.progressStates,
+        entryBackupFeature.restore(
+            session = restoreSession,
+            profileId = profileProvider.activeProfileId,
+            entry = entry,
+            states = backupEntry.featureStatesWithLegacyFallback(entry),
         )
-        restoreDownloadPreferences(normalizedEntry, backupEntry.downloadPreferences)
         val withInterval = FetchInterval(
             entryChapterRepository,
-        ).update(normalizedEntry, now, currentFetchWindow)
+        ).update(entry, now, currentFetchWindow)
         entryRepository.update(withInterval)
-    }
-
-    private suspend fun restoreViewerSettingOverrides(entry: Entry, backupEntry: BackupEntry): Entry {
-        viewerSettingsFeature.restore(entry, backupEntry.toViewerSettingOverrides(entry))
-        return if (entry.type == EntryType.MANGA) {
-            entry.copy(viewerFlags = entry.viewerFlags and LEGACY_MANGA_VIEWER_MASK.inv())
-        } else {
-            entry
-        }
-    }
-
-    private suspend fun restoreProgress(
-        entry: Entry,
-        backupChapters: List<BackupChapter>,
-        backupHistory: List<BackupHistory>,
-        legacyPlaybackStates: List<BackupPlaybackState>,
-        states: List<BackupEntryProgressState>,
-    ) {
-        val genericStates = states.map { it.toEntryProgressStateSnapshot() }
-        val genericIdentities = genericStates.mapTo(hashSetOf()) { it.contentKey to it.resourceKey }
-        val legacyStates = legacyPlaybackStates
-            .mapNotNull { it.toProgressSnapshot() }
-            .filterNot { (it.contentKey to it.resourceKey) in genericIdentities }
-        val legacyMangaStates = if (entry.type == EntryType.MANGA) {
-            val historyByUrl = backupHistory.associateBy { it.url }
-            backupChapters
-                .mapNotNull { it.toMangaProgressSnapshot(historyByUrl[it.url]?.lastRead ?: 0L) }
-                .filterNot { (it.contentKey to it.resourceKey) in genericIdentities }
-        } else {
-            emptyList()
-        }
-        when (
-            progressFeature.restore(
-                entry,
-                EntryProgressSnapshot(
-                    states = legacyStates + legacyMangaStates + genericStates,
-                ),
-            )
-        ) {
-            EntryProgressRestoreResult.Applied -> Unit
-            is EntryProgressRestoreResult.Inapplicable -> Unit
-        }
     }
 
     private suspend fun restoreCategories(
@@ -363,185 +240,6 @@ class EntryRestorer(
             upsertHistory.await(history.mergeWith(chapter.id, existingHistoryByChapterId[chapter.id]))
         }
     }
-
-    private suspend fun restoreTracking(entry: Entry, backupTracks: List<BackupTracking>) {
-        val dbTrackByTrackerId = getTracks.await(entry.id).associateBy { it.trackerId }
-
-        val (existingTracks, newTracks) = backupTracks
-            .mapNotNull {
-                val track = it.getTrackImpl()
-                val dbTrack = dbTrackByTrackerId[track.trackerId]
-                    ?: return@mapNotNull track.copy(
-                        id = 0,
-                        entryId = entry.id,
-                    )
-
-                if (track.forComparison() == dbTrack.forComparison()) {
-                    return@mapNotNull null
-                }
-
-                dbTrack.copy(
-                    remoteId = track.remoteId,
-                    libraryId = track.libraryId,
-                    progress = max(dbTrack.progress, track.progress),
-                )
-            }
-            .partition { it.id > 0 }
-
-        if (newTracks.isNotEmpty()) {
-            insertTrack.awaitAll(newTracks)
-        }
-        if (existingTracks.isNotEmpty()) {
-            handler.await(inTransaction = true) {
-                existingTracks.forEach { track ->
-                    entry_syncQueries.update(
-                        entryId = track.entryId,
-                        syncId = track.trackerId,
-                        mediaId = track.remoteId,
-                        libraryId = track.libraryId,
-                        title = track.title,
-                        lastChapterRead = track.progress,
-                        totalChapter = track.total,
-                        status = track.status,
-                        score = track.score,
-                        trackingUrl = track.remoteUrl,
-                        startDate = track.startDate,
-                        finishDate = track.finishDate,
-                        private = track.private,
-                        id = track.id,
-                        profileId = profileProvider.activeProfileId,
-                    )
-                }
-            }
-        }
-    }
-
-    private fun EntryTrack.forComparison() = this.copy(id = 0L, entryId = 0L)
-
-    private suspend fun restorePlaybackPreferences(
-        entry: Entry,
-        backupPreferences: BackupPlaybackPreferences?,
-    ) {
-        val preferences = backupPreferences?.toPlaybackSnapshot() ?: return
-        playbackPreferencesFeature.restore(entry, preferences)
-    }
-
-    private fun BackupPlaybackState.toProgressSnapshot(): EntryProgressStateSnapshot? {
-        if (url.isBlank() || (!completed && positionMs <= 0L)) return null
-        val safePosition = positionMs.coerceAtLeast(0L)
-        val safeDuration = durationMs.takeIf { it > 0L }
-        val timestamp = lastWatchedAt.coerceAtLeast(0L)
-        return EntryProgressStateSnapshot(
-            resourceKey = url,
-            sourceChildKey = url,
-            locator = EntryProgressLocator(
-                kind = "time",
-                position = safePosition,
-                extent = safeDuration,
-                progression = safeDuration?.let {
-                    (safePosition.toDouble() / it.toDouble()).coerceIn(0.0, 1.0)
-                },
-            ),
-            completed = completed,
-            locatorUpdatedAt = timestamp,
-            completionUpdatedAt = timestamp,
-        )
-    }
-
-    private suspend fun restoreDownloadPreferences(entry: Entry, backupPreferences: BackupDownloadPreferences?) {
-        if (backupPreferences == null) return
-        downloadPreferencesRepository.upsert(
-            DownloadPreferences(
-                entryId = entry.id,
-                dubKey = backupPreferences.dubKey,
-                streamKey = backupPreferences.streamKey,
-                subtitleKey = backupPreferences.subtitleKey,
-                qualityMode = backupPreferences.qualityMode.toDownloadQualityMode(),
-                updatedAt = backupPreferences.updatedAt,
-            ),
-        )
-    }
-
-    private fun String.toDownloadQualityMode(): VideoDownloadQualityMode {
-        return when (this) {
-            "best" -> VideoDownloadQualityMode.BEST
-            "data_saving" -> VideoDownloadQualityMode.DATA_SAVING
-            else -> VideoDownloadQualityMode.BALANCED
-        }
-    }
-
-    private fun BackupPlaybackPreferences.toPlaybackSnapshot(): EntryPlaybackPreferencesSnapshot {
-        return EntryPlaybackPreferencesSnapshot(
-            dubKey = dubKey,
-            streamKey = streamKey,
-            sourceQualityKey = sourceQualityKey,
-            subtitleKey = subtitleKey,
-            playerQualityMode = playerQualityMode.toPlaybackQualityMode(),
-            playerQualityHeight = playerQualityHeight,
-            subtitleOffsetX = subtitleOffsetX,
-            subtitleOffsetY = subtitleOffsetY,
-            subtitleTextSize = subtitleTextSize,
-            subtitleTextColor = subtitleTextColor,
-            subtitleBackgroundColor = subtitleBackgroundColor,
-            subtitleBackgroundOpacity = subtitleBackgroundOpacity,
-            updatedAt = updatedAt,
-        )
-    }
-
-    private fun String.toPlaybackQualityMode(): EntryPlaybackQualityMode {
-        return when (this) {
-            "specific_height" -> EntryPlaybackQualityMode.SPECIFIC_HEIGHT
-            else -> EntryPlaybackQualityMode.AUTO
-        }
-    }
-
-    private fun enqueueMerge(entry: Entry, backupEntry: BackupEntry) {
-        val targetSource = backupEntry.mergeTargetSource ?: return
-        val targetUrl = backupEntry.mergeTargetUrl ?: return
-        val position = backupEntry.mergePosition ?: return
-        val targetType = backupEntry.mergeTargetType ?: backupEntry.type
-        val targetIdentity = EntryMergeBackupIdentity(targetSource, targetUrl, targetType)
-        val memberIdentity = EntryMergeBackupIdentity(entry.source, entry.url, entry.type)
-
-        val group = pendingMerges.getOrPut(targetIdentity) {
-            PendingMergeGroup(
-                targetIdentity = targetIdentity,
-                members = mutableListOf(),
-            )
-        }
-        group.members.removeAll { it.identity == memberIdentity }
-        group.members.add(PendingMergeMember(identity = memberIdentity, position = position))
-        if (targetIdentity == memberIdentity) {
-            group.members.removeAll { it.identity == targetIdentity }
-            group.members.add(PendingMergeMember(identity = targetIdentity, position = position))
-        }
-    }
-
-    private data class PendingMergeGroup(
-        val targetIdentity: EntryMergeBackupIdentity,
-        val members: MutableList<PendingMergeMember>,
-    )
-
-    private data class PendingMergeMember(
-        val identity: EntryMergeBackupIdentity,
-        val position: Int,
-    )
-}
-
-internal fun BackupChapter.toMangaProgressSnapshot(historyTimestamp: Long): EntryProgressStateSnapshot? {
-    if (url.isBlank() || (!read && lastPageRead <= 0L)) return null
-    val timestamp = historyTimestamp.coerceAtLeast(0L)
-    return EntryProgressStateSnapshot(
-        resourceKey = url,
-        sourceChildKey = url,
-        locator = EntryProgressLocator(
-            kind = "page",
-            position = lastPageRead.takeIf { it > 0L },
-        ),
-        completed = read,
-        locatorUpdatedAt = timestamp,
-        completionUpdatedAt = timestamp,
-    )
 }
 
 internal fun BackupHistory.mergeWith(chapterId: Long, existingHistory: History?): HistoryUpdate {

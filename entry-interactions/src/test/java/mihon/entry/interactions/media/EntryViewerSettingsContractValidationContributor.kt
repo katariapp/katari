@@ -18,6 +18,22 @@ class EntryViewerSettingsContractValidationContributor : FeatureValidationContri
     override val owner = EntryViewerSettingsFeatureContributor.owner
 
     override fun contributeTo(sink: FeatureValidationContributionSink) {
+        sink.addEntryBackupParticipationContract(
+            ENTRY_VIEWER_SETTINGS_BACKUP_SNAPSHOT_PARTICIPANT,
+            EntryViewerSettingsBehaviorContract,
+            EntryViewerSettingsBackupState.serializer(),
+            EntryViewerSettingsBackupState(
+                listOf(EntryViewerSettingBackupValue("reader", "theme", "dark", 1)),
+            ),
+        )
+        sink.addEntryBackupParticipationContract(
+            ENTRY_VIEWER_SETTINGS_BACKUP_RESTORE_PARTICIPANT,
+            EntryViewerSettingsBehaviorContract,
+            EntryViewerSettingsBackupState.serializer(),
+            EntryViewerSettingsBackupState(
+                listOf(EntryViewerSettingBackupValue("reader", "theme", "dark", 1)),
+            ),
+        )
         viewerSettingsContracts.forEach { contract ->
             sink.add(
                 FeatureContractVerifier(

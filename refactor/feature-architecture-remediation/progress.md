@@ -4,10 +4,10 @@
 
 - Baseline branch: `features-arch-refactor`
 - Baseline commit: `1d962d406` (`chore: planning cleanup`)
-- Current phase: R4 — Entry Lifecycle Operations
+- Current phase: R5 — Backup and Restore Participation
 - Phase state: complete; awaiting milestone review and commit
 - Last updated: 2026-07-22
-- Next action: after R4 is approved and committed, begin R5 Backup and Restore participation.
+- Next action: after R5 is approved and committed, begin R6 Catalogue Feature completion.
 
 ## Approved Decisions
 
@@ -25,8 +25,8 @@
 | R1 — Executable Participation Architecture | Complete | `76e4341ef` | Architecture first; no app workflow migration |
 | R2 — Production Composition and Enforcement | Complete | `dd58b169e` | One module per production Feature |
 | R3 — Library Membership Lifecycle | Complete | `7984e5608` | One membership boundary and discovered follow-ups |
-| R4 — Entry Lifecycle Operations | Complete, awaiting commit | — | Metadata, removal, Profile move |
-| R5 — Backup and Restore Participation | Pending | — | Includes tracker diagnostics defect |
+| R4 — Entry Lifecycle Operations | Complete | `197d74fa1` | Metadata, removal, Profile move |
+| R5 — Backup and Restore Participation | Complete, awaiting commit | — | Includes tracker diagnostics defect |
 | R6 — Catalogue Feature Completion | Pending | — | Removes raw provider dispatch |
 | R7 — Download Policy and Context Ownership | Pending | — | Removes Manga preference leak |
 | R8 — Enforcement, Secondary Audit, and Documentation | Pending | — | Final alignment and cleanup |
@@ -177,6 +177,49 @@
 - Expected user action: review only the two choices under questionable actions. No response is needed if they are
   acceptable; respond `commit and continue` to commit R4 and begin R5, or identify the classification that should be
   changed.
+
+### Phase R5 milestone — 2026-07-22
+
+- Outcome: Added an always-applicable Entry Backup Feature with discovered snapshot, transactional restore, and
+  post-entry finalization execution points. `EntryBackupCreator` and `EntryRestorer` now invoke only this generic
+  boundary; they no longer inject or enumerate Viewer Settings, Playback Preferences, Progress, child-group filters,
+  Merge, Tracking, or Download Configuration.
+- Notable changes: `BackupEntry` now carries additive opaque Feature-state envelopes with a stable owner ID, an
+  owner-defined schema version, and payload bytes. Each current state model, ID, version, participant declaration, and
+  runtime binding lives with its owning Feature. Current state is dual-written to the older typed fields, and legacy
+  Manga, Anime, generic, and profile-scoped records are translated into envelopes only when a current envelope is
+  absent. Merge accumulates its own restore state by session/profile/type and finalizes after every referenced Entry is
+  available; that mutable state belongs to the caller-owned restore session rather than a production singleton.
+  Tracking now owns profile-scoped backup persistence through its host while preserving the former merge semantics for
+  existing records, and Download Configuration owns the portable quality/state mapping instead of generic backup code.
+  Tracker diagnostics now use `Backup.allEntries()`.
+- Questionable actions or decisions: the finite compatibility adapter deliberately enumerates the seven historical
+  typed wire fields so older backups remain readable and older Katari releases can read current known state. It is not
+  consulted for participant discovery or execution, and future Features do not edit it. Restore finalization is
+  classified `IMMEDIATE` because it occurs after Entry batches rather than inside their transaction; Merge performs
+  each resulting group transition atomically through its own host. A valid envelope owned by an unknown future Feature
+  is ignored, while a known participant rejects a schema version it does not support. No answer is needed unless one
+  of these compatibility/failure rules should change.
+- Validation performed: `spotlessCheck`; full FOSS unit tests; focused current, legacy, Anime, profile, unknown-envelope,
+  diagnostics, and Feature-state compatibility tests; Entry Interactions tests; SQLDelight migration verification;
+  Entry interaction boundary enforcement; FOSS app Kotlin compilation; telemetry/updater Release Kotlin compilation;
+  build-logic tests; production developer-report and content-type-reference generation. The report contains 3 content
+  types, 41 Features, 14 execution points, 381 evaluated integrations, all selected contracts passing, and 0
+  obligations.
+- Known failures or intentionally broken compilation: none.
+- Manifesto comparison: a new Feature adds its state contract, schema version, participant declarations, and bindings
+  only in its owning module. The generic backup coordinator, creator, restorer, wire envelope, production topology, and
+  content-type list require no Feature-specific edit. Capability absence remains ordinary inapplicability; unknown
+  state remains harmless; current Feature codecs and restoration behavior are selected from the same graph and runtime
+  installation; and tests cover observable round trips and sequencing rather than declaring type support. R5 is
+  aligned with the manifesto.
+- Documentation impact: the generated content-type reference now includes the completed shared lifecycle and backup
+  Features. The backup/restore guide documents Feature-owned state, unknown-state behavior, dual writing, and legacy
+  compatibility. Enduring contributor workflow documentation remains scheduled for R8 after remaining Feature APIs
+  stabilize.
+- Expected user action: review only the two compatibility/finalization choices under questionable actions. No answer
+  is needed if they are acceptable; respond `commit and continue` to commit R5 and begin R6, or identify the rule that
+  should change.
 
 ## Milestone Template
 

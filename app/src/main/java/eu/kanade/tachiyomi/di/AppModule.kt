@@ -206,6 +206,7 @@ class AppModule(val app: Application) : InjektModule {
             trackerManager = get(),
             sourceManager = get(),
             getTracks = get(),
+            handler = get(),
             getTracksPerEntry = get(),
             refreshTracks = get(),
             deleteTrack = get(),

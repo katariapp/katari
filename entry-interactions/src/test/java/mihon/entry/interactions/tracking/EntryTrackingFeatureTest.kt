@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.host.tracking.EntryTrackingAccountHost
 import mihon.entry.interactions.host.tracking.EntryTrackingAutomationHost
+import mihon.entry.interactions.host.tracking.EntryTrackingBackupHost
 import mihon.entry.interactions.host.tracking.EntryTrackingCollectionHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHost
 import mihon.entry.interactions.host.tracking.EntryTrackingHostEntryService
@@ -122,6 +123,7 @@ class EntryTrackingFeatureTest {
             override val automation: EntryTrackingAutomationHost = mockk(relaxed = true)
             override val accounts: EntryTrackingAccountHost = mockk(relaxed = true)
             override val collection: EntryTrackingCollectionHost = mockk(relaxed = true)
+            override val backup: EntryTrackingBackupHost = EntryTrackingBackupHost.Empty
 
             override fun registeredServices() = services
 

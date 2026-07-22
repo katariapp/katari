@@ -21,7 +21,7 @@ import tachiyomi.domain.entry.model.Entry
 internal val ENTRY_PROGRESS_FEATURE_ID = FeatureId("entry.progress-transfer")
 internal val ENTRY_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.provider")
 private val ENTRY_PROGRESS_MIGRATION_INTEGRATION_ID = FeatureIntegrationId("entry.progress-transfer.migration")
-private val ENTRY_PROGRESS_FEATURE_OWNER = ContributionOwner("entry-progress-transfer")
+internal val ENTRY_PROGRESS_FEATURE_OWNER = ContributionOwner("entry-progress-transfer")
 private val ENTRY_PROGRESS_REFERENCE = entryContentTypeReferenceContribution(
     id = "progress-transfer",
     owner = ENTRY_PROGRESS_FEATURE_OWNER,

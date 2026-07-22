@@ -56,6 +56,54 @@ schema rather than receiving a portable state snapshot from the owning Feature.
 Backup tracker diagnostics also contain a current defect: validation enumerates only legacy Manga containers instead
 of using the unified `Backup.allEntries()` projection, omitting generic, Anime, and some profile-scoped entries.
 
+The R5 implementation inventory found four distinct layers that had to remain separate:
+
+- `BackupCreator` and `BackupRestorer` own file/profile orchestration, user-selected sections, progress reporting, and
+  compatibility with the top-level and profile-scoped containers. They must not know which Features persist Entry
+  state.
+- `EntryBackupCreator` and `EntryRestorer` own the Entry row plus the existing chapter, history, category, and fetch
+  interval wire semantics. Before R5 they also formed a handwritten Feature list for Viewer Settings, Playback
+  Preferences, Progress, child-group filters, Merge, Tracking, and Download Options; that list was the R5 target.
+- `BackupEntry` is the current protobuf compatibility surface. Its typed Feature fields must remain readable while an
+  additive repeated envelope carries a stable participant ID, participant-owned schema version, and opaque payload.
+  The profile container already embeds `BackupEntry`, so one Entry-level addition covers ordinary and profile backups.
+- Legacy Manga and Anime containers normalize through `toBackupEntry()` and therefore enter the same restore path.
+  Their typed state is compatibility input, not current Feature-discovery evidence.
+
+The Feature-state ownership and selection semantics entering R5 were:
+
+- Viewer Settings, Playback Preferences, child-group filters, and Merge are always considered when an Entry is backed
+  up; their Feature boundaries decide whether state exists or applies.
+- Progress and Download Options are included only with the existing `chapters` backup selection. Chapter/history data
+  remains core wire state, while Progress consumes those fields only as a legacy fallback.
+- Tracking was included only with the existing `tracking` selection. Its snapshot and restoration bypassed the
+  Tracking Feature and directly queried or mutated `entry_sync`.
+- Download Options bypassed the Download Configuration Feature and directly used
+  `DownloadPreferencesRepository`; generic backup code also owned the video quality string mapping. The Download
+  Configuration module therefore had to own this portable snapshot, codec, and restore behavior.
+- Merge restoration is intentionally deferred until all Entries in a destination profile exist. Discovered restore
+  participation must preserve that finalize-after-entry-batch boundary rather than trying to restore each group while
+  its referenced members may be absent. Deferred state belongs to the caller-owned restore session, not to the
+  application composition: an interrupted or concurrent restore must not leave or share mutable pending groups in a
+  production singleton.
+
+R5 compatibility rules are therefore:
+
+- Snapshot participants are discovered through the production Feature-module installation; Entry backup orchestration
+  receives opaque envelopes and never switches on current Feature IDs.
+- Restore participants prefer an envelope they own. A compatibility adapter may translate the finite set of existing
+  typed fields into those same participant payloads only when the corresponding envelope is absent. This adapter is a
+  legacy wire bridge, not a Feature completion list, and a future Feature needs no change to it.
+- Current known state is projected back into typed fields while older releases need it. That dual-write projection is
+  likewise compatibility-only and cannot decide whether a participant runs.
+- Unknown envelopes remain decodable and do not invalidate or block restoration of the Entry or known envelopes.
+- Participant schema versions are interpreted by the owning participant. The generic coordinator validates envelope
+  identity/duplication but does not understand payload schemas.
+- Existing Tracking records retain their local title, status, score, dates, URL, privacy, and total during restore;
+  backup identity fields and the maximum progress are merged exactly as before the architectural migration.
+- Backup diagnostics must derive Tracking service IDs from `Backup.allEntries()`, which includes current generic,
+  legacy Manga, legacy Anime, and profile-scoped Entries.
+
 ### Download policy and context
 
 Generic bulk Download selection depends on `MangaReaderSettingsProvider.skipFiltered`, allowing a Manga reader setting

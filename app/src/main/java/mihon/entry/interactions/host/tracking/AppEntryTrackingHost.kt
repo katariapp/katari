@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.data.track.Tracker
 import eu.kanade.tachiyomi.data.track.TrackerManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import tachiyomi.data.DatabaseHandler
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.domain.track.interactor.DeleteTrack
@@ -22,6 +23,7 @@ class AppEntryTrackingHost(
     private val trackerManager: TrackerManager,
     private val sourceManager: SourceManager,
     private val getTracks: GetTracks,
+    handler: DatabaseHandler,
     getTracksPerEntry: GetTracksPerEntry,
     refreshTracks: RefreshTracks,
     deleteTrack: DeleteTrack,
@@ -53,6 +55,7 @@ class AppEntryTrackingHost(
         trackerManager = trackerManager,
         getTracksPerEntry = getTracksPerEntry,
     )
+    override val backup: EntryTrackingBackupHost = AppEntryTrackingBackupHost(handler)
 
     override fun registeredServices(): List<EntryTrackingHostService> {
         return trackerManager.trackers.map(Tracker::toHostService)
