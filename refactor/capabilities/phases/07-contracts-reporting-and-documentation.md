@@ -92,7 +92,7 @@ contributions:
   reference.
 - [x] Bind the production projection plan to the exact production interaction composition and the authoritative Local,
   legacy-extension, and tracker registrations without copying a type or support matrix.
-- [ ] Generate or verify the deterministic capability section of `docs/features/content-type-reference.md` while
+- [x] Generate or verify the deterministic capability section of `docs/features/content-type-reference.md` while
   retaining appropriate explanatory prose.
 - [ ] Verify source SDK contract documentation against contextual consumer coverage without treating descriptive source
   metadata as Entry behavior support.

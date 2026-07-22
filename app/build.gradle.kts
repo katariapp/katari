@@ -3,6 +3,7 @@ import mihon.gradle.getBuildTime
 import mihon.gradle.getLatestCommitCount
 import mihon.gradle.getLatestCommitSha
 import mihon.gradle.tasks.ReplaceShortcutsPlaceholderTask
+import org.gradle.api.tasks.testing.Test
 import java.io.FileInputStream
 import java.util.Properties
 import kotlin.io.encoding.Base64
@@ -346,6 +347,39 @@ dependencies {
     implementation(libs.leakCanary.plumber)
 
     testImplementation(libs.kotlinx.coroutines.test)
+}
+
+val contentTypeReferenceFile = rootProject.layout.projectDirectory.file("docs/features/content-type-reference.md")
+val contentTypeReferenceTestClass =
+    "eu.kanade.tachiyomi.documentation.ProductionEntryContentTypeReferenceDocumentationTest"
+
+fun Test.useProductionContentTypeReference(mode: String) {
+    testClassesDirs = files(
+        providers.provider { tasks.named<Test>("testFossUnitTest").get().testClassesDirs },
+    )
+    classpath = files(
+        providers.provider { tasks.named<Test>("testFossUnitTest").get().classpath },
+    )
+    filter.includeTestsMatching(contentTypeReferenceTestClass)
+    systemProperty("mihon.entry.contentTypeReference.mode", mode)
+    systemProperty("mihon.entry.contentTypeReference.file", contentTypeReferenceFile.asFile.absolutePath)
+    testLogging.showStandardStreams = true
+}
+
+val generateContentTypeReference = tasks.register<Test>("generateContentTypeReference") {
+    group = "documentation"
+    description = "Generates the capability tables in the content-type reference from the production Feature graph"
+    useProductionContentTypeReference("generate")
+    outputs.file(contentTypeReferenceFile)
+    outputs.upToDateWhen { false }
+}
+
+tasks.register<Test>("verifyContentTypeReference") {
+    group = "verification"
+    description = "Verifies the content-type reference against the production Feature graph"
+    useProductionContentTypeReference("verify")
+    inputs.file(contentTypeReferenceFile)
+    mustRunAfter(generateContentTypeReference)
 }
 
 androidComponents {

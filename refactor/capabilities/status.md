@@ -105,9 +105,9 @@ Updated: 2026-07-22
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
 - Milestone: Phase 7.4 Documentation Projection
-- State: Feature-owned content-reference projection and its production binding are implemented. The production plan
-  evaluates the exact application composition and resolves external context from the Local-source, legacy-extension,
-  and tracker owners. Deterministic Markdown rendering and generate/verify tasks remain next.
+- State: Feature-owned content-reference projection, production binding, deterministic Markdown rendering, and
+  dedicated generate/verify tasks are implemented. Source SDK documentation verification is the remaining Phase 7.4
+  milestone before repository-wide Phase 7.5 reconciliation.
 
 Focused Phase 6 preparation findings:
 
@@ -1605,8 +1605,25 @@ Focused Phase 7.4 Production Projection Binding findings:
   import from the earlier Entry Consumption migration; no test behavior changes.
 - Formatting, production-plan execution, test-fixture compilation, and FOSS unit-test compilation pass.
 
+Focused Phase 7.4 Generated Reference findings:
+
+- `generateContentTypeReference` replaces only the marked factual region in
+  `docs/features/content-type-reference.md`; `verifyContentTypeReference` independently fails when that checked-in
+  region differs from the exact production projection. Handwritten introduction and explanatory prose remain outside
+  the markers.
+- The renderer discovers and sorts content types by stable ID, renders unavailable cells from absent selected
+  relationships, and emits Feature-owned rows and derived notes by their declared section and order. It contains no
+  Feature, row, or content-type registry.
+- The checked-in reference now contains all 40 current projected rows and both derived Download notes across all 36
+  participating production Features. In particular, Anime migration is now shown from runtime truth instead of the
+  stale handwritten value.
+- Generic renderer tests cover unknown future content types, deterministic ordering, status rendering, Markdown
+  escaping, incomplete-plan rejection, and exact marker replacement without asserting current product support.
+- Formatting, renderer tests, production generation, independent checked-in verification, FOSS unit-test compilation,
+  and Entry-interaction boundary validation pass.
+
 ## Exact Next Action After Review
 
-Review and commit the Phase 7.4 production projection binding. Then implement deterministic Markdown rendering of the
-checked-in content-type reference section and the approved generate/verify tasks. Do not begin repository-wide Phase
-7.5 reconciliation until Phase 7.4 is complete.
+Review and commit the generated content-type-reference milestone. Then verify the source SDK contract documentation
+against contextual consumer coverage without treating descriptive source metadata as Entry behavior support. Do not
+begin repository-wide Phase 7.5 reconciliation until Phase 7.4 is complete.
