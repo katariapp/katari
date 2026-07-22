@@ -1,6 +1,6 @@
 # Entry Feature Repository Validation
 
-Status: Proposed
+Status: Accepted
 
 ## Context
 

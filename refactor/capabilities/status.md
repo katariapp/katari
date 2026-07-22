@@ -105,9 +105,9 @@ Updated: 2026-07-22
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
 - Milestone: Phase 7.5 Repository Validation and Register Reconciliation
-- State: Existing repository gates and workflow path filters have been audited. Proposed decision `0025` defines one
-  explicit Entry Feature architecture gate and a narrower documentation gate, without changing Gradle or CI wiring
-  before review. Implementation has not started.
+- State: Decision `0025` is accepted and its repository-validation wiring is implemented. The complete architecture
+  gate now runs in the application workflow, while the narrower projection gate also runs for documentation-only
+  changes. Register reconciliation and the unknown-contribution acceptance path remain.
 
 Focused Phase 6 preparation findings:
 
@@ -1644,8 +1644,22 @@ Focused Phase 7.4 Source SDK Consumer Coverage findings:
 - Formatting, Feature Graph tests, generic planner/renderer tests, production generation, independent source SDK and
   content-reference verification, FOSS unit-test compilation, and boundary validation pass.
 
+Focused Phase 7.5 Repository Validation Wiring findings:
+
+- Root `verifyEntryFeatureArchitecture` composes static boundary enforcement, Feature Graph and Feature Validation
+  infrastructure tests, generic documentation tests, the exact production contract/reporting suite, deterministic
+  report generation, and checked-in production documentation verification.
+- Root `verifyEntryFeatureDocumentation` is the narrower projection gate used by the documentation workflow. It catches
+  stale documentation-only changes even when workflow path filters intentionally skip the application build.
+- Neither aggregate is attached to formatting or `testFossUnitTest`. Their existing responsibilities remain intact,
+  and explicit workflow steps give architecture and documentation failures their own category.
+- The aggregate names architectural validation surfaces only. It contains no content-type, Feature, capability,
+  contract, verifier, projection, row, or source-consumer registry; participation within each surface remains
+  contribution-discovered.
+- The complete gate passes, produces the current 3,413-line developer report with no unresolved work, and independently
+  verifies both checked-in production projections.
+
 ## Exact Next Action After Review
 
-Review proposed decision `0025`. If approved, implement the two root validation aggregates, wire the complete aggregate
-into the application build workflow and the documentation aggregate into the documentation workflow, then reconcile
-the test, reporting, documentation, and boundary register before running the unknown-contribution acceptance path.
+Review and commit the Phase 7.5 repository-validation wiring. Then reconcile every test, reporting, documentation, and
+boundary surface in the migration register before running the unknown-contribution acceptance path.

@@ -99,7 +99,7 @@ contributions:
 
 ### 7.5 — Repository Validation and Register Reconciliation
 
-- [ ] Integrate unresolved-obligation checks, contract execution, report generation, and documentation verification with
+- [x] Integrate unresolved-obligation checks, contract execution, report generation, and documentation verification with
   normal repository validation.
 - [ ] Reconcile every test, reporting, documentation, and boundary surface listed in the migration inventory.
 - [ ] Run the unknown type/capability/feature acceptance path across static and contextual contracts, reporting, and
@@ -118,9 +118,9 @@ contributions:
 - Decision [`0025`](../decisions/0025-entry-feature-repository-validation.md) proposes one root architecture aggregate
   and one narrower documentation aggregate. The architecture aggregate composes existing owner tasks without listing
   types, Features, contracts, projections, rows, or consumers.
-- No task or workflow wiring changes until that decision is reviewed. After approval, implementation begins with the
-  two root aggregates, then wires the application and documentation workflows, then reconciles the complete migration
-  register and unknown-contribution acceptance path.
+- Decision `0025` is accepted. The two root aggregates and their explicit application/documentation workflow steps are
+  implemented. The remaining work reconciles the complete migration register and runs the unknown-contribution
+  acceptance path.
 
 ## Exit Gate
 

@@ -51,6 +51,9 @@ jobs:
       - name: Check code format
         run: ./gradlew spotlessCheck
 
+      - name: Verify Entry Feature architecture
+        run: ./gradlew --quiet verifyEntryFeatureArchitecture
+
       - name: Verify legacy source ABI
         run: ./gradlew --quiet verifyLegacySourceAbi
 
