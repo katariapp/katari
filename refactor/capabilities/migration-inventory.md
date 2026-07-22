@@ -398,6 +398,12 @@ tests remain. Build validation rejects central contract suites, concrete current
 contract validation, direct declaration inspection from ordinary tests, and production validation that bypasses the
 single evaluated host. It deliberately does not ban concrete types from type-owned behavioral or compatibility tests.
 
+Phase 7.3 closes the developer-report portion of this register. A validation-only neutral model derives content types,
+providers, integration states, prerequisites, contextual inputs and blockers, consequences, contracts, projections,
+execution results, and owned obligations from the evaluated production graph. The deterministic report task consumes
+the same production composition and validation host as the contract gate; it does not expose a graph query surface to
+application code or infer unconditional support from applicable validation scenarios.
+
 ## Audited Non-Migration Boundaries
 
 The following are not capability authorities by themselves and should not be forced into the graph:

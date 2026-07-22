@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.Test
+
 plugins {
     alias(mihonx.plugins.android.library)
     alias(mihonx.plugins.spotless)
@@ -29,4 +31,29 @@ dependencies {
     testImplementation(libs.unifile)
     testImplementation(projects.featureValidation)
     testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+val entryFeatureReportFile = layout.buildDirectory.file("reports/entry-features/developer-report.txt")
+
+val generateEntryFeatureReport = tasks.register<Test>("generateEntryFeatureReport") {
+    group = "reporting"
+    description = "Renders the evaluated Entry feature graph and validation results for developers"
+
+    testClassesDirs = files(
+        providers.provider { tasks.named<Test>("testDebugUnitTest").get().testClassesDirs },
+    )
+    classpath = files(
+        providers.provider { tasks.named<Test>("testDebugUnitTest").get().classpath },
+    )
+    filter {
+        includeTestsMatching(
+            "mihon.entry.interactions.validation.ProductionEntryInteractionDeveloperReportTest",
+        )
+    }
+    systemProperty(
+        "mihon.entry.feature.report.output",
+        entryFeatureReportFile.get().asFile.absolutePath,
+    )
+    outputs.file(entryFeatureReportFile)
+    testLogging.showStandardStreams = true
 }

@@ -16,6 +16,7 @@ import mihon.feature.graph.FeatureObligation
 import mihon.feature.graph.IncompleteFeatureContext
 import mihon.feature.graph.MissingContractFixtureObligation
 import mihon.feature.graph.MissingFeatureContextEvidence
+import mihon.feature.graph.MissingFeatureProjectionObligation
 import mihon.feature.graph.SpecializedFeatureObligation
 import mihon.feature.graph.resolveFeatureContext
 import mihon.feature.graph.selectContextualFeatureArtifacts
@@ -187,8 +188,9 @@ fun planFeatureContractValidation(
                 }
                 when (val result = resolved.integration) {
                     is ApplicableFeatureContext -> {
-                        val selected = selectContextualFeatureArtifacts(graph, evaluation, resolved)
-                            .behavioralContracts
+                        val selectedArtifacts = selectContextualFeatureArtifacts(graph, evaluation, resolved)
+                        graphObligations += selectedArtifacts.obligations
+                        val selected = selectedArtifacts.behavioralContracts
                             .single { it.contract.id == contract.id }
                         val verifier = verifiersByContract[reference]
                         if (verifier != null) {
@@ -220,7 +222,7 @@ fun planFeatureContractValidation(
             ),
         ),
         issues = buildList {
-            graphObligations.distinct().mapTo(this, ::GraphFeatureContractPlanIssue)
+            graphObligations.normalized().mapTo(this, ::GraphFeatureContractPlanIssue)
             validationObligations.distinct().mapTo(this, ::ValidationFeatureContractPlanIssue)
         },
     )
@@ -358,6 +360,25 @@ private fun List<MissingContextualFixtureCandidate>.toFixtureObligations(): List
             affectedContracts = candidates.map { it.contract }.distinct().sortedBy { it.id.value },
         )
     }
+}
+
+private fun List<FeatureObligation>.normalized(): List<FeatureObligation> {
+    val projectionObligations = filterIsInstance<MissingFeatureProjectionObligation>()
+        .groupBy { obligation ->
+            Triple(obligation.feature, obligation.integration, obligation.requirement.id)
+        }
+        .values
+        .map { matching ->
+            val first = matching.first()
+            first.copy(
+                affectedSubjects = matching
+                    .flatMap { it.affectedSubjects }
+                    .distinct()
+                    .sortedBy(FeatureIntegrationSubject::sortKey),
+            )
+        }
+        .sortedWith(compareBy({ it.feature.value }, { it.integration.value }, { it.requirement.id.value }))
+    return filterNot { it is MissingFeatureProjectionObligation }.distinct() + projectionObligations
 }
 
 private fun FeatureIntegrationSubject.sortKey(): String =

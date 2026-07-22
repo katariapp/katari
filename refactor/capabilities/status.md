@@ -1,6 +1,6 @@
 # Capability Refactor Status
 
-Updated: 2026-07-21
+Updated: 2026-07-22
 
 ## Repository Snapshot
 
@@ -96,6 +96,7 @@ Updated: 2026-07-21
 - Phase 7.1.4 Source context contract commit: `e14affa81` (`(test): execute source context contracts`)
 - Phase 7.1.5 Workflow and Tracking contract commit: `26b44c8d3` (`(test): execute workflow and tracking contracts`)
 - Phase 7.1.6 Contract Reconciliation commit: `f4b4382f9` (`(test): reconcile production feature contracts`)
+- Phase 7.2 Boundary Enforcement commit: `691011fce` (`(test): enforce graph-selected contract validation`)
 - Latest earlier production migration: `e04b2481c` (`(refactor): derive download capabilities from providers`)
 - Phase 2 completion: `918fcc4d3` (`(refactor): complete bookmark download capability proof`)
 - Always verify `HEAD`, the working tree, and recent commits before relying on this snapshot.
@@ -103,9 +104,8 @@ Updated: 2026-07-21
 ## Active Work
 
 - Phase: Phase 7 — Graph-Selected Contracts, Reporting, and Documentation
-- Milestone: Phase 7.2 Declaration-Test Removal and Boundary Enforcement
-- State: Declaration-only registration tests are removed and the executable-contract boundary is enforced for review.
-  Production contract migration remains successful. Developer reporting and documentation projection have not
+- Milestone: Phase 7.3 Developer Reporting
+- State: The production developer report is implemented and validated for review. Documentation projection has not
   migrated.
 
 Focused Phase 6 preparation findings:
@@ -1546,7 +1546,27 @@ Focused Phase 7.2 Declaration-Test Removal and Boundary Enforcement findings:
 - Formatting, Feature Graph, Feature Validation, root/Anime/Manga interaction tests, build-logic tests, repository
   boundary validation, and FOSS application compilation pass.
 
+Focused Phase 7.3 Developer Reporting findings:
+
+- `feature-validation` owns a neutral report snapshot because scenario and contract execution results are
+  validation-only facts. Runtime application modules do not depend on the reporting model and receive no graph query
+  API.
+- The report derives discovered content types and providers plus all 357 production integration evaluations across 36
+  Features. Each integration retains prerequisites, matched providers, specialized work, context inputs, possible
+  blockers, consequences, contracts, projections, execution outcomes, and responsible owners.
+- Contextual integrations remain labeled conditional even when an applicable validation scenario passes. The renderer
+  explicitly identifies scenario results as samples rather than type-wide support.
+- Contextual artifact selection now retains missing projection obligations instead of discarding them after selecting a
+  contract. A projection obligation still appears only when its Feature declared the requirement and applicable context
+  establishes the relationship.
+- `generateEntryFeatureReport` evaluates the exact production composition through the shared validation host, writes
+  `entry-interactions/build/reports/entry-features/developer-report.txt`, and fails after rendering if validation or
+  obligations are unresolved. A clean task run produces a deterministic 3,090-line report with zero current
+  obligations.
+- Formatting, Feature Graph and Feature Validation tests, all Entry-interactions tests, build-logic tests, boundary
+  validation, clean/root report-task execution, and FOSS application compilation pass.
+
 ## Exact Next Action After Review
 
-Commit Phase 7.2 after review. Then begin Phase 7.3 developer reporting; do not begin documentation projection until
-that milestone is complete.
+Commit Phase 7.3 after review. Then begin Phase 7.4 documentation projection; do not begin repository-wide Phase 7.5
+reconciliation until that milestone is complete.

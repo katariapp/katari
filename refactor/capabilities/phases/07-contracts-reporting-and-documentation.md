@@ -75,11 +75,11 @@ contributions:
 
 ### 7.3 — Developer Reporting
 
-- [ ] Derive a neutral report from graph discovery, static evaluation, contextual scenario results, artifact selection,
+- [x] Derive a neutral report from graph discovery, static evaluation, contextual scenario results, artifact selection,
   execution outcomes, and obligations.
-- [ ] Report providers, integration states, consequences, declared blockers, contracts, projections, and responsible
+- [x] Report providers, integration states, consequences, declared blockers, contracts, projections, and responsible
   owners without converting conditional state into type-wide support.
-- [ ] Add deterministic human-readable rendering and a normal developer task without introducing a report query API for
+- [x] Add deterministic human-readable rendering and a normal developer task without introducing a report query API for
   application code.
 
 ### 7.4 — Documentation Projection
