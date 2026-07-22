@@ -4,6 +4,8 @@ package mihon.feature.graph.validation.reporting
 data class FeatureDeveloperReport(
     val contentTypes: List<FeatureDeveloperContentType>,
     val features: List<FeatureDeveloperFeature>,
+    val executionPoints: List<FeatureDeveloperExecutionPoint>,
+    val executionParticipants: List<FeatureDeveloperExecutionParticipant>,
     val integrations: List<FeatureDeveloperIntegration>,
     val obligations: List<FeatureDeveloperObligation>,
 )
@@ -19,6 +21,26 @@ data class FeatureDeveloperContentType(
 data class FeatureDeveloperFeature(
     val id: String,
     val owner: String,
+)
+
+data class FeatureDeveloperExecutionPoint(
+    val id: String,
+    val owner: String,
+    val eventType: String,
+    val delivery: String,
+    val failurePolicy: String,
+)
+
+data class FeatureDeveloperExecutionParticipant(
+    val contentType: FeatureDeveloperOwnedReference,
+    val point: FeatureDeveloperOwnedReference,
+    val participant: FeatureDeveloperOwnedReference,
+    val state: FeatureDeveloperIntegrationState,
+    val prerequisites: FeatureDeveloperCapabilityRequirement,
+    val contextInputs: List<FeatureDeveloperOwnedReference>,
+    val after: List<String>,
+    val before: List<String>,
+    val contracts: List<String>,
 )
 
 data class FeatureDeveloperOwnedReference(
@@ -127,6 +149,7 @@ data class FeatureDeveloperSubject(
 
 enum class FeatureDeveloperObligationCategory {
     SPECIALIZED_ADAPTER,
+    EXECUTION_SPECIALIZED_ADAPTER,
     CONTRACT_FIXTURE,
     PROJECTION,
     CONTRACT_VERIFIER,

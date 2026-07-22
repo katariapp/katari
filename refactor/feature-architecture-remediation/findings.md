@@ -1,0 +1,117 @@
+# Feature Architecture Remediation Findings
+
+## Purpose
+
+This document preserves the post-migration audit that followed completion of the initial Entry Feature architecture.
+It records the approved gaps that remain; it is not a replacement for
+[`../capability-manifesto.md`](../capability-manifesto.md), which remains the architectural authority.
+
+Audit baseline:
+
+- Branch: `features-arch-refactor`
+- Commit: `1d962d406` (`chore: planning cleanup`)
+- Audit date: 2026-07-22
+
+## Root Cause
+
+The Feature Graph can currently declare a `SharedFeatureConsequence` and evaluate where it applies, but the consequence
+does not bind an executable runtime participant. Runtime delivery is still completed through handwritten dependency
+lists, application call sequences, or `when (artifactId)` dispatch.
+
+This means the graph can report that a consequence exists without proving that the application executes it. The
+architecture therefore still permits the exact failure mode rejected by the manifesto: a developer can finish a
+Feature while forgetting a related lifecycle, persistence, UI, or background integration.
+
+## Approved High-Confidence Gaps
+
+### Library membership lifecycle
+
+Library addition and removal are independently orchestrated by Entry, History, Catalogue, and Library screen models.
+Those paths manually combine duplicate detection, category selection, default child state, Merge lifecycle, Tracking
+binding, custom-cover cleanup, favorite persistence, and Download cleanup.
+
+The category-selection paths demonstrate current drift: automatic Tracking binding can run before the user confirms
+Library membership, while the actual favorite mutation happens later.
+
+`EntryRemovalCleanupInteraction` is an app-local interaction boundary that handles only custom covers and sits beside
+Feature-owned APIs. It must disappear when membership lifecycle consequences are contributed through the new
+architecture.
+
+### Catalogue execution
+
+`EntryCatalogueFeature` owns catalogue availability and description, but application and data code still dispatch raw
+source operations for search, popular/latest paging, filter resolution, global search, and Migration search.
+
+The Catalogue Feature must own these operations so application consumers cannot use raw catalogue providers as an
+alternative API.
+
+### Backup and restore
+
+Backup creation and restoration explicitly inject and call every Feature state integration known at the time. A new
+Feature can contribute persistent Entry state to the graph and still be silently absent from backups.
+
+Anime Download preferences are a concrete boundary leak: generic backup code understands their video-specific storage
+schema rather than receiving a portable state snapshot from the owning Feature.
+
+Backup tracker diagnostics also contain a current defect: validation enumerates only legacy Manga containers instead
+of using the unified `Backup.allEntries()` projection, omitting generic, Anime, and some profile-scoped entries.
+
+### Download policy and context
+
+Generic bulk Download selection depends on `MangaReaderSettingsProvider.skipFiltered`, allowing a Manga reader setting
+to control Anime and Book behavior.
+
+Download source-access context is also reconstructed by several UI, notification, and worker consumers. The existing
+Download Feature must resolve this context and own generic bulk selection policy.
+
+Approved product policy: bulk Download actions operate on the currently visible filtered children. They must not be
+controlled by the Manga reader preference.
+
+### Entry lifecycle operations
+
+Metadata changes, destructive deletion, and Profile movement remain fixed integration lists:
+
+- `EntryMetadataUpdateHooks` hardcodes only Download title maintenance.
+- Clear Database remembers Download cleanup and database deletion but exposes no general removal consequence point.
+- `EntryProfileMoveService` knows the current profile-scoped tables and separately invokes Merge behavior.
+
+These are separate cohesive lifecycle operations, not one catch-all service. Each must expose discovered transactional,
+post-commit, or durable participants as appropriate.
+
+### Custom covers
+
+Custom-cover behavior participates in Library removal, Merge, Migration, Profile movement, and destructive deletion.
+It will remain a host-owned contributed consequence for now, not a standalone user-facing Feature or content-type
+capability. This decision can be revisited if custom covers later need independent availability, contracts, or product
+policy.
+
+## Approved Non-Gap
+
+Stored child-state filters remain generic. Filtering on Downloaded, Consumed, or Bookmarked state does not require the
+corresponding mutation provider to exist for the current content type. No capability gate will be added to those
+filters as part of this remediation.
+
+## Secondary Findings Requiring Later Verification
+
+These were discovered but were not included in the approved primary migration scope:
+
+- WebView declares navigation, sharing, assist, URL, and header consequences, while its contract primarily validates
+  URL and header resolution and UI wiring remains manual.
+- Source Refresh evaluates source availability but exposes no separate availability projection to presentation.
+- Viewer-settings screen projections are manually composed and may fail only during runtime construction.
+- Production Feature contributors are installed through a central list, and omission detection must distinguish a
+  legitimate composition root from an accidental second completion list.
+
+They must be re-audited during the final enforcement phase rather than silently absorbed into an earlier migration.
+
+## Investigated Legitimate Boundaries
+
+The following are not evidence of missing Feature ownership by themselves:
+
+- Legacy Manga and Anime backup wire-format conversion.
+- Tracker-owned supported Entry types.
+- Type-specific debug tools.
+- Source compatibility adapters.
+- Generic Entry notes, categories, display names, and fetch-interval editing.
+- Stored child-state filtering described above.
+

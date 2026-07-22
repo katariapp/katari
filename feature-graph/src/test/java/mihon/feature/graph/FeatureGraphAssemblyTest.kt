@@ -276,6 +276,8 @@ class FeatureGraphAssemblyTest {
     private infix fun FeatureGraph.shouldContainSameGraphAs(other: FeatureGraph) {
         contentTypes.map { it.contentType } shouldContainExactly other.contentTypes.map { it.contentType }
         features.map { it.feature } shouldContainExactly other.features.map { it.feature }
+        executionPoints.map { it.id } shouldContainExactly other.executionPoints.map { it.id }
+        executionParticipants.map { it.id } shouldContainExactly other.executionParticipants.map { it.id }
         capabilities.map { it.id } shouldContainExactly other.capabilities.map { it.id }
         contractFixtures.map { it.id } shouldContainExactly other.contractFixtures.map { it.id }
         projections.map { it.id } shouldContainExactly other.projections.map { it.id }

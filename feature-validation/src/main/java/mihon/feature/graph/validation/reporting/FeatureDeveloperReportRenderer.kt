@@ -5,6 +5,7 @@ fun renderFeatureDeveloperReport(report: FeatureDeveloperReport): String = build
     appendLine("================================")
     appendLine(
         "Content types: ${report.contentTypes.size}; features: ${report.features.size}; " +
+            "execution points: ${report.executionPoints.size}; " +
             "evaluated integrations: ${report.integrations.size}; obligations: ${report.obligations.size}",
     )
     appendLine(
@@ -27,6 +28,43 @@ fun renderFeatureDeveloperReport(report: FeatureDeveloperReport): String = build
     appendLine("--------")
     report.features.forEach { feature ->
         appendLine("- ${feature.id} (owner: ${feature.owner})")
+    }
+
+    appendLine()
+    appendLine("Execution points")
+    appendLine("----------------")
+    if (report.executionPoints.isEmpty()) {
+        appendLine("- none")
+    } else {
+        report.executionPoints.forEach { point ->
+            appendLine(
+                "- ${point.id} (owner: ${point.owner}; event: ${point.eventType}; " +
+                    "delivery: ${point.delivery}; failure: ${point.failurePolicy})",
+            )
+        }
+    }
+
+    appendLine()
+    appendLine("Evaluated execution participants")
+    appendLine("--------------------------------")
+    if (report.executionParticipants.isEmpty()) {
+        appendLine("- none")
+    } else {
+        report.executionParticipants.forEach { participant ->
+            appendLine(
+                "- ${participant.contentType.id} -> ${participant.point.id}/${participant.participant.id} " +
+                    "[${participant.state.name.lowercase()}]",
+            )
+            appendLine(
+                "  owners: type=${participant.contentType.owner}; point=${participant.point.owner}; " +
+                    "participant=${participant.participant.owner}",
+            )
+            appendLine("  prerequisites: ${participant.prerequisites.render()}")
+            appendReferences("context inputs", participant.contextInputs, indent = "  ")
+            if (participant.after.isNotEmpty()) appendLine("  after: ${participant.after.joinToString()}")
+            if (participant.before.isNotEmpty()) appendLine("  before: ${participant.before.joinToString()}")
+            if (participant.contracts.isNotEmpty()) appendLine("  contracts: ${participant.contracts.joinToString()}")
+        }
     }
 
     appendLine()

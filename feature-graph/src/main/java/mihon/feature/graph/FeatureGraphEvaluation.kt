@@ -96,6 +96,8 @@ data class FeatureGraphEvaluation internal constructor(
     val obligations: List<SpecializedFeatureObligation>,
     val sharedConsequences: List<SharedConsequenceApplicability>,
     val candidateConsequences: List<SharedConsequenceCandidate>,
+    val executionParticipants: List<FeatureExecutionParticipantEvaluation>,
+    val executionObligations: List<SpecializedExecutionParticipantObligation>,
 )
 
 fun evaluateFeatureGraph(graph: FeatureGraph): FeatureGraphEvaluation {
@@ -109,6 +111,7 @@ fun evaluateFeatureGraph(graph: FeatureGraph): FeatureGraphEvaluation {
         }
     }
 
+    val executionParticipants = evaluateFeatureExecutionParticipants(graph)
     return FeatureGraphEvaluation(
         integrations = evaluations,
         obligations = evaluations
@@ -128,6 +131,10 @@ fun evaluateFeatureGraph(graph: FeatureGraph): FeatureGraphEvaluation {
                     .sortedBy { it.id.value }
                     .map { consequence -> SharedConsequenceCandidate(evaluation.subject, consequence) }
             },
+        executionParticipants = executionParticipants,
+        executionObligations = executionParticipants
+            .filterIsInstance<IncompleteFeatureExecutionParticipant>()
+            .flatMap { it.obligations },
     )
 }
 

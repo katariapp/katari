@@ -289,6 +289,8 @@ class ContributionSemanticsTest {
         shouldThrow<IllegalArgumentException> { ContentTypeId("Example Type") }
         shouldThrow<IllegalArgumentException> { CapabilityId("entry/open") }
         shouldThrow<IllegalArgumentException> { ContributionOwner(" example.owner") }
+        shouldThrow<IllegalArgumentException> { FeatureExecutionPointId("entry lifecycle") }
+        shouldThrow<IllegalArgumentException> { FeatureExecutionParticipantId("Entry.cleanup") }
     }
 
     private fun consequence(id: String) = object : SharedFeatureConsequence {

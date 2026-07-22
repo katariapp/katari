@@ -31,6 +31,8 @@ class FeatureGraphContributionSink internal constructor(
 ) {
     private val contentTypes = mutableListOf<ContentTypeContribution>()
     private val features = mutableListOf<FeatureContribution>()
+    private val executionPoints = mutableListOf<FeatureExecutionPointDefinition<*>>()
+    private val executionParticipants = mutableListOf<FeatureExecutionParticipantDefinition<*>>()
 
     fun add(contribution: ContentTypeContribution) {
         require(contribution.owner == owner) {
@@ -46,10 +48,26 @@ class FeatureGraphContributionSink internal constructor(
         features += contribution
     }
 
+    fun add(definition: FeatureExecutionPointDefinition<*>) {
+        require(definition.owner == owner) {
+            "Contributor $owner cannot submit execution point ${definition.id} owned by ${definition.owner}"
+        }
+        executionPoints += definition
+    }
+
+    fun add(definition: FeatureExecutionParticipantDefinition<*>) {
+        require(definition.owner == owner) {
+            "Contributor $owner cannot submit execution participant ${definition.id} owned by ${definition.owner}"
+        }
+        executionParticipants += definition
+    }
+
     internal fun snapshot(): DiscoveredFeatureGraphContributions {
         return DiscoveredFeatureGraphContributions(
             contentTypes = contentTypes.toList(),
             features = features.toList(),
+            executionPoints = executionPoints.toList(),
+            executionParticipants = executionParticipants.toList(),
         )
     }
 }
@@ -58,6 +76,8 @@ class FeatureGraphContributionSink internal constructor(
 data class DiscoveredFeatureGraphContributions(
     val contentTypes: List<ContentTypeContribution>,
     val features: List<FeatureContribution>,
+    val executionPoints: List<FeatureExecutionPointDefinition<*>> = emptyList(),
+    val executionParticipants: List<FeatureExecutionParticipantDefinition<*>> = emptyList(),
 )
 
 fun discoverFeatureGraphContributions(
@@ -71,5 +91,7 @@ fun discoverFeatureGraphContributions(
     return DiscoveredFeatureGraphContributions(
         contentTypes = snapshots.flatMap { it.contentTypes },
         features = snapshots.flatMap { it.features },
+        executionPoints = snapshots.flatMap { it.executionPoints },
+        executionParticipants = snapshots.flatMap { it.executionParticipants },
     )
 }

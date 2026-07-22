@@ -17,6 +17,11 @@ import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContractScenarioId
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionDelivery
+import mihon.feature.graph.FeatureExecutionFailurePolicy
+import mihon.feature.graph.FeatureExecutionParticipantDefinition
+import mihon.feature.graph.FeatureExecutionParticipantId
+import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
@@ -28,6 +33,7 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.evaluateFeatureGraph
 import mihon.feature.graph.featureContextRule
+import mihon.feature.graph.featureExecutionPointDefinition
 import mihon.feature.graph.featureProjectionDefinition
 import mihon.feature.graph.validation.FeatureContractFailure
 import mihon.feature.graph.validation.FeatureContractScenario
@@ -242,6 +248,58 @@ class FeatureDeveloperReportTest {
             }
     }
 
+    @Test
+    fun `execution points and independently owned participants appear in the report`() = runSuspend {
+        val pointOwner = ContributionOwner("future.lifecycle")
+        val participantOwner = ContributionOwner("future.cleanup")
+        val point = featureExecutionPointDefinition<FutureEvent>(
+            id = FeatureExecutionPointId("future.lifecycle.removed"),
+            owner = pointOwner,
+            delivery = FeatureExecutionDelivery.AFTER_COMMIT,
+            failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
+        )
+        val executionContract = object : FeatureBehaviorContract {
+            override val id = FeatureArtifactId("future.cleanup.behavior")
+        }
+        val participant = FeatureExecutionParticipantDefinition(
+            id = FeatureExecutionParticipantId("future.cleanup.cover"),
+            owner = participantOwner,
+            point = point,
+            prerequisites = CapabilityExpression.Provided(provider),
+            behavioralContracts = listOf(executionContract),
+        )
+        val graph = assembleFeatureGraph(
+            DiscoveredFeatureGraphContributions(
+                contentTypes = listOf(
+                    type("audio", providesCapability = true),
+                    type("silent", providesCapability = false),
+                ),
+                features = emptyList(),
+                executionPoints = listOf(point),
+                executionParticipants = listOf(participant),
+            ),
+        )
+        val evaluation = evaluateFeatureGraph(graph)
+        val validation = validateFeatureContracts(
+            planFeatureContractValidation(graph, evaluation, emptyList()),
+        )
+
+        val report = buildFeatureDeveloperReport(graph, evaluation, validation)
+
+        report.executionPoints.single().apply {
+            id shouldBe "future.lifecycle.removed"
+            delivery shouldBe "after_commit"
+        }
+        report.executionParticipants.map { it.state } shouldContainExactly listOf(
+            FeatureDeveloperIntegrationState.APPLICABLE,
+            FeatureDeveloperIntegrationState.INAPPLICABLE,
+        )
+        report.executionParticipants.first().contracts shouldContainExactly listOf("future.cleanup.behavior")
+        renderFeatureDeveloperReport(report) shouldContain
+            "audio -> future.lifecycle.removed/future.cleanup.cover [applicable]"
+        Unit
+    }
+
     private fun validationContributor(): FeatureValidationContributor = featureValidationContributor(featureOwner) {
         add(
             FeatureContractVerifier(mihon.feature.graph.validation.FeatureContractReference(featureId, contract)) {
@@ -292,6 +350,7 @@ class FeatureDeveloperReportTest {
     private data object FutureProvider
     private data class FutureContext(val ready: Boolean)
     private data object FutureProjection
+    private data class FutureEvent(val entryId: Long)
 }
 
 private fun <T> runSuspend(block: suspend () -> T): T {

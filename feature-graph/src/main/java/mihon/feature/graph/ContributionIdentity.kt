@@ -62,6 +62,26 @@ value class FeatureArtifactId(val value: String) {
     override fun toString(): String = value
 }
 
+/** Stable identity of a coordinator-owned executable event boundary. */
+@JvmInline
+value class FeatureExecutionPointId(val value: String) {
+    init {
+        validateStableId("Feature execution point id", value)
+    }
+
+    override fun toString(): String = value
+}
+
+/** Stable identity of one independently owned participant in an execution point. */
+@JvmInline
+value class FeatureExecutionParticipantId(val value: String) {
+    init {
+        validateStableId("Feature execution participant id", value)
+    }
+
+    override fun toString(): String = value
+}
+
 /** Stable identity of contextual information consumed while evaluating a feature. */
 @JvmInline
 value class ContextInputId(val value: String) {

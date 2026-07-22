@@ -1,20 +1,25 @@
 package mihon.feature.graph.validation.reporting
 
+import mihon.feature.graph.ApplicableFeatureExecutionParticipant
 import mihon.feature.graph.ApplicableFeatureIntegration
 import mihon.feature.graph.CapabilityExpression
 import mihon.feature.graph.CapabilityProvider
+import mihon.feature.graph.ConditionalFeatureExecutionParticipant
 import mihon.feature.graph.ConditionalFeatureIntegration
 import mihon.feature.graph.FeatureArtifactObligation
 import mihon.feature.graph.FeatureGraph
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureIntegrationEvaluation
 import mihon.feature.graph.FeatureIntegrationSubject
+import mihon.feature.graph.InapplicableFeatureExecutionParticipant
 import mihon.feature.graph.InapplicableFeatureIntegration
+import mihon.feature.graph.IncompleteFeatureExecutionParticipant
 import mihon.feature.graph.IncompleteFeatureIntegration
 import mihon.feature.graph.MissingContractFixtureObligation
 import mihon.feature.graph.MissingFeatureProjectionObligation
 import mihon.feature.graph.SpecializedAdapter
 import mihon.feature.graph.SpecializedAdapterDefinition
+import mihon.feature.graph.SpecializedExecutionParticipantObligation
 import mihon.feature.graph.SpecializedFeatureObligation
 import mihon.feature.graph.validation.CompletedFeatureContractExecution
 import mihon.feature.graph.validation.CrashedFeatureContractExecution
@@ -71,6 +76,49 @@ fun buildFeatureDeveloperReport(
                 owner = contribution.owner.value,
             )
         },
+        executionPoints = graph.executionPoints.map { point ->
+            FeatureDeveloperExecutionPoint(
+                id = point.id.value,
+                owner = point.owner.value,
+                eventType = point.eventType.qualifiedName ?: point.eventType.toString(),
+                delivery = point.delivery.name.lowercase(),
+                failurePolicy = point.failurePolicy.name.lowercase(),
+            )
+        },
+        executionParticipants = evaluation.executionParticipants
+            .sortedBy {
+                "${it.subject.contentType.value}:${it.subject.point.value}:${it.subject.participant.value}"
+            }
+            .map { evaluated ->
+                val state = when (evaluated) {
+                    is InapplicableFeatureExecutionParticipant -> FeatureDeveloperIntegrationState.INAPPLICABLE
+                    is ConditionalFeatureExecutionParticipant -> FeatureDeveloperIntegrationState.CONDITIONAL
+                    is IncompleteFeatureExecutionParticipant -> FeatureDeveloperIntegrationState.INCOMPLETE
+                    is ApplicableFeatureExecutionParticipant -> FeatureDeveloperIntegrationState.APPLICABLE
+                }
+                FeatureDeveloperExecutionParticipant(
+                    contentType = FeatureDeveloperOwnedReference(
+                        evaluated.subject.contentType.value,
+                        evaluated.subject.contentTypeOwner.value,
+                    ),
+                    point = FeatureDeveloperOwnedReference(
+                        evaluated.participant.point.id.value,
+                        evaluated.participant.point.owner.value,
+                    ),
+                    participant = FeatureDeveloperOwnedReference(
+                        evaluated.participant.id.value,
+                        evaluated.participant.owner.value,
+                    ),
+                    state = state,
+                    prerequisites = evaluated.participant.prerequisites.report(),
+                    contextInputs = evaluated.participant.contextInputs.map { input ->
+                        FeatureDeveloperOwnedReference(input.id.value, input.owner.value)
+                    }.sortedBy(FeatureDeveloperOwnedReference::id),
+                    after = evaluated.participant.order.after.map { it.value }.sorted(),
+                    before = evaluated.participant.order.before.map { it.value }.sorted(),
+                    contracts = evaluated.participant.behavioralContracts.map { it.id.value }.sorted(),
+                )
+            },
         integrations = evaluation.integrations
             .sortedBy { it.subject.sortKey() }
             .map { evaluated ->
@@ -79,8 +127,10 @@ fun buildFeatureDeveloperReport(
                     invalidScenarios = invalidScenarios,
                 )
             },
-        obligations = validation.plan.issues
-            .flatMap { it.report() }
+        obligations = (
+            validation.plan.issues.flatMap { it.report() } +
+                evaluation.executionObligations.map { it.report() }
+            )
             .sortedWith(
                 compareBy(
                     FeatureDeveloperObligation::responsibleOwner,
@@ -274,8 +324,25 @@ private fun mihon.feature.graph.FeatureObligation.report(): FeatureDeveloperObli
             artifact = requirement.id.value,
             details = "Applicable integration requires a specialized adapter",
         )
+        is SpecializedExecutionParticipantObligation -> report()
         is FeatureArtifactObligation -> report()
     }
+}
+
+private fun SpecializedExecutionParticipantObligation.report(): FeatureDeveloperObligation {
+    return FeatureDeveloperObligation(
+        responsibleOwner = responsibleOwner.value,
+        category = FeatureDeveloperObligationCategory.EXECUTION_SPECIALIZED_ADAPTER,
+        subjects = listOf(
+            FeatureDeveloperSubject(
+                contentType = subject.contentType.value,
+                feature = "execution.${subject.point.value}",
+                integration = subject.participant.value,
+            ),
+        ),
+        artifact = requirement.id.value,
+        details = "Applicable execution participant requires a specialized adapter",
+    )
 }
 
 private fun FeatureArtifactObligation.report(): FeatureDeveloperObligation {
