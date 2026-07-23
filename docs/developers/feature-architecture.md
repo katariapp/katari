@@ -74,7 +74,7 @@ object EntryExampleFeatureContribution : FeatureGraphContributor {
 }
 
 internal val EntryExampleFeatureRuntimeModule = EntryFeatureRuntimeModule(
-    id = "entry-example",
+    id = "entry.example",
     contributor = EntryExampleFeatureContribution,
     installRuntime = { context ->
         val feature = DefaultEntryExampleFeature(/* graph-selected providers and host dependencies */)
@@ -86,6 +86,17 @@ internal val EntryExampleFeatureRuntimeModule = EntryFeatureRuntimeModule(
 )
 ```
 
+Declare the module next to its owner in an `*.entry-feature-module` file:
+
+```properties
+id=entry.example
+module=mihon.entry.interactions.EntryExampleFeatureRuntimeModule
+```
+
+The descriptor is the production registration. Its ID must match the runtime module ID, and its symbol must resolve to
+an `EntryFeatureRuntimeModule`. The active Android variant discovers descriptors from `src/main` and its own source set,
+then generates the Kotlin production registry in stable ID order.
+
 Declare shared behavior from provider prerequisites rather than naming current content types. If the Feature requires a
 media-specific implementation, declare a specialized requirement so a supporting type becomes incomplete visibly
 instead of silently losing the behavior.
@@ -95,8 +106,18 @@ loaded through the `FeatureValidationContributor` service registry; the build re
 registry, duplicate entries, and unknown registrations. Tests should exercise observable behavior, not repeat which
 types have providers.
 
-The production topology remains the application installation boundary. Build validation discovers Feature contributors
-and runtime modules and requires each exactly once, so the topology cannot silently become a second completeness list.
+Content-type modules use the same owner-local mechanism. Place an `*.entry-type-module` descriptor beside the type
+factory:
+
+```properties
+id=example
+factory=mihon.entry.interactions.example.exampleEntryTypeRuntimeModule
+```
+
+There is no hand-written production topology list. The generator discovers both descriptor kinds, rejects malformed or
+duplicate registrations, and emits direct Kotlin references. Compilation therefore rejects missing or wrongly typed
+symbols without reflection, `ServiceLoader`, or Kotlin source-text parsing. Runtime installation and architecture
+validation consume that same generated composition and validate declared IDs and contributor ownership.
 
 ## Contributing cross-Feature consequences
 
@@ -333,9 +354,9 @@ Run the complete architecture gate after changing a type, Feature, participant, 
 ./gradlew verifyEntryFeatureArchitecture
 ```
 
-The gate checks boundaries and production installation, runs graph and behavioral validation, verifies generated
-documentation, and generates the developer report. The content-type reference is a projection of the same evaluated
-graph; do not edit generated capability truth by hand.
+The gate generates the active production registry, checks boundaries and installation, runs graph and behavioral
+validation, verifies generated documentation, and generates the developer report. The content-type reference is a
+projection of the same evaluated graph; do not edit generated capability truth by hand.
 
 Before adding an allowlist or exception, ask whether an unknown future type or Feature could now be omitted without the
 architecture noticing. If so, extend discovery or validation rather than documenting a new checklist.

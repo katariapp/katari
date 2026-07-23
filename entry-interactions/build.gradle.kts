@@ -1,3 +1,4 @@
+import mihon.gradle.tasks.GenerateEntryInteractionTopologyTask
 import org.gradle.api.tasks.testing.Test
 
 plugins {
@@ -10,6 +11,36 @@ android {
 
     testFixtures {
         enable = true
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        val javaSources = variant.sources.java ?: return@onVariants
+        val variantName = variant.name.replaceFirstChar { it.uppercase() }
+        val generatedTopology = tasks.register<GenerateEntryInteractionTopologyTask>(
+            "generate${variantName}EntryInteractionTopology",
+        ) {
+            this.variantName.set(variant.name)
+            featureModuleDescriptors.from(
+                fileTree(layout.projectDirectory.dir("src/main")) {
+                    include("**/*.entry-feature-module")
+                },
+                fileTree(layout.projectDirectory.dir("src/${variant.name}")) {
+                    include("**/*.entry-feature-module")
+                },
+            )
+            typeModuleDescriptors.from(
+                rootProject.fileTree("entry-interactions") {
+                    include("*/src/main/**/*.entry-type-module")
+                    include("*/src/${variant.name}/**/*.entry-type-module")
+                },
+            )
+            outputDirectory.set(
+                layout.buildDirectory.dir("generated/source/entry-interaction-topology/${variant.name}"),
+            )
+        }
+        javaSources.addGeneratedSourceDirectory(generatedTopology) { it.outputDirectory }
     }
 }
 

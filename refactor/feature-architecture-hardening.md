@@ -222,6 +222,24 @@ This phase starts only after lifecycle enforcement is complete.
 8. Retain semantic boundary rules that are still useful, such as forbidding graph-only validation views in production
    runtime code and preventing behavior projection IDs from becoming dispatch keys.
 
+### Implemented Design
+
+Production registration is now owner-local metadata rather than a central Kotlin list:
+
+- `*.entry-feature-module` declares a stable Feature module ID and a fully qualified module symbol;
+- `*.entry-type-module` declares a stable Entry type ID and a fully qualified factory symbol;
+- the `entry-interactions` Android variant discovers `src/main` plus its active variant source set;
+- `GenerateEntryInteractionTopologyTask` validates and sorts the declarations, then generates direct Kotlin references
+  for the sole production registry;
+- Kotlin compilation proves every declared symbol exists and has the required module type;
+- generated registration guards prove descriptor IDs match the resolved Feature and Entry type module IDs;
+- production installation and the validation environment consume the same generated functions;
+- runtime installation retains the semantic duplicate-contributor and duplicate-boundary ownership checks.
+
+The previous build rule no longer parses `EntryFeatureRuntimeModule` declarations or a formatted
+`productionEntryFeatureRuntimeModules` body. It retains only the independent semantic checks for validation-only graph
+views and descriptive behavior IDs. The generated result remains deterministic and contains no runtime discovery.
+
 ### Completion Criteria
 
 Phase two is complete only when:
