@@ -19,21 +19,33 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryMergeDestructiveRemovalContributor,
         EntryMergeProfileMoveContributor,
         EntryMergeBackupContributor,
+        EntryMergeCustomCoverContributor,
     ),
 ) { context ->
     val dependencies = context.dependencies
     addSingletonFactory {
-        EntryMergeConsequenceDelivery(
+        EntryMergeDurableConsequences(get<EntryInteractionComposition>().featureExecutions)
+    }
+    addSingletonFactory {
+        EntryMergeLegacyConsequenceDelivery(
             host = dependencies.mergeHost,
             tracking = { get() },
             coverCleanup = dependencies.mergeCoverCleanup,
             downloadMaintenance = { get() },
         )
     }
+    addSingletonFactory {
+        EntryMergeConsequenceDelivery(
+            host = dependencies.mergeHost,
+            consequences = get(),
+            legacy = get(),
+        )
+    }
     addSingletonFactory<EntryMergeFeature> {
         EntryMergeWorkflowCoordinator(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
             host = dependencies.mergeHost,
+            durableConsequences = get<EntryMergeDurableConsequences>(),
             consequences = get(),
         )
     }
@@ -63,6 +75,9 @@ internal val EntryMergeFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryMergeDownloadOwnershipCoordinator(dependencies.mergeHost)
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryMergeCustomCoverBinding(dependencies.mergeHost, dependencies.mergeCoverCleanup),
+        ),
         executionBindings = listOf(
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_MERGE_BACKUP_SNAPSHOT_PARTICIPANT,

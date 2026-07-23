@@ -9,7 +9,8 @@ Updated: 2026-07-23
 - Baseline worktree was clean at `94f9a0a8c`.
 - Phase 1 is complete.
 - Phase 2 is complete.
-- Phase 3 is next and has not started.
+- Phase 3 is complete.
+- Phase 4 is next and has not started.
 
 ## Phase status
 
@@ -17,8 +18,8 @@ Updated: 2026-07-23
 | --- | --- | --- |
 | 1. Durable participation architecture | Complete | Opaque versioned envelopes, owned preparation/delivery/discard, binding coverage, tests, and documentation. |
 | 2. Migration durable consequences | Complete | Migration persists and retries opaque owner-contributed participants. |
-| 3. Merge durable consequences | Pending | Next phase; must consume Phase 1. |
-| 4. Media-session lifecycle | Pending | Shared event seam before type migration. |
+| 3. Merge durable consequences | Complete | Merge persists and retries opaque owner-contributed participants. |
+| 4. Media-session lifecycle | Pending | Next phase; shared event seam before type migration. |
 | 5. Refresh lifecycle | Pending | Preserve Library-update batching. |
 | 6. Lifecycle and consumer corrections | Pending | Profile deletion and Bookmark bypass. |
 | 7. Settings projections | Pending | One installation fact for navigation and search. |
@@ -62,6 +63,31 @@ Validation completed:
   participant joins without a Migration coordinator edit.
 - Kept target source refresh and replace-mode Merge participation as defining Migration workflow steps rather than
   treating them as optional consequences.
+
+Validation completed:
+
+- `./gradlew --quiet spotlessApply`
+- `./gradlew --quiet verifySqlDelightMigration`
+- `./gradlew --quiet verifyEntryFeatureArchitecture`
+- `./gradlew --quiet :app:compileFossKotlin`
+
+### Phase 3: Merge durable consequences
+
+- Replaced Merge's fixed consequence construction and participant-ID delivery switch with one discovered durable
+  execution point carrying entry-level workflow facts.
+- Tracking initialization, Download removal, and custom-cover cleanup now contribute their own participant definitions,
+  payload schemas, preparation, delivery, and behavioral validation.
+- The Merge coordinator no longer imports those Feature behaviors, derives a Download-capable type set, or maintains
+  follow-up behavior contexts for a fixed participant list.
+- The Merge host now persists participant ID, schema version, and opaque payload while retaining only the generic Entry
+  target needed to commit consequences atomically with membership changes.
+- Existing schema-1 queue rows retain their stable IDs and use an isolated finite compatibility adapter. Current
+  owner-contributed payloads start at schema 2 and never pass through that adapter.
+- Failed preparation and failed or cancelled host transitions discard prepared owner state. Unknown current
+  participants fail delivery and remain pending.
+- Added owner-specific execution contract verification, generic delivery coverage, and a composition proof that an
+  unknown future durable participant joins without a Merge coordinator edit.
+- Generalized isolated contract-subject construction so validation can bind both immediate and durable participants.
 
 Validation completed:
 

@@ -34,7 +34,8 @@ internal class AppEntryMergeHost(
                     operationId,
                     profileId,
                     entryId,
-                    artifactId,
+                    participantId,
+                    schemaVersion,
                     payload,
                     attempts,
                 ->
@@ -43,7 +44,8 @@ internal class AppEntryMergeHost(
                     operationId = operationId,
                     profileId = profileId,
                     entryId = entryId,
-                    artifactId = artifactId,
+                    participantId = participantId,
+                    schemaVersion = schemaVersion.toInt(),
                     payload = payload,
                     attempts = attempts,
                 )
@@ -530,16 +532,17 @@ internal class AppEntryMergeHost(
             }
             requests.distinctBy { request ->
                 val entryId = request.entryId ?: resolvedIds.getValue(checkNotNull(request.memberKey))
-                entryId to request.artifactId
+                entryId to request.participantId
             }.forEach { request ->
                 val entryId = request.entryId ?: resolvedIds.getValue(checkNotNull(request.memberKey))
-                val consequenceId = "${transition.operationId}:$entryId:${request.artifactId}"
+                val consequenceId = "${transition.operationId}:$entryId:${request.participantId}"
                 merge_consequencesQueries.insert(
                     consequenceId = consequenceId,
                     operationId = transition.operationId,
                     profileId = profileId,
                     entryId = entryId,
-                    artifactId = request.artifactId,
+                    participantId = request.participantId,
+                    schemaVersion = request.schemaVersion.toLong(),
                     payload = request.payload,
                     createdAt = clockMillis(),
                 )

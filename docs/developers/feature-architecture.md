@@ -177,10 +177,16 @@ An ordinary `FeatureExecutionParticipantBinding` cannot bind a durable point, an
 ordinary point. Production composition rejects missing, duplicate, orphaned, contradictory, and uncontracted durable
 participants in the same way as immediate participants.
 
-Entry Migration uses this boundary for optional cross-Feature work. Its host persists only the participant ID, schema
-version, and opaque payload, while each owner contributes its own preparation and delivery. Migration option discovery
-and transition preparation use ordinary execution points for the same reason: adding another participating Feature
-changes that Feature's contribution and runtime binding, not a Migration-owned completion list or dispatch switch.
+Entry Migration and Merge use this boundary for optional cross-Feature work. Their hosts persist only generic workflow
+identity, participant ID, schema version, and opaque payload, while each owner contributes its own preparation and
+delivery. Merge emits entry-level workflow facts; Tracking, Download maintenance, custom-cover ownership, and any
+future owner interpret only the facts relevant to them. Migration option discovery and transition preparation use
+ordinary execution points for the same reason: adding another participating Feature changes that Feature's contribution
+and runtime binding, not a coordinator-owned completion list or dispatch switch.
+
+Finite adapters may remain for payloads persisted before owner-contributed delivery existed. They must be explicitly
+schema-bounded and must not select or dispatch current participants; current payload schemas always use the discovered
+runtime.
 
 ## Contributing Entry backup state
 

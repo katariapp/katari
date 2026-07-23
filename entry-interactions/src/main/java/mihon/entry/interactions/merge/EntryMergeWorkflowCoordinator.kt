@@ -1,7 +1,10 @@
 package mihon.entry.interactions
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.withContext
 import mihon.entry.interactions.host.EntryMergeConsequenceRequest
 import mihon.entry.interactions.host.EntryMergeHost
 import mihon.entry.interactions.host.EntryMergeHostExpectation
@@ -18,17 +21,13 @@ import java.util.UUID
 internal class EntryMergeWorkflowCoordinator(
     private val evaluation: FeatureGraphEvaluation,
     private val host: EntryMergeHost,
+    private val durableConsequences: EntryMergeDurablePreparationGateway,
     private val consequences: EntryMergeConsequenceDelivery,
 ) : EntryMergeFeature {
     private val applicableTypes = evaluation.mergeTypes(
         ENTRY_MERGE_BASE_INTEGRATION_ID,
         EntryMergeBaseBehavior.WORKFLOW_COORDINATION.id,
     )
-    private val downloadTypes = evaluation.mergeTypes(
-        ENTRY_MERGE_DOWNLOAD_INTEGRATION_ID,
-        EntryMergeDownloadBehavior.OWNERSHIP.id,
-    )
-
     override suspend fun prepare(intent: EntryMergePrepareIntent): EntryMergePreparationResult {
         if (intent.selectedEntries.isEmpty()) return rejected(EntryMergeRejection.EMPTY_SELECTION)
         val selectedTypes = intent.selectedEntries.mapTo(mutableSetOf(), Entry::type)
@@ -235,21 +234,35 @@ internal class EntryMergeWorkflowCoordinator(
             return rejectedExecution(EntryMergeRejection.ENTRY_NOT_IN_EDITOR)
         }
 
-        evaluation.requireMergeFollowUpBehaviorContext(
-            type = edit.type,
-            libraryInitializationRequired = edit.preparations.isNotEmpty(),
-            coverCleanupRequired = libraryRemoved.isNotEmpty(),
-            downloadRemovalRequired = libraryRemoved.isNotEmpty().takeIf { edit.type in downloadTypes },
-        )
         val operationId = UUID.randomUUID().toString()
-        val consequenceRequests = edit.preparations.map { preparation ->
-            consequence(preparation.key, EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION)
-        } + libraryRemoved.flatMap { key ->
-            buildList {
-                add(consequence(key, EntryMergeConsequenceArtifact.COVER_CLEANUP))
-                if (edit.type in downloadTypes) {
-                    add(consequence(key, EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL))
-                }
+        val durablePreparations = edit.preparations.map { preparation ->
+            EntryMergeDurablePreparation(
+                target = EntryMergeConsequenceTarget.EditorMember(preparation.key),
+                event = EntryMergeDurableEvent(
+                    operationId = operationId,
+                    entry = preparation.entry,
+                    changes = setOf(EntryMergeDurableChange.ADDED_TO_LIBRARY),
+                    downloadRemovalRequested = false,
+                ),
+            )
+        } + libraryRemoved.map { key ->
+            EntryMergeDurablePreparation(
+                target = EntryMergeConsequenceTarget.EditorMember(key),
+                event = EntryMergeDurableEvent(
+                    operationId = operationId,
+                    entry = edit.entries.getValue(key).entry,
+                    changes = setOf(
+                        EntryMergeDurableChange.REMOVED_FROM_LIBRARY,
+                        EntryMergeDurableChange.REMOVED_FROM_GROUP,
+                    ),
+                    downloadRemovalRequested = false,
+                ),
+            )
+        }
+        val consequenceRequests = when (val result = durableConsequences.prepare(durablePreparations)) {
+            is EntryMergeDurablePreparationResult.Prepared -> result.requests
+            EntryMergeDurablePreparationResult.Failed -> {
+                return EntryMergeExecutionResult.OperationalFailure(retryable = true)
             }
         }
         return apply(
@@ -266,6 +279,7 @@ internal class EntryMergeWorkflowCoordinator(
                 libraryRemovalEntries = libraryRemoved,
                 consequenceRequests = consequenceRequests,
             ),
+            preparedConsequences = consequenceRequests,
         )
     }
 
@@ -322,28 +336,30 @@ internal class EntryMergeWorkflowCoordinator(
         if (!completeOrderedMembership || !homogeneousMembershipType) return EntryMergeExecutionResult.Conflict
         val type = memberTypes.single()
         check(type in applicableTypes) { "Entry type $type was not composed into the Merge feature" }
-        val downloadRemovalRequired = removeDownloads &&
-            (expected.orderedEntryIds.toSet() - replacementIds).isNotEmpty()
-        evaluation.requireMergeFollowUpBehaviorContext(
-            type = type,
-            libraryInitializationRequired = false,
-            coverCleanupRequired = libraryRemovalIds.isNotEmpty(),
-            downloadRemovalRequired = downloadRemovalRequired.takeIf { type in downloadTypes },
-        )
         val operationId = UUID.randomUUID().toString()
-        val consequenceRequests = libraryRemovalIds.flatMap { entryId ->
-            buildList {
-                add(consequence(entryId, EntryMergeConsequenceArtifact.COVER_CLEANUP))
-                if (removeDownloads && type in downloadTypes) {
-                    add(consequence(entryId, EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL))
-                }
+        val entriesById = entries.associateBy(Entry::id)
+        val removedEntryIds = expected.orderedEntryIds.toSet() - replacementIds
+        val durablePreparations = removedEntryIds.map { entryId ->
+            EntryMergeDurablePreparation(
+                target = EntryMergeConsequenceTarget.PersistedEntry(entryId),
+                event = EntryMergeDurableEvent(
+                    operationId = operationId,
+                    entry = entriesById.getValue(entryId),
+                    changes = buildSet {
+                        add(EntryMergeDurableChange.REMOVED_FROM_GROUP)
+                        if (entryId in libraryRemovalIds) {
+                            add(EntryMergeDurableChange.REMOVED_FROM_LIBRARY)
+                        }
+                    },
+                    downloadRemovalRequested = removeDownloads,
+                ),
+            )
+        }
+        val consequenceRequests = when (val result = durableConsequences.prepare(durablePreparations)) {
+            is EntryMergeDurablePreparationResult.Prepared -> result.requests
+            EntryMergeDurablePreparationResult.Failed -> {
+                return EntryMergeExecutionResult.OperationalFailure(retryable = true)
             }
-        } + if (!removeDownloads || type !in downloadTypes) {
-            emptyList()
-        } else {
-            (expected.orderedEntryIds.toSet() - libraryRemovalIds)
-                .filter { it !in replacementIds }
-                .map { consequence(it, EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL) }
         }
         val replacementTarget = when {
             replacementIds.size < 2 -> null
@@ -361,8 +377,9 @@ internal class EntryMergeWorkflowCoordinator(
                 replacementOrderedEntryIds = replacementIds.takeIf { it.size > 1 }.orEmpty(),
                 visibleEntryId = replacementTarget ?: visibleEntryId,
                 libraryRemovalEntryIds = libraryRemovalIds,
-                consequenceRequests = consequenceRequests.distinctBy { it.entryId to it.artifactId },
+                consequenceRequests = consequenceRequests,
             ),
+            preparedConsequences = consequenceRequests,
         )
     }
 
@@ -370,8 +387,20 @@ internal class EntryMergeWorkflowCoordinator(
         operationId: String,
         profileId: Long,
         transition: EntryMergeHostTransition,
+        preparedConsequences: List<EntryMergeConsequenceRequest>,
     ): EntryMergeExecutionResult {
-        return when (val result = host.profile(profileId).applyTransition(transition)) {
+        val result = try {
+            host.profile(profileId).applyTransition(transition)
+        } catch (error: CancellationException) {
+            withContext(NonCancellable) {
+                runCatching { durableConsequences.discard(preparedConsequences) }
+            }
+            throw error
+        }
+        if (result !is EntryMergeHostTransitionResult.Applied) {
+            durableConsequences.discard(preparedConsequences)
+        }
+        return when (result) {
             is EntryMergeHostTransitionResult.Applied -> {
                 val followUp = consequences.deliverOperation(operationId)
                 applied(result.visibleEntryId?.let { EntryMergeSubject(profileId, it) }, followUp)
@@ -394,12 +423,6 @@ internal class EntryMergeWorkflowCoordinator(
     private fun Collection<EntryMergeEditorEntryReference>.toKeysOrNull(
         edit: FeatureEntryMergeEditReference,
     ): List<EntryMergeHostMemberKey>? = map { it.toKeyOrNull(edit) ?: return null }
-
-    private fun consequence(key: EntryMergeHostMemberKey, artifactId: String) =
-        EntryMergeConsequenceRequest(memberKey = key, entryId = null, artifactId = artifactId)
-
-    private fun consequence(entryId: Long, artifactId: String) =
-        EntryMergeConsequenceRequest(memberKey = null, entryId = entryId, artifactId = artifactId)
 
     private fun contentIdentity(entry: Entry): String =
         "${entry.profileId}:${entry.type}:${entry.source}:${entry.url}"

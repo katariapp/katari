@@ -1,8 +1,8 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import io.mockk.coEvery
 import io.mockk.mockk
-import mihon.entry.interactions.host.EntryMergeHostTransition
 import mihon.entry.interactions.host.EntryMergeMembershipSnapshot
 import mihon.entry.interactions.validation.contractExpectation
 import mihon.entry.interactions.validation.productionSubjectEvaluation
@@ -167,9 +167,6 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
                 )
                 contractExpectation(result is EntryMergeExecutionResult.Applied, "Merge must mutate an existing group")
             }
-            EntryMergeBehaviorContract.LIBRARY_INITIALIZATION -> verifyInitialization(type)
-            EntryMergeBehaviorContract.COVER_CLEANUP -> verifyRemoval(type, includeDownloads = false, input = input)
-            EntryMergeBehaviorContract.DOWNLOAD_REMOVAL -> verifyRemoval(type, includeDownloads = true, input = input)
             else -> {
                 val ready = workflow(type, RecordingEntryMergeHost(entries))
                     .prepare(EntryMergePrepareIntent(entries))
@@ -181,85 +178,27 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
         }
     }
 
-    private suspend fun verifyInitialization(type: EntryType) {
-        val persisted = entry(1L, type)
-        val remote = entry(-1L, type).copy(favorite = false)
-        val host = RecordingEntryMergeHost(listOf(persisted))
-        val feature = workflow(type, host)
-        val ready = feature.prepare(
-            EntryMergePrepareIntent(
-                listOf(persisted, remote),
-                listOf(EntryMergeMemberPreparationIntent(remote, emptyList())),
-            ),
-        ) as EntryMergePreparationResult.Ready
-        feature.execute(
-            EntryMergeCommitIntent(
-                ready.editor.editReference,
-                ready.editor.target,
-                ready.editor.entries.map(EntryMergeEditorEntry::reference),
-            ),
-        )
-        val requests = (host.transitions.single() as EntryMergeHostTransition.CommitEditor).consequenceRequests
-        contractExpectation(
-            requests.any { it.artifactId == EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION },
-            "Merge must request initialization for a new library member",
-        )
-    }
-
-    private suspend fun verifyRemoval(
-        type: EntryType,
-        includeDownloads: Boolean,
-        input: FeatureContractExecutionInput,
-    ) {
-        val bindings = if (includeDownloads) {
-            listOf(EntryDownloadCapability.bind(input.provider(EntryDownloadCapability.definition)))
-        } else {
-            emptyList()
-        }
-        val entries = listOf(entry(1L, type), entry(2L, type))
-        val membership = EntryMergeMembershipSnapshot(7L, 1L, entries.map(Entry::id))
-        val host = RecordingEntryMergeHost(entries, listOf(membership))
-        val feature = workflow(type, host, bindings)
-        val ready = feature.prepare(
-            EntryMergePrepareIntent(listOf(entries.first())),
-        ) as EntryMergePreparationResult.Ready
-        val removed = ready.editor.entries.single { it.entry.id == 2L }.reference
-        feature.execute(
-            EntryMergeCommitIntent(
-                ready.editor.editReference,
-                ready.editor.target,
-                ready.editor.entries.map(EntryMergeEditorEntry::reference),
-                libraryRemovalEntries = setOf(removed),
-            ),
-        )
-        val ids = (host.transitions.single() as EntryMergeHostTransition.CommitEditor)
-            .consequenceRequests.map { it.artifactId }
-        contractExpectation(
-            EntryMergeConsequenceArtifact.COVER_CLEANUP in ids,
-            "Merge must request cover cleanup for library removal",
-        )
-        if (includeDownloads) {
-            contractExpectation(
-                EntryMergeConsequenceArtifact.DOWNLOAD_REMOVAL in ids,
-                "Merge must request download cleanup when Download is selected",
-            )
-        }
-    }
-
     private fun workflow(
         type: EntryType,
         host: RecordingEntryMergeHost,
-        bindings: List<EntryInteractionProviderBinding<*>> = emptyList(),
     ): EntryMergeFeature {
-        val evaluation = if (bindings.isEmpty()) {
-            productionSubjectEvaluation(type, EntryMergeFeatureContributor)
-        } else {
-            productionSubjectEvaluation(bindings, EntryMergeFeatureContributor)
+        val evaluation = productionSubjectEvaluation(
+            type = type,
+            feature = EntryMergeFeatureContributor,
+            additionalContributors = listOf(
+                EntryTrackingMergeContributor,
+                EntryMergeCustomCoverContributor,
+                EntryDownloadMergeContributor,
+            ),
+        )
+        val durable = mockk<EntryMergeDurableConsequences> {
+            coEvery { prepare(any()) } returns EntryMergeDurablePreparationResult.Prepared(emptyList())
         }
         return EntryMergeWorkflowCoordinator(
             evaluation,
             host,
-            EntryMergeConsequenceDelivery(host, { mockk(relaxed = true) }, {}, { mockk(relaxed = true) }),
+            durable,
+            EntryMergeConsequenceDelivery(host, durable),
         )
     }
 
@@ -309,16 +248,6 @@ class EntryMergeContractValidationContributor : FeatureValidationContributor {
                     contextEvidence(ENTRY_MERGE_COMPLETE_ORDERED_MEMBERSHIP_CONTEXT, true),
                     contextEvidence(ENTRY_MERGE_HOMOGENEOUS_MEMBERSHIP_TYPE_CONTEXT, true),
                 )
-            },
-            Contract(
-                ENTRY_MERGE_LIBRARY_INITIALIZATION_CONTEXT_INTEGRATION,
-                EntryMergeBehaviorContract.LIBRARY_INITIALIZATION,
-            ) { listOf(contextEvidence(ENTRY_MERGE_LIBRARY_INITIALIZATION_REQUIRED_CONTEXT, true)) },
-            Contract(ENTRY_MERGE_COVER_CLEANUP_CONTEXT_INTEGRATION, EntryMergeBehaviorContract.COVER_CLEANUP) {
-                listOf(contextEvidence(ENTRY_MERGE_COVER_CLEANUP_REQUIRED_CONTEXT, true))
-            },
-            Contract(ENTRY_MERGE_DOWNLOAD_REMOVAL_CONTEXT_INTEGRATION, EntryMergeBehaviorContract.DOWNLOAD_REMOVAL) {
-                listOf(contextEvidence(ENTRY_MERGE_DOWNLOAD_REMOVAL_REQUIRED_CONTEXT, true))
             },
         )
     }

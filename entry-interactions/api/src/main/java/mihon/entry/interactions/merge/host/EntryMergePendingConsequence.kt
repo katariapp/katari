@@ -5,7 +5,8 @@ data class EntryMergePendingConsequence(
     val operationId: String,
     val profileId: Long,
     val entryId: Long,
-    val artifactId: String,
+    val participantId: String,
+    val schemaVersion: Int,
     val payload: String,
     val attempts: Long,
 )

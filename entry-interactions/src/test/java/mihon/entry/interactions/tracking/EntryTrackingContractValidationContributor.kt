@@ -2,6 +2,7 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -114,6 +115,41 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
                         tracks == listOf(preparedTrack.toDomainTrack()),
                         "Tracking must contribute prepared records to the Migration transition",
                     )
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_TRACKING_MERGE_PARTICIPANT.id,
+                    EntryTrackingMergeDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+                    val persisted = Entry.create().copy(
+                        id = 42L,
+                        profileId = 7L,
+                        type = type,
+                        source = 11L,
+                        url = "/merge-tracking",
+                    )
+                    val feature = mockk<EntryTrackingFeature>(relaxed = true)
+                    val binding = entryTrackingMergeBinding(
+                        resolveEntry = { _, _, _, _ -> persisted },
+                        feature = { feature },
+                    )
+                    val prepared = binding.preparer.prepare(
+                        EntryMergeDurableEvent(
+                            operationId = "contract",
+                            entry = persisted.copy(id = -1L),
+                            changes = setOf(EntryMergeDurableChange.ADDED_TO_LIBRARY),
+                            downloadRemovalRequested = false,
+                        ),
+                    )
+                    contractExpectation(prepared != null, "Tracking must prepare Merge library initialization")
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    coVerify(exactly = 1) { feature.bindAutomatically(persisted) }
                 }
             },
         )

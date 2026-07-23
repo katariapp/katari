@@ -93,6 +93,36 @@ class EntryDownloadMaintenanceContractValidationContributor : FeatureValidationC
         sink.add(
             FeatureExecutionContractVerifier(
                 FeatureExecutionContractReference(
+                    ENTRY_DOWNLOAD_MERGE_PARTICIPANT.id,
+                    EntryDownloadMergeDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = input.provider(EntryDownloadCapability.definition).type
+                    val entry = Entry.create().copy(id = 82L, type = type)
+                    val plan = EntryDownloadRemovalPlan(listOf(entry))
+                    val feature = mockk<EntryDownloadMaintenanceFeature> {
+                        coEvery { prepareRemoval(entry) } returns EntryDownloadRemovalPreparation.Prepared(plan)
+                        coEvery { applyRemoval(plan) } returns EntryDownloadMaintenanceResult.Performed
+                    }
+                    val binding = entryDownloadMergeBinding { feature }
+                    val prepared = binding.preparer.prepare(
+                        EntryMergeDurableEvent(
+                            operationId = "contract",
+                            entry = entry,
+                            changes = setOf(EntryMergeDurableChange.REMOVED_FROM_GROUP),
+                            downloadRemovalRequested = true,
+                        ),
+                    )
+                    contractExpectation(prepared != null, "Download Maintenance must prepare durable Merge removal")
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    coVerify(exactly = 1) { feature.applyRemoval(plan) }
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
                     ENTRY_DOWNLOAD_MIGRATION_PARTICIPANT.id,
                     EntryDownloadMigrationDurableBehaviorContract,
                 ),

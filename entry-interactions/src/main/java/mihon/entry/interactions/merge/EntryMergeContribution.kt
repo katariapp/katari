@@ -70,9 +70,6 @@ internal enum class EntryMergeBehaviorContract(
     PREPARATION_AUTHORITY(FeatureArtifactId("entry.merge.preparation-authority.behavior")),
     PREPARATION_MEMBERSHIP(FeatureArtifactId("entry.merge.preparation-membership.behavior")),
     EXISTING_GROUP(FeatureArtifactId("entry.merge.existing-group.behavior")),
-    LIBRARY_INITIALIZATION(FeatureArtifactId("entry.merge.library-initialization.behavior")),
-    COVER_CLEANUP(FeatureArtifactId("entry.merge.cover-cleanup.behavior")),
-    DOWNLOAD_REMOVAL(FeatureArtifactId("entry.merge.download-removal.behavior")),
     LIBRARY_REMOVAL_PARTICIPATION(FeatureArtifactId("entry.merge.library-removal-participation.behavior")),
     DESTRUCTIVE_REMOVAL_PARTICIPATION(FeatureArtifactId("entry.merge.destructive-removal-participation.behavior")),
     PROFILE_MOVE_PARTICIPATION(FeatureArtifactId("entry.merge.profile-move-participation.behavior")),
@@ -89,6 +86,7 @@ internal object EntryMergeFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_MERGE_FEATURE_OWNER
 
     override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(ENTRY_MERGE_DURABLE_EXECUTION_POINT)
         sink.add(
             FeatureContribution(
                 feature = ENTRY_MERGE_FEATURE_ID,

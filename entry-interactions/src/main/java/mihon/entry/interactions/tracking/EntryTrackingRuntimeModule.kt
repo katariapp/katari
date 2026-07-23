@@ -13,6 +13,7 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryTrackingProfileMoveContributor,
         EntryTrackingBackupContributor,
         EntryTrackingMigrationContributor,
+        EntryTrackingMergeContributor,
     ),
 ) { context ->
     addSingletonFactory<EntryTrackingFeature> {
@@ -25,6 +26,21 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
         DefaultEntryTrackingBackupFeature(context.dependencies.trackingHost.backup)
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryTrackingMergeBinding(
+                resolveEntry = { profileId, type, sourceId, url ->
+                    context.dependencies.mergeHost.profile(profileId).resolveEntryIdentity(
+                        tachiyomi.domain.entry.model.Entry.create().copy(
+                            profileId = profileId,
+                            type = type,
+                            source = sourceId,
+                            url = url,
+                        ),
+                    )
+                },
+                feature = { get<EntryTrackingFeature>() },
+            ),
+        ),
         executionBindings = listOf(
             entryTrackingMigrationBinding { get<EntryTrackingFeature>() },
             FeatureExecutionParticipantBinding(

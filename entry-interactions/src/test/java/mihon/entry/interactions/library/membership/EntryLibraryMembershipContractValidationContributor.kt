@@ -108,6 +108,35 @@ class EntryLibraryCustomCoverContractValidationContributor : FeatureValidationCo
         sink.add(
             FeatureExecutionContractVerifier(
                 FeatureExecutionContractReference(
+                    ENTRY_MERGE_CUSTOM_COVER_PARTICIPANT.id,
+                    EntryMergeCustomCoverDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+                    val entry = Entry.create().copy(id = 96L, profileId = 7L, type = type)
+                    val cleaned = mutableListOf<Long>()
+                    val binding = entryMergeCustomCoverBinding(
+                        mergeHost = RecordingEntryMergeHost(listOf(entry)),
+                        cleanup = { cleaned += it.id },
+                    )
+                    val prepared = binding.preparer.prepare(
+                        EntryMergeDurableEvent(
+                            operationId = "contract",
+                            entry = entry,
+                            changes = setOf(EntryMergeDurableChange.REMOVED_FROM_LIBRARY),
+                            downloadRemovalRequested = false,
+                        ),
+                    )
+                    contractExpectation(prepared != null, "Custom covers must prepare durable Merge cleanup")
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    contractExpectation(cleaned == listOf(96L), "Merge must deliver custom-cover cleanup")
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
                     ENTRY_MIGRATION_CUSTOM_COVER_PARTICIPANT.id,
                     EntryMigrationCustomCoverDurableBehaviorContract,
                 ),

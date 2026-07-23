@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -18,9 +19,7 @@ import mihon.entry.interactions.host.EntryMergeMembershipSnapshot
 import mihon.entry.interactions.host.EntryMergePendingConsequence
 import mihon.entry.interactions.host.EntryMergeProfileHost
 import mihon.entry.interactions.host.EntryMergeProfileMoveHostTransition
-import mihon.feature.graph.ContributionOwner
-import mihon.feature.graph.discoverAndAssembleFeatureGraph
-import mihon.feature.graph.evaluateFeatureGraph
+import mihon.entry.interactions.validation.productionSubjectEvaluation
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.DuplicateEntryCandidate
 import tachiyomi.domain.entry.model.Entry
@@ -156,8 +155,8 @@ class EntryMergeFeatureTest {
         val transition = host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
         transition.preparations.single().categoryIds shouldContainExactly listOf(4L, 5L)
         transition.expected.entries.single { it.persistedEntryId == null }.entry.url shouldBe remote.url
-        transition.consequenceRequests.map { it.artifactId } shouldContainExactly
-            listOf(EntryMergeConsequenceArtifact.LIBRARY_INITIALIZATION)
+        transition.consequenceRequests.map { it.payload } shouldContainExactly
+            listOf("ADDED_TO_LIBRARY:download=false")
     }
 
     @Test
@@ -236,8 +235,8 @@ class EntryMergeFeatureTest {
         ).shouldBeInstanceOf<EntryMergeExecutionResult.Applied>()
 
         host.transitions.single().shouldBeInstanceOf<EntryMergeHostTransition.CommitEditor>()
-            .consequenceRequests.map { it.artifactId } shouldContainExactly
-            listOf(EntryMergeConsequenceArtifact.COVER_CLEANUP)
+            .consequenceRequests.map { it.payload } shouldContainExactly
+            listOf("REMOVED_FROM_LIBRARY,REMOVED_FROM_GROUP:download=false")
     }
 
     @Test
@@ -257,24 +256,20 @@ class EntryMergeFeatureTest {
     }
 
     private fun feature(host: FakeEntryMergeHost): EntryMergeFeature {
-        val evaluation = evaluateFeatureGraph(
-            discoverAndAssembleFeatureGraph(listOf(plugin(), EntryMergeFeatureContributor)),
+        val evaluation = productionSubjectEvaluation(
+            type = EntryType.BOOK,
+            feature = EntryMergeFeatureContributor,
+            additionalContributors = listOf(
+                EntryTrackingMergeContributor,
+                EntryMergeCustomCoverContributor,
+                EntryDownloadMergeContributor,
+            ),
         )
-        val delivery = EntryMergeConsequenceDelivery(
-            host = host,
-            tracking = { mockk(relaxed = true) },
-            coverCleanup = {},
-            downloadMaintenance = { mockk(relaxed = true) },
-        )
-        return EntryMergeWorkflowCoordinator(evaluation, host, delivery)
-    }
-
-    private fun plugin(): EntryInteractionPlugin {
-        return object : EntryInteractionPlugin {
-            override val type = EntryType.BOOK
-            override val owner = ContributionOwner("test.book")
-            override val providerBindings = emptyList<EntryInteractionProviderBinding<*>>()
+        val durable = RecordingMergeDurableGateway()
+        val delivery = mockk<EntryMergeConsequenceDelivery> {
+            coEvery { deliverOperation(any()) } returns EntryMergeFollowUp.COMPLETE
         }
+        return EntryMergeWorkflowCoordinator(evaluation, host, durable, delivery)
     }
 
     private fun entry(id: Long, suffix: String): Entry {
@@ -371,4 +366,26 @@ class EntryMergeFeatureTest {
 
         override suspend fun makeConsequencesRetryable() = Unit
     }
+}
+
+private class RecordingMergeDurableGateway : EntryMergeDurablePreparationGateway {
+    override suspend fun prepare(
+        preparations: List<EntryMergeDurablePreparation>,
+    ): EntryMergeDurablePreparationResult {
+        return EntryMergeDurablePreparationResult.Prepared(
+            preparations.map { preparation ->
+                val target = preparation.target
+                mihon.entry.interactions.host.EntryMergeConsequenceRequest(
+                    memberKey = (target as? EntryMergeConsequenceTarget.EditorMember)?.key,
+                    entryId = (target as? EntryMergeConsequenceTarget.PersistedEntry)?.id,
+                    participantId = "test.merge-durable",
+                    schemaVersion = 1,
+                    payload = preparation.event.changes.joinToString(separator = ",") { it.name } +
+                        ":download=${preparation.event.downloadRemovalRequested}",
+                )
+            },
+        )
+    }
+
+    override suspend fun discard(requests: List<mihon.entry.interactions.host.EntryMergeConsequenceRequest>) = Unit
 }

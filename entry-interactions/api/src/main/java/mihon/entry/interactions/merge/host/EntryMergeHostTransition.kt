@@ -77,14 +77,16 @@ data class EntryMergeHostPreparation(
 data class EntryMergeConsequenceRequest(
     val memberKey: EntryMergeHostMemberKey?,
     val entryId: Long?,
-    val artifactId: String,
+    val participantId: String,
+    val schemaVersion: Int,
     val payload: String = "",
 ) {
     init {
         require((memberKey == null) != (entryId == null)) {
             "A Merge consequence must identify either an editor member or a persisted Entry"
         }
-        require(artifactId.isNotBlank()) { "Merge consequence artifact ID cannot be blank" }
+        require(participantId.isNotBlank()) { "Merge consequence participant ID cannot be blank" }
+        require(schemaVersion > 0) { "Merge consequence schema version must be positive" }
     }
 }
 
