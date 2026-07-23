@@ -20,10 +20,8 @@
 - Before finishing a change, re-read every added or modified test and remove or narrow cases that are now subsumed by stronger coverage introduced later in the same change.
 
 ## Toolchain
-- Use the Gradle wrapper (`9.4.1`) and JDK `21` from `.github/.java-version`.
 - Android SDK/NDK and Java compatibility come from `gradle/mihon.versions.toml` plus build logic; do not hardcode them per module.
-- Build scripts shell out to `git` for commit count/SHA/build time, so `git` must be on `PATH`.
-- Do not run commands in a way that will result in the full output from gradlew to prevent context from being filled with unnecessary information. Use --quiet when possible
+- Do not run commands in a way that will result in the full output from gradlew to prevent context from being filled with unnecessary information. Use --quiet when actual command output is not needed
 
 ## Validation
 - Run `./gradlew spotlessApply` from the repo root.
