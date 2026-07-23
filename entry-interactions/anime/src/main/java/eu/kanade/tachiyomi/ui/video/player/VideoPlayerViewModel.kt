@@ -341,7 +341,7 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
                             },
                             activity = snapshot.historyUpdate?.let { history ->
                                 EntryMediaSessionActivity(
-                                    recordedAtEpochMillis = history.readAt?.time ?: now(),
+                                    recordedAtEpochMillis = history.readAt.time,
                                     durationMillis = history.sessionReadDuration,
                                 )
                             },

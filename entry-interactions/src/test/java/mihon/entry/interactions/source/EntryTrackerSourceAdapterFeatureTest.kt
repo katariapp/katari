@@ -15,7 +15,7 @@ class EntryTrackerSourceAdapterFeatureTest {
     @Test
     fun `tracker adapter composes only explicitly available source relationships`() {
         val preferences = mockk<SharedPreferences>()
-        val client = OkHttpClient()
+        val client = mockk<OkHttpClient>()
         val source = mockk<EntryImageSource> {
             every { this@mockk.client } returns client
         }

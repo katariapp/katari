@@ -93,7 +93,7 @@ internal class AnimeImmersiveProcessor(
                     },
                     activity = snapshot.historyUpdate?.let { history ->
                         EntryMediaSessionActivity(
-                            recordedAtEpochMillis = history.readAt?.time ?: System.currentTimeMillis(),
+                            recordedAtEpochMillis = history.readAt.time,
                             durationMillis = history.sessionReadDuration,
                         )
                     },

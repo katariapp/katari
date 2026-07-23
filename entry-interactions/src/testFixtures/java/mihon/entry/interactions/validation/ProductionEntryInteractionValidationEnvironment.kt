@@ -5,6 +5,7 @@ import eu.kanade.tachiyomi.network.NetworkHelper
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -70,6 +71,7 @@ import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.registry.default.DefaultRegistrar
 import java.io.File
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ProductionEntryInteractionValidationEnvironment(
     private val temporaryDirectory: File,
     private val viewerSettingsScreenProjectionResolver: EntryViewerSettingsScreenProjectionResolver =
@@ -145,7 +147,7 @@ class ProductionEntryInteractionValidationEnvironment(
             every { getDownloadsDirectory() } returns null
         }
         val networkHelper = mockk<NetworkHelper>(relaxed = true) {
-            every { client } returns OkHttpClient()
+            every { client } returns mockk<OkHttpClient>(relaxed = true)
         }
         Injekt.addSingletonFactory<Application> { application }
         Injekt.addSingletonFactory<StorageManager> { storageManager }

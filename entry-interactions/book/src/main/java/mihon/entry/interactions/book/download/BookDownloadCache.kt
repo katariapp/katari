@@ -33,7 +33,7 @@ internal class BookDownloadCache(
     private val _packages = MutableStateFlow<Map<BookDownloadPackageKey, VerifiedBookDownloadPackage>>(emptyMap())
     val packages: StateFlow<Map<BookDownloadPackageKey, VerifiedBookDownloadPackage>> = _packages.asStateFlow()
     private val verifiedPackageKeys = mutableSetOf<BookDownloadPackageKey>()
-    val changes: Flow<Unit> = _packages.drop(1).map { Unit }
+    val changes: Flow<Unit> = _packages.drop(1).map {}
 
     private val _isInitializing = MutableStateFlow(false)
     val isInitializing: StateFlow<Boolean> = _isInitializing.asStateFlow()

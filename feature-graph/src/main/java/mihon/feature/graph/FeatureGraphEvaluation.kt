@@ -23,6 +23,7 @@ sealed interface FeatureIntegrationEvaluation {
 }
 
 /** A prerequisite provider is absent. This is ordinary unsupported behavior and creates no obligation. */
+@ConsistentCopyVisibility
 data class InapplicableFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -32,6 +33,7 @@ data class InapplicableFeatureIntegration internal constructor(
 ) : FeatureIntegrationEvaluation
 
 /** Capability prerequisites are satisfied, but runtime context must decide whether the integration applies. */
+@ConsistentCopyVisibility
 data class ConditionalFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -42,6 +44,7 @@ data class ConditionalFeatureIntegration internal constructor(
 ) : FeatureIntegrationEvaluation
 
 /** Prerequisites are satisfied, but the affected content type has not supplied required specialized work. */
+@ConsistentCopyVisibility
 data class IncompleteFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -51,6 +54,7 @@ data class IncompleteFeatureIntegration internal constructor(
 ) : FeatureIntegrationEvaluation
 
 /** All statically evaluable prerequisites and specialized requirements are satisfied. */
+@ConsistentCopyVisibility
 data class ApplicableFeatureIntegration internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -91,6 +95,7 @@ data class BehaviorProjectionCandidate(
 )
 
 /** Deterministic derived evaluation of an assembled [FeatureGraph]. */
+@ConsistentCopyVisibility
 data class FeatureGraphEvaluation internal constructor(
     val integrations: List<FeatureIntegrationEvaluation>,
     val obligations: List<SpecializedFeatureObligation>,

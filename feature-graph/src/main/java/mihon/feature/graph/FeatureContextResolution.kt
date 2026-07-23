@@ -45,6 +45,7 @@ sealed interface ContextualFeatureIntegrationEvaluation {
     val evidence: List<ContextEvidence<*>>
 }
 
+@ConsistentCopyVisibility
 data class MissingFeatureContextEvidence internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -53,6 +54,7 @@ data class MissingFeatureContextEvidence internal constructor(
     val missingInputs: List<ContextInputDefinition<*>>,
 ) : ContextualFeatureIntegrationEvaluation
 
+@ConsistentCopyVisibility
 data class BlockedFeatureContext internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -61,6 +63,7 @@ data class BlockedFeatureContext internal constructor(
     val blockers: List<FeatureContextBlocker>,
 ) : ContextualFeatureIntegrationEvaluation
 
+@ConsistentCopyVisibility
 data class IncompleteFeatureContext internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -70,6 +73,7 @@ data class IncompleteFeatureContext internal constructor(
     val obligations: List<SpecializedFeatureObligation>,
 ) : ContextualFeatureIntegrationEvaluation
 
+@ConsistentCopyVisibility
 data class ApplicableFeatureContext internal constructor(
     override val subject: FeatureIntegrationSubject,
     override val integration: FeatureIntegration,
@@ -79,6 +83,7 @@ data class ApplicableFeatureContext internal constructor(
 ) : ContextualFeatureIntegrationEvaluation
 
 /** Runtime resolution and the obligations or descriptive behavior projections activated by exact context evidence. */
+@ConsistentCopyVisibility
 data class FeatureContextEvaluation internal constructor(
     val integration: ContextualFeatureIntegrationEvaluation,
     val obligations: List<SpecializedFeatureObligation>,

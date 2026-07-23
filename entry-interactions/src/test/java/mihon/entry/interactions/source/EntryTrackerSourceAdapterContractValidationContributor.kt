@@ -30,7 +30,7 @@ class EntryTrackerSourceAdapterContractValidationContributor : FeatureValidation
                 verifyFeatureContract {
                     val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
                     val preferences = mockk<SharedPreferences>()
-                    val client = OkHttpClient()
+                    val client = mockk<OkHttpClient>()
                     val source = mockk<EntryImageSource> { every { this@mockk.client } returns client }
                     val settings = mockk<EntrySourceSettingsFeature> {
                         every { resolve(7L) } returns EntrySourceSettingsResolution.Available(7L, preferences) {}

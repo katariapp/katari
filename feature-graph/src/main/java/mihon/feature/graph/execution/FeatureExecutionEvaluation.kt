@@ -14,6 +14,7 @@ sealed interface FeatureExecutionParticipantEvaluation {
     val participant: FeatureExecutionParticipantDefinition<*>
 }
 
+@ConsistentCopyVisibility
 data class InapplicableFeatureExecutionParticipant internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -22,6 +23,7 @@ data class InapplicableFeatureExecutionParticipant internal constructor(
     val unmetSpecializedPrerequisites: List<SpecializedAdapterDefinition<*>> = emptyList(),
 ) : FeatureExecutionParticipantEvaluation
 
+@ConsistentCopyVisibility
 data class ConditionalFeatureExecutionParticipant internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -31,6 +33,7 @@ data class ConditionalFeatureExecutionParticipant internal constructor(
     val pendingSpecializedRequirements: List<SpecializedAdapterDefinition<*>>,
 ) : FeatureExecutionParticipantEvaluation
 
+@ConsistentCopyVisibility
 data class IncompleteFeatureExecutionParticipant internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -39,6 +42,7 @@ data class IncompleteFeatureExecutionParticipant internal constructor(
     val obligations: List<SpecializedExecutionParticipantObligation>,
 ) : FeatureExecutionParticipantEvaluation
 
+@ConsistentCopyVisibility
 data class ApplicableFeatureExecutionParticipant internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -137,6 +141,7 @@ sealed interface ContextualFeatureExecutionParticipantEvaluation {
     val evidence: List<ContextEvidence<*>>
 }
 
+@ConsistentCopyVisibility
 data class MissingFeatureExecutionContextEvidence internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -144,6 +149,7 @@ data class MissingFeatureExecutionContextEvidence internal constructor(
     val missingInputs: List<ContextInputDefinition<*>>,
 ) : ContextualFeatureExecutionParticipantEvaluation
 
+@ConsistentCopyVisibility
 data class BlockedFeatureExecutionContext internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -151,6 +157,7 @@ data class BlockedFeatureExecutionContext internal constructor(
     val blockers: List<FeatureContextBlocker>,
 ) : ContextualFeatureExecutionParticipantEvaluation
 
+@ConsistentCopyVisibility
 data class IncompleteFeatureExecutionContext internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,
@@ -158,6 +165,7 @@ data class IncompleteFeatureExecutionContext internal constructor(
     val obligations: List<SpecializedExecutionParticipantObligation>,
 ) : ContextualFeatureExecutionParticipantEvaluation
 
+@ConsistentCopyVisibility
 data class ApplicableFeatureExecutionContext internal constructor(
     override val subject: FeatureExecutionParticipantSubject,
     override val participant: FeatureExecutionParticipantDefinition<*>,

@@ -7,6 +7,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -309,12 +310,14 @@ internal class BookDownloadManager(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun statusFlow(): Flow<BookDownload> = queueState.flatMapLatest { downloads ->
         downloads.map { download -> download.statusFlow.drop(1).map { download } }.merge()
     }.onStart {
         emitAll(queueState.value.filter { it.status == BookDownload.State.DOWNLOADING }.asFlow())
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun progressFlow(): Flow<BookDownload> = queueState.flatMapLatest { downloads ->
         downloads.map { download -> download.progressFlow.drop(1).map { download } }.merge()
     }.onStart {
