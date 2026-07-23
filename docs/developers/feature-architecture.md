@@ -131,6 +131,52 @@ participants.
 Descriptive projections are different: they report or render already-derived truth and have no execution path. Do not
 use a projection ID as a runtime dispatch key.
 
+### Durable consequences
+
+Work that must survive process death uses the same discovered participant model with a `DURABLE` execution point. A
+durable participant owns three operations:
+
+- preparation of an opaque, versioned payload from the typed workflow event;
+- delivery of that payload after the workflow host has committed it;
+- optional discard of prepared state when the workflow cannot commit.
+
+```kotlin
+val migrated = featureExecutionPointDefinition<EntryMigratedEvent>(
+    delivery = DURABLE,
+    failurePolicy = FAIL_FAST,
+)
+
+val exampleParticipant = FeatureExecutionParticipantDefinition(
+    point = migrated,
+    prerequisites = ExampleCapability,
+    behavioralContracts = listOf(exampleMigrationContract),
+)
+
+FeatureDurableExecutionParticipantBinding(
+    definition = exampleParticipant,
+    preparer = FeatureDurableExecutionPreparer { event ->
+        exampleFeature.prepare(event)?.let { state ->
+            FeatureDurableExecutionPayload(schemaVersion = 1, value = codec.encode(state))
+        }
+    },
+    deliveryHandler = FeatureDurableExecutionDeliveryHandler { payload ->
+        exampleFeature.apply(codec.decode(payload.schemaVersion, payload.value))
+    },
+)
+```
+
+The workflow coordinator asks the execution runtime to prepare all applicable participants. Its persistence host stores
+each returned envelope as participant ID, schema version, and opaque payload. Delivery routes through the installed
+participant binding; the coordinator never switches on participant IDs and never interprets payload schemas.
+
+Unknown persisted participant IDs are an explicit delivery failure and remain pending for retry or compatibility
+handling. They must not be acknowledged or silently discarded. If persistence of a prepared plan fails, the
+coordinator asks the runtime to discard the prepared envelopes so participant-owned staging can be cleaned up.
+
+An ordinary `FeatureExecutionParticipantBinding` cannot bind a durable point, and a durable binding cannot bind an
+ordinary point. Production composition rejects missing, duplicate, orphaned, contradictory, and uncontracted durable
+participants in the same way as immediate participants.
+
 ## Contributing Entry backup state
 
 Feature-owned Entry state participates in the Backup Feature's snapshot and restore execution points. The participant

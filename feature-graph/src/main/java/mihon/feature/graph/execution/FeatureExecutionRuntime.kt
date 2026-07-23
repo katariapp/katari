@@ -17,6 +17,9 @@ data class FeatureExecutionParticipantBinding<E : Any>(
     val contextResolver: FeatureExecutionContextResolver<E>? = null,
 ) {
     init {
+        require(definition.point.delivery != FeatureExecutionDelivery.DURABLE) {
+            "Durable execution participant ${definition.id} requires a durable runtime binding"
+        }
         require(definition.contextInputs.isNotEmpty() == (contextResolver != null)) {
             "Execution participant ${definition.id} must bind a context resolver exactly when it declares context inputs"
         }
@@ -46,8 +49,10 @@ class FeatureExecutionRuntime(
     private val graph: FeatureGraph,
     private val evaluation: FeatureGraphEvaluation,
     bindings: List<FeatureExecutionParticipantBinding<*>>,
+    durableBindings: List<FeatureDurableExecutionParticipantBinding<*>> = emptyList(),
 ) {
     private val bindingsById: Map<FeatureExecutionParticipantId, FeatureExecutionParticipantBinding<*>>
+    private val durableRuntime = FeatureDurableExecutionRuntime(graph, evaluation, durableBindings)
 
     init {
         validateEvaluationCoverage()
@@ -55,16 +60,18 @@ class FeatureExecutionRuntime(
         check(duplicateBindings.isEmpty()) {
             "Duplicate execution participant bindings: ${duplicateBindings.keys.sortedBy { it.value }}"
         }
-        bindingsById = bindings.associateBy { it.definition.id }
         val declaredById = graph.executionParticipants.associateBy { it.id }
-        val missing = declaredById.keys - bindingsById.keys
-        val orphaned = bindingsById.keys - declaredById.keys
+        val immediateDeclaredById = declaredById.filterValues { it.point.delivery != FeatureExecutionDelivery.DURABLE }
+        bindingsById = bindings.associateBy { it.definition.id }
+
+        val missing = immediateDeclaredById.keys - bindingsById.keys
+        val orphaned = bindingsById.keys - immediateDeclaredById.keys
         check(missing.isEmpty() && orphaned.isEmpty()) {
             "Execution participant binding coverage mismatch; missing: ${missing.sortedBy { it.value }}, " +
                 "orphaned: ${orphaned.sortedBy { it.value }}"
         }
         bindingsById.forEach { (id, binding) ->
-            check(binding.definition == declaredById.getValue(id)) {
+            check(binding.definition == immediateDeclaredById.getValue(id)) {
                 "Execution participant binding $id does not match its graph declaration"
             }
         }
@@ -75,6 +82,9 @@ class FeatureExecutionRuntime(
         contentType: ContentTypeId,
         event: E,
     ): FeatureExecutionResult {
+        check(point.delivery != FeatureExecutionDelivery.DURABLE) {
+            "Durable execution point ${point.id} must be prepared and delivered through the durable runtime API"
+        }
         val declaredPoint = graph.executionPoints.singleOrNull { it.id == point.id }
             ?: error("Unknown execution point ${point.id}")
         check(declaredPoint == point) {
@@ -149,6 +159,20 @@ class FeatureExecutionRuntime(
             stoppedEarly = stoppedEarly,
         )
     }
+
+    suspend fun <E : Any> prepareDurable(
+        point: FeatureExecutionPointDefinition<E>,
+        contentType: ContentTypeId,
+        event: E,
+    ): FeatureDurableExecutionPreparationResult = durableRuntime.prepare(point, contentType, event)
+
+    suspend fun deliverDurable(envelope: FeatureDurableExecutionEnvelope) {
+        durableRuntime.deliver(envelope)
+    }
+
+    suspend fun discardDurable(
+        envelopes: List<FeatureDurableExecutionEnvelope>,
+    ): List<FeatureExecutionFailure> = durableRuntime.discard(envelopes)
 
     private fun validateEvaluationCoverage() {
         val expected = buildMap {

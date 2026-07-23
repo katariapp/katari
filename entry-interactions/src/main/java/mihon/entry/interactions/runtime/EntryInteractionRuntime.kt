@@ -84,6 +84,9 @@ fun InjektRegistrar.addEntryInteractionRuntime(
             plugins = typeRuntimeContributions.map(EntryTypeRuntimeContribution::plugin),
             featureContributors = installedFeatureModules.flatMap { it.module.graphContributors },
             executionBindings = installedFeatureModules.flatMap { it.artifacts.executionBindings },
+            durableExecutionBindings = installedFeatureModules.flatMap {
+                it.artifacts.durableExecutionBindings
+            },
         )
     }
     addSingletonFactory<EntryInteractionRuntimeWarmup> {

@@ -1,6 +1,7 @@
 package mihon.entry.interactions
 
 import android.app.Application
+import mihon.feature.graph.FeatureDurableExecutionParticipantBinding
 import mihon.feature.graph.FeatureExecutionParticipantBinding
 import mihon.feature.graph.FeatureGraphContributor
 import uy.kohesive.injekt.api.InjektRegistrar
@@ -33,6 +34,7 @@ internal data class EntryFeatureRuntimeInstallationContext(
 
 internal data class EntryFeatureRuntimeArtifacts(
     val executionBindings: List<FeatureExecutionParticipantBinding<*>> = emptyList(),
+    val durableExecutionBindings: List<FeatureDurableExecutionParticipantBinding<*>> = emptyList(),
     val runtimeBoundaries: List<EntryFeatureRuntimeBoundary<*>> = emptyList(),
     val warmups: List<() -> Unit> = emptyList(),
 )

@@ -2,6 +2,7 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.feature.graph.FeatureArtifactSelection
+import mihon.feature.graph.FeatureDurableExecutionParticipantBinding
 import mihon.feature.graph.FeatureExecutionParticipantBinding
 import mihon.feature.graph.FeatureExecutionRuntime
 import mihon.feature.graph.FeatureGraph
@@ -16,7 +17,13 @@ fun createEntryInteractions(
     plugins: List<EntryInteractionPlugin>,
     featureContributors: List<FeatureGraphContributor>,
     executionBindings: List<FeatureExecutionParticipantBinding<*>> = emptyList(),
-): EntryInteractions = createEntryInteractionComposition(plugins, featureContributors, executionBindings).interactions
+    durableExecutionBindings: List<FeatureDurableExecutionParticipantBinding<*>> = emptyList(),
+): EntryInteractions = createEntryInteractionComposition(
+    plugins,
+    featureContributors,
+    executionBindings,
+    durableExecutionBindings,
+).interactions
 
 data class EntryInteractionComposition(
     val interactions: EntryInteractions,
@@ -30,6 +37,7 @@ fun createEntryInteractionComposition(
     plugins: List<EntryInteractionPlugin>,
     featureContributors: List<FeatureGraphContributor>,
     executionBindings: List<FeatureExecutionParticipantBinding<*>> = emptyList(),
+    durableExecutionBindings: List<FeatureDurableExecutionParticipantBinding<*>> = emptyList(),
 ): EntryInteractionComposition {
     validateEntryInteractionPlugins(plugins)
     val featureGraph = discoverAndAssembleFeatureGraph(plugins + featureContributors)
@@ -62,7 +70,12 @@ fun createEntryInteractionComposition(
         featureGraph = featureGraph,
         featureGraphEvaluation = featureGraphEvaluation,
         featureArtifacts = featureArtifacts,
-        featureExecutions = FeatureExecutionRuntime(featureGraph, featureGraphEvaluation, executionBindings),
+        featureExecutions = FeatureExecutionRuntime(
+            featureGraph,
+            featureGraphEvaluation,
+            executionBindings,
+            durableExecutionBindings,
+        ),
     )
 }
 

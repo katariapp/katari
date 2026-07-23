@@ -11,6 +11,10 @@ import mihon.entry.interactions.toContentTypeId
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
+import mihon.feature.graph.FeatureDurableExecutionDeliveryHandler
+import mihon.feature.graph.FeatureDurableExecutionParticipantBinding
+import mihon.feature.graph.FeatureDurableExecutionPayload
+import mihon.feature.graph.FeatureDurableExecutionPreparer
 import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionHandler
@@ -62,6 +66,53 @@ class EntryExecutionCompositionValidationTest {
         }
 
         exception.message.orEmpty() shouldContain "missing: [test.follow-up.record]"
+    }
+
+    @Test
+    fun `composition discovers durable participants from the same contribution pipeline`() = runTest {
+        val type = EntryType.entries.first()
+        val pointOwner = ContributionOwner("test.durable-lifecycle")
+        val participantOwner = ContributionOwner("test.durable-follow-up")
+        val point = featureExecutionPointDefinition<TestEvent>(
+            id = FeatureExecutionPointId("test.durable-lifecycle.changed"),
+            owner = pointOwner,
+            delivery = FeatureExecutionDelivery.DURABLE,
+            failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
+        )
+        val participant = FeatureExecutionParticipantDefinition(
+            id = FeatureExecutionParticipantId("test.durable-follow-up.record"),
+            owner = participantOwner,
+            point = point,
+            behavioralContracts = listOf(TestExecutionContract),
+        )
+        val delivered = mutableListOf<String>()
+        val composition = createEntryInteractionComposition(
+            plugins = listOf(plugin(type)),
+            featureContributors = listOf(
+                featureGraphContributor(pointOwner) { add(point) },
+                featureGraphContributor(participantOwner) { add(participant) },
+            ),
+            durableExecutionBindings = listOf(
+                FeatureDurableExecutionParticipantBinding(
+                    definition = participant,
+                    preparer = FeatureDurableExecutionPreparer { event ->
+                        FeatureDurableExecutionPayload(1, event.entryId.toString())
+                    },
+                    deliveryHandler = FeatureDurableExecutionDeliveryHandler { payload ->
+                        delivered += payload.value
+                    },
+                ),
+            ),
+        )
+
+        val prepared = composition.featureExecutions.prepareDurable(
+            point = point,
+            contentType = type.toContentTypeId(),
+            event = TestEvent(42L),
+        )
+        composition.featureExecutions.deliverDurable(prepared.envelopes.single())
+
+        delivered shouldContainExactly listOf("42")
     }
 
     private fun fixture(): Fixture {
