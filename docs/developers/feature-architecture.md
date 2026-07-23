@@ -181,6 +181,24 @@ Adding another refresh consequence therefore changes only its owning contributio
 a call to the Entry screen, Library worker, Source Refresh coordinator, or Library Refresh coordinator. Participant
 absence remains valid when its prerequisites are absent.
 
+### Consumer lifecycle boundaries
+
+Application and type-runtime consumers must enter shared behavior through the Feature that owns it, even when the
+underlying persistence call looks simple. A media runtime that changes a child bookmark calls `EntryBookmarkFeature`;
+it does not update the child repository directly. This preserves provider dispatch, contextual policy, behavioral
+contracts, and future Bookmark consequences for that consumer.
+
+Permanent profile deletion first sends every Entry owned by the profile through `EntryDestructiveRemovalFeature`.
+Download cleanup, Merge cleanup, custom covers, and future Entry-removal participants are therefore discovered from
+their owners before the profile row is removed. Remaining persisted state follows declared database ownership through
+foreign-key cascades, while the profile host removes its own preference namespace. Profile code must not maintain a
+parallel list of Feature tables to clear.
+
+No separate profile-wide Feature participant is currently required because the audited state is Entry-owned,
+relationally profile-owned, or core profile-host state. If a Feature later introduces independent profile-wide state,
+it must introduce a discoverable profile lifecycle boundary rather than append another delete statement to profile
+orchestration.
+
 ### Durable consequences
 
 Work that must survive process death uses the same discovered participant model with a `DURABLE` execution point. A

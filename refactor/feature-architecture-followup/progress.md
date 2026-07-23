@@ -12,6 +12,7 @@ Updated: 2026-07-23
 - Phase 3 is complete.
 - Phase 4 is complete.
 - Phase 5 is complete.
+- Phase 6 is complete.
 
 ## Phase status
 
@@ -22,7 +23,7 @@ Updated: 2026-07-23
 | 3. Merge durable consequences | Complete | Merge persists and retries opaque owner-contributed participants. |
 | 4. Media-session lifecycle | Complete | Shared event seam with independently owned policy and consequences. |
 | 5. Refresh lifecycle | Complete | Manual and Library refresh emit discovered new-child consequences. |
-| 6. Lifecycle and consumer corrections | Pending | Profile deletion and Bookmark bypass. |
+| 6. Lifecycle and consumer corrections | Complete | Profile deletion and Manga bookmarking use their Feature boundaries. |
 | 7. Settings projections | Pending | One installation fact for navigation and search. |
 | 8. Final enforcement and review | Pending | Includes repeat audit and cleanup. |
 
@@ -161,6 +162,41 @@ Manifesto comparison:
 Validation completed:
 
 - `./gradlew --quiet spotlessApply`
+- `./gradlew --quiet :entry-interactions:testDebugUnitTest :entry-interactions:manga:testDebugUnitTest :entry-interactions:anime:testDebugUnitTest :entry-interactions:book:testDebugUnitTest`
+- `./gradlew --quiet verifyEntryFeatureArchitecture`
+- `./gradlew --quiet :app:compileFossKotlin`
+
+### Phase 6: lifecycle and consumer corrections
+
+- Permanent profile deletion now loads every Entry owned by the profile and routes them through
+  `EntryDestructiveRemovalFeature` before deleting the profile.
+- Removed the profile database's fixed per-table cleanup list. Entry-owned and relational profile state follows foreign
+  keys; the profile host continues to own its preference namespace.
+- Audited the remaining profile state and found no independent profile-wide Feature state requiring another execution
+  point. Future independent state must introduce a discoverable lifecycle boundary rather than extend profile SQL
+  orchestration.
+- Manga Reader bookmark mutation now calls `EntryBookmarkFeature` with the actual member Entry and pre-mutation child
+  state instead of persisting through `EntryChapterRepository`.
+- Added profile deletion behavior tests for successful discovered removal and transactional failure.
+- Added build enforcement preventing type runtimes from restoring direct bookmark persistence and profile code from
+  restoring a curated `deleteByProfile` list or omitting destructive removal.
+- Updated developer documentation for consumer and profile lifecycle ownership. User-facing Profile behavior is
+  unchanged, so the existing Profiles documentation requires no behavioral update.
+
+Manifesto comparison:
+
+- Existing capability and lifecycle declarations now reach the corrected consumers without another per-type or
+  per-table completion list.
+- Future destructive-removal participants are selected by their own contributions when a profile is deleted.
+- Bookmark support remains an optional provider fact; the Manga consumer uses the shared Feature without creating a
+  Manga-specific support flag.
+- Boundary validation prevents the two known parallel authorities from returning.
+
+Validation completed:
+
+- `./gradlew --quiet spotlessApply`
+- `./gradlew --quiet -p gradle/build-logic test --tests 'mihon.gradle.tasks.EntryInteractionBoundaryCheckTaskTest'`
+- `./gradlew --quiet :app:testFossUnitTest --tests 'mihon.feature.profiles.core.ProfileManagerTest'`
 - `./gradlew --quiet :entry-interactions:testDebugUnitTest :entry-interactions:manga:testDebugUnitTest :entry-interactions:anime:testDebugUnitTest :entry-interactions:book:testDebugUnitTest`
 - `./gradlew --quiet verifyEntryFeatureArchitecture`
 - `./gradlew --quiet :app:compileFossKotlin`

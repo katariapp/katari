@@ -135,6 +135,8 @@ class AppModule(val app: Application) : InjektModule {
                 profilesPreferences = get(),
                 extensionManager = get(),
                 preferenceOwnership = get(),
+                entryRepository = get(),
+                destructiveRemoval = get(),
             )
         }
         addSingletonFactory<EntryPreferenceProvider> { ProfileSourcePreferenceProvider(app, get()) }

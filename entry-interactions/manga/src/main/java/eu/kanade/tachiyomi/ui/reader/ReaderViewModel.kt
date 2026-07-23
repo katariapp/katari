@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
+import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryChildWebViewResolution
 import mihon.entry.interactions.EntryMediaSessionActivity
 import mihon.entry.interactions.EntryMediaSessionEvent
@@ -66,7 +67,6 @@ import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.progressResourceKey
-import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.sortedForReading
@@ -93,9 +93,9 @@ internal class ReaderViewModel @JvmOverloads constructor(
     val readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getEntryWithChapters: GetEntryWithChapters = Injekt.get(),
-    private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val entryProgressRepository: EntryProgressRepository = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
+    private val bookmarkFeature: EntryBookmarkFeature = Injekt.get(),
     private val viewerSettingBinder: ViewerSettingBinder = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val localCoverManager: LocalCoverManager = Injekt.get(),
@@ -599,15 +599,14 @@ internal class ReaderViewModel @JvmOverloads constructor(
      * Bookmarks the currently active chapter.
      */
     fun toggleChapterBookmark() {
-        val chapter = getCurrentChapter()?.chapter ?: return
-        val bookmarked = !chapter.bookmark
-        chapter.bookmark = bookmarked
+        val current = getCurrentChapter() ?: return
+        val owner = current.manga ?: manga ?: return
+        val entryChapter = current.chapter.toDomainChapter()?.toEntryChapter() ?: return
+        val bookmarked = !entryChapter.bookmark
+        current.chapter.bookmark = bookmarked
 
         viewModelScope.launchNonCancellable {
-            val entryChapter = chapter.toDomainChapter()?.toEntryChapter() ?: return@launchNonCancellable
-            entryChapterRepository.updateAll(
-                listOf(entryChapter.copy(bookmark = bookmarked)),
-            )
+            bookmarkFeature.setBookmarked(owner, listOf(entryChapter), bookmarked)
         }
 
         mutableState.update {

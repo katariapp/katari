@@ -309,6 +309,8 @@ private class EntryInteractionBoundaryRules(
             checkSourceMediaResolutionReferences(file, findings)
             checkMediaCacheMaintenanceReferences(file, findings)
             checkMediaSessionConsequenceBypass(file, findings)
+            checkBookmarkMutationBypass(file, findings)
+            checkProfileDeletionBypass(file, findings)
             checkProfilePreferenceOwnerBypass(file, findings)
             checkExhaustiveEntryTypeMappings(file, findings)
             checkSuspiciousTypeBranches(file, findings)
@@ -418,6 +420,47 @@ private class EntryInteractionBoundaryRules(
                         "independently contributed Feature consequence",
                 )
             }
+        }
+    }
+
+    private fun checkBookmarkMutationBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath() || file.owningTypeModule() == null) return
+        val ownsBookmarkProvider = file.topLevelDeclarations.any { declaration ->
+            "EntryBookmarkProcessor" in declaration.superTypeNames
+        }
+        if (ownsBookmarkProvider) return
+        if (!DIRECT_BOOKMARK_PERSISTENCE.containsMatchIn(file.content)) return
+
+        findings += Finding(
+            relativePath = file.relativePath,
+            lineNumber = file.lineNumberOf("bookmark"),
+            reason = "type runtimes must mutate bookmarks through EntryBookmarkFeature; direct bookmark persistence " +
+                "bypasses contributed behavior",
+        )
+    }
+
+    private fun checkProfileDeletionBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath() || !file.relativePath.startsWith(PROFILE_FEATURE_ROOT)) return
+
+        file.findReference("deleteByProfile")?.let { reference ->
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = reference.lineNumber,
+                reason = "profile deletion must use relational ownership and EntryDestructiveRemovalFeature; " +
+                    "a hand-maintained deleteByProfile list is a parallel cleanup authority",
+            )
+        }
+
+        if (!file.relativePath.endsWith("/core/ProfileManager.kt")) return
+        if (!file.content.contains("permanentlyDeleteProfile")) return
+        val usesDestructiveRemoval = file.findReference("EntryDestructiveRemovalFeature") != null &&
+            DESTRUCTIVE_REMOVAL_INVOCATION.containsMatchIn(file.content)
+        if (!usesDestructiveRemoval) {
+            findings += Finding(
+                relativePath = file.relativePath,
+                lineNumber = file.lineNumberOf("permanentlyDeleteProfile"),
+                reason = "permanent profile deletion must route its Entries through EntryDestructiveRemovalFeature",
+            )
         }
     }
 
@@ -1296,6 +1339,16 @@ private class EntryInteractionBoundaryRules(
             "EntryDownloadLifecycleFeature",
             "EntryTrackingFeature",
             "EntryMediaSessionIncognitoState",
+        )
+
+        private const val PROFILE_FEATURE_ROOT = "app/src/main/java/mihon/feature/profiles/"
+
+        private val DIRECT_BOOKMARK_PERSISTENCE = Regex(
+            """(?s)\bupdateAll\s*\(.*?\.copy\s*\(\s*bookmark\s*=""",
+        )
+
+        private val DESTRUCTIVE_REMOVAL_INVOCATION = Regex(
+            """\bdestructiveRemoval\s*\.\s*remove\s*\(""",
         )
 
         private val TYPE_BRANCH_PATTERNS = listOf(

@@ -19,14 +19,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import logcat.LogPriority
 import mihon.core.common.CustomPreferences
 import mihon.core.common.HomeScreenTabs
 import mihon.core.common.defaultHomeScreenTabs
 import mihon.core.common.toHomeScreenTabPreferenceValue
 import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
+import mihon.entry.interactions.EntryDestructiveRemovalFeature
+import mihon.entry.interactions.EntryDestructiveRemovalResult
 import mihon.entry.interactions.settings.EntryInteractionPreferences
 import tachiyomi.core.common.preference.Preference
 import tachiyomi.core.common.preference.ProfilePreferenceOwnerGroupId
+import tachiyomi.core.common.util.system.logcat
+import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.library.service.DuplicatePreferences
 import tachiyomi.domain.library.service.DuplicateTitleExclusions
 import uy.kohesive.injekt.Injekt
@@ -43,6 +48,8 @@ class ProfileManager(
     private val profilesPreferences: ProfilesPreferences = Injekt.get(),
     private val extensionManager: ExtensionManager = Injekt.get(),
     private val preferenceOwnership: ProfilePreferenceOwnership,
+    private val entryRepository: EntryRepository = Injekt.get(),
+    private val destructiveRemoval: EntryDestructiveRemovalFeature = Injekt.get(),
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val switchRequests = MutableStateFlow(profilesPreferences.activeProfileId.get())
@@ -118,7 +125,7 @@ class ProfileManager(
             requiresAuth = false,
             isArchived = false,
         )
-        clearProfileState(id)
+        profileStore.deleteProfileState(id)
         val hiddenSourceIds = extensionManager.installedExtensionsFlow.value
             .filterIsInstance<eu.kanade.tachiyomi.extension.model.Extension.Installed>()
             .flatMap { extension -> extension.sources.map { source -> source.id.toString() } }
@@ -156,12 +163,18 @@ class ProfileManager(
         if (activeProfileId == profileId && fallback != null) {
             setActiveProfile(fallback.id)
         }
-        clearProfileState(profileId)
+        when (val result = destructiveRemoval.remove(entryRepository.getAllEntriesByProfile(profileId))) {
+            is EntryDestructiveRemovalResult.Failed -> throw result.cause
+            EntryDestructiveRemovalResult.NoChange -> Unit
+            is EntryDestructiveRemovalResult.Removed -> {
+                result.failures.forEach { failure ->
+                    logcat(LogPriority.ERROR, failure.cause) {
+                        "Profile deletion consequence ${failure.participantId} failed"
+                    }
+                }
+            }
+        }
         profileDatabase.deleteProfile(profileId)
-    }
-
-    private suspend fun clearProfileState(profileId: Long) {
-        profileDatabase.clearProfileData(profileId)
         profileStore.deleteProfileState(profileId)
     }
 

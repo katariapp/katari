@@ -124,6 +124,57 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `type runtime cannot persist bookmark mutations beside the Bookmark Feature`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/manga/src/main/java/eu/kanade/tachiyomi/ui/reader/ReaderViewModel.kt" to
+                    """
+                        package eu.kanade.tachiyomi.ui.reader
+
+                        class ReaderViewModel(
+                            private val entryChapterRepository: EntryChapterRepository,
+                        ) {
+                            suspend fun bookmark(chapter: EntryChapter) {
+                                entryChapterRepository.updateAll(
+                                    listOf(chapter.copy(bookmark = true)),
+                                )
+                            }
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "type runtimes must mutate bookmarks through EntryBookmarkFeature"
+    }
+
+    @Test
+    fun `profile deletion cannot restore a curated database cleanup list`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "app/src/main/java/mihon/feature/profiles/core/ProfileManager.kt" to
+                    """
+                        package mihon.feature.profiles.core
+
+                        class ProfileManager {
+                            suspend fun permanentlyDeleteProfile(profileId: Long) {
+                                entriesQueries.deleteByProfile(profileId)
+                                profileDatabase.deleteProfile(profileId)
+                            }
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "hand-maintained deleteByProfile list is a parallel cleanup authority"
+        error.message shouldContain "permanent profile deletion must route its Entries through"
+        error.message shouldContain "EntryDestructiveRemovalFeature"
+    }
+
+    @Test
     fun `application consumers cannot bypass Library Progress Feature through domain port`() {
         createBaseFixture(
             appSource = """
