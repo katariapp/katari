@@ -11,6 +11,14 @@
 - Avoid catch-all directories such as `common`, `misc`, or `utils`. Name structural groups after concrete ownership, and place narrowly shared helpers with the feature that owns their semantics.
 - Before finishing a change, inspect every touched source directory. If the new files make ownership harder to understand from the tree alone, reorganize that area before committing rather than leaving cleanup for a follow-up.
 
+## Test quality
+- Every test must protect a distinct, durable behavior, compatibility guarantee, failure mode, or architectural invariant. Do not retain tests whose only purpose was to observe an implementation while it was being developed.
+- Before adding a test, inspect existing unit, integration, regression, and contract coverage for the same behavior. Do not repeat the same assertion at the same boundary; overlapping tests must each protect a distinct regression or integration seam.
+- Test observable behavior through the narrowest stable boundary that owns it. Avoid assertions about internal intermediate state, private control flow, or paths that supported production callers cannot reach.
+- Avoid tests for pass-through wrappers or exact collaborator call sequences unless the wrapper adds meaningful branching, transformation, ordering, transaction, or error semantics.
+- A test must be capable of failing for a plausible regression. Avoid tautological assertions, duplicating production calculations in the test, or snapshots of incidental structure with no reviewed compatibility requirement.
+- Before finishing a change, re-read every added or modified test and remove or narrow cases that are now subsumed by stronger coverage introduced later in the same change.
+
 ## Toolchain
 - Use the Gradle wrapper (`9.4.1`) and JDK `21` from `.github/.java-version`.
 - Android SDK/NDK and Java compatibility come from `gradle/mihon.versions.toml` plus build logic; do not hardcode them per module.

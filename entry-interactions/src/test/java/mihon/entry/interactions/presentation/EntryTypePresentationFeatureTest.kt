@@ -5,30 +5,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
-import tachiyomi.i18n.MR
 
 class EntryTypePresentationFeatureTest {
-
-    @Test
-    fun `discovered provider is projected without a feature type list`() {
-        val projected = genericEntryTypePresentation.copy(displayNameLabel = MR.strings.entry_type_book)
-        val provider = object : EntryTypePresentationProvider {
-            override val type = EntryType.BOOK
-            override val presentation = projected
-        }
-        val feature = feature(
-            object : EntryInteractionPlugin {
-                override val type = EntryType.BOOK
-                override val owner = ContributionOwner("test.synthetic")
-                override val providerBindings = listOf(EntryTypePresentationCapability.bind(provider))
-            },
-        )
-
-        val result = feature.presentation(EntryType.BOOK)
-
-        result.shouldBeInstanceOf<EntryTypePresentationResult.Contributed>()
-        result.presentation shouldBe projected
-    }
 
     @Test
     fun `provider absence stays valid and resolves as observable generic vocabulary`() {

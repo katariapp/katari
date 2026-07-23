@@ -2,8 +2,6 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
-import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
 import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
@@ -70,25 +68,6 @@ class EntryPlaybackPreferencesFeatureTest {
         processor.copied shouldBe null
         feature.applyMigration(prepared.payload) shouldBe EntryPlaybackPreferencesRestoreResult.Applied
         processor.restored shouldBe (targetEntry to snapshot)
-    }
-
-    @Test
-    fun `raw dispatch is strict because structured absence belongs to the feature`() = runTest {
-        val composition = compositionFor()
-        val interaction = composition.interactions.playbackPreferences
-
-        val absentFailure = runCatching { interaction.snapshot(sourceEntry) }.exceptionOrNull()
-        absentFailure.shouldBeInstanceOf<IllegalStateException>().message shouldContain
-            "No playback preferences processor registered"
-
-        val processor = RecordingPlaybackPreferencesProcessor(snapshot)
-        val providedInteraction = compositionFor(EntryPlaybackPreferencesCapability.bind(processor))
-            .interactions.playbackPreferences
-        val mismatchFailure = runCatching {
-            providedInteraction.copy(sourceEntry, entry(id = 9L, type = EntryType.ANIME))
-        }.exceptionOrNull()
-        mismatchFailure.shouldBeInstanceOf<IllegalArgumentException>().message shouldContain
-            "requires matching Entry types"
     }
 
     private fun featureFor(

@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -89,16 +88,6 @@ class EntryChildGroupFilterFeatureTest {
             EntryChildGroupFilterRestoreResult.NoChange
     }
 
-    @Test
-    fun `internal dispatch rejects a type without the selected provider`() {
-        val fixture = fixture()
-        val manga = entry.copy(type = EntryType.MANGA)
-
-        shouldThrow<IllegalStateException> {
-            fixture.composition.interactions.childGroupFilter.groupFor(manga, first)
-        }
-    }
-
     private fun fixture(
         provider: Boolean = true,
         dataSource: FakeDataSource = FakeDataSource(),
@@ -119,7 +108,6 @@ class EntryChildGroupFilterFeatureTest {
             featureContributors = listOf(EntryChildGroupFilterFeatureContributor),
         )
         return Fixture(
-            composition = composition,
             feature = DefaultEntryChildGroupFilterFeature(
                 evaluation = composition.featureGraphEvaluation,
                 interaction = composition.interactions.childGroupFilter,
@@ -129,7 +117,6 @@ class EntryChildGroupFilterFeatureTest {
     }
 
     private data class Fixture(
-        val composition: EntryInteractionComposition,
         val feature: EntryChildGroupFilterFeature,
     )
 

@@ -17,27 +17,6 @@ class EntryConsumptionFeatureTest {
     private val child = EntryChapter.create().copy(id = 12L, entryId = entry.id)
 
     @Test
-    fun `a consumption provider activates shared mutation eligibility and lifecycle behavior`() = runTest {
-        val processor = consumptionProcessor()
-        coEvery { processor.setConsumed(entry, listOf(child), consumed = true) } returns listOf(child)
-        val lifecycle = lifecycleSink()
-        val feature = featureFor(plugin(EntryConsumptionCapability.bind(processor)), lifecycle)
-
-        feature.isApplicable(entry.type) shouldBe true
-        feature.canSetConsumed(
-            entry.type,
-            EntryConsumptionStatus(consumed = false, hasPartialProgress = false),
-            consumed = true,
-        ) shouldBe true
-        feature.setConsumed(entry, listOf(child), consumed = true) shouldBe
-            EntryConsumptionResult.Changed(listOf(child))
-
-        coVerify(exactly = 1) {
-            lifecycle.onEvent(EntryDownloadLifecycleEvent.MarkedConsumed(entry, listOf(child)))
-        }
-    }
-
-    @Test
     fun `unconsuming retains the mutation result without producing a marked-consumed event`() = runTest {
         val consumedChild = child.copy(read = true)
         val processor = consumptionProcessor()

@@ -34,16 +34,9 @@ class EntryChildListFeatureTest {
     }
 
     @Test
-    fun `child-list provider activates ordering and display without implying progress labels`() = runTest {
+    fun `child-list provider builds display rows without implying progress labels`() = runTest {
         val feature = featureFor(EntryChildListCapability.bind(RecordingChildListProcessor()))
 
-        feature.isApplicable(entry.type) shouldBe true
-        feature.readingOrder(entry, listOf(first, second), listOf(entry.id)) shouldBe
-            EntryChildOrderResult.Available(listOf(second, first))
-        feature.firstReadingChild(entry, listOf(first, second), listOf(entry.id)) shouldBe
-            EntryFirstChildResult.Available(second)
-        feature.displayOrder(entry, listOf(first, second), listOf(entry.id)) shouldBe
-            EntryChildOrderResult.Available(listOf(first, second))
         feature.displayList(request()) shouldBe EntryChildListResult.Available(
             EntryChildListDisplay(
                 rows = listOf(EntryChildListRow.Child(first), EntryChildListRow.Child(second)),

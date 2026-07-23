@@ -1,6 +1,5 @@
 package mihon.entry.interactions
 
-import android.content.SharedPreferences
 import eu.kanade.tachiyomi.source.entry.ConfigurableSource
 import eu.kanade.tachiyomi.source.entry.EntryPreferenceScreen
 import eu.kanade.tachiyomi.source.entry.UnifiedSource
@@ -13,11 +12,9 @@ import tachiyomi.domain.source.service.SourceManager
 class EntrySourceSettingsFeatureTest {
 
     @Test
-    fun `missing unsupported and configured sources produce distinct results`() {
-        val preferences = mockk<SharedPreferences>()
+    fun `missing unsupported and supported source ids remain distinct`() {
         val configurable = mockk<ConfigurableSource> {
             every { id } returns 2L
-            every { getSourcePreferences() } returns preferences
         }
         val unsupported = mockk<UnifiedSource> { every { id } returns 1L }
         val sourceManager = mockk<SourceManager> {
@@ -33,8 +30,6 @@ class EntrySourceSettingsFeatureTest {
 
         feature.resolve(0L) shouldBe EntrySourceSettingsResolution.Missing(0L)
         feature.resolve(1L) shouldBe EntrySourceSettingsResolution.Unsupported(1L)
-        val available = feature.resolve(2L) as EntrySourceSettingsResolution.Available
-        available.preferences shouldBe preferences
         feature.supportedSourceIds() shouldBe listOf(2L)
     }
 

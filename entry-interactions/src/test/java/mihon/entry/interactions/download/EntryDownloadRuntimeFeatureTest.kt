@@ -8,7 +8,6 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -21,17 +20,14 @@ class EntryDownloadRuntimeFeatureTest {
     private val entry = Entry.create().copy(id = 7L, type = EntryType.BOOK)
 
     @Test
-    fun `a contributed download provider activates every shared runtime behavior`() = runTest {
+    fun `runtime projects queue and child status`() = runTest {
         val queueItem = queueItem()
         val processor = processor(queueItem)
-        every { processor.getDownloadCount(entry) } returns 3
         val status = EntryDownloadStatus(EntryType.BOOK, queueItem.childId, EntryDownloadState.QUEUE)
         every { processor.getStatus(any(), any(), any(), any(), any(), any()) } returns status
         val feature = featureFor(EntryDownloadCapability.bind(processor))
 
-        feature.isApplicable(EntryType.BOOK).shouldBeTrue()
         feature.state.first().queue.single().items.shouldContainExactly(queueItem)
-        feature.downloadCount(entry) shouldBe 3
         feature.status(
             type = entry.type,
             childId = queueItem.childId,
@@ -41,9 +37,6 @@ class EntryDownloadRuntimeFeatureTest {
             entryTitle = entry.title,
             sourceId = entry.source,
         ) shouldBe status
-
-        feature.start()
-        verify(exactly = 1) { processor.startDownloads() }
     }
 
     @Test

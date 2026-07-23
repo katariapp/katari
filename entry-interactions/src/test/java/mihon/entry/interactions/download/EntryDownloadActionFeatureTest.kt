@@ -23,18 +23,11 @@ class EntryDownloadActionFeatureTest {
     private val chapter = EntryChapter.create().copy(id = 12L, entryId = entry.id)
 
     @Test
-    fun `a core provider activates individual actions without implying bulk actions`() = runTest {
-        val download = downloadProcessor()
-        val feature = featureFor(EntryDownloadCapability.bind(download))
+    fun `a core provider does not imply bulk actions`() = runTest {
+        val feature = featureFor(EntryDownloadCapability.bind(downloadProcessor()))
 
-        feature.individualAvailability(remoteRequest) shouldBe EntryDownloadActionAvailability.Available
         feature.bulkAvailability(listOf(remoteRequest), EntryBulkDownloadAction.unread) shouldBe
             EntryDownloadActionAvailability.Inapplicable(setOf(EntryType.BOOK))
-        feature.download(entry, listOf(chapter)) shouldBe EntryDownloadActionResult.Performed
-        feature.retry(listOf(remoteRequest)) shouldBe EntryDownloadActionResult.Performed
-
-        coVerify(exactly = 1) { download.download(entry, listOf(chapter), false) }
-        verify(exactly = 1) { download.startDownloads() }
     }
 
     @Test

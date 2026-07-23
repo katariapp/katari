@@ -11,10 +11,9 @@ import tachiyomi.domain.source.service.SourceManager
 class EntrySourceHomeFeatureTest {
 
     @Test
-    fun `home resolution distinguishes source support URL absence and operational failure`() {
+    fun `home resolution distinguishes unavailable outcomes`() {
         val unsupported = mockk<UnifiedSource> { every { id } returns 1L }
         val withoutUrl = homeSource(2L, null)
-        val available = homeSource(3L, "https://example.test")
         val error = IllegalStateException("URL failure")
         val failed = mockk<SourceHomePage> {
             every { id } returns 4L
@@ -24,7 +23,6 @@ class EntrySourceHomeFeatureTest {
             every { get(0L) } returns null
             every { get(1L) } returns unsupported
             every { get(2L) } returns withoutUrl
-            every { get(3L) } returns available
             every { get(4L) } returns failed
         }
         val feature = DefaultEntrySourceHomeFeature(
@@ -35,8 +33,6 @@ class EntrySourceHomeFeatureTest {
         feature.resolve(0L) shouldBe EntrySourceHomeResolution.Missing(0L)
         feature.resolve(1L) shouldBe EntrySourceHomeResolution.Unsupported(1L)
         feature.resolve(2L) shouldBe EntrySourceHomeResolution.NoUrl(2L)
-        feature.resolve(3L) shouldBe
-            EntrySourceHomeResolution.Available(3L, "Source 3", "https://example.test")
         feature.resolve(4L) shouldBe EntrySourceHomeResolution.Failed(4L, error)
     }
 

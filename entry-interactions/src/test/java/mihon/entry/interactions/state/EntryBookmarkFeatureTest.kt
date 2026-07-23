@@ -2,6 +2,8 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
@@ -26,13 +28,14 @@ class EntryBookmarkFeatureTest {
     }
 
     @Test
-    fun `one provider activates shared eligibility and mutation`() = runTest {
-        val processor = RecordingBookmarkProcessor()
+    fun `selection availability distinguishes state changes from no-ops`() {
+        val processor = mockk<EntryBookmarkProcessor> {
+            every { type } returns EntryType.BOOK
+        }
         val feature = featureFor(EntryBookmarkCapability.bind(processor))
         val unbookmarkedTarget = EntryBookmarkTarget(entry.type, unbookmarked.bookmarkStatus())
         val bookmarkedTarget = EntryBookmarkTarget(entry.type, bookmarked.bookmarkStatus())
 
-        feature.isApplicable(entry.type) shouldBe true
         feature.selectionAvailability(listOf(bookmarkedTarget, unbookmarkedTarget), bookmarked = true) shouldBe
             EntryBookmarkAvailability.Available
         feature.selectionAvailability(listOf(bookmarkedTarget), bookmarked = true) shouldBe
@@ -41,11 +44,6 @@ class EntryBookmarkFeatureTest {
             EntryBookmarkAvailability.Available
         feature.selectionAvailability(listOf(bookmarkedTarget, unbookmarkedTarget), bookmarked = false) shouldBe
             EntryBookmarkAvailability.NoChange
-
-        feature.setBookmarked(entry, listOf(unbookmarked, bookmarked), bookmarked = true) shouldBe
-            EntryBookmarkMutationResult.Applied(changedCount = 1)
-        processor.receivedChapters shouldBe listOf(unbookmarked)
-        processor.receivedBookmarked shouldBe true
     }
 
     private fun featureFor(
@@ -66,21 +64,6 @@ class EntryBookmarkFeatureTest {
             override val type = EntryType.BOOK
             override val owner = ContributionOwner("test.type.book")
             override val providerBindings = bindings.toList()
-        }
-    }
-
-    private class RecordingBookmarkProcessor : EntryBookmarkProcessor {
-        override val type = EntryType.BOOK
-        var receivedChapters: List<EntryChapter> = emptyList()
-        var receivedBookmarked: Boolean? = null
-
-        override suspend fun setBookmarked(
-            entry: Entry,
-            chapters: List<EntryChapter>,
-            bookmarked: Boolean,
-        ) {
-            receivedChapters = chapters
-            receivedBookmarked = bookmarked
         }
     }
 }

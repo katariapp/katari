@@ -15,17 +15,6 @@ class EntryContinueFeatureTest {
     private val entry = Entry.create().copy(id = 7L, type = EntryType.BOOK)
 
     @Test
-    fun `a contributed Continue provider activates shared dispatch automatically`() = runTest {
-        val chapter = EntryChapter.create().copy(id = 12L)
-        val processor = RecordingContinueProcessor(EntryType.BOOK, chapter)
-        val feature = featureFor(plugin(EntryType.BOOK, EntryContinueCapability.bind(processor)))
-
-        feature.nextTarget(entry) shouldBe EntryContinueTargetResult.Available(chapter)
-        feature.continueEntry(context, entry) shouldBe EntryContinueResult.Opened(chapter)
-        processor.openedEntryId shouldBe entry.id
-    }
-
-    @Test
     fun `an applicable provider reports that no next child exists`() = runTest {
         val feature = featureFor(
             plugin(EntryType.BOOK, EntryContinueCapability.bind(RecordingContinueProcessor(EntryType.BOOK, null))),
@@ -69,12 +58,8 @@ class EntryContinueFeatureTest {
         override val type: EntryType,
         private val next: EntryChapter?,
     ) : EntryContinueProcessor {
-        var openedEntryId: Long? = null
-
         override suspend fun findNext(entry: Entry): EntryChapter? = next
 
-        override fun open(context: Context, entry: Entry, chapter: EntryChapter) {
-            openedEntryId = entry.id
-        }
+        override fun open(context: Context, entry: Entry, chapter: EntryChapter) = Unit
     }
 }

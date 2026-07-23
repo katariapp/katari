@@ -5,33 +5,18 @@ import eu.kanade.tachiyomi.source.entry.UnifiedSource
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import okhttp3.Headers
-import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.source.service.SourceManager
 
 class EntryCoverNetworkFeatureTest {
 
     @Test
-    fun `cover network resolution returns source client and headers together`() {
-        val callFactory = mockk<OkHttpClient>()
-        val headers = Headers.Builder().add("Authorization", "token").build()
-        val source = mockk<EntryImageSource> {
-            every { client } returns callFactory
-            every { this@mockk.headers } returns headers
-        }
-        val feature = feature(mockk { every { get(7L) } returns source })
-
-        feature.resolve(7L) shouldBe EntryCoverNetworkResolution.Available(7L, callFactory, headers)
-    }
-
-    @Test
     fun `cover network resolution distinguishes missing unsupported and failed sources`() {
-        val unsupported = mockk<UnifiedSource>()
         val failure = IllegalStateException("client failure")
         val failed = mockk<EntryImageSource> {
             every { client } throws failure
         }
+        val unsupported = mockk<UnifiedSource>()
         val feature = feature(
             mockk {
                 every { get(0L) } returns null

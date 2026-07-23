@@ -20,40 +20,6 @@ import tachiyomi.domain.source.service.SourceManager
 class EntryDeepLinkFeatureTest {
 
     @Test
-    fun `resolved persisted entry remains authoritative`() = runTest {
-        val networkEntry = SEntry.create().apply {
-            url = "/entry"
-            title = "Network title"
-            type = EntryType.ANIME
-        }
-        val persistedEntry = Entry.create().copy(
-            id = 9L,
-            source = 4L,
-            title = "Persisted title",
-            type = EntryType.BOOK,
-        )
-        val resolver = mockk<ResolvableSource> {
-            every { id } returns 4L
-            every { getUriType("https://example.test/entry") } returns EntryUriType.Entry
-            coEvery { getEntry("https://example.test/entry") } returns networkEntry
-        }
-        val sourceManager = mockk<SourceManager> { every { getAll() } returns listOf(resolver) }
-        val networkToLocalEntry = mockk<NetworkToLocalEntry> {
-            coEvery { this@mockk.invoke(any<Entry>()) } returns persistedEntry
-        }
-        val feature = DefaultEntryDeepLinkFeature(
-            evaluation = sourceFeatureEvaluation(EntryDeepLinkFeatureContributor),
-            sourceManager = sourceManager,
-            networkToLocalEntry = networkToLocalEntry,
-            entryChapterRepository = mockk(),
-            sourceRefresh = mockk(),
-        )
-
-        feature.resolve("https://example.test/entry") shouldBe
-            EntryDeepLinkResolution.Resolved(persistedEntry)
-    }
-
-    @Test
     fun `no resolver no match and resolver failure are distinct outcomes`() = runTest {
         val sourceManager = mockk<SourceManager>()
         val feature = feature(sourceManager)

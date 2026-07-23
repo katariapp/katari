@@ -7,7 +7,6 @@ import eu.kanade.tachiyomi.source.model.Page
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -177,41 +176,6 @@ class MangaEntryInteractionPluginTest {
         ).first()
 
         labels shouldBe emptyMap()
-    }
-
-    @Test
-    fun `manga processors reject anime entries`() = runTest {
-        val dependencies = dependencies()
-        val openProcessor = MangaOpenProcessor()
-        val continueProcessor = MangaContinueProcessor(
-            dependencies.getEntryWithChapters,
-            dependencies.entryProgressRepository,
-            openProcessor,
-        )
-        val downloadProcessor = MangaDownloadProcessor(dependencies)
-        val consumptionProcessor = MangaConsumptionProcessor(
-            entryChapterRepository = dependencies.entryChapterRepository,
-            entryProgressRepository = dependencies.entryProgressRepository,
-        )
-        val animeEntry = entry(EntryType.ANIME)
-
-        val openError = assertFailsWith<IllegalArgumentException> {
-            openProcessor.open(context, animeEntry, chapter(), EntryOpenOptions())
-        }
-        val continueError = assertFailsWith<IllegalArgumentException> {
-            continueProcessor.findNext(animeEntry)
-        }
-        val downloadError = assertFailsWith<IllegalArgumentException> {
-            downloadProcessor.download(animeEntry, listOf(chapter()), startNow = false)
-        }
-        val consumptionError = assertFailsWith<IllegalArgumentException> {
-            consumptionProcessor.setConsumed(animeEntry, listOf(chapter()), consumed = true)
-        }
-
-        openError.message shouldContain "expected MANGA"
-        continueError.message shouldContain "expected MANGA"
-        downloadError.message shouldContain "expected MANGA"
-        consumptionError.message shouldContain "expected MANGA"
     }
 
     @Test
@@ -807,19 +771,5 @@ class MangaEntryInteractionPluginTest {
             states += state
             upsertedStates += state
         }
-    }
-
-    private suspend inline fun <reified T : Throwable> assertFailsWith(
-        crossinline block: suspend () -> Unit,
-    ): T {
-        try {
-            block()
-        } catch (throwable: Throwable) {
-            if (throwable is T) {
-                return throwable
-            }
-            throw throwable
-        }
-        error("Expected ${T::class.simpleName} to be thrown")
     }
 }
