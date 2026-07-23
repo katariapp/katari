@@ -11,6 +11,7 @@ Updated: 2026-07-23
 - Phase 2 is complete.
 - Phase 3 is complete.
 - Phase 4 is complete.
+- Phase 5 is complete.
 
 ## Phase status
 
@@ -20,7 +21,7 @@ Updated: 2026-07-23
 | 2. Migration durable consequences | Complete | Migration persists and retries opaque owner-contributed participants. |
 | 3. Merge durable consequences | Complete | Merge persists and retries opaque owner-contributed participants. |
 | 4. Media-session lifecycle | Complete | Shared event seam with independently owned policy and consequences. |
-| 5. Refresh lifecycle | Pending | Preserve Library-update batching. |
+| 5. Refresh lifecycle | Complete | Manual and Library refresh emit discovered new-child consequences. |
 | 6. Lifecycle and consumer corrections | Pending | Profile deletion and Bookmark bypass. |
 | 7. Settings projections | Pending | One installation fact for navigation and search. |
 | 8. Final enforcement and review | Pending | Includes repeat audit and cleanup. |
@@ -126,6 +127,40 @@ Validation completed:
 
 - `./gradlew --quiet spotlessApply`
 - `./gradlew --quiet -p gradle/build-logic test --tests 'mihon.gradle.tasks.EntryInteractionBoundaryCheckTaskTest'`
+- `./gradlew --quiet :entry-interactions:testDebugUnitTest :entry-interactions:manga:testDebugUnitTest :entry-interactions:anime:testDebugUnitTest :entry-interactions:book:testDebugUnitTest`
+- `./gradlew --quiet verifyEntryFeatureArchitecture`
+- `./gradlew --quiet :app:compileFossKotlin`
+
+### Phase 5: Refresh lifecycle
+
+- Added separate typed execution points for newly discovered children after manual Entry refresh and during Library
+  update.
+- Made refresh context explicit at every Source Refresh call site so a new user-facing caller cannot silently accept a
+  default that omits manual-refresh consequences.
+- Automatic Download now contributes independently owned participants and runtime bindings to both refresh contexts.
+  Its app-facing API no longer exposes lifecycle methods that callers could invoke manually.
+- Added one Library-update refresh session whose generic, participant-owned state preserves deferred Download batching.
+  The Library worker creates and completes the session without naming Automatic Download or interpreting its state.
+- Removed Automatic Download orchestration from the Entry screen and Library worker while retaining worker scheduling,
+  progress notifications, update notifications, and failure recording in the app workflow.
+- Added execution contract verification for immediate and deferred Automatic Download behavior, including one-time
+  batch creation and completion.
+- Added a composition proof that an unknown future consequence joins both refresh contexts solely through contribution
+  and that its opaque Library-session state completes once.
+- Documented refresh consequence ownership and the Library-session lifecycle.
+
+Manifesto comparison:
+
+- Source and Library refresh coordinators emit facts and discover consequences; neither maintains a Feature completion
+  list.
+- Download support remains an optional provider fact. Automatic Download participates only where that provider is
+  present, with no per-type capability matrix or mandatory operation.
+- Application consumers cannot bypass the contributed Automatic Download lifecycle through its public Feature API.
+- Production composition has exact participant binding coverage and zero unresolved behavioral contract work.
+
+Validation completed:
+
+- `./gradlew --quiet spotlessApply`
 - `./gradlew --quiet :entry-interactions:testDebugUnitTest :entry-interactions:manga:testDebugUnitTest :entry-interactions:anime:testDebugUnitTest :entry-interactions:book:testDebugUnitTest`
 - `./gradlew --quiet verifyEntryFeatureArchitecture`
 - `./gradlew --quiet :app:compileFossKotlin`

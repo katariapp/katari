@@ -6,11 +6,29 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import java.util.concurrent.atomic.AtomicBoolean
 
+internal interface EntryAutomaticDownloadCoordinator : EntryAutomaticDownloadFeature {
+    fun newLibraryUpdateBatch(): EntryAutomaticDownloadBatch
+
+    suspend fun downloadAfterEntryRefresh(
+        entry: Entry,
+        newChapters: List<EntryChapter>,
+    ): EntryAutomaticDownloadResult
+}
+
+internal interface EntryAutomaticDownloadBatch {
+    suspend fun enqueue(
+        entry: Entry,
+        newChapters: List<EntryChapter>,
+    ): EntryAutomaticDownloadResult
+
+    fun complete()
+}
+
 internal class DefaultEntryAutomaticDownloadFeature(
     private val evaluation: FeatureGraphEvaluation,
     private val interaction: EntryDownloadInteraction,
     private val sharedPolicy: EntryAutomaticDownloadPolicy,
-) : EntryAutomaticDownloadFeature {
+) : EntryAutomaticDownloadCoordinator {
     private val applicableTypes = evaluation.automaticDownloadTypes()
 
     override fun isApplicable(type: EntryType): Boolean = type in applicableTypes

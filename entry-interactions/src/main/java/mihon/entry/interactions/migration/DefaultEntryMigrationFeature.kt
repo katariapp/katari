@@ -459,6 +459,7 @@ internal class DefaultEntryMigrationFeature(
                     entry = target,
                     fetchDetails = fetchDetails,
                     fetchChildren = fetchChildren,
+                    manual = false,
                 ),
             )
         ) {

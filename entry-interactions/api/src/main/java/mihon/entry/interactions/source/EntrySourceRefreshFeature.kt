@@ -12,7 +12,7 @@ data class EntrySourceRefreshRequest(
     val entry: Entry,
     val fetchDetails: Boolean = true,
     val fetchChildren: Boolean = true,
-    val manual: Boolean = false,
+    val manual: Boolean,
     val fetchWindow: EntrySourceRefreshWindow = EntrySourceRefreshWindow(),
 )
 

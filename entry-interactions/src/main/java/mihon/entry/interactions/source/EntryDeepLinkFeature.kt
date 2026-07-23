@@ -190,7 +190,7 @@ internal class DefaultEntryDeepLinkFeature(
 
     private suspend fun getChapter(sourceChild: SEntryChapter, entry: Entry): EntryChapter? {
         return entryChapterRepository.getChapterByUrlAndEntryId(sourceChild.url, entry.id)
-            ?: when (val refresh = sourceRefresh.refresh(EntrySourceRefreshRequest(entry))) {
+            ?: when (val refresh = sourceRefresh.refresh(EntrySourceRefreshRequest(entry, manual = false))) {
                 is EntrySourceRefreshResult.Refreshed -> {
                     refresh.insertedChildren.find { it.url == sourceChild.url }
                 }

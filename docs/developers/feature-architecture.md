@@ -149,6 +149,38 @@ Adding another consequence changes only its owning Feature contribution and runt
 does not require edits to the coordinator or to existing consequence owners unless a genuinely specialized contract is
 reported as incomplete.
 
+### Refresh consequences
+
+Manual Entry refresh and Library update emit separate typed new-child events because their lifecycle guarantees differ.
+Source Refresh emits its event after a successful manual refresh. Library Update creates one refresh session, emits an
+event for every successfully refreshed Entry, and completes the session once after its concurrent refresh work. Every
+Source Refresh caller must state whether its request is manual; there is no default that can silently omit the
+manual-refresh consequences.
+
+Automatic Download contributes to both points. Its manual-refresh participant applies policy immediately. Its
+Library-update participant owns a deferred batch in the generic refresh session, queues accepted children while source
+work is active, and starts Download processing once when the session completes. The Library worker does not know which
+participant owns that state or what completion means; it retains ownership only of scheduling, progress and result
+notifications, and failure reporting.
+
+```kotlin
+val session = entryLibraryUpdateRefreshFeature.newSession()
+entries.concurrentForEach { entry ->
+    session.refresh(EntryLibraryUpdateRefreshRequest(entry))
+}
+session.complete()
+
+val futureParticipant = FeatureExecutionParticipantDefinition(
+    point = libraryUpdateNewChildren,
+    prerequisites = FutureCapability,
+    behavioralContracts = listOf(futureRefreshContract),
+)
+```
+
+Adding another refresh consequence therefore changes only its owning contribution and runtime binding. It does not add
+a call to the Entry screen, Library worker, Source Refresh coordinator, or Library Refresh coordinator. Participant
+absence remains valid when its prerequisites are absent.
+
 ### Durable consequences
 
 Work that must survive process death uses the same discovered participant model with a `DURABLE` execution point. A

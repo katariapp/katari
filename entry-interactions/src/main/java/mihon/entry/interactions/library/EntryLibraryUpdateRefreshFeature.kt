@@ -9,6 +9,7 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionRuntime
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
@@ -17,10 +18,10 @@ import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 
 internal val ENTRY_LIBRARY_UPDATE_REFRESH_FEATURE_ID = FeatureId("entry.library-update-refresh")
-private val FEATURE_OWNER = ContributionOwner("entry-library-update")
+internal val ENTRY_LIBRARY_UPDATE_REFRESH_OWNER = ContributionOwner("entry-library-update")
 private val ENTRY_LIBRARY_UPDATE_REFRESH_REFERENCE = entryContentTypeReferenceContribution(
     id = "library-update-refresh",
-    owner = FEATURE_OWNER,
+    owner = ENTRY_LIBRARY_UPDATE_REFRESH_OWNER,
     section = EntryContentTypeReferenceSection.LIBRARY_AND_UPDATES,
     label = "Refresh entries during library updates",
     order = 400,
@@ -40,7 +41,7 @@ internal object EntryLibraryUpdateRefreshBehaviorContract : FeatureBehaviorContr
 }
 
 internal object EntryLibraryUpdateRefreshFeatureContributor : FeatureGraphContributor {
-    override val owner = FEATURE_OWNER
+    override val owner = ENTRY_LIBRARY_UPDATE_REFRESH_OWNER
 
     override fun contributeTo(sink: FeatureGraphContributionSink) {
         sink.add(
@@ -59,16 +60,25 @@ internal object EntryLibraryUpdateRefreshFeatureContributor : FeatureGraphContri
                 ),
             ),
         )
+        sink.add(ENTRY_LIBRARY_UPDATE_NEW_CHILDREN_EXECUTION_POINT)
     }
 }
 
 internal class DefaultEntryLibraryUpdateRefreshFeature(
     evaluation: FeatureGraphEvaluation,
     private val sourceRefresh: EntrySourceRefreshFeature,
+    private val executions: FeatureExecutionRuntime,
 ) : EntryLibraryUpdateRefreshFeature {
     private val selectedTypes = evaluation.libraryUpdateRefreshContentTypes()
 
-    override suspend fun refresh(request: EntryLibraryUpdateRefreshRequest): EntryLibraryUpdateRefreshResult {
+    override fun newSession(): EntryLibraryUpdateRefreshSession {
+        return DefaultEntryLibraryUpdateRefreshSession(this)
+    }
+
+    private suspend fun refresh(
+        request: EntryLibraryUpdateRefreshRequest,
+        session: EntryLibraryUpdateExecutionSession,
+    ): EntryLibraryUpdateRefreshResult {
         check(request.entry.type.toContentTypeId() in selectedTypes) {
             "Entry type ${request.entry.type} was not contributed to Library Update Refresh"
         }
@@ -78,6 +88,7 @@ internal class DefaultEntryLibraryUpdateRefreshFeature(
                     entry = request.entry,
                     fetchDetails = request.fetchMetadata,
                     fetchChildren = true,
+                    manual = false,
                     fetchWindow = EntrySourceRefreshWindow(
                         lowerBound = request.fetchWindowLowerBound,
                         upperBound = request.fetchWindowUpperBound,
@@ -85,9 +96,17 @@ internal class DefaultEntryLibraryUpdateRefreshFeature(
                 ),
             )
         ) {
-            is EntrySourceRefreshResult.Refreshed -> EntryLibraryUpdateRefreshResult.Updated(
-                result.insertedChildren.sortedByDescending { it.sourceOrder },
-            )
+            is EntrySourceRefreshResult.Refreshed -> {
+                val newChildren = result.insertedChildren.sortedByDescending { it.sourceOrder }
+                if (newChildren.isNotEmpty()) {
+                    executions.execute(
+                        point = ENTRY_LIBRARY_UPDATE_NEW_CHILDREN_EXECUTION_POINT,
+                        contentType = request.entry.type.toContentTypeId(),
+                        event = EntryLibraryUpdateNewChildrenEvent(request.entry, newChildren, session),
+                    ).throwFirstFailure()
+                }
+                EntryLibraryUpdateRefreshResult.Updated(newChildren)
+            }
             is EntrySourceRefreshResult.SourceUnavailable -> EntryLibraryUpdateRefreshResult.SourceUnavailable
             is EntrySourceRefreshResult.Failed -> when (val reason = result.reason) {
                 EntrySourceRefreshFailure.NoChildren -> EntryLibraryUpdateRefreshResult.NoChildren
@@ -95,6 +114,24 @@ internal class DefaultEntryLibraryUpdateRefreshFeature(
                     EntryLibraryUpdateRefreshResult.OperationalFailure(reason.error)
                 }
             }
+        }
+    }
+
+    private class DefaultEntryLibraryUpdateRefreshSession(
+        private val feature: DefaultEntryLibraryUpdateRefreshFeature,
+    ) : EntryLibraryUpdateRefreshSession {
+        private val executionSession = EntryLibraryUpdateExecutionSession()
+        private var completed = false
+
+        override suspend fun refresh(request: EntryLibraryUpdateRefreshRequest): EntryLibraryUpdateRefreshResult {
+            check(!completed) { "Cannot refresh after the Library update session completed" }
+            return feature.refresh(request, executionSession)
+        }
+
+        override fun complete() {
+            if (completed) return
+            completed = true
+            executionSession.complete()
         }
     }
 }

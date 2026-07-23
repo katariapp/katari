@@ -35,7 +35,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import logcat.LogPriority
-import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryLibraryUpdateRefreshFeature
 import mihon.entry.interactions.EntryLibraryUpdateRefreshRequest
 import mihon.entry.interactions.EntryLibraryUpdateRefreshResult
@@ -78,7 +77,6 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
 
     private val sourceManager: SourceManager = Injekt.get()
     private val libraryPreferences: LibraryPreferences = Injekt.get()
-    private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get()
     private val entryUpdateEligibility: EntryUpdateEligibilityFeature = Injekt.get()
     private val getLibraryEntries: GetLibraryEntries = Injekt.get()
     private val entryRepository: EntryRepository = Injekt.get()
@@ -264,7 +262,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         val currentlyUpdatingEntries = CopyOnWriteArrayList<Entry>()
         val newUpdates = CopyOnWriteArrayList<Pair<Entry, Array<EntryChapter>>>()
         val failedUpdates = CopyOnWriteArrayList<Pair<Entry, String?>>()
-        val automaticDownloads = entryAutomaticDownloadFeature.newLibraryUpdateBatch()
+        val refreshSession = entryLibraryUpdateRefreshFeature.newSession()
 
         logcat(LogPriority.INFO) { "Processing ${entriesToUpdate.size} queued library entries" }
 
@@ -289,7 +287,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                 ) {
                                     try {
                                         when (
-                                            val result = entryLibraryUpdateRefreshFeature.refresh(
+                                            val result = refreshSession.refresh(
                                                 EntryLibraryUpdateRefreshRequest(
                                                     entry = entry,
                                                     fetchMetadata = libraryPreferences.autoUpdateMetadata.get(),
@@ -301,8 +299,6 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
                                             is EntryLibraryUpdateRefreshResult.Updated -> {
                                                 val newChapters = result.newChildren
                                                 if (newChapters.isNotEmpty()) {
-                                                    automaticDownloads.enqueue(entry, newChapters)
-
                                                     libraryPreferences.newUpdatesCount.getAndSet {
                                                         it + newChapters.size
                                                     }
@@ -352,7 +348,7 @@ class LibraryUpdateJob(private val context: Context, workerParams: WorkerParamet
         if (newUpdates.isNotEmpty()) {
             notifier.showUpdateNotifications(newUpdates)
         }
-        automaticDownloads.complete()
+        refreshSession.complete()
 
         logcat(LogPriority.INFO) {
             "Library update finished with ${newUpdates.size} updated entr${if (newUpdates.size == 1) "y" else "ies"} and ${failedUpdates.size} failure${if (failedUpdates.size == 1) "" else "s"}"

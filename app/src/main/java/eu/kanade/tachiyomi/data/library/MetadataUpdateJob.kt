@@ -134,6 +134,7 @@ class MetadataUpdateJob(private val context: Context, workerParams: WorkerParame
                                                     entry = freshEntry,
                                                     fetchDetails = true,
                                                     fetchChildren = false,
+                                                    manual = false,
                                                 ),
                                             )
                                         ) {

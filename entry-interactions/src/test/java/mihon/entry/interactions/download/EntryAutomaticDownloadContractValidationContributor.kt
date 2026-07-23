@@ -1,7 +1,10 @@
 package mihon.entry.interactions
 
 import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import mihon.entry.interactions.validation.contractExpectation
 import mihon.entry.interactions.validation.productionSubjectEvaluation
 import mihon.entry.interactions.validation.verifyFeatureContract
@@ -10,6 +13,8 @@ import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
@@ -29,6 +34,65 @@ class EntryAutomaticDownloadContractValidationContributor : FeatureValidationCon
         )
         sink.add(FeatureContractVerifier(providerReference, ::verifyAutomaticDownload))
         sink.add(FeatureContractVerifier(contextReference, ::verifyAutomaticDownload))
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_AUTOMATIC_DOWNLOAD_SOURCE_REFRESH_PARTICIPANT.id,
+                    EntryAutomaticDownloadSourceRefreshBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val provider = input.provider(EntryDownloadCapability.definition)
+                    val entry = Entry.create().copy(id = 75L, type = provider.type)
+                    val chapter = EntryChapter.create().copy(id = 76L, entryId = entry.id)
+                    val feature = mockk<EntryAutomaticDownloadCoordinator> {
+                        coEvery {
+                            downloadAfterEntryRefresh(entry, listOf(chapter))
+                        } returns EntryAutomaticDownloadResult.Scheduled(1)
+                    }
+
+                    entryAutomaticDownloadSourceRefreshBinding { feature }
+                        .handler
+                        .execute(EntrySourceRefreshNewChildrenEvent(entry, listOf(chapter)))
+
+                    coVerify(exactly = 1) { feature.downloadAfterEntryRefresh(entry, listOf(chapter)) }
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_AUTOMATIC_DOWNLOAD_LIBRARY_UPDATE_PARTICIPANT.id,
+                    EntryAutomaticDownloadLibraryUpdateBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val provider = input.provider(EntryDownloadCapability.definition)
+                    val entry = Entry.create().copy(id = 77L, type = provider.type)
+                    val chapter = EntryChapter.create().copy(id = 78L, entryId = entry.id)
+                    val batch = mockk<EntryAutomaticDownloadBatch> {
+                        coEvery { enqueue(entry, listOf(chapter)) } returns
+                            EntryAutomaticDownloadResult.Scheduled(1)
+                        every { complete() } returns Unit
+                    }
+                    val feature = mockk<EntryAutomaticDownloadCoordinator> {
+                        every { newLibraryUpdateBatch() } returns batch
+                    }
+                    val session = EntryLibraryUpdateExecutionSession()
+                    val binding = entryAutomaticDownloadLibraryUpdateBinding { feature }
+                    val event = EntryLibraryUpdateNewChildrenEvent(entry, listOf(chapter), session)
+
+                    binding.handler.execute(event)
+                    binding.handler.execute(event)
+                    session.complete()
+                    session.complete()
+
+                    verify(exactly = 1) { feature.newLibraryUpdateBatch() }
+                    coVerify(exactly = 2) { batch.enqueue(entry, listOf(chapter)) }
+                    verify(exactly = 1) { batch.complete() }
+                }
+            },
+        )
         sink.add(
             FeatureContractScenario(
                 FeatureContractScenarioId("entry.download.automatic.context.applicable"),

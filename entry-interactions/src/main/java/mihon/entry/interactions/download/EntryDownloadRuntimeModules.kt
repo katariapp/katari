@@ -59,9 +59,10 @@ internal val EntryDownloadActionFeatureRuntimeModule = EntryFeatureRuntimeModule
 internal val EntryAutomaticDownloadFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.automatic",
     contributor = EntryAutomaticDownloadFeatureContributor,
+    additionalContributors = listOf(EntryAutomaticDownloadRefreshContributor),
 ) {
     addSingletonFactory { EntryAutomaticDownloadPolicy(get(), get(), get()) }
-    addSingletonFactory<EntryAutomaticDownloadFeature> {
+    addSingletonFactory<EntryAutomaticDownloadCoordinator> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryAutomaticDownloadFeature(
             evaluation = composition.featureGraphEvaluation,
@@ -69,10 +70,38 @@ internal val EntryAutomaticDownloadFeatureRuntimeModule = EntryFeatureRuntimeMod
             sharedPolicy = get(),
         )
     }
+    addSingletonFactory<EntryAutomaticDownloadFeature> { get<EntryAutomaticDownloadCoordinator>() }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            entryAutomaticDownloadSourceRefreshBinding { get<EntryAutomaticDownloadCoordinator>() },
+            entryAutomaticDownloadLibraryUpdateBinding { get<EntryAutomaticDownloadCoordinator>() },
+        ),
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryAutomaticDownloadFeature>() }),
     )
 }
+
+internal fun entryAutomaticDownloadSourceRefreshBinding(
+    feature: () -> EntryAutomaticDownloadCoordinator,
+) = FeatureExecutionParticipantBinding(
+    definition = ENTRY_AUTOMATIC_DOWNLOAD_SOURCE_REFRESH_PARTICIPANT,
+    handler = FeatureExecutionHandler { event ->
+        feature().downloadAfterEntryRefresh(event.entry, event.newChildren)
+    },
+)
+
+internal fun entryAutomaticDownloadLibraryUpdateBinding(
+    feature: () -> EntryAutomaticDownloadCoordinator,
+) = FeatureExecutionParticipantBinding(
+    definition = ENTRY_AUTOMATIC_DOWNLOAD_LIBRARY_UPDATE_PARTICIPANT,
+    handler = FeatureExecutionHandler { event ->
+        val batch = event.session.state(
+            participant = ENTRY_AUTOMATIC_DOWNLOAD_LIBRARY_UPDATE_PARTICIPANT.id,
+            create = feature()::newLibraryUpdateBatch,
+            complete = EntryAutomaticDownloadBatch::complete,
+        )
+        batch.enqueue(event.entry, event.newChildren)
+    },
+)
 
 internal val EntryDownloadLifecycleFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.lifecycle",

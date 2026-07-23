@@ -64,6 +64,7 @@ internal val EntrySourceRefreshFeatureRuntimeModule = EntryFeatureRuntimeModule(
     addSingletonFactory<EntrySourceRefreshFeature> {
         DefaultEntrySourceRefreshFeature(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
+            executions = get<EntryInteractionComposition>().featureExecutions,
             sourceManager = get(),
             syncEntryWithSource = get(),
             updateLibraryTitles = context.dependencies.sourceRefreshUpdateLibraryTitles,

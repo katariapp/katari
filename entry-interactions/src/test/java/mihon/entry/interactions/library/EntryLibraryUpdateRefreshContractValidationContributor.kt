@@ -4,7 +4,6 @@ import eu.kanade.tachiyomi.source.entry.EntryType
 import io.mockk.coEvery
 import io.mockk.mockk
 import mihon.entry.interactions.validation.contractExpectation
-import mihon.entry.interactions.validation.productionSubjectEvaluation
 import mihon.entry.interactions.validation.verifyFeatureContract
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractVerifier
@@ -38,13 +37,15 @@ class EntryLibraryUpdateRefreshContractValidationContributor : FeatureValidation
                             false,
                         )
                     }
+                    val composition = refreshFeatureTestComposition(type)
                     val feature = DefaultEntryLibraryUpdateRefreshFeature(
-                        productionSubjectEvaluation(type, EntryLibraryUpdateRefreshFeatureContributor),
-                        sourceRefresh,
+                        evaluation = composition.featureGraphEvaluation,
+                        sourceRefresh = sourceRefresh,
+                        executions = composition.featureExecutions,
                     )
 
                     contractExpectation(
-                        feature.refresh(EntryLibraryUpdateRefreshRequest(entry, true, 0L, 0L)) ==
+                        feature.newSession().refresh(EntryLibraryUpdateRefreshRequest(entry, true, 0L, 0L)) ==
                             EntryLibraryUpdateRefreshResult.Updated(listOf(later, earlier)),
                         "Library Update Refresh must hand ordered inserted children to its caller",
                     )

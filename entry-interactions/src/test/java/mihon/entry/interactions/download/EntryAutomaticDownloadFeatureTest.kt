@@ -139,7 +139,7 @@ class EntryAutomaticDownloadFeatureTest {
     private fun featureFor(
         composition: EntryInteractionComposition,
         policy: EntryAutomaticDownloadPolicy,
-    ): EntryAutomaticDownloadFeature {
+    ): EntryAutomaticDownloadCoordinator {
         return DefaultEntryAutomaticDownloadFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.download,

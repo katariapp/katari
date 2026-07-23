@@ -6,7 +6,6 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import mihon.entry.interactions.validation.contractExpectation
-import mihon.entry.interactions.validation.productionSubjectEvaluation
 import mihon.entry.interactions.validation.verifyFeatureContract
 import mihon.feature.graph.FeatureContractScenarioId
 import mihon.feature.graph.contextEvidence
@@ -34,14 +33,16 @@ class EntrySourceRefreshContractValidationContributor : FeatureValidationContrib
                         coEvery { syncStrictly(any(), any(), any(), any(), any(), any(), any()) } returns
                             SyncEntryWithSource.SyncResult(listOf(child), 1, 0, 0, false)
                     }
+                    val composition = refreshFeatureTestComposition(type)
                     val feature = DefaultEntrySourceRefreshFeature(
-                        productionSubjectEvaluation(type, EntrySourceRefreshFeatureContributor),
-                        mockk { every { get(entry.source) } returns mockk<UnifiedSource>() },
-                        sync,
-                        { false },
+                        evaluation = composition.featureGraphEvaluation,
+                        executions = composition.featureExecutions,
+                        sourceManager = mockk { every { get(entry.source) } returns mockk<UnifiedSource>() },
+                        syncEntryWithSource = sync,
+                        updateLibraryTitles = { false },
                     )
                     contractExpectation(
-                        feature.refresh(EntrySourceRefreshRequest(entry)) ==
+                        feature.refresh(EntrySourceRefreshRequest(entry, manual = false)) ==
                             EntrySourceRefreshResult.Refreshed(listOf(child), 1, 0, 0, false),
                         "Source Refresh must expose the shared synchronization result",
                     )

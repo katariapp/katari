@@ -120,6 +120,7 @@ internal class DefaultEntryImmersiveFeature(
                     entry = entry,
                     fetchDetails = false,
                     fetchChildren = true,
+                    manual = false,
                 ),
             )
         ) {

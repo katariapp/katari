@@ -81,7 +81,7 @@ class EntrySourceRefreshFeatureTest {
         val updateTitles = mockk<(Long) -> Boolean>(relaxed = true)
         val missing = feature(sourceManager(null), sync, updateTitles)
 
-        missing.refresh(EntrySourceRefreshRequest(entry)) shouldBe
+        missing.refresh(EntrySourceRefreshRequest(entry, manual = false)) shouldBe
             EntrySourceRefreshResult.SourceUnavailable(sourceId = entry.source)
         coVerify(exactly = 0) { sync.syncStrictly(any(), any(), any(), any(), any(), any(), any()) }
         verify(exactly = 0) { updateTitles(any()) }
@@ -94,18 +94,18 @@ class EntrySourceRefreshFeatureTest {
         val feature = feature(sourceManager, sync) { true }
         coEvery { sync.syncStrictly(any(), any(), any(), any(), any(), any(), any()) } throws NoChaptersException()
 
-        feature.refresh(EntrySourceRefreshRequest(entry)) shouldBe
+        feature.refresh(EntrySourceRefreshRequest(entry, manual = false)) shouldBe
             EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.NoChildren)
 
         val failure = IllegalStateException("refresh failed")
         coEvery { sync.syncStrictly(any(), any(), any(), any(), any(), any(), any()) } throws failure
-        feature.refresh(EntrySourceRefreshRequest(entry))
+        feature.refresh(EntrySourceRefreshRequest(entry, manual = false))
             .shouldBeInstanceOf<EntrySourceRefreshResult.Failed>()
             .reason shouldBe EntrySourceRefreshFailure.Operation(failure)
 
         coEvery { sync.syncStrictly(any(), any(), any(), any(), any(), any(), any()) } throws CancellationException()
         shouldThrow<CancellationException> {
-            feature.refresh(EntrySourceRefreshRequest(entry))
+            feature.refresh(EntrySourceRefreshRequest(entry, manual = false))
         }
     }
 
@@ -116,7 +116,12 @@ class EntrySourceRefreshFeatureTest {
         assertThrows<IllegalArgumentException> {
             kotlinx.coroutines.runBlocking {
                 feature.refresh(
-                    EntrySourceRefreshRequest(entry, fetchDetails = false, fetchChildren = false),
+                    EntrySourceRefreshRequest(
+                        entry,
+                        fetchDetails = false,
+                        fetchChildren = false,
+                        manual = false,
+                    ),
                 )
             }
         }
@@ -130,10 +135,14 @@ class EntrySourceRefreshFeatureTest {
         sourceManager: SourceManager,
         sync: SyncEntryWithSource,
         updateTitles: (Long) -> Boolean,
-    ) = DefaultEntrySourceRefreshFeature(
-        evaluation = sourceFeatureEvaluation(EntrySourceRefreshFeatureContributor),
-        sourceManager = sourceManager,
-        syncEntryWithSource = sync,
-        updateLibraryTitles = updateTitles,
-    )
+    ): EntrySourceRefreshFeature {
+        val composition = refreshFeatureTestComposition()
+        return DefaultEntrySourceRefreshFeature(
+            evaluation = composition.featureGraphEvaluation,
+            executions = composition.featureExecutions,
+            sourceManager = sourceManager,
+            syncEntryWithSource = sync,
+            updateLibraryTitles = updateTitles,
+        )
+    }
 }

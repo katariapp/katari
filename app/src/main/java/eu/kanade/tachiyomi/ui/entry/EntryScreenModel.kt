@@ -52,7 +52,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import logcat.LogPriority
-import mihon.entry.interactions.EntryAutomaticDownloadFeature
 import mihon.entry.interactions.EntryBookmarkFeature
 import mihon.entry.interactions.EntryBulkDownloadAction
 import mihon.entry.interactions.EntryBulkDownloadRequest
@@ -171,7 +170,6 @@ class EntryScreenModel(
     private val downloadRuntime: EntryDownloadRuntimeFeature = Injekt.get(),
     private val entryDownloadActionFeature: EntryDownloadActionFeature = Injekt.get(),
     private val entryDownloadOptionsFeature: EntryDownloadOptionsFeature = Injekt.get(),
-    private val entryAutomaticDownloadFeature: EntryAutomaticDownloadFeature = Injekt.get(),
     private val downloadMaintenance: EntryDownloadMaintenanceFeature = Injekt.get(),
     private val entryMigrationFeature: EntryMigrationFeature = Injekt.get(),
     private val entryConsumptionFeature: EntryConsumptionFeature = Injekt.get(),
@@ -719,7 +717,6 @@ class EntryScreenModel(
         successState ?: return
         try {
             val membersToRefresh = getMembersToRefreshFromSource(manualFetch)
-            val insertedChildren = mutableListOf<EntryChapter>()
             for (memberEntry in membersToRefresh) {
                 when (
                     val result = sourceRefreshFeature.refresh(
@@ -731,7 +728,7 @@ class EntryScreenModel(
                         ),
                     )
                 ) {
-                    is EntrySourceRefreshResult.Refreshed -> insertedChildren += result.insertedChildren
+                    is EntrySourceRefreshResult.Refreshed -> Unit
                     is EntrySourceRefreshResult.SourceUnavailable -> {
                         showRefreshFailure(context.stringResource(MR.strings.loader_not_implemented_error))
                         return
@@ -751,10 +748,6 @@ class EntryScreenModel(
                         }
                     }
                 }
-            }
-
-            if (manualFetch) {
-                downloadNewEntryChapters(insertedChildren)
             }
         } catch (_: CancellationException) {
             // ignore
@@ -1340,18 +1333,6 @@ class EntryScreenModel(
         toggleAllSelection(false)
     }
 
-    private suspend fun getChapterItems(chapters: List<EntryChapter>): List<EntryChapterList.Item> {
-        return chapters.map { chapter ->
-            val entry = entryRepository.getEntryById(chapter.entryId) ?: return@map null
-            EntryChapterList.Item(
-                chapter = chapter,
-                entry = entry,
-                downloadState = EntryDownloadState.NOT_DOWNLOADED,
-                downloadProgress = 0,
-            )
-        }.filterNotNull()
-    }
-
     /**
      * Bookmarks the given list of chapters.
      * @param chapters the list of chapters to bookmark.
@@ -1382,20 +1363,6 @@ class EntryScreenModel(
             } catch (e: Throwable) {
                 logcat(LogPriority.ERROR, e)
             }
-        }
-    }
-
-    private fun downloadNewEntryChapters(chapters: List<EntryChapter>) {
-        screenModelScope.launchNonCancellable {
-            getChapterItems(chapters)
-                .groupBy { it.entry.id }
-                .forEach { (_, chapterItems) ->
-                    val entry = chapterItems.first().entry
-                    entryAutomaticDownloadFeature.downloadAfterEntryRefresh(
-                        entry = entry,
-                        newChapters = chapterItems.map { it.chapter },
-                    )
-                }
         }
     }
 

@@ -16,6 +16,7 @@ import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionRuntime
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
@@ -30,7 +31,7 @@ import tachiyomi.domain.entry.interactor.SyncEntryWithSource
 import tachiyomi.domain.source.service.SourceManager
 
 internal val ENTRY_SOURCE_REFRESH_FEATURE_ID = FeatureId("entry.source-refresh")
-private val ENTRY_SOURCE_REFRESH_OWNER = ContributionOwner("entry-source-refresh")
+internal val ENTRY_SOURCE_REFRESH_OWNER = ContributionOwner("entry-source-refresh")
 private val ENTRY_SOURCE_REFRESH_REFERENCE = entryContentTypeReferenceContribution(
     id = "source-refresh",
     owner = ENTRY_SOURCE_REFRESH_OWNER,
@@ -93,11 +94,13 @@ internal object EntrySourceRefreshFeatureContributor : FeatureGraphContributor {
                 ),
             ),
         )
+        sink.add(ENTRY_SOURCE_REFRESH_NEW_CHILDREN_EXECUTION_POINT)
     }
 }
 
 internal class DefaultEntrySourceRefreshFeature(
     private val evaluation: FeatureGraphEvaluation,
+    private val executions: FeatureExecutionRuntime,
     private val sourceManager: SourceManager,
     private val syncEntryWithSource: SyncEntryWithSource,
     private val updateLibraryTitles: (profileId: Long) -> Boolean,
@@ -113,7 +116,7 @@ internal class DefaultEntrySourceRefreshFeature(
         if (!sourceInstalled) return EntrySourceRefreshResult.SourceUnavailable(request.entry.source)
 
         return try {
-            syncEntryWithSource.syncStrictly(
+            val result = syncEntryWithSource.syncStrictly(
                 entry = request.entry,
                 profileId = request.entry.profileId,
                 updateLibraryTitles = updateLibraryTitles(request.entry.profileId),
@@ -122,6 +125,14 @@ internal class DefaultEntrySourceRefreshFeature(
                 manualFetch = request.manual,
                 fetchWindow = request.fetchWindow.let { it.lowerBound to it.upperBound },
             ).toRefreshResult()
+            if (request.manual && result.insertedChildren.isNotEmpty()) {
+                executions.execute(
+                    point = ENTRY_SOURCE_REFRESH_NEW_CHILDREN_EXECUTION_POINT,
+                    contentType = request.entry.type.toContentTypeId(),
+                    event = EntrySourceRefreshNewChildrenEvent(request.entry, result.insertedChildren),
+                ).throwFirstFailure()
+            }
+            result
         } catch (error: CancellationException) {
             throw error
         } catch (_: NoChaptersException) {

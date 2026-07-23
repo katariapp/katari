@@ -34,7 +34,3 @@ internal class DefaultEntryMediaSessionFeature(
         return EntryMediaSessionResult.Handled
     }
 }
-
-private fun mihon.feature.graph.FeatureExecutionResult.throwFirstFailure() {
-    failures.firstOrNull()?.let { throw it.error }
-}

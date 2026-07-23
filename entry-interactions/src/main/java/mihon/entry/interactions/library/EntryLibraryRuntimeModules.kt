@@ -72,6 +72,7 @@ internal val EntryLibraryUpdateRefreshFeatureRuntimeModule = EntryFeatureRuntime
         DefaultEntryLibraryUpdateRefreshFeature(
             evaluation = get<EntryInteractionComposition>().featureGraphEvaluation,
             sourceRefresh = get(),
+            executions = get<EntryInteractionComposition>().featureExecutions,
         )
     }
     EntryFeatureRuntimeArtifacts(

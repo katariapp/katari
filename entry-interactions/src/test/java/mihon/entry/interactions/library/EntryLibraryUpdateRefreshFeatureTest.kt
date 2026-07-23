@@ -28,7 +28,7 @@ class EntryLibraryUpdateRefreshFeatureTest {
         }
         val feature = feature(sourceRefresh)
 
-        feature.refresh(
+        feature.newSession().refresh(
             EntryLibraryUpdateRefreshRequest(
                 entry = entry,
                 fetchMetadata = false,
@@ -42,6 +42,7 @@ class EntryLibraryUpdateRefreshFeatureTest {
                     entry = entry,
                     fetchDetails = false,
                     fetchChildren = true,
+                    manual = false,
                     fetchWindow = EntrySourceRefreshWindow(10L, 20L),
                 ),
             )
@@ -55,20 +56,24 @@ class EntryLibraryUpdateRefreshFeatureTest {
         val request = EntryLibraryUpdateRefreshRequest(entry, true, 0L, 0L)
 
         coEvery { sourceRefresh.refresh(any()) } returns EntrySourceRefreshResult.SourceUnavailable(entry.source)
-        feature.refresh(request) shouldBe EntryLibraryUpdateRefreshResult.SourceUnavailable
+        feature.newSession().refresh(request) shouldBe EntryLibraryUpdateRefreshResult.SourceUnavailable
 
         coEvery { sourceRefresh.refresh(any()) } returns
             EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.NoChildren)
-        feature.refresh(request) shouldBe EntryLibraryUpdateRefreshResult.NoChildren
+        feature.newSession().refresh(request) shouldBe EntryLibraryUpdateRefreshResult.NoChildren
 
         val failure = IllegalStateException("refresh failed")
         coEvery { sourceRefresh.refresh(any()) } returns
             EntrySourceRefreshResult.Failed(EntrySourceRefreshFailure.Operation(failure))
-        feature.refresh(request) shouldBe EntryLibraryUpdateRefreshResult.OperationalFailure(failure)
+        feature.newSession().refresh(request) shouldBe EntryLibraryUpdateRefreshResult.OperationalFailure(failure)
     }
 
-    private fun feature(sourceRefresh: EntrySourceRefreshFeature) = DefaultEntryLibraryUpdateRefreshFeature(
-        evaluation = sourceFeatureEvaluation(EntryLibraryUpdateRefreshFeatureContributor),
-        sourceRefresh = sourceRefresh,
-    )
+    private fun feature(sourceRefresh: EntrySourceRefreshFeature): EntryLibraryUpdateRefreshFeature {
+        val composition = refreshFeatureTestComposition()
+        return DefaultEntryLibraryUpdateRefreshFeature(
+            evaluation = composition.featureGraphEvaluation,
+            sourceRefresh = sourceRefresh,
+            executions = composition.featureExecutions,
+        )
+    }
 }
