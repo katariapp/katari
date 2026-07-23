@@ -8,7 +8,6 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureGraphContributionSink
@@ -16,7 +15,7 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
 
 internal val ENTRY_METADATA_LIFECYCLE_OWNER = ContributionOwner("entry-metadata-lifecycle")
 private val ENTRY_METADATA_LIFECYCLE_FEATURE_ID = FeatureId("entry.metadata-lifecycle")
@@ -36,12 +35,12 @@ private object EntryMetadataLifecycleBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.metadata-lifecycle.propagation")
 }
 
-internal val ENTRY_METADATA_CHANGED_EXECUTION_POINT = featureExecutionPointDefinition<EntryMetadataChangedEvent>(
-    id = FeatureExecutionPointId("entry.metadata.changed"),
-    owner = ENTRY_METADATA_LIFECYCLE_OWNER,
-    delivery = FeatureExecutionDelivery.AFTER_COMMIT,
-    failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
-)
+internal val ENTRY_METADATA_CHANGED_EXECUTION_POINT =
+    afterCommitVolatileFeatureExecutionPointDefinition<EntryMetadataChangedEvent>(
+        id = FeatureExecutionPointId("entry.metadata.changed"),
+        owner = ENTRY_METADATA_LIFECYCLE_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
+    )
 
 internal object EntryMetadataLifecycleFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_METADATA_LIFECYCLE_OWNER

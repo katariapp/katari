@@ -1,20 +1,18 @@
 package mihon.entry.interactions
 
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureExecutionPointId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal val ENTRY_LIBRARY_UPDATE_NEW_CHILDREN_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryLibraryUpdateNewChildrenEvent>(
+    afterCommitVolatileFeatureExecutionPointDefinition<EntryLibraryUpdateNewChildrenEvent>(
         id = FeatureExecutionPointId("entry.library-update-refresh.new-children"),
         owner = ENTRY_LIBRARY_UPDATE_REFRESH_OWNER,
-        delivery = FeatureExecutionDelivery.AFTER_COMMIT,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 

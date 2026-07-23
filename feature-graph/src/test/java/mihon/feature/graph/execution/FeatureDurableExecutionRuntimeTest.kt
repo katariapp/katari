@@ -115,10 +115,9 @@ class FeatureDurableExecutionRuntimeTest {
         }.message shouldContain "No durable execution participant binding for example.future"
     }
 
-    private fun point(): FeatureExecutionPointDefinition<Event> = featureExecutionPointDefinition(
+    private fun point(): DurableFeatureExecutionPointDefinition<Event> = durableFeatureExecutionPointDefinition(
         id = FeatureExecutionPointId("example.durable-point"),
         owner = pointOwner,
-        delivery = FeatureExecutionDelivery.DURABLE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 

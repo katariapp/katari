@@ -1,10 +1,9 @@
 package mihon.entry.interactions
 
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureExecutionRuntime
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.inlineFeatureExecutionPointDefinition
 import tachiyomi.domain.entry.model.Entry
 
 internal data class EntryMigrationOptionDiscoveryEvent(
@@ -17,10 +16,9 @@ internal fun interface EntryMigrationOptionSink {
 }
 
 internal val ENTRY_MIGRATION_OPTION_DISCOVERY_POINT =
-    featureExecutionPointDefinition<EntryMigrationOptionDiscoveryEvent>(
+    inlineFeatureExecutionPointDefinition<EntryMigrationOptionDiscoveryEvent>(
         id = FeatureExecutionPointId("entry.migration.option-discovery"),
         owner = ENTRY_MIGRATION_FEATURE_OWNER,
-        delivery = FeatureExecutionDelivery.IMMEDIATE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 
@@ -29,7 +27,7 @@ internal class EntryMigrationOptionDiscovery(
 ) {
     suspend fun discover(source: Entry): Set<EntryMigrationOption> {
         val discovered = linkedSetOf<EntryMigrationOption>()
-        val result = executions.execute(
+        val result = executions.executeInline(
             point = ENTRY_MIGRATION_OPTION_DISCOVERY_POINT,
             contentType = source.type.toContentTypeId(),
             event = EntryMigrationOptionDiscoveryEvent(source, discovered::add),

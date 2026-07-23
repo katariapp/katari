@@ -1,7 +1,9 @@
 package mihon.entry.interactions
 
 import kotlinx.coroutines.CancellationException
+import mihon.feature.graph.FeatureCommitExecutionResult
 import mihon.feature.graph.FeatureExecutionRuntime
+import mihon.feature.graph.coordinateFeatureCommit
 import tachiyomi.domain.entry.model.Entry
 
 internal class EntryDestructiveRemovalCoordinator(
@@ -14,35 +16,48 @@ internal class EntryDestructiveRemovalCoordinator(
         return try {
             val collected = MutableEntryDestructiveRemovalOutcomes()
             when (
-                val commit = host.remove(requested) { persisted ->
-                    persisted.groupBy(Entry::type).forEach { (type, typedEntries) ->
-                        val result = executions.execute(
-                            point = ENTRY_DESTRUCTIVE_REMOVING_EXECUTION_POINT,
-                            contentType = type.toContentTypeId(),
-                            event = EntryDestructiveRemovingEvent(typedEntries, collected),
+                val execution = executions.coordinateFeatureCommit(
+                    commit = {
+                        host.remove(
+                            requested = requested,
+                            beforeDelete = callback { persisted ->
+                                persisted.groupBy(Entry::type).forEach { (type, typedEntries) ->
+                                    val result = execute(
+                                        point = ENTRY_DESTRUCTIVE_REMOVING_EXECUTION_POINT,
+                                        contentType = type.toContentTypeId(),
+                                        event = EntryDestructiveRemovingEvent(typedEntries, collected),
+                                    )
+                                    check(result.isSuccessful) {
+                                        "Transactional destructive-removal participants failed: " +
+                                            result.failures.joinToString { it.participant.value }
+                                    }
+                                }
+                            },
                         )
-                        check(result.isSuccessful) {
-                            "Transactional destructive-removal participants failed: " +
-                                result.failures.joinToString { it.participant.value }
+                    },
+                    committed = { it is EntryDestructiveRemovalCommit.Applied },
+                    volatileConsequences = { commit ->
+                        val entries = (commit as EntryDestructiveRemovalCommit.Applied).entries
+                        val failures = entries.groupBy(Entry::type).flatMap { (type, typedEntries) ->
+                            execute(
+                                point = ENTRY_DESTRUCTIVE_REMOVED_EXECUTION_POINT,
+                                contentType = type.toContentTypeId(),
+                                event = EntryDestructiveRemovedEvent(typedEntries, collected.snapshot()),
+                            ).toLifecycleFailures()
                         }
-                    }
-                }
-            ) {
-                is EntryDestructiveRemovalCommit.Applied -> {
-                    val failures = commit.entries.groupBy(Entry::type).flatMap { (type, typedEntries) ->
-                        executions.execute(
-                            point = ENTRY_DESTRUCTIVE_REMOVED_EXECUTION_POINT,
-                            contentType = type.toContentTypeId(),
-                            event = EntryDestructiveRemovedEvent(typedEntries, collected.snapshot()),
-                        ).toLifecycleFailures()
-                    }
-                    EntryDestructiveRemovalResult.Removed(commit.entries, failures)
-                }
-                EntryDestructiveRemovalCommit.NoChange -> EntryDestructiveRemovalResult.NoChange
-                EntryDestructiveRemovalCommit.Conflict -> EntryDestructiveRemovalResult.Failed(
-                    requested,
-                    IllegalStateException("Entries changed before destructive removal"),
+                        EntryDestructiveRemovalResult.Removed(entries, failures)
+                    },
                 )
+            ) {
+                is FeatureCommitExecutionResult.Committed -> execution.volatileConsequences
+                is FeatureCommitExecutionResult.NotCommitted -> when (execution.commit) {
+                    EntryDestructiveRemovalCommit.NoChange -> EntryDestructiveRemovalResult.NoChange
+                    EntryDestructiveRemovalCommit.Conflict -> EntryDestructiveRemovalResult.Failed(
+                        requested,
+                        IllegalStateException("Entries changed before destructive removal"),
+                    )
+                    is EntryDestructiveRemovalCommit.Applied -> error("Applied destructive removal was not committed")
+                }
             }
         } catch (error: CancellationException) {
             throw error

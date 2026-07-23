@@ -23,6 +23,7 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
+import mihon.feature.graph.afterFeatureCommitVolatile
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.featureContextRule
@@ -126,11 +127,13 @@ internal class DefaultEntrySourceRefreshFeature(
                 fetchWindow = request.fetchWindow.let { it.lowerBound to it.upperBound },
             ).toRefreshResult()
             if (request.manual && result.insertedChildren.isNotEmpty()) {
-                executions.execute(
-                    point = ENTRY_SOURCE_REFRESH_NEW_CHILDREN_EXECUTION_POINT,
-                    contentType = request.entry.type.toContentTypeId(),
-                    event = EntrySourceRefreshNewChildrenEvent(request.entry, result.insertedChildren),
-                ).throwFirstFailure()
+                executions.afterFeatureCommitVolatile {
+                    execute(
+                        point = ENTRY_SOURCE_REFRESH_NEW_CHILDREN_EXECUTION_POINT,
+                        contentType = request.entry.type.toContentTypeId(),
+                        event = EntrySourceRefreshNewChildrenEvent(request.entry, result.insertedChildren),
+                    ).throwFirstFailure()
+                }
             }
             result
         } catch (error: CancellationException) {

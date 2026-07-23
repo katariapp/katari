@@ -46,8 +46,8 @@ data class FeatureDurableExecutionParticipantBinding<E : Any>(
     val contextResolver: FeatureExecutionContextResolver<E>? = null,
 ) {
     init {
-        require(definition.point.delivery == FeatureExecutionDelivery.DURABLE) {
-            "Non-durable execution participant ${definition.id} requires an immediate runtime binding"
+        require(definition.point.phase == FeatureExecutionPhase.Durable) {
+            "Non-durable execution participant ${definition.id} requires a transient runtime binding"
         }
         require(definition.contextInputs.isNotEmpty() == (contextResolver != null)) {
             "Durable execution participant ${definition.id} must bind a context resolver exactly when it declares " +
@@ -78,7 +78,7 @@ internal class FeatureDurableExecutionRuntime(
         }
         bindingsById = bindings.associateBy { it.definition.id }
         val declaredById = graph.executionParticipants
-            .filter { it.point.delivery == FeatureExecutionDelivery.DURABLE }
+            .filter { it.point.phase == FeatureExecutionPhase.Durable }
             .associateBy { it.id }
         val missing = declaredById.keys - bindingsById.keys
         val orphaned = bindingsById.keys - declaredById.keys
@@ -94,7 +94,7 @@ internal class FeatureDurableExecutionRuntime(
     }
 
     suspend fun <E : Any> prepare(
-        point: FeatureExecutionPointDefinition<E>,
+        point: DurableFeatureExecutionPointDefinition<E>,
         contentType: ContentTypeId,
         event: E,
     ): FeatureDurableExecutionPreparationResult {
@@ -175,13 +175,10 @@ internal class FeatureDurableExecutionRuntime(
     }
 
     private fun <E : Any> validateRequest(
-        point: FeatureExecutionPointDefinition<E>,
+        point: DurableFeatureExecutionPointDefinition<E>,
         contentType: ContentTypeId,
         event: E,
     ) {
-        check(point.delivery == FeatureExecutionDelivery.DURABLE) {
-            "Execution point ${point.id} is not durable"
-        }
         val declaredPoint = graph.executionPoints.singleOrNull { it.id == point.id }
             ?: error("Unknown execution point ${point.id}")
         check(declaredPoint == point) {

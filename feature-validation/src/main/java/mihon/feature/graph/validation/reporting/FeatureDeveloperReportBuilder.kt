@@ -102,7 +102,7 @@ fun buildFeatureDeveloperReport(
                 id = point.id.value,
                 owner = point.owner.value,
                 eventType = point.eventType.qualifiedName ?: point.eventType.toString(),
-                delivery = point.delivery.name.lowercase(),
+                phase = point.phase.id,
                 failurePolicy = point.failurePolicy.name.lowercase(),
             )
         },

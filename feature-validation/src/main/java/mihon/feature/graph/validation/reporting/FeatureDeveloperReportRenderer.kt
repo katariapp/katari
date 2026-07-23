@@ -39,7 +39,7 @@ fun renderFeatureDeveloperReport(report: FeatureDeveloperReport): String = build
         report.executionPoints.forEach { point ->
             appendLine(
                 "- ${point.id} (owner: ${point.owner}; event: ${point.eventType}; " +
-                    "delivery: ${point.delivery}; failure: ${point.failurePolicy})",
+                    "phase: ${point.phase}; failure: ${point.failurePolicy})",
             )
         }
     }

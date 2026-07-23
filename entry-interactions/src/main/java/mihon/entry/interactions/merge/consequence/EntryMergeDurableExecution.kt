@@ -6,11 +6,10 @@ import kotlinx.coroutines.withContext
 import mihon.entry.interactions.host.EntryMergeConsequenceRequest
 import mihon.entry.interactions.host.EntryMergeHostMemberKey
 import mihon.feature.graph.FeatureDurableExecutionEnvelope
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureExecutionRuntime
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.durableFeatureExecutionPointDefinition
 import tachiyomi.domain.entry.model.Entry
 
 internal enum class EntryMergeDurableChange {
@@ -27,10 +26,9 @@ internal data class EntryMergeDurableEvent(
 )
 
 internal val ENTRY_MERGE_DURABLE_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryMergeDurableEvent>(
+    durableFeatureExecutionPointDefinition<EntryMergeDurableEvent>(
         id = FeatureExecutionPointId("entry.merge.durable-consequences"),
         owner = ENTRY_MERGE_FEATURE_OWNER,
-        delivery = FeatureExecutionDelivery.DURABLE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 

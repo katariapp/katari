@@ -15,15 +15,16 @@ import mihon.feature.graph.FeatureDurableExecutionDeliveryHandler
 import mihon.feature.graph.FeatureDurableExecutionParticipantBinding
 import mihon.feature.graph.FeatureDurableExecutionPayload
 import mihon.feature.graph.FeatureDurableExecutionPreparer
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionHandler
 import mihon.feature.graph.FeatureExecutionParticipantBinding
 import mihon.feature.graph.FeatureExecutionParticipantDefinition
 import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureExecutionPointId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.InlineFeatureExecutionPointDefinition
+import mihon.feature.graph.durableFeatureExecutionPointDefinition
 import mihon.feature.graph.featureGraphContributor
+import mihon.feature.graph.inlineFeatureExecutionPointDefinition
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -44,7 +45,7 @@ class EntryExecutionCompositionValidationTest {
             ),
         )
 
-        val result = composition.featureExecutions.execute(
+        val result = composition.featureExecutions.executeInline(
             point = fixture.point,
             contentType = fixture.type.toContentTypeId(),
             event = TestEvent(42L),
@@ -73,10 +74,9 @@ class EntryExecutionCompositionValidationTest {
         val type = EntryType.entries.first()
         val pointOwner = ContributionOwner("test.durable-lifecycle")
         val participantOwner = ContributionOwner("test.durable-follow-up")
-        val point = featureExecutionPointDefinition<TestEvent>(
+        val point = durableFeatureExecutionPointDefinition<TestEvent>(
             id = FeatureExecutionPointId("test.durable-lifecycle.changed"),
             owner = pointOwner,
-            delivery = FeatureExecutionDelivery.DURABLE,
             failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
         )
         val participant = FeatureExecutionParticipantDefinition(
@@ -119,10 +119,9 @@ class EntryExecutionCompositionValidationTest {
         val type = EntryType.entries.first()
         val pointOwner = ContributionOwner("test.lifecycle")
         val participantOwner = ContributionOwner("test.follow-up")
-        val point = featureExecutionPointDefinition<TestEvent>(
+        val point = inlineFeatureExecutionPointDefinition<TestEvent>(
             id = FeatureExecutionPointId("test.lifecycle.changed"),
             owner = pointOwner,
-            delivery = FeatureExecutionDelivery.AFTER_COMMIT,
             failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
         )
         val participant = FeatureExecutionParticipantDefinition(
@@ -152,7 +151,7 @@ class EntryExecutionCompositionValidationTest {
 
     private data class Fixture(
         val type: EntryType,
-        val point: mihon.feature.graph.FeatureExecutionPointDefinition<TestEvent>,
+        val point: InlineFeatureExecutionPointDefinition<TestEvent>,
         val participant: FeatureExecutionParticipantDefinition<TestEvent>,
         val contributors: List<mihon.feature.graph.FeatureGraphContributor>,
     )

@@ -8,7 +8,6 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureGraphContributionSink
@@ -16,7 +15,8 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
+import mihon.feature.graph.transactionalFeatureExecutionPointDefinition
 
 internal val ENTRY_LIBRARY_MEMBERSHIP_FEATURE_ID = FeatureId("entry.library-membership")
 internal val ENTRY_LIBRARY_MEMBERSHIP_OWNER = ContributionOwner("entry-library-membership")
@@ -38,26 +38,26 @@ private object EntryLibraryMembershipBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.library-membership.workflow")
 }
 
-internal val ENTRY_LIBRARY_ADDED_EXECUTION_POINT = featureExecutionPointDefinition<EntryLibraryAddedEvent>(
-    id = FeatureExecutionPointId("entry.library-membership.added"),
-    owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER,
-    delivery = FeatureExecutionDelivery.AFTER_COMMIT,
-    failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
-)
+internal val ENTRY_LIBRARY_ADDED_EXECUTION_POINT =
+    afterCommitVolatileFeatureExecutionPointDefinition<EntryLibraryAddedEvent>(
+        id = FeatureExecutionPointId("entry.library-membership.added"),
+        owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
+    )
 
-internal val ENTRY_LIBRARY_REMOVING_EXECUTION_POINT = featureExecutionPointDefinition<EntryLibraryRemovingEvent>(
-    id = FeatureExecutionPointId("entry.library-membership.removing"),
-    owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER,
-    delivery = FeatureExecutionDelivery.TRANSACTIONAL,
-    failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
-)
+internal val ENTRY_LIBRARY_REMOVING_EXECUTION_POINT =
+    transactionalFeatureExecutionPointDefinition<EntryLibraryRemovingEvent>(
+        id = FeatureExecutionPointId("entry.library-membership.removing"),
+        owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
+    )
 
-internal val ENTRY_LIBRARY_REMOVED_EXECUTION_POINT = featureExecutionPointDefinition<EntryLibraryRemovedEvent>(
-    id = FeatureExecutionPointId("entry.library-membership.removed"),
-    owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER,
-    delivery = FeatureExecutionDelivery.AFTER_COMMIT,
-    failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
-)
+internal val ENTRY_LIBRARY_REMOVED_EXECUTION_POINT =
+    afterCommitVolatileFeatureExecutionPointDefinition<EntryLibraryRemovedEvent>(
+        id = FeatureExecutionPointId("entry.library-membership.removed"),
+        owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
+    )
 
 internal object EntryLibraryMembershipFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_LIBRARY_MEMBERSHIP_OWNER

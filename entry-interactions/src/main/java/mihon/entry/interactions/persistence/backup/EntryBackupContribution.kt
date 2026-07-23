@@ -8,7 +8,6 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureGraphContributionSink
@@ -16,7 +15,7 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.inlineFeatureExecutionPointDefinition
 
 internal val ENTRY_BACKUP_OWNER = ContributionOwner("entry-backup")
 private val ENTRY_BACKUP_FEATURE_ID = FeatureId("entry.backup")
@@ -36,25 +35,22 @@ private object EntryBackupBehavior : FeatureBehaviorProjection {
     override val id = FeatureArtifactId("entry.backup.feature-state")
 }
 
-internal val ENTRY_BACKUP_SNAPSHOT_EXECUTION_POINT = featureExecutionPointDefinition<EntryBackupSnapshotEvent>(
+internal val ENTRY_BACKUP_SNAPSHOT_EXECUTION_POINT = inlineFeatureExecutionPointDefinition<EntryBackupSnapshotEvent>(
     id = FeatureExecutionPointId("entry.backup.snapshot"),
     owner = ENTRY_BACKUP_OWNER,
-    delivery = FeatureExecutionDelivery.IMMEDIATE,
     failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
 )
 
-internal val ENTRY_BACKUP_RESTORE_EXECUTION_POINT = featureExecutionPointDefinition<EntryBackupRestoreEvent>(
+internal val ENTRY_BACKUP_RESTORE_EXECUTION_POINT = inlineFeatureExecutionPointDefinition<EntryBackupRestoreEvent>(
     id = FeatureExecutionPointId("entry.backup.restore"),
     owner = ENTRY_BACKUP_OWNER,
-    delivery = FeatureExecutionDelivery.TRANSACTIONAL,
     failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
 )
 
 internal val ENTRY_BACKUP_RESTORE_FINALIZING_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryBackupRestoreFinalizingEvent>(
+    inlineFeatureExecutionPointDefinition<EntryBackupRestoreFinalizingEvent>(
         id = FeatureExecutionPointId("entry.backup.restore-finalizing"),
         owner = ENTRY_BACKUP_OWNER,
-        delivery = FeatureExecutionDelivery.IMMEDIATE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 

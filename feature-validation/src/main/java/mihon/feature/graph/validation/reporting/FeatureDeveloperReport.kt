@@ -27,7 +27,7 @@ data class FeatureDeveloperExecutionPoint(
     val id: String,
     val owner: String,
     val eventType: String,
-    val delivery: String,
+    val phase: String,
     val failurePolicy: String,
 )
 

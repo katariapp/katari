@@ -58,6 +58,21 @@ existing durable path.
 `BEST_EFFORT` is not a lifecycle phase and currently has no production execution point. It overlaps failure and retry
 policy rather than describing when work runs.
 
+### Resolved Inventory
+
+The lifecycle migration classifies the 22 production points by their actual guarantee:
+
+- Inline (9): Media Session policy and consequences, Migration option discovery and transition preparation, Backup
+  snapshot/restore/finalization, and Profile Move preparation/destination inspection.
+- In transaction (4): Library removal preparation, destructive removal preparation, Profile Move work before core
+  mutation, and Profile Move state transfer after core mutation.
+- After commit, volatile (7): Library addition/removal, metadata changes, completed Profile Move, completed destructive
+  removal, manual Source Refresh children, and Library Update children.
+- Durable (2): Migration consequences and Merge consequences.
+
+Backup restore is deliberately inline. Its current repository sequence is one logical restore operation but not one
+shared database transaction. Giving it the stronger phase would make the transactional contract descriptive again.
+
 ### Target Contract
 
 Execution points must carry a phase in their type rather than only as inspectable enum data. The exact Kotlin shape can

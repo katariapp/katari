@@ -2,11 +2,10 @@ package mihon.entry.interactions
 
 import mihon.feature.graph.FeatureDurableExecutionEnvelope
 import mihon.feature.graph.FeatureDurableExecutionPreparationResult
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureExecutionRuntime
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.durableFeatureExecutionPointDefinition
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 
@@ -20,10 +19,9 @@ internal data class EntryMigrationDurableEvent(
 )
 
 internal val ENTRY_MIGRATION_DURABLE_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryMigrationDurableEvent>(
+    durableFeatureExecutionPointDefinition<EntryMigrationDurableEvent>(
         id = FeatureExecutionPointId("entry.migration.durable-consequences"),
         owner = ENTRY_MIGRATION_FEATURE_OWNER,
-        delivery = FeatureExecutionDelivery.DURABLE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 

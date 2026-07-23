@@ -2,15 +2,29 @@ package mihon.feature.graph
 
 import kotlin.reflect.KClass
 
-/** Where one coordinator guarantees that contributed work executes relative to its core state change. */
-enum class FeatureExecutionDelivery {
-    /** Synchronous planning or inspection that completes before a coordinator begins persistence. */
-    IMMEDIATE,
+/** When one coordinator guarantees that contributed work executes relative to its core state change. */
+sealed interface FeatureExecutionPhase {
+    val id: String
 
-    TRANSACTIONAL,
-    AFTER_COMMIT,
-    DURABLE,
-    BEST_EFFORT,
+    /** Synchronous work at the caller's current lifecycle position, with no persistence guarantee. */
+    data object Inline : FeatureExecutionPhase {
+        override val id = "inline"
+    }
+
+    /** Work which must execute inside the same host transaction as the core state change. */
+    data object InTransaction : FeatureExecutionPhase {
+        override val id = "in-transaction"
+    }
+
+    /** Process-local work released only after persistence commits successfully. */
+    data object AfterCommitVolatile : FeatureExecutionPhase {
+        override val id = "after-commit-volatile"
+    }
+
+    /** Persisted work which can be delivered after the process-local commit boundary is lost. */
+    data object Durable : FeatureExecutionPhase {
+        override val id = "durable"
+    }
 }
 
 /** Whether one participant failure prevents later independent participants from running. */
@@ -20,24 +34,91 @@ enum class FeatureExecutionFailurePolicy {
 }
 
 /** A typed executable event boundary owned by the coordinator that emits it. */
-data class FeatureExecutionPointDefinition<E : Any>(
-    val id: FeatureExecutionPointId,
-    val owner: ContributionOwner,
-    val eventType: KClass<E>,
-    val delivery: FeatureExecutionDelivery,
-    val failurePolicy: FeatureExecutionFailurePolicy,
-)
+sealed interface FeatureExecutionPointDefinition<E : Any> {
+    val id: FeatureExecutionPointId
+    val owner: ContributionOwner
+    val eventType: KClass<E>
+    val phase: FeatureExecutionPhase
+    val failurePolicy: FeatureExecutionFailurePolicy
+}
 
-inline fun <reified E : Any> featureExecutionPointDefinition(
+data class InlineFeatureExecutionPointDefinition<E : Any>(
+    override val id: FeatureExecutionPointId,
+    override val owner: ContributionOwner,
+    override val eventType: KClass<E>,
+    override val failurePolicy: FeatureExecutionFailurePolicy,
+) : FeatureExecutionPointDefinition<E> {
+    override val phase = FeatureExecutionPhase.Inline
+}
+
+data class TransactionalFeatureExecutionPointDefinition<E : Any>(
+    override val id: FeatureExecutionPointId,
+    override val owner: ContributionOwner,
+    override val eventType: KClass<E>,
+    override val failurePolicy: FeatureExecutionFailurePolicy,
+) : FeatureExecutionPointDefinition<E> {
+    override val phase = FeatureExecutionPhase.InTransaction
+}
+
+data class AfterCommitVolatileFeatureExecutionPointDefinition<E : Any>(
+    override val id: FeatureExecutionPointId,
+    override val owner: ContributionOwner,
+    override val eventType: KClass<E>,
+    override val failurePolicy: FeatureExecutionFailurePolicy,
+) : FeatureExecutionPointDefinition<E> {
+    override val phase = FeatureExecutionPhase.AfterCommitVolatile
+}
+
+data class DurableFeatureExecutionPointDefinition<E : Any>(
+    override val id: FeatureExecutionPointId,
+    override val owner: ContributionOwner,
+    override val eventType: KClass<E>,
+    override val failurePolicy: FeatureExecutionFailurePolicy,
+) : FeatureExecutionPointDefinition<E> {
+    override val phase = FeatureExecutionPhase.Durable
+}
+
+inline fun <reified E : Any> inlineFeatureExecutionPointDefinition(
     id: FeatureExecutionPointId,
     owner: ContributionOwner,
-    delivery: FeatureExecutionDelivery,
     failurePolicy: FeatureExecutionFailurePolicy,
-): FeatureExecutionPointDefinition<E> = FeatureExecutionPointDefinition(
+): InlineFeatureExecutionPointDefinition<E> = InlineFeatureExecutionPointDefinition(
     id = id,
     owner = owner,
     eventType = E::class,
-    delivery = delivery,
+    failurePolicy = failurePolicy,
+)
+
+inline fun <reified E : Any> transactionalFeatureExecutionPointDefinition(
+    id: FeatureExecutionPointId,
+    owner: ContributionOwner,
+    failurePolicy: FeatureExecutionFailurePolicy,
+): TransactionalFeatureExecutionPointDefinition<E> = TransactionalFeatureExecutionPointDefinition(
+    id = id,
+    owner = owner,
+    eventType = E::class,
+    failurePolicy = failurePolicy,
+)
+
+inline fun <reified E : Any> afterCommitVolatileFeatureExecutionPointDefinition(
+    id: FeatureExecutionPointId,
+    owner: ContributionOwner,
+    failurePolicy: FeatureExecutionFailurePolicy,
+): AfterCommitVolatileFeatureExecutionPointDefinition<E> = AfterCommitVolatileFeatureExecutionPointDefinition(
+    id = id,
+    owner = owner,
+    eventType = E::class,
+    failurePolicy = failurePolicy,
+)
+
+inline fun <reified E : Any> durableFeatureExecutionPointDefinition(
+    id: FeatureExecutionPointId,
+    owner: ContributionOwner,
+    failurePolicy: FeatureExecutionFailurePolicy,
+): DurableFeatureExecutionPointDefinition<E> = DurableFeatureExecutionPointDefinition(
+    id = id,
+    owner = owner,
+    eventType = E::class,
     failurePolicy = failurePolicy,
 )
 

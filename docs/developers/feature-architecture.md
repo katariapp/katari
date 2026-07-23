@@ -104,8 +104,7 @@ When one coordinator must invoke independently owned work, it exposes a typed ex
 host contributes its own participant and runtime binding:
 
 ```kotlin
-val libraryAdded = featureExecutionPointDefinition<EntryLibraryAddedEvent>(
-    delivery = AFTER_COMMIT,
+val libraryAdded = afterCommitVolatileFeatureExecutionPointDefinition<EntryLibraryAddedEvent>(
     failurePolicy = CONTINUE_AND_REPORT,
 )
 
@@ -124,9 +123,40 @@ FeatureExecutionParticipantBinding(
 ```
 
 The coordinator executes applicable participants selected by the evaluated graph; it does not switch on participant or
-Feature IDs. Delivery timing and failure policy belong to the execution point. Ordering is declared only for real
-dependencies. Composition rejects missing, orphaned, duplicate, unknown, unreachable, or uncontracted executable
-participants.
+Feature IDs. Lifecycle phase and failure policy belong to the execution point. Point types are phase-specific:
+
+- `inlineFeatureExecutionPointDefinition` runs synchronously at the caller's current lifecycle position and makes no
+  persistence guarantee;
+- `transactionalFeatureExecutionPointDefinition` can execute only through a restricted scope inside a host callback;
+- `afterCommitVolatileFeatureExecutionPointDefinition` is process-local and can execute only after a successful commit
+  result;
+- `durableFeatureExecutionPointDefinition` prepares persistable work for eventual delivery.
+
+For atomic workflows, `coordinateFeatureCommit` gives the coordinator a callback factory rather than a transaction
+execution scope. The coordinator passes those callbacks to its persistence host, and the host invokes them inside the
+actual database transaction. The runtime releases volatile post-commit work only when the host result is classified as
+committed:
+
+```kotlin
+executions.coordinateFeatureCommit(
+    commit = {
+        host.remove(
+            entries,
+            beforeDelete = callback { persisted ->
+                execute(removingPoint, type, RemovingEvent(persisted)).requireSuccessful()
+            },
+        )
+    },
+    committed = { it is RemovalCommit.Applied },
+    volatileConsequences = { commit ->
+        execute(removedPoint, type, RemovedEvent(commit.entries))
+    },
+)
+```
+
+The host owns the database boundary; the coordinator cannot manufacture either restricted execution scope. Ordering is
+declared only for real dependencies. Composition rejects missing, orphaned, duplicate, unknown, unreachable, or
+uncontracted executable participants.
 
 Descriptive projections are different: they report or render already-derived truth and have no execution path. Do not
 use a projection ID as a runtime dispatch key.
@@ -201,7 +231,7 @@ orchestration.
 
 ### Durable consequences
 
-Work that must survive process death uses the same discovered participant model with a `DURABLE` execution point. A
+Work that must survive process death uses the same discovered participant model with a durable execution point. A
 durable participant owns three operations:
 
 - preparation of an opaque, versioned payload from the typed workflow event;
@@ -209,8 +239,7 @@ durable participant owns three operations:
 - optional discard of prepared state when the workflow cannot commit.
 
 ```kotlin
-val migrated = featureExecutionPointDefinition<EntryMigratedEvent>(
-    delivery = DURABLE,
+val migrated = durableFeatureExecutionPointDefinition<EntryMigratedEvent>(
     failurePolicy = FAIL_FAST,
 )
 
@@ -242,15 +271,17 @@ handling. They must not be acknowledged or silently discarded. If persistence of
 coordinator asks the runtime to discard the prepared envelopes so participant-owned staging can be cleaned up.
 
 An ordinary `FeatureExecutionParticipantBinding` cannot bind a durable point, and a durable binding cannot bind an
-ordinary point. Production composition rejects missing, duplicate, orphaned, contradictory, and uncontracted durable
-participants in the same way as immediate participants.
+transient point. Production composition rejects missing, duplicate, orphaned, contradictory, and uncontracted durable
+participants in the same way as transient participants.
 
 Entry Migration and Merge use this boundary for optional cross-Feature work. Their hosts persist only generic workflow
 identity, participant ID, schema version, and opaque payload, while each owner contributes its own preparation and
 delivery. Merge emits entry-level workflow facts; Tracking, Download maintenance, custom-cover ownership, and any
 future owner interpret only the facts relevant to them. Migration option discovery and transition preparation use
-ordinary execution points for the same reason: adding another participating Feature changes that Feature's contribution
-and runtime binding, not a coordinator-owned completion list or dispatch switch.
+inline execution points for the same reason: adding another participating Feature changes that Feature's contribution
+and runtime binding, not a coordinator-owned completion list or dispatch switch. Backup restore is also inline: its
+current repository sequence is a logical restore operation, not one shared database transaction, so it must not claim
+the stronger transactional contract.
 
 Finite adapters may remain for payloads persisted before owner-contributed delivery existed. They must be explicitly
 schema-bounded and must not select or dispatch current participants; current payload schemas always use the discovered

@@ -1,8 +1,12 @@
 package mihon.entry.interactions
 
 import kotlinx.coroutines.CancellationException
+import mihon.feature.graph.FeatureAfterCommitVolatileExecutionScope
+import mihon.feature.graph.FeatureCommitExecutionResult
 import mihon.feature.graph.FeatureExecutionResult
 import mihon.feature.graph.FeatureExecutionRuntime
+import mihon.feature.graph.FeatureTransactionalExecutionScope
+import mihon.feature.graph.coordinateFeatureCommit
 import tachiyomi.domain.category.model.Category
 import tachiyomi.domain.entry.model.Entry
 
@@ -30,26 +34,37 @@ internal class EntryLibraryMembershipCoordinator(
                 is EntryLibraryCategorySelection.Selected -> selection.categoryIds.distinct()
             }
             when (
-                val commit = host.add(
-                    entry = entry,
-                    categoryIds = categoryIds,
-                    defaultChildFlags = preparation.defaultChildFlags,
+                val execution = executions.coordinateFeatureCommit(
+                    commit = {
+                        host.add(
+                            entry = entry,
+                            categoryIds = categoryIds,
+                            defaultChildFlags = preparation.defaultChildFlags,
+                        )
+                    },
+                    committed = { it is EntryLibraryMembershipCommit.Applied },
+                    volatileConsequences = { commit ->
+                        val added = (commit as EntryLibraryMembershipCommit.Applied).entries.single()
+                        execute(
+                            point = ENTRY_LIBRARY_ADDED_EXECUTION_POINT,
+                            contentType = added.type.toContentTypeId(),
+                            event = EntryLibraryAddedEvent(added),
+                        )
+                    },
                 )
             ) {
-                is EntryLibraryMembershipCommit.Applied -> {
-                    val added = commit.entries.single()
-                    val execution = executions.execute(
-                        point = ENTRY_LIBRARY_ADDED_EXECUTION_POINT,
-                        contentType = added.type.toContentTypeId(),
-                        event = EntryLibraryAddedEvent(added),
-                    )
-                    EntryLibraryAddResult.Added(added, execution.toConsequenceFailures())
+                is FeatureCommitExecutionResult.Committed -> {
+                    val added = (execution.commit as EntryLibraryMembershipCommit.Applied).entries.single()
+                    EntryLibraryAddResult.Added(added, execution.volatileConsequences.toConsequenceFailures())
                 }
-                EntryLibraryMembershipCommit.NoChange -> EntryLibraryAddResult.AlreadyInLibrary(entry)
-                EntryLibraryMembershipCommit.Conflict -> EntryLibraryAddResult.Failed(
-                    entry,
-                    EntryLibraryMembershipConflict("Entry changed while adding it to the Library"),
-                )
+                is FeatureCommitExecutionResult.NotCommitted -> when (execution.commit) {
+                    EntryLibraryMembershipCommit.NoChange -> EntryLibraryAddResult.AlreadyInLibrary(entry)
+                    EntryLibraryMembershipCommit.Conflict -> EntryLibraryAddResult.Failed(
+                        entry,
+                        EntryLibraryMembershipConflict("Entry changed while adding it to the Library"),
+                    )
+                    is EntryLibraryMembershipCommit.Applied -> error("Applied Library addition was not committed")
+                }
             }
         } catch (error: CancellationException) {
             throw error
@@ -62,16 +77,29 @@ internal class EntryLibraryMembershipCoordinator(
         val requested = entries.distinctBy { it.profileId to it.id }
         if (requested.isEmpty()) return EntryLibraryRemovalResult.NoChange
         return try {
-            val commit = host.remove(requested) { persisted ->
-                executeRemoving(persisted)
-            }
-            when (commit) {
-                is EntryLibraryMembershipCommit.Applied -> executeRemoved(commit.entries)
-                EntryLibraryMembershipCommit.NoChange -> EntryLibraryRemovalResult.NoChange
-                EntryLibraryMembershipCommit.Conflict -> EntryLibraryRemovalResult.Failed(
-                    requested,
-                    EntryLibraryMembershipConflict("Entries changed while removing them from the Library"),
+            when (
+                val execution = executions.coordinateFeatureCommit(
+                    commit = {
+                        host.remove(
+                            entries = requested,
+                            beforeCommit = callback { persisted -> executeRemoving(persisted) },
+                        )
+                    },
+                    committed = { it is EntryLibraryMembershipCommit.Applied },
+                    volatileConsequences = { commit ->
+                        executeRemoved((commit as EntryLibraryMembershipCommit.Applied).entries)
+                    },
                 )
+            ) {
+                is FeatureCommitExecutionResult.Committed -> execution.volatileConsequences
+                is FeatureCommitExecutionResult.NotCommitted -> when (execution.commit) {
+                    EntryLibraryMembershipCommit.NoChange -> EntryLibraryRemovalResult.NoChange
+                    EntryLibraryMembershipCommit.Conflict -> EntryLibraryRemovalResult.Failed(
+                        requested,
+                        EntryLibraryMembershipConflict("Entries changed while removing them from the Library"),
+                    )
+                    is EntryLibraryMembershipCommit.Applied -> error("Applied Library removal was not committed")
+                }
             }
         } catch (error: CancellationException) {
             throw error
@@ -101,9 +129,9 @@ internal class EntryLibraryMembershipCoordinator(
         )
     }
 
-    private suspend fun executeRemoving(entries: List<Entry>) {
+    private suspend fun FeatureTransactionalExecutionScope.executeRemoving(entries: List<Entry>) {
         entries.groupBy(Entry::type).forEach { (type, typedEntries) ->
-            val result = executions.execute(
+            val result = execute(
                 point = ENTRY_LIBRARY_REMOVING_EXECUTION_POINT,
                 contentType = type.toContentTypeId(),
                 event = EntryLibraryRemovingEvent(typedEntries),
@@ -112,12 +140,14 @@ internal class EntryLibraryMembershipCoordinator(
         }
     }
 
-    private suspend fun executeRemoved(entries: List<Entry>): EntryLibraryRemovalResult.Removed {
+    private suspend fun FeatureAfterCommitVolatileExecutionScope.executeRemoved(
+        entries: List<Entry>,
+    ): EntryLibraryRemovalResult.Removed {
         val downloads = linkedMapOf<Pair<Long, Long>, Entry>()
         val failures = mutableListOf<EntryLibraryConsequenceFailure>()
         val sink = EntryLibraryRemovalOutcomeSink { entry -> downloads[entry.profileId to entry.id] = entry }
         entries.groupBy(Entry::type).forEach { (type, typedEntries) ->
-            val result = executions.execute(
+            val result = execute(
                 point = ENTRY_LIBRARY_REMOVED_EXECUTION_POINT,
                 contentType = type.toContentTypeId(),
                 event = EntryLibraryRemovedEvent(typedEntries, sink),

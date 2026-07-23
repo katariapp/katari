@@ -11,15 +11,14 @@ import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.DiscoveredFeatureGraphContributions
 import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionParticipantDefinition
 import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureExecutionPointId
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.capabilityDefinition
 import mihon.feature.graph.evaluateFeatureGraph
-import mihon.feature.graph.featureExecutionPointDefinition
 import mihon.feature.graph.validation.CompletedFeatureExecutionContractExecution
 import mihon.feature.graph.validation.FeatureContractVerificationResult
 import mihon.feature.graph.validation.FeatureExecutionContractReference
@@ -42,10 +41,9 @@ class FeatureExecutionContractValidationTest {
     private val contract = object : FeatureBehaviorContract {
         override val id = FeatureArtifactId("example.execution.contract")
     }
-    private val point = featureExecutionPointDefinition<ExampleEvent>(
+    private val point = afterCommitVolatileFeatureExecutionPointDefinition<ExampleEvent>(
         id = FeatureExecutionPointId("example.point"),
         owner = pointOwner,
-        delivery = FeatureExecutionDelivery.AFTER_COMMIT,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
     private val participant = FeatureExecutionParticipantDefinition(

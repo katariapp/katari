@@ -18,7 +18,6 @@ import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContractScenarioId
 import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionParticipantDefinition
 import mihon.feature.graph.FeatureExecutionParticipantId
@@ -27,13 +26,13 @@ import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
 import mihon.feature.graph.FeatureProjection
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
 import mihon.feature.graph.assembleFeatureGraph
 import mihon.feature.graph.capabilityDefinition
 import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.contextInputDefinition
 import mihon.feature.graph.evaluateFeatureGraph
 import mihon.feature.graph.featureContextRule
-import mihon.feature.graph.featureExecutionPointDefinition
 import mihon.feature.graph.featureProjectionDefinition
 import mihon.feature.graph.validation.FeatureContractFailure
 import mihon.feature.graph.validation.FeatureContractScenario
@@ -254,10 +253,9 @@ class FeatureDeveloperReportTest {
     fun `execution points and independently owned participants appear in the report`() = runSuspend {
         val pointOwner = ContributionOwner("future.lifecycle")
         val participantOwner = ContributionOwner("future.cleanup")
-        val point = featureExecutionPointDefinition<FutureEvent>(
+        val point = afterCommitVolatileFeatureExecutionPointDefinition<FutureEvent>(
             id = FeatureExecutionPointId("future.lifecycle.removed"),
             owner = pointOwner,
-            delivery = FeatureExecutionDelivery.AFTER_COMMIT,
             failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
         )
         val executionContract = object : FeatureBehaviorContract {
@@ -299,7 +297,7 @@ class FeatureDeveloperReportTest {
 
         report.executionPoints.single().apply {
             id shouldBe "future.lifecycle.removed"
-            delivery shouldBe "after_commit"
+            phase shouldBe "after-commit-volatile"
         }
         report.executionParticipants.map { it.state } shouldContainExactly listOf(
             FeatureDeveloperIntegrationState.APPLICABLE,

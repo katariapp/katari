@@ -13,7 +13,7 @@ internal class EntryBackupCoordinator(
         selection: EntryBackupSelection,
     ): List<EntryFeatureStateEnvelope> {
         val states = MutableEntryBackupStates()
-        executions.execute(
+        executions.executeInline(
             point = ENTRY_BACKUP_SNAPSHOT_EXECUTION_POINT,
             contentType = entry.type.toContentTypeId(),
             event = EntryBackupSnapshotEvent(profileId, entry, selection, states),
@@ -28,7 +28,7 @@ internal class EntryBackupCoordinator(
         states: List<EntryFeatureStateEnvelope>,
     ) {
         val source = ImmutableEntryBackupStates(states)
-        executions.execute(
+        executions.executeInline(
             point = ENTRY_BACKUP_RESTORE_EXECUTION_POINT,
             contentType = entry.type.toContentTypeId(),
             event = EntryBackupRestoreEvent(session, profileId, entry, source),
@@ -43,7 +43,7 @@ internal class EntryBackupCoordinator(
         val issues = MutableEntryBackupRestoreIssues()
         // Execute only for types actually restored in this session/profile. This remains open to future Entry types.
         for (type in restoredTypes) {
-            executions.execute(
+            executions.executeInline(
                 point = ENTRY_BACKUP_RESTORE_FINALIZING_EXECUTION_POINT,
                 contentType = type.toContentTypeId(),
                 event = EntryBackupRestoreFinalizingEvent(session, profileId, type, issues),

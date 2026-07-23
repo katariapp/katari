@@ -17,7 +17,7 @@ data class FeatureExecutionParticipantBinding<E : Any>(
     val contextResolver: FeatureExecutionContextResolver<E>? = null,
 ) {
     init {
-        require(definition.point.delivery != FeatureExecutionDelivery.DURABLE) {
+        require(definition.point.phase != FeatureExecutionPhase.Durable) {
             "Durable execution participant ${definition.id} requires a durable runtime binding"
         }
         require(definition.contextInputs.isNotEmpty() == (contextResolver != null)) {
@@ -61,28 +61,46 @@ class FeatureExecutionRuntime(
             "Duplicate execution participant bindings: ${duplicateBindings.keys.sortedBy { it.value }}"
         }
         val declaredById = graph.executionParticipants.associateBy { it.id }
-        val immediateDeclaredById = declaredById.filterValues { it.point.delivery != FeatureExecutionDelivery.DURABLE }
+        val transientDeclaredById = declaredById.filterValues { it.point.phase != FeatureExecutionPhase.Durable }
         bindingsById = bindings.associateBy { it.definition.id }
 
-        val missing = immediateDeclaredById.keys - bindingsById.keys
-        val orphaned = bindingsById.keys - immediateDeclaredById.keys
+        val missing = transientDeclaredById.keys - bindingsById.keys
+        val orphaned = bindingsById.keys - transientDeclaredById.keys
         check(missing.isEmpty() && orphaned.isEmpty()) {
             "Execution participant binding coverage mismatch; missing: ${missing.sortedBy { it.value }}, " +
                 "orphaned: ${orphaned.sortedBy { it.value }}"
         }
         bindingsById.forEach { (id, binding) ->
-            check(binding.definition == immediateDeclaredById.getValue(id)) {
+            check(binding.definition == transientDeclaredById.getValue(id)) {
                 "Execution participant binding $id does not match its graph declaration"
             }
         }
     }
 
-    suspend fun <E : Any> execute(
+    suspend fun <E : Any> executeInline(
+        point: InlineFeatureExecutionPointDefinition<E>,
+        contentType: ContentTypeId,
+        event: E,
+    ): FeatureExecutionResult = executeTransient(point, contentType, event)
+
+    internal suspend fun <E : Any> executeTransactional(
+        point: TransactionalFeatureExecutionPointDefinition<E>,
+        contentType: ContentTypeId,
+        event: E,
+    ): FeatureExecutionResult = executeTransient(point, contentType, event)
+
+    internal suspend fun <E : Any> executeAfterCommitVolatile(
+        point: AfterCommitVolatileFeatureExecutionPointDefinition<E>,
+        contentType: ContentTypeId,
+        event: E,
+    ): FeatureExecutionResult = executeTransient(point, contentType, event)
+
+    private suspend fun <E : Any> executeTransient(
         point: FeatureExecutionPointDefinition<E>,
         contentType: ContentTypeId,
         event: E,
     ): FeatureExecutionResult {
-        check(point.delivery != FeatureExecutionDelivery.DURABLE) {
+        check(point.phase != FeatureExecutionPhase.Durable) {
             "Durable execution point ${point.id} must be prepared and delivered through the durable runtime API"
         }
         val declaredPoint = graph.executionPoints.singleOrNull { it.id == point.id }
@@ -161,7 +179,7 @@ class FeatureExecutionRuntime(
     }
 
     suspend fun <E : Any> prepareDurable(
-        point: FeatureExecutionPointDefinition<E>,
+        point: DurableFeatureExecutionPointDefinition<E>,
         contentType: ContentTypeId,
         event: E,
     ): FeatureDurableExecutionPreparationResult = durableRuntime.prepare(point, contentType, event)

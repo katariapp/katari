@@ -21,12 +21,12 @@ internal class DefaultEntryMediaSessionFeature(
         if (!isApplicable(type)) return EntryMediaSessionResult.Inapplicable(type)
 
         val executionEvent = EntryMediaSessionExecutionEvent(event)
-        executions.execute(
+        executions.executeInline(
             point = ENTRY_MEDIA_SESSION_POLICY_EXECUTION_POINT,
             contentType = type.toContentTypeId(),
             event = executionEvent,
         ).throwFirstFailure()
-        executions.execute(
+        executions.executeInline(
             point = ENTRY_MEDIA_SESSION_CONSEQUENCE_EXECUTION_POINT,
             contentType = type.toContentTypeId(),
             event = executionEvent,

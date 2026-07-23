@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CancellationException
 
 class FeatureExecutionRuntimeTest {
 
@@ -32,8 +33,8 @@ class FeatureExecutionRuntimeTest {
         val events = mutableListOf<String>()
         val runtime = runtime(graph, binding(participant) { events += it.value })
 
-        val supported = runtime.execute(point, ContentTypeId("supported"), Event("supported"))
-        val unsupported = runtime.execute(point, ContentTypeId("unsupported"), Event("unsupported"))
+        val supported = runtime.executeInline(point, ContentTypeId("supported"), Event("supported"))
+        val unsupported = runtime.executeInline(point, ContentTypeId("unsupported"), Event("unsupported"))
 
         supported.selectedParticipants shouldContainExactly listOf(participant.id)
         supported.completedParticipants shouldContainExactly listOf(participant.id)
@@ -100,7 +101,7 @@ class FeatureExecutionRuntimeTest {
             binding(independent) { calls += independent.id.value },
         )
 
-        val result = runtime.execute(point, ContentTypeId("subject"), Event("event"))
+        val result = runtime.executeInline(point, ContentTypeId("subject"), Event("event"))
 
         result.selectedParticipants shouldContainExactly listOf(independent.id, first.id, last.id)
         calls shouldContainExactly result.selectedParticipants.map { it.value }
@@ -140,9 +141,9 @@ class FeatureExecutionRuntimeTest {
             ),
         )
 
-        runtime.execute(point, ContentTypeId("subject"), Event("disabled", enabled = false))
+        runtime.executeInline(point, ContentTypeId("subject"), Event("disabled", enabled = false))
             .selectedParticipants shouldBe emptyList()
-        runtime.execute(point, ContentTypeId("subject"), Event("enabled", enabled = true))
+        runtime.executeInline(point, ContentTypeId("subject"), Event("enabled", enabled = true))
             .selectedParticipants shouldContainExactly listOf(participant.id)
         calls shouldContainExactly listOf("enabled")
     }
@@ -159,7 +160,7 @@ class FeatureExecutionRuntimeTest {
             binding(completed) {},
         )
 
-        val result = runtime.execute(point, ContentTypeId("subject"), Event("event"))
+        val result = runtime.executeInline(point, ContentTypeId("subject"), Event("event"))
 
         result.completedParticipants shouldContainExactly listOf(completed.id)
         result.failures.map { it.participant } shouldContainExactly listOf(failed.id)
@@ -179,11 +180,26 @@ class FeatureExecutionRuntimeTest {
             binding(skipped) { skippedCalls++ },
         )
 
-        val result = runtime.execute(point, ContentTypeId("subject"), Event("event"))
+        val result = runtime.executeInline(point, ContentTypeId("subject"), Event("event"))
 
         result.failures.map { it.participant } shouldContainExactly listOf(failed.id)
         result.stoppedEarly shouldBe true
         skippedCalls shouldBe 0
+    }
+
+    @Test
+    fun `participant cancellation escapes execution instead of becoming a reported failure`() = runSuspend {
+        val point = point()
+        val participant = participant("example.cancelled", point)
+        val graph = graph(listOf(point), listOf(participant))
+        val runtime = runtime(
+            graph,
+            binding(participant) { throw CancellationException("cancelled") },
+        )
+
+        shouldThrow<CancellationException> {
+            runtime.executeInline(point, ContentTypeId("subject"), Event("event"))
+        }
     }
 
     @Test
@@ -228,7 +244,11 @@ class FeatureExecutionRuntimeTest {
             graph(listOf(point, point), listOf(participant))
         }.message shouldContain "Duplicate execution point example.point"
 
-        val contradictoryPoint = point.copy(delivery = FeatureExecutionDelivery.DURABLE)
+        val contradictoryPoint = durableFeatureExecutionPointDefinition<Event>(
+            id = point.id,
+            owner = point.owner,
+            failurePolicy = point.failurePolicy,
+        )
         val contradictoryParticipant = participant("example.contradictory", contradictoryPoint)
         shouldThrow<IllegalStateException> {
             graph(listOf(point), listOf(contradictoryParticipant))
@@ -260,10 +280,9 @@ class FeatureExecutionRuntimeTest {
 
     private fun point(
         failurePolicy: FeatureExecutionFailurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
-    ): FeatureExecutionPointDefinition<Event> = featureExecutionPointDefinition(
+    ): InlineFeatureExecutionPointDefinition<Event> = inlineFeatureExecutionPointDefinition(
         id = FeatureExecutionPointId("example.point"),
         owner = pointOwner,
-        delivery = FeatureExecutionDelivery.AFTER_COMMIT,
         failurePolicy = failurePolicy,
     )
 

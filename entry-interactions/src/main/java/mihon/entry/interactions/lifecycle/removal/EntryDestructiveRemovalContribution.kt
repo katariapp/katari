@@ -8,7 +8,6 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureGraphContributionSink
@@ -16,7 +15,8 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
+import mihon.feature.graph.transactionalFeatureExecutionPointDefinition
 
 internal val ENTRY_DESTRUCTIVE_REMOVAL_OWNER = ContributionOwner("entry-destructive-removal")
 private val ENTRY_DESTRUCTIVE_REMOVAL_REFERENCE = entryContentTypeReferenceContribution(
@@ -36,18 +36,16 @@ private object EntryDestructiveRemovalBehavior : FeatureBehaviorProjection {
 }
 
 internal val ENTRY_DESTRUCTIVE_REMOVING_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryDestructiveRemovingEvent>(
+    transactionalFeatureExecutionPointDefinition<EntryDestructiveRemovingEvent>(
         id = FeatureExecutionPointId("entry.destructive-removal.removing"),
         owner = ENTRY_DESTRUCTIVE_REMOVAL_OWNER,
-        delivery = FeatureExecutionDelivery.TRANSACTIONAL,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 
 internal val ENTRY_DESTRUCTIVE_REMOVED_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryDestructiveRemovedEvent>(
+    afterCommitVolatileFeatureExecutionPointDefinition<EntryDestructiveRemovedEvent>(
         id = FeatureExecutionPointId("entry.destructive-removal.removed"),
         owner = ENTRY_DESTRUCTIVE_REMOVAL_OWNER,
-        delivery = FeatureExecutionDelivery.AFTER_COMMIT,
         failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
     )
 

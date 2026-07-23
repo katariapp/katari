@@ -44,6 +44,18 @@ class EntryLibraryMembershipCoordinatorTest {
     }
 
     @Test
+    fun `addition conflict suppresses volatile consequence`() = runTest {
+        val trace = mutableListOf<String>()
+        val host = RecordingHost(trace, additionConflicts = true)
+        val feature = feature(host, trace = trace)
+
+        val result = feature.add(EntryLibraryAddRequest(entry()))
+
+        (result is EntryLibraryAddResult.Failed) shouldBe true
+        trace shouldContainExactly emptyList()
+    }
+
+    @Test
     fun `transactional removal consequence failure prevents membership commit`() = runTest {
         val trace = mutableListOf<String>()
         val host = RecordingHost(trace)
@@ -120,6 +132,7 @@ private class RecordingHost(
     private val trace: MutableList<String>,
     private val defaultCategoryId: Long = 0L,
     private val categories: List<Category> = emptyList(),
+    private val additionConflicts: Boolean = false,
 ) : EntryLibraryMembershipHost {
     var addCalls = 0
     var removeCommitted = false
@@ -137,6 +150,7 @@ private class RecordingHost(
         defaultChildFlags: Long,
     ): EntryLibraryMembershipCommit {
         addCalls++
+        if (additionConflicts) return EntryLibraryMembershipCommit.Conflict
         trace += "membership-committed"
         return EntryLibraryMembershipCommit.Applied(listOf(entry.copy(favorite = true)))
     }

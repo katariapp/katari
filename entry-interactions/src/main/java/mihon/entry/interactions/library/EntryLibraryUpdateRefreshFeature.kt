@@ -16,6 +16,7 @@ import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
+import mihon.feature.graph.afterFeatureCommitVolatile
 
 internal val ENTRY_LIBRARY_UPDATE_REFRESH_FEATURE_ID = FeatureId("entry.library-update-refresh")
 internal val ENTRY_LIBRARY_UPDATE_REFRESH_OWNER = ContributionOwner("entry-library-update")
@@ -99,11 +100,13 @@ internal class DefaultEntryLibraryUpdateRefreshFeature(
             is EntrySourceRefreshResult.Refreshed -> {
                 val newChildren = result.insertedChildren.sortedByDescending { it.sourceOrder }
                 if (newChildren.isNotEmpty()) {
-                    executions.execute(
-                        point = ENTRY_LIBRARY_UPDATE_NEW_CHILDREN_EXECUTION_POINT,
-                        contentType = request.entry.type.toContentTypeId(),
-                        event = EntryLibraryUpdateNewChildrenEvent(request.entry, newChildren, session),
-                    ).throwFirstFailure()
+                    executions.afterFeatureCommitVolatile {
+                        execute(
+                            point = ENTRY_LIBRARY_UPDATE_NEW_CHILDREN_EXECUTION_POINT,
+                            contentType = request.entry.type.toContentTypeId(),
+                            event = EntryLibraryUpdateNewChildrenEvent(request.entry, newChildren, session),
+                        ).throwFirstFailure()
+                    }
                 }
                 EntryLibraryUpdateRefreshResult.Updated(newChildren)
             }

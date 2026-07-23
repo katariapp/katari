@@ -1,8 +1,13 @@
 package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
+import mihon.feature.graph.FeatureCommitExecutionResult
 import mihon.feature.graph.FeatureExecutionResult
 import mihon.feature.graph.FeatureExecutionRuntime
+import mihon.feature.graph.FeatureTransactionalExecutionScope
+import mihon.feature.graph.InlineFeatureExecutionPointDefinition
+import mihon.feature.graph.TransactionalFeatureExecutionPointDefinition
+import mihon.feature.graph.coordinateFeatureCommit
 import tachiyomi.domain.entry.model.Entry
 
 internal class EntryProfileMoveCoordinator(
@@ -17,7 +22,7 @@ internal class EntryProfileMoveCoordinator(
         check(selected.isNotEmpty()) { "No selected entries still belong to the source profile" }
         val contributions = MutableEntryProfileMovePreparation(request, selected)
         selected.groupBy(Entry::type).forEach { (type, typedEntries) ->
-            executions.executeOrThrow(
+            executions.executeInlineOrThrow(
                 point = ENTRY_PROFILE_MOVE_PREPARING_EXECUTION_POINT,
                 type = type,
                 event = EntryProfileMovePreparingEvent(request, typedEntries, contributions),
@@ -27,7 +32,7 @@ internal class EntryProfileMoveCoordinator(
         val groups = contributions.groups()
         val conflicts = host.destinationConflicts(request, groups.flatMap(EntryProfileMoveGroup::entries))
         groups.flatMap(EntryProfileMoveGroup::entries).map(Entry::type).distinct().forEach { type ->
-            executions.executeOrThrow(
+            executions.executeInlineOrThrow(
                 point = ENTRY_PROFILE_MOVE_DESTINATION_INSPECTING_EXECUTION_POINT,
                 type = type,
                 event = EntryProfileMoveDestinationInspectingEvent(
@@ -59,47 +64,65 @@ internal class EntryProfileMoveCoordinator(
         val prepared = buildPlan(preview, resolutions)
         val outcomes = MutableEntryProfileMoveOutcomes()
         val typedPlans = prepared.plan.byType()
-        when (
-            host.execute(
-                preview = preview,
-                plan = prepared.plan,
-                beforeCoreMutation = {
-                    typedPlans.forEach { (type, plan) ->
-                        executions.executeOrThrow(
-                            point = ENTRY_PROFILE_MOVING_EXECUTION_POINT,
-                            type = type,
-                            event = EntryProfileMovingEvent(type, plan, preview.reference, outcomes),
-                        )
-                    }
-                },
-                afterCoreMutation = {
-                    typedPlans.forEach { (type, plan) ->
-                        executions.executeOrThrow(
-                            point = ENTRY_PROFILE_STATE_MOVED_EXECUTION_POINT,
-                            type = type,
-                            event = EntryProfileStateMovedEvent(type, plan, preview.reference),
-                        )
-                    }
-                },
-            )
-        ) {
-            EntryProfileMoveCommit.Applied -> Unit
-            EntryProfileMoveCommit.Conflict -> error("Entries changed before Profile movement could commit")
+        val execution = executions.coordinateFeatureCommit(
+            commit = {
+                host.execute(
+                    preview = preview,
+                    plan = prepared.plan,
+                    beforeCoreMutation = callback {
+                        typedPlans.forEach { (type, plan) ->
+                            executeOrThrow(
+                                point = ENTRY_PROFILE_MOVING_EXECUTION_POINT,
+                                type = type,
+                                event = EntryProfileMovingEvent(type, plan, preview.reference, outcomes),
+                            )
+                        }
+                    },
+                    afterCoreMutation = callback {
+                        typedPlans.forEach { (type, plan) ->
+                            executeOrThrow(
+                                point = ENTRY_PROFILE_STATE_MOVED_EXECUTION_POINT,
+                                type = type,
+                                event = EntryProfileStateMovedEvent(type, plan, preview.reference),
+                            )
+                        }
+                    },
+                )
+            },
+            committed = { it == EntryProfileMoveCommit.Applied },
+            volatileConsequences = {
+                typedPlans.flatMap { (type, plan) ->
+                    execute(
+                        point = ENTRY_PROFILE_MOVED_EXECUTION_POINT,
+                        contentType = type.toContentTypeId(),
+                        event = EntryProfileMovedEvent(type, plan, outcomes.snapshot()),
+                    ).toLifecycleFailures()
+                }
+            },
+        )
+        val failures = when (execution) {
+            is FeatureCommitExecutionResult.Committed -> execution.volatileConsequences
+            is FeatureCommitExecutionResult.NotCommitted -> when (execution.commit) {
+                EntryProfileMoveCommit.Conflict -> error("Entries changed before Profile movement could commit")
+                EntryProfileMoveCommit.Applied -> error("Applied Profile movement was not committed")
+            }
         }
 
-        val failures = typedPlans.flatMap { (type, plan) ->
-            executions.execute(
-                point = ENTRY_PROFILE_MOVED_EXECUTION_POINT,
-                contentType = type.toContentTypeId(),
-                event = EntryProfileMovedEvent(type, plan, outcomes.snapshot()),
-            ).toLifecycleFailures()
-        }
         return prepared.result.copy(consequenceFailures = failures)
     }
 }
 
-private suspend fun <E : Any> FeatureExecutionRuntime.executeOrThrow(
-    point: mihon.feature.graph.FeatureExecutionPointDefinition<E>,
+private suspend fun <E : Any> FeatureExecutionRuntime.executeInlineOrThrow(
+    point: InlineFeatureExecutionPointDefinition<E>,
+    type: EntryType,
+    event: E,
+) {
+    val result = executeInline(point, type.toContentTypeId(), event)
+    check(result.isSuccessful) { result.failureMessage() }
+}
+
+private suspend fun <E : Any> FeatureTransactionalExecutionScope.executeOrThrow(
+    point: TransactionalFeatureExecutionPointDefinition<E>,
     type: EntryType,
     event: E,
 ) {

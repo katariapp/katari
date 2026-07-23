@@ -6,10 +6,10 @@ import mihon.entry.interactions.EntryInteractionProviderBinding
 import mihon.entry.interactions.createEntryInteractionComposition
 import mihon.feature.graph.ContributionOwner
 import mihon.feature.graph.FeatureDurableExecutionParticipantBinding
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionHandler
 import mihon.feature.graph.FeatureExecutionParticipantBinding
 import mihon.feature.graph.FeatureExecutionParticipantDefinition
+import mihon.feature.graph.FeatureExecutionPhase
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureGraphEvaluation
 import mihon.feature.graph.SpecializedAdapter
@@ -81,10 +81,10 @@ private fun validationExecutionBindings(
     val participants = discoverFeatureGraphContributions(contributors).executionParticipants
     return ValidationExecutionBindings(
         immediate = participants
-            .filter { it.point.delivery != FeatureExecutionDelivery.DURABLE }
+            .filter { it.point.phase != FeatureExecutionPhase.Durable }
             .map(::noOpBinding),
         durable = participants
-            .filter { it.point.delivery == FeatureExecutionDelivery.DURABLE }
+            .filter { it.point.phase == FeatureExecutionPhase.Durable }
             .map(::noOpDurableBinding),
     )
 }

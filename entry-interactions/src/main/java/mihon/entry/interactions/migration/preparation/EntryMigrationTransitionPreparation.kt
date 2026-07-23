@@ -1,10 +1,9 @@
 package mihon.entry.interactions
 
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureExecutionRuntime
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.inlineFeatureExecutionPointDefinition
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.track.model.EntryTrack
 
@@ -20,10 +19,9 @@ internal fun interface EntryMigrationTransitionPreparationSink {
 }
 
 internal val ENTRY_MIGRATION_TRANSITION_PREPARING_POINT =
-    featureExecutionPointDefinition<EntryMigrationTransitionPreparingEvent>(
+    inlineFeatureExecutionPointDefinition<EntryMigrationTransitionPreparingEvent>(
         id = FeatureExecutionPointId("entry.migration.transition-preparing"),
         owner = ENTRY_MIGRATION_FEATURE_OWNER,
-        delivery = FeatureExecutionDelivery.IMMEDIATE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 
@@ -41,7 +39,7 @@ internal class EntryMigrationTransitionPreparation(
         sourceTracks: List<EntryTrack>,
     ): EntryMigrationTransitionPreparationResult {
         val preparedTracks = mutableListOf<EntryTrack>()
-        val result = executions.execute(
+        val result = executions.executeInline(
             point = ENTRY_MIGRATION_TRANSITION_PREPARING_POINT,
             contentType = source.type.toContentTypeId(),
             event = EntryMigrationTransitionPreparingEvent(source, target, sourceTracks, preparedTracks::addAll),

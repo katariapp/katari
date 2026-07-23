@@ -2,6 +2,7 @@ package mihon.entry.interactions
 
 import mihon.feature.graph.FeatureExecutionResult
 import mihon.feature.graph.FeatureExecutionRuntime
+import mihon.feature.graph.afterFeatureCommitVolatile
 import tachiyomi.domain.entry.model.Entry
 
 internal class EntryMetadataLifecycleCoordinator(
@@ -14,11 +15,13 @@ internal class EntryMetadataLifecycleCoordinator(
         require(previous.type == current.type) { "Metadata lifecycle cannot change Entry type" }
         if (previous == current) return EntryMetadataChangeResult.NoChange
 
-        val execution = executions.execute(
-            point = ENTRY_METADATA_CHANGED_EXECUTION_POINT,
-            contentType = current.type.toContentTypeId(),
-            event = EntryMetadataChangedEvent(previous, current),
-        )
+        val execution = executions.afterFeatureCommitVolatile {
+            execute(
+                point = ENTRY_METADATA_CHANGED_EXECUTION_POINT,
+                contentType = current.type.toContentTypeId(),
+                event = EntryMetadataChangedEvent(previous, current),
+            )
+        }
         return EntryMetadataChangeResult.Applied(execution.toLifecycleFailures())
     }
 }

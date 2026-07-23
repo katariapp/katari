@@ -8,7 +8,6 @@ import mihon.feature.graph.FeatureArtifactId
 import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContribution
-import mihon.feature.graph.FeatureExecutionDelivery
 import mihon.feature.graph.FeatureExecutionFailurePolicy
 import mihon.feature.graph.FeatureExecutionPointId
 import mihon.feature.graph.FeatureGraphContributionSink
@@ -16,7 +15,9 @@ import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
 import mihon.feature.graph.FeatureIntegration
 import mihon.feature.graph.FeatureIntegrationId
-import mihon.feature.graph.featureExecutionPointDefinition
+import mihon.feature.graph.afterCommitVolatileFeatureExecutionPointDefinition
+import mihon.feature.graph.inlineFeatureExecutionPointDefinition
+import mihon.feature.graph.transactionalFeatureExecutionPointDefinition
 
 internal val ENTRY_PROFILE_MOVE_OWNER = ContributionOwner("entry-profile-move")
 private val ENTRY_PROFILE_MOVE_REFERENCE = entryContentTypeReferenceContribution(
@@ -36,41 +37,39 @@ private object EntryProfileMoveBehavior : FeatureBehaviorProjection {
 }
 
 internal val ENTRY_PROFILE_MOVE_PREPARING_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryProfileMovePreparingEvent>(
+    inlineFeatureExecutionPointDefinition<EntryProfileMovePreparingEvent>(
         id = FeatureExecutionPointId("entry.profile-move.preparing"),
         owner = ENTRY_PROFILE_MOVE_OWNER,
-        delivery = FeatureExecutionDelivery.IMMEDIATE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 
 internal val ENTRY_PROFILE_MOVE_DESTINATION_INSPECTING_EXECUTION_POINT =
-    featureExecutionPointDefinition<EntryProfileMoveDestinationInspectingEvent>(
+    inlineFeatureExecutionPointDefinition<EntryProfileMoveDestinationInspectingEvent>(
         id = FeatureExecutionPointId("entry.profile-move.destination-inspecting"),
         owner = ENTRY_PROFILE_MOVE_OWNER,
-        delivery = FeatureExecutionDelivery.IMMEDIATE,
         failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
     )
 
-internal val ENTRY_PROFILE_MOVING_EXECUTION_POINT = featureExecutionPointDefinition<EntryProfileMovingEvent>(
-    id = FeatureExecutionPointId("entry.profile-move.moving"),
-    owner = ENTRY_PROFILE_MOVE_OWNER,
-    delivery = FeatureExecutionDelivery.TRANSACTIONAL,
-    failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
-)
+internal val ENTRY_PROFILE_MOVING_EXECUTION_POINT =
+    transactionalFeatureExecutionPointDefinition<EntryProfileMovingEvent>(
+        id = FeatureExecutionPointId("entry.profile-move.moving"),
+        owner = ENTRY_PROFILE_MOVE_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
+    )
 
-internal val ENTRY_PROFILE_STATE_MOVED_EXECUTION_POINT = featureExecutionPointDefinition<EntryProfileStateMovedEvent>(
-    id = FeatureExecutionPointId("entry.profile-move.state-moved"),
-    owner = ENTRY_PROFILE_MOVE_OWNER,
-    delivery = FeatureExecutionDelivery.TRANSACTIONAL,
-    failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
-)
+internal val ENTRY_PROFILE_STATE_MOVED_EXECUTION_POINT =
+    transactionalFeatureExecutionPointDefinition<EntryProfileStateMovedEvent>(
+        id = FeatureExecutionPointId("entry.profile-move.state-moved"),
+        owner = ENTRY_PROFILE_MOVE_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.FAIL_FAST,
+    )
 
-internal val ENTRY_PROFILE_MOVED_EXECUTION_POINT = featureExecutionPointDefinition<EntryProfileMovedEvent>(
-    id = FeatureExecutionPointId("entry.profile-move.moved"),
-    owner = ENTRY_PROFILE_MOVE_OWNER,
-    delivery = FeatureExecutionDelivery.AFTER_COMMIT,
-    failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
-)
+internal val ENTRY_PROFILE_MOVED_EXECUTION_POINT =
+    afterCommitVolatileFeatureExecutionPointDefinition<EntryProfileMovedEvent>(
+        id = FeatureExecutionPointId("entry.profile-move.moved"),
+        owner = ENTRY_PROFILE_MOVE_OWNER,
+        failurePolicy = FeatureExecutionFailurePolicy.CONTINUE_AND_REPORT,
+    )
 
 internal object EntryProfileMoveFeatureContributor : FeatureGraphContributor {
     override val owner = ENTRY_PROFILE_MOVE_OWNER
