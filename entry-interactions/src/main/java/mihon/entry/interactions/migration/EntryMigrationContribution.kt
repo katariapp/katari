@@ -22,13 +22,8 @@ internal val ENTRY_MIGRATION_CONSUMPTION_INTEGRATION_ID = FeatureIntegrationId("
 internal val ENTRY_MIGRATION_BOOKMARK_INTEGRATION_ID = FeatureIntegrationId("entry.migration.bookmarking")
 internal val ENTRY_MIGRATION_CHILD_STATE_OPTION_INTEGRATION_ID =
     FeatureIntegrationId("entry.migration.child-state-option")
-internal val ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID = FeatureIntegrationId("entry.migration.downloads")
-internal val ENTRY_MIGRATION_PROGRESS_INTEGRATION_ID = FeatureIntegrationId("entry.migration.progress")
-internal val ENTRY_MIGRATION_PLAYBACK_PREFERENCES_INTEGRATION_ID =
-    FeatureIntegrationId("entry.migration.playback-preferences")
-internal val ENTRY_MIGRATION_VIEWER_SETTINGS_INTEGRATION_ID = FeatureIntegrationId("entry.migration.viewer-settings")
 
-private val ENTRY_MIGRATION_FEATURE_OWNER = ContributionOwner("entry-migration")
+internal val ENTRY_MIGRATION_FEATURE_OWNER = ContributionOwner("entry-migration")
 private val ENTRY_MIGRATION_REFERENCE = entryContentTypeReferenceContribution(
     id = "migration",
     owner = ENTRY_MIGRATION_FEATURE_OWNER,
@@ -47,8 +42,6 @@ internal enum class EntryMigrationBaseBehavior(
     TARGET_SYNCHRONIZATION(FeatureArtifactId("entry.migration.target-synchronization")),
     ENTRY_STATE_TRANSFER(FeatureArtifactId("entry.migration.entry-state-transfer")),
     CATEGORY_TRANSFER(FeatureArtifactId("entry.migration.category-transfer")),
-    TRACKING_TRANSFER(FeatureArtifactId("entry.migration.tracking-transfer")),
-    CUSTOM_COVER_TRANSFER(FeatureArtifactId("entry.migration.custom-cover-transfer")),
     MERGE_REPLACEMENT(FeatureArtifactId("entry.migration.merge-replacement")),
 }
 
@@ -64,31 +57,6 @@ internal enum class EntryMigrationBookmarkBehavior(
     TRANSFER(FeatureArtifactId("entry.migration.bookmark-transfer")),
 }
 
-internal enum class EntryMigrationProgressBehavior(
-    override val id: FeatureArtifactId,
-) : FeatureBehaviorProjection {
-    COPY(FeatureArtifactId("entry.migration.progress-copy")),
-}
-
-internal enum class EntryMigrationPlaybackPreferencesBehavior(
-    override val id: FeatureArtifactId,
-) : FeatureBehaviorProjection {
-    COPY(FeatureArtifactId("entry.migration.playback-preferences-copy")),
-}
-
-internal enum class EntryMigrationViewerSettingsBehavior(
-    override val id: FeatureArtifactId,
-) : FeatureBehaviorProjection {
-    COPY(FeatureArtifactId("entry.migration.viewer-settings-copy")),
-}
-
-internal enum class EntryMigrationDownloadBehavior(
-    override val id: FeatureArtifactId,
-) : FeatureBehaviorProjection {
-    PARTICIPATION(FeatureArtifactId("entry.migration.download-participation")),
-    CLEANUP(FeatureArtifactId("entry.migration.download-cleanup")),
-}
-
 internal enum class EntryMigrationBehaviorContract(
     override val id: FeatureArtifactId,
 ) : FeatureBehaviorContract {
@@ -98,16 +66,11 @@ internal enum class EntryMigrationBehaviorContract(
     CONSUMPTION(FeatureArtifactId("entry.migration.consumption-cooperation")),
     BOOKMARK(FeatureArtifactId("entry.migration.bookmark-cooperation")),
     CHILD_STATE_OPTION(FeatureArtifactId("entry.migration.child-state-option.behavior")),
-    PROGRESS(FeatureArtifactId("entry.migration.progress-cooperation")),
-    PLAYBACK_PREFERENCES(FeatureArtifactId("entry.migration.playback-preferences-cooperation")),
-    VIEWER_SETTINGS(FeatureArtifactId("entry.migration.viewer-settings-cooperation")),
-    DOWNLOAD(FeatureArtifactId("entry.migration.download-cooperation")),
     PAIR_CONTEXT(FeatureArtifactId("entry.migration.pair-context.behavior")),
     INSPECTION_CONTEXT(FeatureArtifactId("entry.migration.inspection-context.behavior")),
     CATEGORIES_OPTION(FeatureArtifactId("entry.migration.categories-option.behavior")),
     NOTES_OPTION(FeatureArtifactId("entry.migration.notes-option.behavior")),
     CUSTOM_COVER_OPTION(FeatureArtifactId("entry.migration.custom-cover-option.behavior")),
-    DOWNLOAD_OPTION(FeatureArtifactId("entry.migration.download-option.behavior")),
     EXECUTION_CONTEXT(FeatureArtifactId("entry.migration.execution-context.behavior")),
 }
 
@@ -118,8 +81,6 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
         val migration = CapabilityExpression.Provided(EntryMigrationCapability.definition)
         val consumption = CapabilityExpression.Provided(EntryConsumptionCapability.definition)
         val bookmark = CapabilityExpression.Provided(EntryBookmarkCapability.definition)
-        val download = CapabilityExpression.Provided(EntryDownloadCapability.definition)
-        val migrationDownload = allOf(migration, download)
         sink.add(
             FeatureContribution(
                 feature = ENTRY_MIGRATION_FEATURE_ID,
@@ -153,44 +114,14 @@ internal object EntryMigrationFeatureContributor : FeatureGraphContributor {
                         behaviorProjections = listOf(EntryMigrationChildStateOptionBehavior),
                         behavioralContracts = listOf(EntryMigrationBehaviorContract.CHILD_STATE_OPTION),
                     ),
-                    FeatureIntegration(
-                        id = ENTRY_MIGRATION_PROGRESS_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            migration,
-                            CapabilityExpression.Provided(EntryProgressCapability.definition),
-                        ),
-                        behaviorProjections = EntryMigrationProgressBehavior.entries,
-                        behavioralContracts = listOf(EntryMigrationBehaviorContract.PROGRESS),
-                    ),
-                    FeatureIntegration(
-                        id = ENTRY_MIGRATION_PLAYBACK_PREFERENCES_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            migration,
-                            CapabilityExpression.Provided(EntryPlaybackPreferencesCapability.definition),
-                        ),
-                        behaviorProjections = EntryMigrationPlaybackPreferencesBehavior.entries,
-                        behavioralContracts = listOf(EntryMigrationBehaviorContract.PLAYBACK_PREFERENCES),
-                    ),
-                    FeatureIntegration(
-                        id = ENTRY_MIGRATION_VIEWER_SETTINGS_INTEGRATION_ID,
-                        prerequisites = allOf(
-                            migration,
-                            CapabilityExpression.Provided(EntryViewerSettingsCapability.definition),
-                        ),
-                        behaviorProjections = EntryMigrationViewerSettingsBehavior.entries,
-                        behavioralContracts = listOf(EntryMigrationBehaviorContract.VIEWER_SETTINGS),
-                    ),
-                    FeatureIntegration(
-                        id = ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID,
-                        prerequisites = migrationDownload,
-                        behaviorProjections = EntryMigrationDownloadBehavior.entries,
-                        behavioralContracts = listOf(EntryMigrationBehaviorContract.DOWNLOAD),
-                    ),
                 ) +
                     entryMigrationPreparationContextIntegrations(owner, migration) +
-                    entryMigrationOptionContextIntegrations(owner, migration, migrationDownload) +
+                    entryMigrationOptionContextIntegrations(owner, migration) +
                     listOf(entryMigrationExecutionContextIntegration(owner, migration)),
             ),
         )
+        sink.add(ENTRY_MIGRATION_DURABLE_EXECUTION_POINT)
+        sink.add(ENTRY_MIGRATION_OPTION_DISCOVERY_POINT)
+        sink.add(ENTRY_MIGRATION_TRANSITION_PREPARING_POINT)
     }
 }

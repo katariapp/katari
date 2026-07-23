@@ -2,7 +2,6 @@ package mihon.entry.interactions
 
 import mihon.entry.interactions.host.EntryMigrationHostChildUpdate
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.model.progressResourceKey
 
 internal fun prepareMigrationChildUpdates(
     sourceChildren: List<EntryChapter>,
@@ -35,21 +34,6 @@ internal fun prepareMigrationChildUpdates(
         }
         val updated = target.copy(read = read, bookmark = bookmark, dateFetch = dateFetch)
         updated.takeIf { it != target }?.let { EntryMigrationHostChildUpdate(target, it) }
-    }
-}
-
-internal fun prepareMigrationProgressMappings(
-    sourceChildren: List<EntryChapter>,
-    targetChildren: List<EntryChapter>,
-): List<EntryProgressResourceMapping> {
-    return targetChildren.mapNotNull { target ->
-        findMigrationSourceChild(target, sourceChildren)?.let { source ->
-            EntryProgressResourceMapping(
-                sourceResourceKey = source.progressResourceKey,
-                targetResourceKey = target.progressResourceKey,
-                targetChapterId = target.id,
-            )
-        }
     }
 }
 

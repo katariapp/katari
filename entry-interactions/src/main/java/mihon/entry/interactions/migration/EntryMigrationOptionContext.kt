@@ -57,16 +57,6 @@ internal enum class EntryMigrationContextualOption(
         blockerId = FeatureArtifactId("entry.migration.no-custom-cover"),
         contract = EntryMigrationBehaviorContract.CUSTOM_COVER_OPTION,
     ),
-    DOWNLOADS(
-        integration = FeatureIntegrationId("entry.migration.download-option-context"),
-        behaviorProjection = FeatureArtifactId("entry.migration.download-option-availability"),
-        input = contextInputDefinition(
-            ContextInputId("entry.migration.has-downloads"),
-            ContributionOwner("entry-download-state"),
-        ),
-        blockerId = FeatureArtifactId("entry.migration.no-downloads"),
-        contract = EntryMigrationBehaviorContract.DOWNLOAD_OPTION,
-    ),
 }
 
 private data class EntryMigrationOptionDefinition(
@@ -85,12 +75,11 @@ private val OPTION_DEFINITIONS = EntryMigrationContextualOption.entries.associat
 internal fun entryMigrationOptionContextIntegrations(
     owner: ContributionOwner,
     migration: CapabilityExpression,
-    download: CapabilityExpression,
 ): List<FeatureIntegration> = EntryMigrationContextualOption.entries.map { option ->
     val definition = OPTION_DEFINITIONS.getValue(option)
     FeatureIntegration(
         id = option.integration,
-        prerequisites = if (option == EntryMigrationContextualOption.DOWNLOADS) download else migration,
+        prerequisites = migration,
         contextInputs = listOf(option.input),
         contextRule = featureContextRule(owner) { evidence ->
             if (evidence.value(option.input)) {

@@ -1,10 +1,15 @@
 package mihon.entry.interactions
 
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import mihon.entry.interactions.validation.contractExpectation
 import mihon.entry.interactions.validation.productionSubjectEvaluation
 import mihon.entry.interactions.validation.verifyFeatureContract
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
@@ -18,6 +23,33 @@ class EntryProgressContractValidationContributor : FeatureValidationContributor 
             EntryProgressBehaviorContract,
             EntryProgressSnapshot.serializer(),
             EntryProgressSnapshot(),
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_PROGRESS_MIGRATION_PARTICIPANT.id,
+                    EntryProgressMigrationDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = input.provider(EntryProgressCapability.definition).type
+                    val source = Entry.create().copy(id = 53L, type = type)
+                    val target = source.copy(id = 54L)
+                    val payload = EntryProgressMigrationPayload(target, EntryProgressSnapshot())
+                    val feature = mockk<EntryProgressFeature> {
+                        coEvery { prepareMigration(source, target, any()) } returns
+                            EntryProgressMigrationPreparation.Prepared(payload)
+                        coEvery { applyMigration(payload) } returns EntryProgressRestoreResult.Applied
+                    }
+                    val binding = entryProgressMigrationBinding { feature }
+                    val prepared = binding.preparer.prepare(
+                        EntryMigrationDurableEvent("contract", source, target, emptySet(), emptyList(), emptyList()),
+                    )
+                    contractExpectation(prepared != null, "Progress must prepare a durable Migration payload")
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    coVerify(exactly = 1) { feature.applyMigration(payload) }
+                }
+            },
         )
         sink.addEntryBackupParticipationContract(
             ENTRY_PROGRESS_BACKUP_RESTORE_PARTICIPANT,

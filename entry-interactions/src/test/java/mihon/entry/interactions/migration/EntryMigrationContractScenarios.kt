@@ -12,10 +12,6 @@ internal val EntryMigrationBehaviorContract.requiresExecution: Boolean
     get() = this in setOf(
         EntryMigrationBehaviorContract.CONSUMPTION,
         EntryMigrationBehaviorContract.BOOKMARK,
-        EntryMigrationBehaviorContract.PROGRESS,
-        EntryMigrationBehaviorContract.PLAYBACK_PREFERENCES,
-        EntryMigrationBehaviorContract.VIEWER_SETTINGS,
-        EntryMigrationBehaviorContract.DOWNLOAD,
         EntryMigrationBehaviorContract.EXECUTION_CONTEXT,
     )
 
@@ -46,20 +42,6 @@ internal fun migrationContracts() = buildList {
             EntryMigrationBehaviorContract.CHILD_STATE_OPTION,
         ),
     )
-    add(EntryMigrationContract(ENTRY_MIGRATION_PROGRESS_INTEGRATION_ID, EntryMigrationBehaviorContract.PROGRESS))
-    add(
-        EntryMigrationContract(
-            ENTRY_MIGRATION_PLAYBACK_PREFERENCES_INTEGRATION_ID,
-            EntryMigrationBehaviorContract.PLAYBACK_PREFERENCES,
-        ),
-    )
-    add(
-        EntryMigrationContract(
-            ENTRY_MIGRATION_VIEWER_SETTINGS_INTEGRATION_ID,
-            EntryMigrationBehaviorContract.VIEWER_SETTINGS,
-        ),
-    )
-    add(EntryMigrationContract(ENTRY_MIGRATION_DOWNLOAD_INTEGRATION_ID, EntryMigrationBehaviorContract.DOWNLOAD))
     add(
         EntryMigrationContract(ENTRY_MIGRATION_PAIR_CONTEXT_INTEGRATION, EntryMigrationBehaviorContract.PAIR_CONTEXT) {
             migrationSourceEvidence() + listOf(

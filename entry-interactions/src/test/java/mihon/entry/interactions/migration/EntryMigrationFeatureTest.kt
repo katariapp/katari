@@ -23,6 +23,9 @@ import mihon.entry.interactions.host.EntryMigrationHostTransitionResult
 import mihon.entry.interactions.host.EntryMigrationPreparationHost
 import mihon.entry.interactions.host.EntryMigrationPreparationProfileHost
 import mihon.feature.graph.ContributionOwner
+import mihon.feature.graph.FeatureExecutionHandler
+import mihon.feature.graph.FeatureExecutionParticipantBinding
+import mihon.feature.graph.featureGraphContributor
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
@@ -326,8 +329,8 @@ class EntryMigrationFeatureTest {
             EntryMigrationExecuteIntent(preparation.reference, EntryMigrationMode.COPY, emptySet()),
         ).shouldBeInstanceOf<EntryMigrationExecutionResult.Applied>()
 
-        host.transitions.single().consequenceRequests.map { it.artifactId } shouldBe
-            listOf(EntryMigrationConsequenceArtifact.PROGRESS)
+        host.transitions.single().consequenceRequests.map { it.participantId } shouldBe
+            listOf(ENTRY_PROGRESS_MIGRATION_PARTICIPANT.id.value)
         coVerify(exactly = 1) { delivery.deliverOperation(any()) }
     }
 
@@ -343,6 +346,53 @@ class EntryMigrationFeatureTest {
         sourceRefresh: EntrySourceRefreshFeature = refreshedSourceRefresh(),
         tracking: EntryTrackingFeature? = null,
     ): EntryMigrationFeature {
+        val downloadFeature = downloads ?: mockk<EntryDownloadMaintenanceFeature>().also {
+            coEvery { it.inspectEntry(any()) } returns
+                EntryDownloadMaintenanceInspection.Inapplicable(EntryType.BOOK)
+            coEvery { it.prepareRemoval(any()) } returns
+                EntryDownloadRemovalPreparation.Inapplicable(EntryType.BOOK)
+        }
+        val customCoverHost = mockk<mihon.entry.interactions.host.EntryMigrationCustomCoverHost>(relaxed = true)
+        val trackingFeature = tracking ?: mockk<EntryTrackingFeature>().also {
+            coEvery { it.prepareMigrationTracks(any(), any(), any()) } answers {
+                val target = args[1] as Entry
+
+                @Suppress("UNCHECKED_CAST")
+                val tracks = args[2] as List<EntryTrackingRecord>
+                EntryTrackingMigrationPreparationResult.Prepared(
+                    tracks.map { track -> track.copy(entryId = target.id) },
+                )
+            }
+        }
+        val featureContributors = buildList {
+            add(EntryMigrationFeatureContributor)
+            add(EntryDownloadMigrationContributor)
+            add(EntryMigrationCustomCoverContributor)
+            add(EntryTrackingMigrationContributor)
+            if (progress != null) {
+                add(featureGraphContributor(ENTRY_PROGRESS_FEATURE_OWNER) { add(ENTRY_PROGRESS_MIGRATION_PARTICIPANT) })
+            }
+        }
+        val executionBindings = buildList {
+            add(entryTrackingMigrationBinding { trackingFeature })
+            add(
+                FeatureExecutionParticipantBinding(
+                    definition = ENTRY_DOWNLOAD_MIGRATION_OPTION_PARTICIPANT,
+                    handler = FeatureExecutionHandler { event ->
+                        if (downloadFeature.inspectEntry(event.source) ==
+                            EntryDownloadMaintenanceInspection.HasDownloads
+                        ) {
+                            event.options.add(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS)
+                        }
+                    },
+                ),
+            )
+        }
+        val durableBindings = buildList {
+            progress?.let { add(entryProgressMigrationBinding { it }) }
+            add(entryDownloadMigrationBinding { downloadFeature })
+            add(entryMigrationCustomCoverBinding(customCoverHost))
+        }
         val composition = createEntryInteractionComposition(
             plugins = listOf(
                 object : EntryInteractionPlugin {
@@ -351,39 +401,12 @@ class EntryMigrationFeatureTest {
                     override val providerBindings = bindings
                 },
             ),
-            featureContributors = listOf(EntryMigrationFeatureContributor),
+            featureContributors = featureContributors,
+            executionBindings = executionBindings,
+            durableExecutionBindings = durableBindings,
         )
-        val progressFeature = progress ?: mockk<EntryProgressFeature>().also {
-            coEvery { it.prepareMigration(any(), any(), any()) } returns
-                EntryProgressMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
-        }
-        val playback = mockk<EntryPlaybackPreferencesFeature>()
-        coEvery { playback.prepareMigration(any(), any()) } returns
-            EntryPlaybackPreferencesMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
-        val viewerSettings = mockk<EntryViewerSettingsFeature>()
-        coEvery { viewerSettings.prepareMigration(any(), any()) } returns
-            EntryViewerSettingsMigrationPreparation.Inapplicable(setOf(EntryType.BOOK))
-        val downloadFeature = downloads ?: mockk<EntryDownloadMaintenanceFeature>().also {
-            coEvery { it.inspectEntry(any()) } returns
-                EntryDownloadMaintenanceInspection.Inapplicable(EntryType.BOOK)
-            coEvery { it.prepareRemoval(any()) } returns
-                EntryDownloadRemovalPreparation.Inapplicable(EntryType.BOOK)
-        }
         val delivery = consequenceDelivery ?: mockk<EntryMigrationConsequenceDelivery>().also {
             coEvery { it.deliverOperation(any()) } returns EntryMigrationFollowUp.INCOMPLETE
-        }
-        val trackingFeature = tracking ?: mockk<EntryTrackingFeature>().also {
-            coEvery { it.prepareMigrationTracks(any(), any(), any()) } answers {
-                val target = args[1] as Entry
-
-                @Suppress("UNCHECKED_CAST")
-                val tracks = args[2] as List<EntryTrackingRecord>
-                EntryTrackingMigrationPreparationResult.Prepared(
-                    tracks.map { track ->
-                        track.copy(entryId = target.id)
-                    },
-                )
-            }
         }
         return DefaultEntryMigrationFeature(
             evaluation = composition.featureGraphEvaluation,
@@ -391,12 +414,9 @@ class EntryMigrationFeatureTest {
             executionHost = host,
             sourceRefresh = sourceRefresh,
             mergeMigration = merge,
-            progress = progressFeature,
-            playbackPreferences = playback,
-            viewerSettings = viewerSettings,
-            downloads = downloadFeature,
-            tracking = trackingFeature,
-            customCover = mockk(relaxed = true),
+            optionDiscovery = EntryMigrationOptionDiscovery(composition.featureExecutions),
+            transitionPreparation = EntryMigrationTransitionPreparation(composition.featureExecutions),
+            durableConsequences = EntryMigrationDurableConsequences(composition.featureExecutions),
             consequences = delivery,
             clockMillis = { 999 },
         )

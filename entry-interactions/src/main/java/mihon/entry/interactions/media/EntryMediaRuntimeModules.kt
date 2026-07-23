@@ -17,7 +17,10 @@ import uy.kohesive.injekt.api.get
 internal val EntryPlaybackPreferencesFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.playback-preferences-transfer",
     contributor = EntryPlaybackPreferencesFeatureContributor,
-    additionalContributors = listOf(EntryPlaybackPreferencesBackupContributor),
+    additionalContributors = listOf(
+        EntryPlaybackPreferencesBackupContributor,
+        EntryPlaybackPreferencesMigrationContributor,
+    ),
 ) {
     addSingletonFactory<EntryPlaybackPreferencesFeature> {
         val composition = get<EntryInteractionComposition>()
@@ -27,6 +30,9 @@ internal val EntryPlaybackPreferencesFeatureRuntimeModule = EntryFeatureRuntimeM
         )
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryPlaybackPreferencesMigrationBinding { get<EntryPlaybackPreferencesFeature>() },
+        ),
         executionBindings = listOf(
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_PLAYBACK_PREFERENCES_BACKUP_SNAPSHOT_PARTICIPANT,
@@ -100,7 +106,7 @@ internal val EntryImmersiveFeatureRuntimeModule = EntryFeatureRuntimeModule(
 internal val EntryViewerSettingsFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.viewer-settings",
     contributor = EntryViewerSettingsFeatureContributor,
-    additionalContributors = listOf(EntryViewerSettingsBackupContributor),
+    additionalContributors = listOf(EntryViewerSettingsBackupContributor, EntryViewerSettingsMigrationContributor),
 ) { context ->
     addSingletonFactory<ViewerSettingBinder> {
         DefaultViewerSettingBinder(
@@ -127,6 +133,9 @@ internal val EntryViewerSettingsFeatureRuntimeModule = EntryFeatureRuntimeModule
         )
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryViewerSettingsMigrationBinding { get<EntryViewerSettingsFeature>() },
+        ),
         executionBindings = listOf(
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_VIEWER_SETTINGS_BACKUP_SNAPSHOT_PARTICIPANT,

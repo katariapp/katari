@@ -34,11 +34,20 @@ internal class AppEntryMigrationHost(
                     id,
                     operationId,
                     profileId,
-                    artifactId,
+                    participantId,
+                    schemaVersion,
                     payload,
                     attempts,
                 ->
-                EntryMigrationPendingConsequence(id, operationId, profileId, artifactId, payload, attempts)
+                EntryMigrationPendingConsequence(
+                    id,
+                    operationId,
+                    profileId,
+                    participantId,
+                    schemaVersion.toInt(),
+                    payload,
+                    attempts,
+                )
             }
         }
     }
@@ -53,7 +62,8 @@ internal class AppEntryMigrationHost(
                     id,
                     persistedOperationId,
                     profileId,
-                    artifactId,
+                    participantId,
+                    schemaVersion,
                     payload,
                     attempts,
                 ->
@@ -61,7 +71,8 @@ internal class AppEntryMigrationHost(
                     id,
                     persistedOperationId,
                     profileId,
-                    artifactId,
+                    participantId,
+                    schemaVersion.toInt(),
                     payload,
                     attempts,
                 )
@@ -91,8 +102,12 @@ internal class AppEntryMigrationHost(
         return handler.awaitOne { entry_migration_consequencesQueries.countByOperation(operationId) }
     }
 
-    override suspend fun consequencePayloads(artifactId: String): List<String> {
-        return handler.awaitList { entry_migration_consequencesQueries.payloadsByArtifact(artifactId) }
+    override suspend fun participantPayloads(participantId: String): List<EntryMigrationPersistedPayload> {
+        return handler.awaitList {
+            entry_migration_consequencesQueries.payloadsByParticipant(participantId) { schemaVersion, payload ->
+                EntryMigrationPersistedPayload(schemaVersion.toInt(), payload)
+            }
+        }
     }
 
     override fun observeConsequenceStatus(): Flow<EntryMigrationConsequenceStatusSnapshot> {
@@ -252,10 +267,11 @@ internal class AppEntryMigrationHost(
                     )
                     transition.consequenceRequests.forEach { request ->
                         entry_migration_consequencesQueries.insert(
-                            consequenceId = "${transition.operationId}:${request.artifactId}",
+                            consequenceId = "${transition.operationId}:${request.participantId}",
                             operationId = transition.operationId,
                             profileId = profileId,
-                            artifactId = request.artifactId,
+                            participantId = request.participantId,
+                            schemaVersion = request.schemaVersion.toLong(),
                             payload = request.payload,
                             createdAt = clockMillis(),
                         )

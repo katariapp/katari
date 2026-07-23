@@ -2,7 +2,10 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
+import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
+import mihon.entry.interactions.host.EntryMigrationCustomCoverPayload
 import mihon.entry.interactions.validation.contractExpectation
 import mihon.entry.interactions.validation.verifyFeatureContract
 import mihon.feature.graph.ContributionOwner
@@ -99,6 +102,40 @@ class EntryLibraryCustomCoverContractValidationContributor : FeatureValidationCo
                         cleaned == listOf(92L),
                         "Library removal must invoke the host-owned custom-cover cleanup",
                     )
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_MIGRATION_CUSTOM_COVER_PARTICIPANT.id,
+                    EntryMigrationCustomCoverDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+                    val source = Entry.create().copy(id = 95L, type = type)
+                    val target = source.copy(id = 96L)
+                    val payload = EntryMigrationCustomCoverPayload("contract-stage", target.id)
+                    val host = mockk<EntryMigrationCustomCoverHost>(relaxed = true) {
+                        coEvery { stage("contract", source, target) } returns payload
+                    }
+                    val binding = entryMigrationCustomCoverBinding(host)
+                    val prepared = binding.preparer.prepare(
+                        EntryMigrationDurableEvent(
+                            "contract",
+                            source,
+                            target,
+                            setOf(EntryMigrationOption.CUSTOM_COVER),
+                            emptyList(),
+                            emptyList(),
+                        ),
+                    )
+                    contractExpectation(prepared != null, "Custom covers must prepare durable Migration state")
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    binding.discardHandler.discard(prepared)
+                    coVerify(exactly = 1) { host.promote(payload) }
+                    coVerify(exactly = 1) { host.discard(payload) }
                 }
             },
         )

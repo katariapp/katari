@@ -90,6 +90,33 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
                 }
             },
         )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_TRACKING_MIGRATION_PARTICIPANT.id,
+                    EntryTrackingMigrationParticipationBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = EntryType.entries.single { it.toContentTypeId() == input.subject.contentType }
+                    val source = Entry.create().copy(id = 43L, type = type)
+                    val target = source.copy(id = 44L)
+                    val preparedTrack = track(target.id).toTrackingRecord()
+                    val feature = mockk<EntryTrackingFeature> {
+                        coEvery { prepareMigrationTracks(source, target, any()) } returns
+                            EntryTrackingMigrationPreparationResult.Prepared(listOf(preparedTrack))
+                    }
+                    val tracks = mutableListOf<EntryTrack>()
+                    entryTrackingMigrationBinding { feature }.handler.execute(
+                        EntryMigrationTransitionPreparingEvent(source, target, emptyList(), tracks::addAll),
+                    )
+                    contractExpectation(
+                        tracks == listOf(preparedTrack.toDomainTrack()),
+                        "Tracking must contribute prepared records to the Migration transition",
+                    )
+                }
+            },
+        )
     }
 
     private suspend fun verifyLibraryAddition(

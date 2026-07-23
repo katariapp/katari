@@ -12,6 +12,7 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryTrackingLibraryMembershipContributor,
         EntryTrackingProfileMoveContributor,
         EntryTrackingBackupContributor,
+        EntryTrackingMigrationContributor,
     ),
 ) { context ->
     addSingletonFactory<EntryTrackingFeature> {
@@ -25,6 +26,7 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
     }
     EntryFeatureRuntimeArtifacts(
         executionBindings = listOf(
+            entryTrackingMigrationBinding { get<EntryTrackingFeature>() },
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_TRACKING_BACKUP_SNAPSHOT_PARTICIPANT,
                 handler = FeatureExecutionHandler { event ->

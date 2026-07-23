@@ -10,7 +10,7 @@ interface EntryMigrationConsequenceHost {
     suspend fun acknowledgeConsequence(consequenceId: String)
     suspend fun recordConsequenceFailure(consequenceId: String, message: String, retryAtMillis: Long)
     suspend fun pendingConsequenceCount(operationId: String): Long
-    suspend fun consequencePayloads(artifactId: String): List<String>
+    suspend fun participantPayloads(participantId: String): List<EntryMigrationPersistedPayload>
     fun observeConsequenceStatus(): Flow<EntryMigrationConsequenceStatusSnapshot>
     suspend fun makeConsequencesRetryable()
 }
@@ -19,9 +19,15 @@ data class EntryMigrationPendingConsequence(
     val id: String,
     val operationId: String,
     val profileId: Long,
-    val artifactId: String,
+    val participantId: String,
+    val schemaVersion: Int,
     val payload: String,
     val attempts: Long,
+)
+
+data class EntryMigrationPersistedPayload(
+    val schemaVersion: Int,
+    val payload: String,
 )
 
 data class EntryMigrationConsequenceStatusSnapshot(

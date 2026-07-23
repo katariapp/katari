@@ -2,13 +2,14 @@ CREATE TABLE entry_migration_consequences(
     consequence_id TEXT NOT NULL PRIMARY KEY,
     operation_id TEXT NOT NULL,
     profile_id INTEGER NOT NULL,
-    artifact_id TEXT NOT NULL,
+    participant_id TEXT NOT NULL,
+    schema_version INTEGER NOT NULL,
     payload TEXT NOT NULL,
     attempts INTEGER NOT NULL DEFAULT 0,
     next_attempt_at INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
     created_at INTEGER NOT NULL,
-    UNIQUE(operation_id, artifact_id),
+    UNIQUE(operation_id, participant_id),
     FOREIGN KEY(operation_id) REFERENCES entry_migration_operations(operation_id) ON DELETE CASCADE,
     FOREIGN KEY(profile_id) REFERENCES profiles(_id) ON DELETE CASCADE
 );
@@ -21,20 +22,20 @@ SELECT count(*)
 FROM entry_migration_consequences
 WHERE operation_id = :operationId;
 
-payloadsByArtifact:
-SELECT payload
+payloadsByParticipant:
+SELECT schema_version, payload
 FROM entry_migration_consequences
-WHERE artifact_id = :artifactId;
+WHERE participant_id = :participantId;
 
 pending:
-SELECT consequence_id, operation_id, profile_id, artifact_id, payload, attempts
+SELECT consequence_id, operation_id, profile_id, participant_id, schema_version, payload, attempts
 FROM entry_migration_consequences
 WHERE next_attempt_at <= :now
 ORDER BY created_at, consequence_id
 LIMIT :limit;
 
 pendingByOperation:
-SELECT consequence_id, operation_id, profile_id, artifact_id, payload, attempts
+SELECT consequence_id, operation_id, profile_id, participant_id, schema_version, payload, attempts
 FROM entry_migration_consequences
 WHERE operation_id = :operationId AND next_attempt_at <= :now
 ORDER BY created_at, consequence_id
@@ -58,7 +59,8 @@ INSERT INTO entry_migration_consequences(
     consequence_id,
     operation_id,
     profile_id,
-    artifact_id,
+    participant_id,
+    schema_version,
     payload,
     created_at
 )
@@ -66,7 +68,8 @@ VALUES (
     :consequenceId,
     :operationId,
     :profileId,
-    :artifactId,
+    :participantId,
+    :schemaVersion,
     :payload,
     :createdAt
 );

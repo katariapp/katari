@@ -61,7 +61,7 @@ internal val EntryUpdateEligibilityFeatureRuntimeModule = EntryFeatureRuntimeMod
 internal val EntryProgressFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.progress-transfer",
     contributor = EntryProgressFeatureContributor,
-    additionalContributors = listOf(EntryProgressBackupContributor),
+    additionalContributors = listOf(EntryProgressBackupContributor, EntryProgressMigrationContributor),
 ) {
     addSingletonFactory<EntryProgressFeature> {
         val composition = get<EntryInteractionComposition>()
@@ -71,6 +71,9 @@ internal val EntryProgressFeatureRuntimeModule = EntryFeatureRuntimeModule(
         )
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryProgressMigrationBinding { get<EntryProgressFeature>() },
+        ),
         executionBindings = listOf(
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_PROGRESS_BACKUP_SNAPSHOT_PARTICIPANT,

@@ -10,16 +10,29 @@ import uy.kohesive.injekt.api.get
 internal val EntryMigrationFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.migration",
     contributor = EntryMigrationFeatureContributor,
+    additionalContributors = listOf(EntryMigrationCustomCoverContributor),
 ) { context ->
     val dependencies = context.dependencies
     addSingletonFactory {
+        EntryMigrationDurableConsequences(get<EntryInteractionComposition>().featureExecutions)
+    }
+    addSingletonFactory {
+        EntryMigrationOptionDiscovery(get<EntryInteractionComposition>().featureExecutions)
+    }
+    addSingletonFactory {
+        EntryMigrationTransitionPreparation(get<EntryInteractionComposition>().featureExecutions)
+    }
+    addSingletonFactory {
+        EntryMigrationCustomCoverOrphanCleanup(
+            consequenceHost = dependencies.migrationConsequenceHost,
+            coverHost = dependencies.migrationCustomCoverHost,
+        )
+    }
+    addSingletonFactory {
         EntryMigrationConsequenceDelivery(
             host = dependencies.migrationConsequenceHost,
-            progress = { get() },
-            playbackPreferences = { get() },
-            viewerSettings = { get() },
-            downloads = { get() },
-            customCover = dependencies.migrationCustomCoverHost,
+            consequences = get(),
+            coverOrphanCleanup = get(),
         )
     }
     addSingletonFactory<EntryMigrationConsequenceStatusFeature> {
@@ -32,16 +45,16 @@ internal val EntryMigrationFeatureRuntimeModule = EntryFeatureRuntimeModule(
             executionHost = dependencies.migrationExecutionHost,
             sourceRefresh = get(),
             mergeMigration = get(),
-            progress = get(),
-            playbackPreferences = get(),
-            viewerSettings = get(),
-            downloads = get(),
-            tracking = get(),
-            customCover = dependencies.migrationCustomCoverHost,
+            optionDiscovery = get(),
+            transitionPreparation = get(),
+            durableConsequences = get(),
             consequences = get(),
         )
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryMigrationCustomCoverBinding(dependencies.migrationCustomCoverHost),
+        ),
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryMigrationFeature>() }),
         warmups = listOf {
             CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

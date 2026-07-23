@@ -1,6 +1,7 @@
 package mihon.entry.interactions
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import mihon.entry.interactions.validation.contractExpectation
 import mihon.entry.interactions.validation.productionSubjectEvaluation
@@ -10,6 +11,8 @@ import mihon.feature.graph.FeatureBehaviorContract
 import mihon.feature.graph.validation.FeatureContractExecutionInput
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
@@ -25,6 +28,37 @@ class EntryViewerSettingsContractValidationContributor : FeatureValidationContri
             EntryViewerSettingsBackupState(
                 listOf(EntryViewerSettingBackupValue("reader", "theme", "dark", 1)),
             ),
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_VIEWER_SETTINGS_MIGRATION_PARTICIPANT.id,
+                    EntryViewerSettingsMigrationDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = input.provider(EntryViewerSettingsCapability.definition).type
+                    val source = Entry.create().copy(id = 94L, type = type)
+                    val target = source.copy(id = 95L)
+                    val payload = EntryViewerSettingsMigrationPayload(target, 0L, emptyList())
+                    val feature = mockk<EntryViewerSettingsFeature> {
+                        coEvery { prepareMigration(source, target) } returns
+                            EntryViewerSettingsMigrationPreparation.Prepared(payload)
+                        coEvery { applyMigration(payload) } returns
+                            EntryViewerSettingsRestoreResult.Restored(0, emptySet())
+                    }
+                    val binding = entryViewerSettingsMigrationBinding { feature }
+                    val prepared = binding.preparer.prepare(
+                        EntryMigrationDurableEvent("contract", source, target, emptySet(), emptyList(), emptyList()),
+                    )
+                    contractExpectation(
+                        prepared != null,
+                        "Viewer Settings must prepare a durable Migration payload",
+                    )
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    coVerify(exactly = 1) { feature.applyMigration(payload) }
+                }
+            },
         )
         sink.addEntryBackupParticipationContract(
             ENTRY_VIEWER_SETTINGS_BACKUP_RESTORE_PARTICIPANT,

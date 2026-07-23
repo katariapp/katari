@@ -48,8 +48,7 @@ class EntryMigrationContractValidationContributor : FeatureValidationContributor
             sourceChildren = listOf(sourceChild),
             targetChildren = listOf(targetChild),
         )
-        val execution = EntryMigrationContractExecutionRecord()
-        val feature = entryMigrationContractFeature(input, type, host, execution)
+        val feature = entryMigrationContractFeature(input, type, host)
 
         when (contract) {
             EntryMigrationBehaviorContract.PROVIDER,
@@ -74,9 +73,6 @@ class EntryMigrationContractValidationContributor : FeatureValidationContributor
                 if (contract.requiresExecution) {
                     val selectedOptions = buildSet {
                         if (contract.transfersChildState) add(EntryMigrationOption.CHILD_STATE)
-                        if (contract == EntryMigrationBehaviorContract.DOWNLOAD) {
-                            add(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS)
-                        }
                     }
                     val result = feature.execute(
                         EntryMigrationExecuteIntent(ready.reference, EntryMigrationMode.COPY, selectedOptions),
@@ -85,7 +81,7 @@ class EntryMigrationContractValidationContributor : FeatureValidationContributor
                         result is EntryMigrationExecutionResult.Applied,
                         "Migration must execute its applicable shared workflow",
                     )
-                    verifyExecutionContract(contract, execution, host)
+                    verifyExecutionContract(contract, host)
                 }
             }
         }
@@ -103,9 +99,6 @@ class EntryMigrationContractValidationContributor : FeatureValidationContributor
             EntryMigrationBehaviorContract.CATEGORIES_OPTION -> EntryMigrationOption.CATEGORIES
             EntryMigrationBehaviorContract.NOTES_OPTION -> EntryMigrationOption.NOTES
             EntryMigrationBehaviorContract.CUSTOM_COVER_OPTION -> EntryMigrationOption.CUSTOM_COVER
-            EntryMigrationBehaviorContract.DOWNLOAD_OPTION,
-            EntryMigrationBehaviorContract.DOWNLOAD,
-            -> EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS
             else -> null
         }
         if (expectedOption != null) {
@@ -115,7 +108,6 @@ class EntryMigrationContractValidationContributor : FeatureValidationContributor
 
     private fun verifyExecutionContract(
         contract: EntryMigrationBehaviorContract,
-        execution: EntryMigrationContractExecutionRecord,
         host: RecordingEntryMigrationHost,
     ) {
         val invoked = when (contract) {
@@ -123,10 +115,6 @@ class EntryMigrationContractValidationContributor : FeatureValidationContributor
                 .childUpdates.single().updated.read
             EntryMigrationBehaviorContract.BOOKMARK -> host.transitions.single()
                 .childUpdates.single().updated.bookmark
-            EntryMigrationBehaviorContract.PROGRESS -> execution.progress
-            EntryMigrationBehaviorContract.PLAYBACK_PREFERENCES -> execution.playback
-            EntryMigrationBehaviorContract.VIEWER_SETTINGS -> execution.viewerSettings
-            EntryMigrationBehaviorContract.DOWNLOAD -> execution.downloadRemoval
             else -> host.transitions.isNotEmpty()
         }
         contractExpectation(invoked, "Migration must coordinate ${contract.id}")

@@ -69,6 +69,63 @@ class EntryDownloadMaintenanceContractValidationContributor : FeatureValidationC
         sink.add(
             FeatureExecutionContractVerifier(
                 FeatureExecutionContractReference(
+                    ENTRY_DOWNLOAD_MIGRATION_OPTION_PARTICIPANT.id,
+                    EntryDownloadMigrationOptionBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = input.provider(EntryDownloadCapability.definition).type
+                    val source = Entry.create().copy(id = 79L, type = type)
+                    val feature = mockk<EntryDownloadMaintenanceFeature> {
+                        coEvery { inspectEntry(source) } returns EntryDownloadMaintenanceInspection.HasDownloads
+                    }
+                    val options = linkedSetOf<EntryMigrationOption>()
+                    entryDownloadMigrationOptionBinding { feature }.handler.execute(
+                        EntryMigrationOptionDiscoveryEvent(source, options::add),
+                    )
+                    contractExpectation(
+                        EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS in options,
+                        "Download Maintenance must contribute its Migration option when downloads exist",
+                    )
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_DOWNLOAD_MIGRATION_PARTICIPANT.id,
+                    EntryDownloadMigrationDurableBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val type = input.provider(EntryDownloadCapability.definition).type
+                    val source = Entry.create().copy(id = 80L, type = type)
+                    val target = source.copy(id = 81L)
+                    val plan = EntryDownloadRemovalPlan(listOf(source))
+                    val feature = mockk<EntryDownloadMaintenanceFeature> {
+                        coEvery { prepareRemoval(source) } returns EntryDownloadRemovalPreparation.Prepared(plan)
+                        coEvery { applyRemoval(plan) } returns EntryDownloadMaintenanceResult.Performed
+                    }
+                    val binding = entryDownloadMigrationBinding { feature }
+                    val prepared = binding.preparer.prepare(
+                        EntryMigrationDurableEvent(
+                            "contract",
+                            source,
+                            target,
+                            setOf(EntryMigrationOption.REMOVE_SOURCE_DOWNLOADS),
+                            emptyList(),
+                            emptyList(),
+                        ),
+                    )
+                    contractExpectation(prepared != null, "Download Maintenance must prepare durable removal")
+                    binding.deliveryHandler.deliver(requireNotNull(prepared))
+                    coVerify(exactly = 1) { feature.applyRemoval(plan) }
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
                     ENTRY_DOWNLOAD_METADATA_CHANGE_PARTICIPANT.id,
                     EntryDownloadMetadataChangeBehaviorContract,
                 ),

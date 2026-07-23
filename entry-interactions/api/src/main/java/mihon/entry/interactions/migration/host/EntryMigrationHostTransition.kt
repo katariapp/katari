@@ -30,11 +30,13 @@ data class EntryMigrationHostChildUpdate(
 )
 
 data class EntryMigrationConsequenceRequest(
-    val artifactId: String,
+    val participantId: String,
+    val schemaVersion: Int,
     val payload: String,
 ) {
     init {
-        require(artifactId.isNotBlank()) { "Migration consequence artifact ID cannot be blank" }
+        require(participantId.isNotBlank()) { "Migration consequence participant ID cannot be blank" }
+        require(schemaVersion > 0) { "Migration consequence schema version must be positive" }
     }
 }
 

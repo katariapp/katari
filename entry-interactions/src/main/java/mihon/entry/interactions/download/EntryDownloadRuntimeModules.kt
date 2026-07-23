@@ -166,6 +166,7 @@ internal val EntryDownloadMaintenanceFeatureRuntimeModule = EntryFeatureRuntimeM
         EntryDownloadMetadataLifecycleContributor,
         EntryDownloadDestructiveRemovalContributor,
         EntryDownloadProfileMoveContributor,
+        EntryDownloadMigrationContributor,
     ),
 ) {
     addSingletonFactory<EntryDownloadMaintenanceFeature> {
@@ -177,7 +178,11 @@ internal val EntryDownloadMaintenanceFeatureRuntimeModule = EntryFeatureRuntimeM
         )
     }
     EntryFeatureRuntimeArtifacts(
+        durableExecutionBindings = listOf(
+            entryDownloadMigrationBinding { get<EntryDownloadMaintenanceFeature>() },
+        ),
         executionBindings = listOf(
+            entryDownloadMigrationOptionBinding { get<EntryDownloadMaintenanceFeature>() },
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_DOWNLOAD_LIBRARY_REMOVAL_PARTICIPANT,
                 handler = FeatureExecutionHandler { event ->

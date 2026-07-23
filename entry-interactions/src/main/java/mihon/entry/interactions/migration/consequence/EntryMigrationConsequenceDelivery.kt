@@ -5,17 +5,14 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import mihon.entry.interactions.host.EntryMigrationConsequenceHost
-import mihon.entry.interactions.host.EntryMigrationCustomCoverHost
 import mihon.entry.interactions.host.EntryMigrationPendingConsequence
+import mihon.feature.graph.FeatureDurableExecutionEnvelope
+import mihon.feature.graph.FeatureExecutionParticipantId
 
 internal class EntryMigrationConsequenceDelivery(
     private val host: EntryMigrationConsequenceHost,
-    private val progress: () -> EntryProgressFeature,
-    private val playbackPreferences: () -> EntryPlaybackPreferencesFeature,
-    private val viewerSettings: () -> EntryViewerSettingsFeature,
-    private val downloads: () -> EntryDownloadMaintenanceFeature,
-    private val customCover: EntryMigrationCustomCoverHost,
-    private val codec: EntryMigrationConsequenceCodec = EntryMigrationConsequenceCodec(),
+    private val consequences: EntryMigrationDurableConsequences,
+    private val coverOrphanCleanup: EntryMigrationCustomCoverOrphanCleanup,
     private val clockMillis: () -> Long = System::currentTimeMillis,
 ) {
     suspend fun deliverOperation(operationId: String): EntryMigrationFollowUp {
@@ -35,7 +32,7 @@ internal class EntryMigrationConsequenceDelivery(
 
     suspend fun runRetryLoop() {
         try {
-            cleanupCoverOrphans()
+            coverOrphanCleanup.cleanup()
         } catch (error: CancellationException) {
             throw error
         } catch (_: Exception) {
@@ -53,24 +50,12 @@ internal class EntryMigrationConsequenceDelivery(
         }
     }
 
-    private suspend fun cleanupCoverOrphans() {
-        val activeStageIds = host.consequencePayloads(EntryMigrationConsequenceArtifact.CUSTOM_COVER)
-            .mapNotNull { payload -> runCatching { codec.customCover(payload).stageId }.getOrNull() }
-            .toSet()
-        customCover.cleanupOrphans(
-            activeStageIds = activeStageIds,
-            olderThanMillis = clockMillis() - ORPHAN_MINIMUM_AGE_MILLIS,
-            limit = ORPHAN_CLEANUP_BATCH_SIZE,
-        )
-    }
-
     private suspend fun deliverSafely(consequence: EntryMigrationPendingConsequence) {
         try {
-            deliver(consequence)
+            val envelope = consequence.envelope()
+            consequences.deliver(envelope)
             host.acknowledgeConsequence(consequence.id)
-            if (consequence.artifactId == EntryMigrationConsequenceArtifact.CUSTOM_COVER) {
-                runCatching { customCover.discard(codec.customCover(consequence.payload)) }
-            }
+            consequences.discard(listOf(envelope))
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
@@ -82,34 +67,14 @@ internal class EntryMigrationConsequenceDelivery(
         }
     }
 
-    private suspend fun deliver(consequence: EntryMigrationPendingConsequence) {
-        when (consequence.artifactId) {
-            EntryMigrationConsequenceArtifact.PROGRESS -> check(
-                progress().applyMigration(codec.progress(consequence.payload)) is EntryProgressRestoreResult.Applied,
-            )
-            EntryMigrationConsequenceArtifact.PLAYBACK_PREFERENCES -> check(
-                playbackPreferences().applyMigration(codec.playback(consequence.payload)) is
-                    EntryPlaybackPreferencesRestoreResult.Applied,
-            )
-            EntryMigrationConsequenceArtifact.VIEWER_SETTINGS -> check(
-                viewerSettings().applyMigration(codec.viewerSettings(consequence.payload)) is
-                    EntryViewerSettingsRestoreResult.Restored,
-            )
-            EntryMigrationConsequenceArtifact.DOWNLOAD_REMOVAL -> check(
-                downloads().applyRemoval(codec.downloadRemoval(consequence.payload)) ==
-                    EntryDownloadMaintenanceResult.Performed,
-            ) { "Migration download removal was not verified" }
-            EntryMigrationConsequenceArtifact.CUSTOM_COVER -> customCover.promote(
-                codec.customCover(consequence.payload),
-            )
-            else -> error("No Migration consequence handler for ${consequence.artifactId}")
-        }
-    }
-
     private companion object {
         const val DEFAULT_BATCH_SIZE = 100
         const val RETRY_DELAY_MILLIS = 60_000L
-        const val ORPHAN_MINIMUM_AGE_MILLIS = 24 * 60 * 60 * 1_000L
-        const val ORPHAN_CLEANUP_BATCH_SIZE = 100
     }
 }
+
+private fun EntryMigrationPendingConsequence.envelope() = FeatureDurableExecutionEnvelope(
+    participant = FeatureExecutionParticipantId(participantId),
+    schemaVersion = schemaVersion,
+    payload = payload,
+)
