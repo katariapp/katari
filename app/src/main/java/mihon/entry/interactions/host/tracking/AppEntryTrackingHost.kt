@@ -5,6 +5,7 @@ import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.RefreshTracks
 import eu.kanade.domain.track.interactor.SyncChapterProgressWithTrack
 import eu.kanade.domain.track.interactor.TrackChapter
+import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.tachiyomi.data.track.DeletableTracker
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
@@ -31,6 +32,7 @@ class AppEntryTrackingHost(
     addTracks: AddTracks,
     trackChapter: TrackChapter,
     syncChapterProgress: SyncChapterProgressWithTrack,
+    trackPreferences: TrackPreferences,
 ) : EntryTrackingHost {
 
     override val operations: EntryTrackingOperationHost = AppEntryTrackingOperationHost(
@@ -46,6 +48,7 @@ class AppEntryTrackingHost(
         addTracks = addTracks,
         trackChapter = trackChapter,
         syncChapterProgress = syncChapterProgress,
+        preferences = trackPreferences,
     )
     override val accounts: EntryTrackingAccountHost = AppEntryTrackingAccountHost(
         trackerManager = trackerManager,

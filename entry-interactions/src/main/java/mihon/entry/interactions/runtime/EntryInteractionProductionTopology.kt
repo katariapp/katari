@@ -19,6 +19,9 @@ internal fun productionEntryTypeRuntimeModules(
 internal fun productionEntryFeatureRuntimeModules(): List<EntryFeatureRuntimeModule> = listOf(
     EntryOpenFeatureRuntimeModule,
     EntryContinueFeatureRuntimeModule,
+    EntryMediaSessionFeatureRuntimeModule,
+    EntryMediaSessionIncognitoFeatureRuntimeModule,
+    EntryHistoryFeatureRuntimeModule,
     EntryDownloadRuntimeFeatureRuntimeModule,
     EntryDownloadActionFeatureRuntimeModule,
     EntryAutomaticDownloadFeatureRuntimeModule,

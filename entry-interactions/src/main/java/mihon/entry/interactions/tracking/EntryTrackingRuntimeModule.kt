@@ -1,7 +1,9 @@
 package mihon.entry.interactions
 
+import mihon.feature.graph.FeatureExecutionContextResolver
 import mihon.feature.graph.FeatureExecutionHandler
 import mihon.feature.graph.FeatureExecutionParticipantBinding
+import mihon.feature.graph.contextEvidence
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
 
@@ -14,6 +16,7 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
         EntryTrackingBackupContributor,
         EntryTrackingMigrationContributor,
         EntryTrackingMergeContributor,
+        EntryTrackingMediaSessionContributor,
     ),
 ) { context ->
     addSingletonFactory<EntryTrackingFeature> {
@@ -42,6 +45,12 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
             ),
         ),
         executionBindings = listOf(
+            entryTrackingMediaSessionBinding(
+                feature = { get<EntryTrackingFeature>() },
+                automaticSynchronizationEnabled = {
+                    context.dependencies.trackingHost.automation.isAutomaticProgressSynchronizationEnabled()
+                },
+            ),
             entryTrackingMigrationBinding { get<EntryTrackingFeature>() },
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_TRACKING_BACKUP_SNAPSHOT_PARTICIPANT,
@@ -89,3 +98,29 @@ internal val EntryTrackingFeatureRuntimeModule = EntryFeatureRuntimeModule(
         ),
     )
 }
+
+internal fun entryTrackingMediaSessionBinding(
+    feature: () -> EntryTrackingFeature,
+    automaticSynchronizationEnabled: () -> Boolean,
+) = FeatureExecutionParticipantBinding(
+    definition = ENTRY_TRACKING_MEDIA_SESSION_PARTICIPANT,
+    contextResolver = FeatureExecutionContextResolver { execution ->
+        listOf(
+            contextEvidence(
+                ENTRY_MEDIA_SESSION_TRACKING_ALLOWED,
+                execution.permits(EntryMediaSessionConsequence.SYNCHRONIZE_TRACKING),
+            ),
+        )
+    },
+    handler = FeatureExecutionHandler { execution ->
+        val event = execution.event as? EntryMediaSessionEvent.Progressed
+            ?: return@FeatureExecutionHandler
+        if (execution.progressResult?.completedNow != true) return@FeatureExecutionHandler
+        if (event.child.chapterNumber < 0.0) return@FeatureExecutionHandler
+        if (!automaticSynchronizationEnabled()) return@FeatureExecutionHandler
+        feature().synchronizeProgress(
+            entry = event.visibleEntry,
+            progress = event.child.chapterNumber,
+        )
+    },
+)

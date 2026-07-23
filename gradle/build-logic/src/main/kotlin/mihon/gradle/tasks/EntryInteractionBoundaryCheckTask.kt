@@ -308,6 +308,7 @@ private class EntryInteractionBoundaryRules(
             checkDownloadRuntimeReferences(file, findings)
             checkSourceMediaResolutionReferences(file, findings)
             checkMediaCacheMaintenanceReferences(file, findings)
+            checkMediaSessionConsequenceBypass(file, findings)
             checkProfilePreferenceOwnerBypass(file, findings)
             checkExhaustiveEntryTypeMappings(file, findings)
             checkSuspiciousTypeBranches(file, findings)
@@ -400,6 +401,23 @@ private class EntryInteractionBoundaryRules(
                 reason = "active profile/private preference stores may only bind ProfilePreferenceOwnerInstaller; " +
                     "runtime preference owners must be created from an installed handle",
             )
+        }
+    }
+
+    private fun checkMediaSessionConsequenceBypass(file: KotlinSourceFile, findings: MutableList<Finding>) {
+        if (file.isTestPath() || file.owningTypeModule() == null) return
+        if (!file.content.contains("MediaSessionProcessor")) return
+        if (file.relativePath.endsWith("MediaSessionProcessor.kt")) return
+
+        MEDIA_SESSION_DIRECT_CONSEQUENCE_OPERATIONS.forEach { operation ->
+            file.findReference(operation)?.let { reference ->
+                findings += Finding(
+                    relativePath = file.relativePath,
+                    lineNumber = reference.lineNumber,
+                    reason = "media runtimes must emit EntryMediaSessionEvent facts; $operation belongs to an " +
+                        "independently contributed Feature consequence",
+                )
+            }
         }
     }
 
@@ -1269,6 +1287,15 @@ private class EntryInteractionBoundaryRules(
             "app/src/main/java/eu/kanade/tachiyomi/ui/",
             "presentation-core/src/main/java/",
             "presentation-widget/src/main/java/",
+        )
+
+        private val MEDIA_SESSION_DIRECT_CONSEQUENCE_OPERATIONS = setOf(
+            "mergeAndSyncChild",
+            "upsertHistory",
+            "EntryDownloadLifecycleEventSink",
+            "EntryDownloadLifecycleFeature",
+            "EntryTrackingFeature",
+            "EntryMediaSessionIncognitoState",
         )
 
         private val TYPE_BRANCH_PATTERNS = listOf(

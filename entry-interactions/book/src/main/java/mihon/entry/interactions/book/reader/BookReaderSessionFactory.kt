@@ -11,8 +11,9 @@ import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookFailure
 import mihon.book.api.BookFailureReason
 import mihon.book.api.BookLocator
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryMediaSessionActivity
+import mihon.entry.interactions.EntryMediaSessionEvent
+import mihon.entry.interactions.EntryMediaSessionProcessor
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
 import mihon.entry.interactions.book.download.DownloadedBookContentSession
@@ -24,23 +25,18 @@ import tachiyomi.domain.entry.model.EntryProgressState
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.history.model.HistoryUpdate
-import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
-import java.util.Date
 
 internal class BookReaderSessionFactory(
     private val entryRepository: EntryRepository,
     private val entryChapterRepository: EntryChapterRepository,
     private val entryProgressRepository: EntryProgressRepository,
-    private val historyRepository: HistoryRepository,
     private val sourceManager: SourceManager,
     private val processorRegistry: BookProcessorRegistry,
     private val networkHelper: NetworkHelper,
-    private val incognitoState: mihon.entry.interactions.EntryReaderIncognitoState,
     private val materializationStore: BookMaterializationStore,
     private val downloadCache: BookDownloadCache,
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
+    private val mediaSession: EntryMediaSessionProcessor,
     private val now: () -> Long = System::currentTimeMillis,
 ) {
     suspend fun open(
@@ -146,16 +142,12 @@ internal class BookReaderSessionFactory(
                     BookReaderOpenResult.Success(
                         OpenedBookReaderSession(
                             entry = visibleEntry,
-                            historySourceId = owner.source,
                             chapter = chapter,
                             progressIdentity = progressIdentity,
                             contentSession = contentSession,
                             publicationSession = opened.session,
                             initialLocator = initialLocator,
-                            entryProgressRepository = entryProgressRepository,
-                            historyRepository = historyRepository,
-                            incognitoState = incognitoState,
-                            downloadLifecycle = downloadLifecycle,
+                            mediaSession = mediaSession,
                             now = now,
                         ),
                     )
@@ -288,16 +280,12 @@ internal sealed interface BookReaderOpenResult {
 
 internal class OpenedBookReaderSession(
     val entry: Entry,
-    private val historySourceId: Long,
     val chapter: EntryChapter,
     private val progressIdentity: BookProgressIdentity,
     contentSession: BookContentSession,
     val publicationSession: BookPublicationSession,
     val initialLocator: BookLocator?,
-    private val entryProgressRepository: EntryProgressRepository,
-    private val historyRepository: HistoryRepository,
-    private val incognitoState: mihon.entry.interactions.EntryReaderIncognitoState,
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink,
+    private val mediaSession: EntryMediaSessionProcessor,
     private val now: () -> Long,
 ) : AutoCloseable {
     private val closeStack = BookSessionCloseStack().apply {
@@ -306,51 +294,40 @@ internal class OpenedBookReaderSession(
     }
 
     suspend fun saveLocation(locator: BookLocator, completed: Boolean = false) {
-        if (incognitoState.isIncognito(historySourceId)) return
         val timestamp = now()
-        val current = entryProgressRepository.get(
-            chapter.entryId,
-            progressIdentity.contentKey,
-            progressIdentity.resourceKey,
+        val shouldBeCompleted = chapter.read || completed
+        val progress = EntryProgressState(
+            entryId = chapter.entryId,
+            chapterId = chapter.id,
+            contentKey = progressIdentity.contentKey,
+            resourceKey = progressIdentity.resourceKey,
+            resourceRevision = progressIdentity.resourceRevision,
+            locator = BookProgressLocatorCodec.encode(locator),
+            locatorUpdatedAt = timestamp,
+            completed = shouldBeCompleted,
+            completionUpdatedAt = if (shouldBeCompleted) timestamp else 0L,
         )
-        val shouldBeCompleted = current?.completed == true || chapter.read || completed
-        val completedNow = shouldBeCompleted && current?.completed != true
-        entryProgressRepository.mergeAndSyncChild(
-            current?.copy(
-                chapterId = chapter.id,
-                resourceRevision = progressIdentity.resourceRevision,
-                locator = BookProgressLocatorCodec.encode(locator, current.locator.extensions),
-                locatorUpdatedAt = timestamp,
-                completed = shouldBeCompleted,
-                completionUpdatedAt = if (completedNow) timestamp else current.completionUpdatedAt,
-            ) ?: EntryProgressState(
-                entryId = chapter.entryId,
-                chapterId = chapter.id,
-                contentKey = progressIdentity.contentKey,
-                resourceKey = progressIdentity.resourceKey,
-                resourceRevision = progressIdentity.resourceRevision,
-                locator = BookProgressLocatorCodec.encode(locator),
-                locatorUpdatedAt = timestamp,
-                completed = shouldBeCompleted,
-                completionUpdatedAt = if (shouldBeCompleted) timestamp else 0L,
+        mediaSession.onEvent(
+            EntryMediaSessionEvent.Progressed(
+                visibleEntry = entry,
+                child = chapter,
+                progress = progress,
+                fraction = locator.totalProgression ?: locator.progression,
+                preserveLocatorExtensions = true,
             ),
         )
-        val fraction = locator.totalProgression ?: locator.progression
-        if (fraction != null) {
-            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.Progressed(entry, chapter, fraction))
-        }
-        if (completed && current?.completed != true) {
-            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.Completed(entry, chapter))
-        }
     }
 
     suspend fun recordHistory(sessionReadDuration: Long) {
-        if (sessionReadDuration <= 0L || incognitoState.isIncognito(historySourceId)) return
-        historyRepository.upsertHistory(
-            HistoryUpdate(
-                chapterId = chapter.id,
-                readAt = Date(now()),
-                sessionReadDuration = sessionReadDuration,
+        if (sessionReadDuration <= 0L) return
+        mediaSession.onEvent(
+            EntryMediaSessionEvent.ActivityRecorded(
+                visibleEntry = entry,
+                child = chapter,
+                activity = EntryMediaSessionActivity(
+                    recordedAtEpochMillis = now(),
+                    durationMillis = sessionReadDuration,
+                ),
             ),
         )
     }

@@ -4,6 +4,7 @@ import android.app.Application
 import eu.kanade.domain.track.interactor.AddTracks
 import eu.kanade.domain.track.interactor.SyncChapterProgressWithTrack
 import eu.kanade.domain.track.interactor.TrackChapter
+import eu.kanade.domain.track.service.TrackPreferences
 import eu.kanade.tachiyomi.data.track.EnhancedTracker
 import eu.kanade.tachiyomi.data.track.EntryTrackingSource
 import eu.kanade.tachiyomi.data.track.TrackerManager
@@ -19,7 +20,10 @@ internal class AppEntryTrackingAutomationHost(
     private val addTracks: AddTracks,
     private val trackChapter: TrackChapter,
     private val syncChapterProgress: SyncChapterProgressWithTrack,
+    private val preferences: TrackPreferences,
 ) : EntryTrackingAutomationHost {
+
+    override fun isAutomaticProgressSynchronizationEnabled(): Boolean = preferences.autoUpdateTrack.get()
 
     override suspend fun bindAutomatically(
         entry: Entry,

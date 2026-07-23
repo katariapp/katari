@@ -16,8 +16,8 @@ import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookLocator
 import mihon.book.api.BookPublication
 import mihon.book.api.BookResource
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.EntryDownloadLifecycleResult
+import mihon.entry.interactions.EntryMediaSessionEventSink
+import mihon.entry.interactions.EntryMediaSessionResult
 import mihon.entry.interactions.book.download.BookDownloadCache
 import mihon.entry.interactions.book.download.BookDownloadManifest
 import mihon.entry.interactions.book.download.BookDownloadPackageKey
@@ -30,7 +30,6 @@ import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
 import java.io.ByteArrayInputStream
 import kotlin.test.assertEquals
@@ -66,16 +65,14 @@ class BookReaderDownloadedResolutionTest {
                 coEvery { getChapterById(chapter.id) } returns chapter
             },
             entryProgressRepository = progressRepository,
-            historyRepository = mockk<HistoryRepository>(relaxed = true),
             sourceManager = sourceManager,
             processorRegistry = BookProcessorRegistry(listOf(processor)),
             networkHelper = mockk<NetworkHelper> {
                 every { client } returns mockk<OkHttpClient>()
             },
-            incognitoState = mockk(relaxed = true),
             materializationStore = mockk(relaxed = true),
             downloadCache = downloadCache,
-            downloadLifecycle = noOpDownloadLifecycle(),
+            mediaSession = noOpMediaSession(),
         )
 
         val prepared = assertIs<BookReaderPrepareResult.Success>(
@@ -93,9 +90,9 @@ class BookReaderDownloadedResolutionTest {
         opened.close()
     }
 
-    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
-        EntryDownloadLifecycleResult.Handled
-    }
+    private fun noOpMediaSession() = BookMediaSessionProcessor(
+        EntryMediaSessionEventSink { EntryMediaSessionResult.Handled },
+    )
 
     private fun entry(id: Long, source: Long, url: String): Entry = Entry.create().copy(
         id = id,

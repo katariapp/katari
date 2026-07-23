@@ -7,12 +7,13 @@ import mihon.entry.interactions.EntryChildProgressCapability
 import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadCapability
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadOptionsCapability
 import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryMediaCacheCapability
+import mihon.entry.interactions.EntryMediaSessionCapability
+import mihon.entry.interactions.EntryMediaSessionProcessor
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryOpenCapability
 import mihon.entry.interactions.EntryPlaybackPreferencesCapability
@@ -33,7 +34,6 @@ import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.PlaybackPreferencesRepository
-import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -54,9 +54,8 @@ fun animeEntryInteractionPlugin(
             downloadPreferencesRepository = dependencies.downloadPreferencesRepository,
             sourceManager = dependencies.sourceManager,
             entryRepository = dependencies.entryRepository,
-            downloadLifecycle = dependencies.downloadLifecycle,
+            mediaSession = dependencies.mediaSession,
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
-            historyRepository = dependencies.historyRepository,
         ),
         viewerSettingsProvider = viewerSettingsProvider,
     )
@@ -91,8 +90,8 @@ internal fun animeEntryInteractionPlugin(
     )
     val immersiveProcessor = AnimeImmersiveProcessor(
         entryProgressRepository = dependencies.entryProgressRepository,
-        historyRepository = dependencies.historyRepository,
         resolveVideoStream = { Injekt.get() },
+        mediaSession = dependencies.mediaSession,
     )
     return object : EntryInteractionPlugin {
         override val type = EntryType.ANIME
@@ -115,6 +114,7 @@ internal fun animeEntryInteractionPlugin(
                     EntryPreviewCapability.bind(previewProcessor),
                     EntryPreviewConfigurationCapability.bind(previewProcessor),
                     EntryImmersiveCapability.bind(immersiveProcessor),
+                    EntryMediaSessionCapability.bind(dependencies.mediaSession),
                     EntryTypePresentationCapability.bind(AnimeEntryTypePresentationProvider),
                     EntryMediaCacheCapability.bind(AnimeMediaCacheProvider { Injekt.get() }),
                 ),
@@ -133,9 +133,8 @@ data class AnimeEntryInteractionDependencies(
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
-    val downloadLifecycle: EntryDownloadLifecycleEventSink,
+    val mediaSession: EntryMediaSessionProcessor,
     val entryInteractionPreferences: EntryInteractionPreferences,
-    val historyRepository: HistoryRepository? = null,
 )
 
 internal data class AnimeEntryInteractionRuntimeDependencies(
@@ -149,7 +148,6 @@ internal data class AnimeEntryInteractionRuntimeDependencies(
     val downloadPreferencesRepository: DownloadPreferencesRepository,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
-    val downloadLifecycle: EntryDownloadLifecycleEventSink,
+    val mediaSession: EntryMediaSessionProcessor,
     val entryInteractionPreferences: EntryInteractionPreferences,
-    val historyRepository: HistoryRepository? = null,
 )

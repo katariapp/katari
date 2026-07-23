@@ -2,6 +2,7 @@ package mihon.entry.interactions
 
 import eu.kanade.tachiyomi.source.entry.EntryType
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import mihon.feature.graph.ContributionOwner
 import org.junit.jupiter.api.Test
@@ -122,6 +123,9 @@ class EntryProgressFeatureTest {
         return DefaultEntryProgressFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.progress,
+            repository = mockk(relaxed = true),
+            getEntryWithChapters = mockk(relaxed = true),
+            globalLibraryPreferences = mockk(relaxed = true),
         )
     }
 

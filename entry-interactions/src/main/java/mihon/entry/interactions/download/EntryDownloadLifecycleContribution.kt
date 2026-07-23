@@ -13,6 +13,9 @@ import mihon.feature.graph.FeatureBehaviorProjection
 import mihon.feature.graph.FeatureContextBlocker
 import mihon.feature.graph.FeatureContextDecision
 import mihon.feature.graph.FeatureContribution
+import mihon.feature.graph.FeatureExecutionOrder
+import mihon.feature.graph.FeatureExecutionParticipantDefinition
+import mihon.feature.graph.FeatureExecutionParticipantId
 import mihon.feature.graph.FeatureGraphContributionSink
 import mihon.feature.graph.FeatureGraphContributor
 import mihon.feature.graph.FeatureId
@@ -78,6 +81,22 @@ internal object EntryDownloadBookmarkProtectionProviderBehaviorContract : Featur
 internal object EntryDownloadBookmarkProtectionContextBehaviorContract : FeatureBehaviorContract {
     override val id = FeatureArtifactId("entry.download.lifecycle.bookmark-protection.context-behavior")
 }
+
+internal object EntryDownloadMediaSessionBehaviorContract : FeatureBehaviorContract {
+    override val id = FeatureArtifactId("entry.download.lifecycle.media-session.behavior")
+}
+
+internal val ENTRY_DOWNLOAD_MEDIA_SESSION_PARTICIPANT = FeatureExecutionParticipantDefinition(
+    id = FeatureExecutionParticipantId("entry.download.lifecycle.media-session"),
+    owner = FEATURE_OWNER,
+    point = ENTRY_MEDIA_SESSION_CONSEQUENCE_EXECUTION_POINT,
+    prerequisites = allOf(
+        CapabilityExpression.Provided(EntryMediaSessionCapability.definition),
+        CapabilityExpression.Provided(EntryDownloadCapability.definition),
+    ),
+    order = FeatureExecutionOrder(after = setOf(ENTRY_PROGRESS_MEDIA_SESSION_PARTICIPANT.id)),
+    behavioralContracts = listOf(EntryDownloadMediaSessionBehaviorContract),
+)
 
 internal enum class EntryDownloadLifecycleProviderBehavior(
     override val id: FeatureArtifactId,
@@ -268,6 +287,14 @@ internal object EntryDownloadLifecycleFeatureContributor : FeatureGraphContribut
                 ),
             ),
         )
+    }
+}
+
+internal object EntryDownloadMediaSessionContributor : FeatureGraphContributor {
+    override val owner = FEATURE_OWNER
+
+    override fun contributeTo(sink: FeatureGraphContributionSink) {
+        sink.add(ENTRY_DOWNLOAD_MEDIA_SESSION_PARTICIPANT)
     }
 }
 

@@ -31,12 +31,12 @@ import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.EntryDownloadOptionSelection
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
+import mihon.entry.interactions.EntryMediaSessionEventSink
+import mihon.entry.interactions.EntryMediaSessionResult
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPlaybackPreferencesSnapshot
 import mihon.entry.interactions.EntryPlaybackQualityMode
@@ -250,22 +250,18 @@ class AnimeEntryInteractionPluginTest {
     fun `anime child list defaults to chapter number descending without missing chapter ranges`() = runTest {
         val interactions = createEntryInteractions(listOf(animeEntryInteractionPlugin(dependencies())))
         val entry = entry(EntryType.ANIME)
-        val rows = interactions.childList.buildDisplayList(
-            EntryChildListRequest(
-                entry = entry,
-                chapters = listOf(
-                    chapter(id = 3L, sourceOrder = 30L, chapterNumber = 3.0),
-                    chapter(id = 1L, sourceOrder = 10L, chapterNumber = 1.0),
-                    chapter(id = 2L, sourceOrder = 20L, chapterNumber = 2.0),
-                ),
-                memberIds = listOf(entry.id),
-                includeMissingCounts = true,
+        val rows = interactions.childList.sortedForDisplay(
+            entry = entry,
+            chapters = listOf(
+                chapter(id = 3L, sourceOrder = 30L, chapterNumber = 3.0),
+                chapter(id = 1L, sourceOrder = 10L, chapterNumber = 1.0),
+                chapter(id = 2L, sourceOrder = 20L, chapterNumber = 2.0),
             ),
+            memberIds = listOf(entry.id),
         )
 
-        rows.rows.filterIsInstance<EntryChildListRow.MissingCount>() shouldBe emptyList()
-        rows.rows.filterIsInstance<EntryChildListRow.Child>()
-            .map { it.chapter.id }
+        rows
+            .map { it.id }
             .shouldContainExactly(3L, 2L, 1L)
     }
 
@@ -875,13 +871,13 @@ class AnimeEntryInteractionPluginTest {
             downloadPreferencesRepository = downloadPreferencesRepository,
             sourceManager = sourceManager,
             entryRepository = entryRepository,
-            downloadLifecycle = noOpDownloadLifecycle(),
+            mediaSession = AnimeMediaSessionProcessor(noOpMediaSession()),
             entryInteractionPreferences = entryInteractionPreferences,
         )
     }
 
-    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
-        EntryDownloadLifecycleResult.Handled
+    private fun noOpMediaSession() = EntryMediaSessionEventSink {
+        EntryMediaSessionResult.Handled
     }
 
     private fun mockAnimeDownloadManager(episodeDownloaded: Boolean): AnimeDownloadManager {

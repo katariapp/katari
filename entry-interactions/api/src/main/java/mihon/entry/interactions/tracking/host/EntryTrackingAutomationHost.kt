@@ -4,6 +4,8 @@ import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.track.model.EntryTrack
 
 interface EntryTrackingAutomationHost {
+    fun isAutomaticProgressSynchronizationEnabled(): Boolean
+
     suspend fun bindAutomatically(
         entry: Entry,
         serviceIds: Set<Long>,

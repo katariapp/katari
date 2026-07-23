@@ -39,11 +39,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 import logcat.LogPriority
 import mihon.entry.interactions.EntryChildWebViewResolution
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.EntryReaderIncognitoState
-import mihon.entry.interactions.EntryReaderTracking
+import mihon.entry.interactions.EntryMediaSessionActivity
+import mihon.entry.interactions.EntryMediaSessionEvent
 import mihon.entry.interactions.EntryWebViewFeature
+import mihon.entry.interactions.manga.MangaMediaSessionProcessor
 import mihon.entry.interactions.manga.download.DownloadManager
 import mihon.entry.interactions.manga.download.DownloadProvider
 import mihon.entry.interactions.manga.download.model.MangaDownload
@@ -71,9 +70,6 @@ import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.service.sortedForReading
-import tachiyomi.domain.history.interactor.UpsertHistory
-import tachiyomi.domain.history.model.HistoryUpdate
-import tachiyomi.domain.library.service.GlobalLibraryPreferences
 import tachiyomi.domain.library.service.LibraryPreferences
 import tachiyomi.domain.source.service.SourceManager
 import tachiyomi.source.local.LocalSource
@@ -95,19 +91,15 @@ internal class ReaderViewModel @JvmOverloads constructor(
     private val webViewFeature: EntryWebViewFeature = Injekt.get(),
     private val imageSaver: ReaderImageSaver = ReaderImageSaver(Injekt.get<Application>()),
     val readerPreferences: MangaReaderSettingsProvider = Injekt.get(),
-    private val readerTracking: EntryReaderTracking = Injekt.get(),
     private val getEntry: GetEntry = Injekt.get(),
     private val getEntryWithChapters: GetEntryWithChapters = Injekt.get(),
     private val entryChapterRepository: EntryChapterRepository = Injekt.get(),
     private val entryProgressRepository: EntryProgressRepository = Injekt.get(),
     private val entryRepository: EntryRepository = Injekt.get(),
-    private val upsertHistory: UpsertHistory = Injekt.get(),
     private val viewerSettingBinder: ViewerSettingBinder = Injekt.get(),
-    private val readerIncognitoState: EntryReaderIncognitoState = Injekt.get(),
-    private val globalLibraryPreferences: GlobalLibraryPreferences = Injekt.get(),
     private val libraryPreferences: LibraryPreferences = Injekt.get(),
     private val localCoverManager: LocalCoverManager = Injekt.get(),
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink = Injekt.get(),
+    private val mediaSession: MangaMediaSessionProcessor = Injekt.get(),
 ) : ViewModel() {
     private val downloadManager: DownloadManager = Injekt.get()
     private val downloadProvider: DownloadProvider = Injekt.get()
@@ -256,7 +248,6 @@ internal class ReaderViewModel @JvmOverloads constructor(
             }
     }
 
-    private val incognitoMode: Boolean by lazy { readerIncognitoState.isIncognito(manga?.source) }
     init {
         // To save state
         state.map { it.viewerChapters?.current }
@@ -490,28 +481,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
             loadNewChapter(selectedChapter)
         }
 
-        val inDownloadRange = page.number.toDouble() / pages.size > 0.25
-        if (inDownloadRange) {
-            reportDownloadProgress(selectedChapter, page.number.toDouble() / pages.size)
-        }
-
         eventChannel.trySend(Event.PageChanged)
-    }
-
-    private fun reportDownloadProgress(currentChapter: ReaderChapter, fraction: Double) {
-        val manga = manga ?: return
-        val chapter = currentChapter.chapter.toDomainChapter()?.toEntryChapter() ?: return
-        viewModelScope.launchIO {
-            val visibleEntry = getEntry.await(manga.id) ?: return@launchIO
-            downloadLifecycle.onEvent(
-                EntryDownloadLifecycleEvent.Progressed(
-                    visibleEntry = visibleEntry,
-                    child = chapter,
-                    fraction = fraction,
-                    deduplicateByNumber = readerPreferences.skipDupe.get(),
-                ),
-            )
-        }
     }
 
     /**
@@ -525,8 +495,7 @@ internal class ReaderViewModel @JvmOverloads constructor(
     }
 
     /**
-     * Saves the chapter progress (last read page and whether it's read)
-     * if incognito mode isn't on.
+     * Reports the observed chapter progress. Shared Feature participants decide which consequences are allowed.
      */
     private suspend fun updateChapterProgress(readerChapter: ReaderChapter, page: Page) {
         val pageIndex = page.index
@@ -537,79 +506,35 @@ internal class ReaderViewModel @JvmOverloads constructor(
         readerChapter.requestedPage = pageIndex
         chapterPageIndex = pageIndex
 
-        if (!incognitoMode && page.status !is Page.State.Error) {
-            if (readerChapter.pages?.lastIndex == pageIndex) {
-                updateChapterProgressOnComplete(readerChapter)
-            }
-
-            val entryChapter = readerChapter.chapter.toDomainChapter()?.toEntryChapter()
-                ?: return
-            val current = entryProgressRepository.get(entryChapter.entryId, "", entryChapter.progressResourceKey)
-            val timestamp = System.currentTimeMillis()
-            val completedNow = readerChapter.chapter.read && current?.completed != true
-            entryProgressRepository.mergeAndSyncChild(
-                mangaProgressState(
+        if (page.status is Page.State.Error) return
+        val entryChapter = readerChapter.chapter.toDomainChapter()?.toEntryChapter() ?: return
+        val visibleEntry = manga?.let { getEntry.await(it.id) } ?: return
+        val completed = readerChapter.pages?.lastIndex == pageIndex
+        if (completed) {
+            readerChapter.chapter.read = true
+            chapterToDownload = null
+        }
+        val timestamp = System.currentTimeMillis()
+        val pageCount = readerChapter.pages?.size ?: return
+        mediaSession.onEvent(
+            EntryMediaSessionEvent.Progressed(
+                visibleEntry = visibleEntry,
+                child = entryChapter,
+                progress = mangaProgressState(
                     entryId = entryChapter.entryId,
                     chapterId = entryChapter.id,
                     resourceKey = entryChapter.progressResourceKey,
                     pageIndex = pageIndex.toLong(),
-                    pageCount = readerChapter.pages?.size?.toLong(),
-                    completed = current?.completed == true || readerChapter.chapter.read,
+                    pageCount = pageCount.toLong(),
+                    completed = readerChapter.chapter.read,
                     locatorUpdatedAt = timestamp,
-                    completionUpdatedAt = if (completedNow) timestamp else current?.completionUpdatedAt ?: 0L,
+                    completionUpdatedAt = if (completed) timestamp else 0L,
                 ),
-            )
-        }
-    }
-
-    private suspend fun updateChapterProgressOnComplete(readerChapter: ReaderChapter) {
-        readerChapter.chapter.read = true
-        updateTrackChapterRead(readerChapter)
-        chapterToDownload = null
-        val visibleEntry = manga?.let { getEntry.await(it.id) }
-        val completedChapter = readerChapter.chapter.toDomainChapter()?.toEntryChapter()
-        if (visibleEntry != null && completedChapter != null) {
-            downloadLifecycle.onEvent(
-                EntryDownloadLifecycleEvent.Completed(
-                    visibleEntry,
-                    completedChapter,
-                    deduplicateByNumber = readerPreferences.skipDupe.get(),
-                ),
-            )
-        }
-
-        val markDuplicateAsRead = globalLibraryPreferences.markDuplicateReadChapterAsRead.get()
-            .contains(LibraryPreferences.MARK_DUPLICATE_CHAPTER_READ_EXISTING)
-        if (!markDuplicateAsRead) return
-
-        val duplicateUnreadChapters = unfilteredChapterList
-            .mapNotNull { chapter ->
-                if (
-                    !chapter.read &&
-                    chapter.isRecognizedNumber &&
-                    chapter.chapterNumber.toFloat() == readerChapter.chapter.chapter_number
-                ) {
-                    chapter.copy(read = true)
-                } else {
-                    null
-                }
-            }
-        val timestamp = System.currentTimeMillis()
-        duplicateUnreadChapters.forEach { chapter ->
-            val current = entryProgressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
-            entryProgressRepository.mergeAndSyncChild(
-                mangaProgressState(
-                    entryId = chapter.entryId,
-                    chapterId = chapter.id,
-                    resourceKey = chapter.progressResourceKey,
-                    pageIndex = current?.pageIndex,
-                    pageCount = current?.locator?.extent,
-                    completed = true,
-                    locatorUpdatedAt = current?.locatorUpdatedAt ?: 0L,
-                    completionUpdatedAt = timestamp,
-                ),
-            )
-        }
+                fraction = page.number.toDouble() / pageCount,
+                completeEquivalentChildrenByNumber = completed,
+                deduplicateDownloadByNumber = readerPreferences.skipDupe.get(),
+            ),
+        )
     }
 
     fun restartReadTimer() {
@@ -617,17 +542,25 @@ internal class ReaderViewModel @JvmOverloads constructor(
     }
 
     /**
-     * Saves the chapter last read history if incognito mode isn't on.
+     * Reports completed reader activity through the shared media-session boundary.
      */
     suspend fun updateHistory() {
         getCurrentChapter()?.let { readerChapter ->
-            if (incognitoMode) return@let
-
             val chapterId = readerChapter.chapter.id!!
             val endTime = Date()
             val sessionReadDuration = chapterReadStartTime?.let { endTime.time - it } ?: 0
-
-            upsertHistory.await(HistoryUpdate(chapterId, endTime, sessionReadDuration))
+            val visibleEntry = manga?.let { getEntry.await(it.id) } ?: return@let
+            val child = readerChapter.chapter.toDomainChapter()?.toEntryChapter() ?: return@let
+            mediaSession.onEvent(
+                EntryMediaSessionEvent.ActivityRecorded(
+                    visibleEntry = visibleEntry,
+                    child = child,
+                    activity = EntryMediaSessionActivity(
+                        recordedAtEpochMillis = endTime.time,
+                        durationMillis = sessionReadDuration,
+                    ),
+                ),
+            )
             chapterReadStartTime = null
         }
     }
@@ -1003,21 +936,6 @@ internal class ReaderViewModel @JvmOverloads constructor(
     sealed interface SaveImageResult {
         class Success(val uri: Uri) : SaveImageResult
         class Error(val error: Throwable) : SaveImageResult
-    }
-
-    /**
-     * Starts the service that updates the last chapter read in sync services. This operation
-     * will run in a background thread and errors are ignored.
-     */
-    private fun updateTrackChapterRead(readerChapter: ReaderChapter) {
-        if (incognitoMode) return
-        if (!readerTracking.isAutomaticTrackingEnabled()) return
-        val manga = manga ?: return
-        val context = Injekt.get<Application>()
-
-        viewModelScope.launchNonCancellable {
-            readerTracking.updateChapterRead(context, manga.id, readerChapter.chapter.chapter_number.toDouble())
-        }
     }
 
     /**

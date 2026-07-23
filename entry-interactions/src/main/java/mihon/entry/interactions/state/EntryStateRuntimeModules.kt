@@ -1,7 +1,9 @@
 package mihon.entry.interactions
 
+import mihon.feature.graph.FeatureExecutionContextResolver
 import mihon.feature.graph.FeatureExecutionHandler
 import mihon.feature.graph.FeatureExecutionParticipantBinding
+import mihon.feature.graph.contextEvidence
 import tachiyomi.domain.library.service.LibraryPreferences
 import uy.kohesive.injekt.api.addSingletonFactory
 import uy.kohesive.injekt.api.get
@@ -61,13 +63,20 @@ internal val EntryUpdateEligibilityFeatureRuntimeModule = EntryFeatureRuntimeMod
 internal val EntryProgressFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.progress-transfer",
     contributor = EntryProgressFeatureContributor,
-    additionalContributors = listOf(EntryProgressBackupContributor, EntryProgressMigrationContributor),
+    additionalContributors = listOf(
+        EntryProgressBackupContributor,
+        EntryProgressMigrationContributor,
+        EntryProgressMediaSessionContributor,
+    ),
 ) {
     addSingletonFactory<EntryProgressFeature> {
         val composition = get<EntryInteractionComposition>()
         DefaultEntryProgressFeature(
             evaluation = composition.featureGraphEvaluation,
             interaction = composition.interactions.progress,
+            repository = get(),
+            getEntryWithChapters = get(),
+            globalLibraryPreferences = get(),
         )
     }
     EntryFeatureRuntimeArtifacts(
@@ -75,6 +84,7 @@ internal val EntryProgressFeatureRuntimeModule = EntryFeatureRuntimeModule(
             entryProgressMigrationBinding { get<EntryProgressFeature>() },
         ),
         executionBindings = listOf(
+            entryProgressMediaSessionBinding { get<EntryProgressFeature>() },
             FeatureExecutionParticipantBinding(
                 definition = ENTRY_PROGRESS_BACKUP_SNAPSHOT_PARTICIPANT,
                 handler = FeatureExecutionHandler { event ->
@@ -107,6 +117,25 @@ internal val EntryProgressFeatureRuntimeModule = EntryFeatureRuntimeModule(
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryProgressFeature>() }),
     )
 }
+
+internal fun entryProgressMediaSessionBinding(
+    feature: () -> EntryProgressFeature,
+) = FeatureExecutionParticipantBinding(
+    definition = ENTRY_PROGRESS_MEDIA_SESSION_PARTICIPANT,
+    contextResolver = FeatureExecutionContextResolver { execution ->
+        listOf(
+            contextEvidence(
+                ENTRY_MEDIA_SESSION_PROGRESS_ALLOWED,
+                execution.permits(EntryMediaSessionConsequence.RECORD_PROGRESS),
+            ),
+        )
+    },
+    handler = FeatureExecutionHandler { execution ->
+        val event = execution.event as? EntryMediaSessionEvent.Progressed
+            ?: return@FeatureExecutionHandler
+        execution.progressResult = feature().recordMediaProgress(event)
+    },
+)
 
 internal fun Set<String>.toEntryUpdateEligibilityPolicy(): EntryUpdateEligibilityPolicy {
     return EntryUpdateEligibilityPolicy(

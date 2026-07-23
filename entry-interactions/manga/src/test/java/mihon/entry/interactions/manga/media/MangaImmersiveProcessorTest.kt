@@ -11,21 +11,17 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.EntryImmersiveHandle
 import mihon.entry.interactions.EntryImmersiveProgress
-import mihon.entry.interactions.EntryReaderIncognitoState
-import mihon.entry.interactions.EntryReaderTracking
+import mihon.entry.interactions.EntryMediaSessionEvent
+import mihon.entry.interactions.EntryMediaSessionEventSink
+import mihon.entry.interactions.EntryMediaSessionResult
 import okhttp3.Request
 import org.junit.jupiter.api.Test
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
-import tachiyomi.domain.entry.model.EntryProgressState
-import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
-import tachiyomi.domain.history.model.HistoryUpdate
-import tachiyomi.domain.history.repository.HistoryRepository
 
 class MangaImmersiveProcessorTest {
     @Test
@@ -42,7 +38,7 @@ class MangaImmersiveProcessorTest {
                     .header("Referer", "https://example.invalid/")
                     .build()
         }
-        val handle = MangaImmersiveProcessor().load(
+        val handle = MangaImmersiveProcessor(mediaSession = noOpMediaSession()).load(
             context = mockk<Context>(relaxed = true),
             entry = Entry.create().copy(id = 10L, type = EntryType.MANGA),
             chapter = EntryChapter.create().copy(id = 20L, entryId = 10L),
@@ -82,7 +78,10 @@ class MangaImmersiveProcessorTest {
             )
         }
 
-        val handle = MangaImmersiveProcessor(entryProgressRepository = progressRepository).load(
+        val handle = MangaImmersiveProcessor(
+            entryProgressRepository = progressRepository,
+            mediaSession = noOpMediaSession(),
+        ).load(
             context = mockk(relaxed = true),
             entry = Entry.create().copy(id = 10L, type = EntryType.MANGA),
             chapter = EntryChapter.create().copy(id = 20L, entryId = 10L, url = "/chapter"),
@@ -93,108 +92,69 @@ class MangaImmersiveProcessorTest {
     }
 
     @Test
-    fun `persists page progress and reading time`() = runTest {
+    fun `reports page progress and reading time`() = runTest {
         val chapter = EntryChapter.create().copy(id = 20L, entryId = 10L, url = "/chapter/20")
-        val repository = mockk<EntryChapterRepository> {
-            coEvery { getChapterById(20L) } returns chapter
-            coEvery { update(any()) } returns true
-        }
-        val history = mockk<HistoryRepository> {
-            coEvery { upsertHistory(any()) } returns Unit
-        }
-        val progressRepository = mockk<EntryProgressRepository> {
-            coEvery { get(10L, "", any()) } returns null
-            coEvery { mergeAndSyncChild(any()) } answers { firstArg() }
-        }
-        val processor = MangaImmersiveProcessor(
-            entryChapterRepository = repository,
-            entryProgressRepository = progressRepository,
-            historyRepository = history,
-            readerIncognitoState = mockk {
-                every { isIncognito(1L) } returns false
+        val events = mutableListOf<EntryMediaSessionEvent>()
+        val mediaSession = MangaMediaSessionProcessor(
+            EntryMediaSessionEventSink {
+                events += it
+                EntryMediaSessionResult.Handled
             },
         )
-        val handle = imageHandle(chapterId = 20L)
+        val processor = MangaImmersiveProcessor(mediaSession = mediaSession)
+        val handle = imageHandle(chapter)
 
         processor.persistProgress(
             handle,
             EntryImmersiveProgress.ImagePage(pageIndex = 2, pageCount = 5, sessionDurationMs = 400L),
         )
 
-        val updated = slot<EntryProgressState>()
-        coVerify { progressRepository.mergeAndSyncChild(capture(updated)) }
-        updated.captured.pageIndex shouldBe 2L
-        updated.captured.completed shouldBe false
-        val historyUpdate = slot<HistoryUpdate>()
-        coVerify { history.upsertHistory(capture(historyUpdate)) }
-        historyUpdate.captured.sessionReadDuration shouldBe 400L
+        val event = events.single() as EntryMediaSessionEvent.Progressed
+        event.progress.pageIndex shouldBe 2L
+        event.progress.completed shouldBe false
+        event.activity?.durationMillis shouldBe 400L
     }
 
     @Test
-    fun `final page marks chapter read and syncs tracking once`() = runTest {
+    fun `final page reports completed progress`() = runTest {
         val chapter = EntryChapter.create().copy(
             id = 20L,
             entryId = 10L,
             url = "/chapter/20",
             chapterNumber = 3.0,
         )
-        val repository = mockk<EntryChapterRepository> {
-            coEvery { getChapterById(20L) } returns chapter
-            coEvery { update(any()) } returns true
-        }
-        val tracking = mockk<EntryReaderTracking> {
-            coEvery { updateChapterRead(any(), any(), any()) } returns Unit
-        }
-        val progressRepository = mockk<EntryProgressRepository> {
-            coEvery { get(10L, "", any()) } returns null
-            coEvery { mergeAndSyncChild(any()) } answers { firstArg() }
-        }
+        val events = mutableListOf<EntryMediaSessionEvent>()
         val processor = MangaImmersiveProcessor(
-            entryChapterRepository = repository,
-            entryProgressRepository = progressRepository,
-            readerIncognitoState = mockk {
-                every { isIncognito(1L) } returns false
-            },
-            readerTracking = tracking,
+            mediaSession = MangaMediaSessionProcessor(
+                EntryMediaSessionEventSink {
+                    events += it
+                    EntryMediaSessionResult.Handled
+                },
+            ),
         )
 
         processor.persistProgress(
-            imageHandle(chapterId = 20L, chapterNumber = 3.0),
+            imageHandle(chapter),
             EntryImmersiveProgress.ImagePage(pageIndex = 4, pageCount = 5, sessionDurationMs = 0L),
         )
 
-        val updated = slot<EntryProgressState>()
-        coVerify { progressRepository.mergeAndSyncChild(capture(updated)) }
-        updated.captured.completed shouldBe true
-        coVerify(exactly = 1) { tracking.updateChapterRead(any(), 10L, 3.0) }
+        val event = events.single() as EntryMediaSessionEvent.Progressed
+        event.progress.completed shouldBe true
     }
 
-    @Test
-    fun `incognito suppresses immersive reading progress`() = runTest {
-        val repository = mockk<EntryChapterRepository>(relaxed = true)
-        val processor = MangaImmersiveProcessor(
-            entryChapterRepository = repository,
-            entryProgressRepository = mockk(relaxed = true),
-            readerIncognitoState = mockk<EntryReaderIncognitoState> {
-                every { isIncognito(1L) } returns true
-            },
-        )
-
-        processor.persistProgress(
-            imageHandle(chapterId = 20L),
-            EntryImmersiveProgress.ImagePage(pageIndex = 1, pageCount = 5, sessionDurationMs = 100L),
-        )
-
-        coVerify(exactly = 0) { repository.getChapterById(any()) }
-    }
+    private fun noOpMediaSession() = MangaMediaSessionProcessor(
+        EntryMediaSessionEventSink {
+            EntryMediaSessionResult.Handled
+        },
+    )
 
     private fun imageHandle(
-        chapterId: Long,
-        chapterNumber: Double = 1.0,
+        child: EntryChapter,
     ): EntryImmersiveHandle.ImagePages {
+        val entry = Entry.create().copy(id = 10L, source = 1L, type = EntryType.MANGA)
         return EntryImmersiveHandle.ImagePages(
             entryType = EntryType.MANGA,
-            chapterId = chapterId,
+            chapterId = child.id,
             delegate = MangaImmersiveMedia(
                 pages = listOf(
                     MangaImmersivePage(
@@ -204,10 +164,8 @@ class MangaImmersiveProcessorTest {
                     ),
                 ),
                 initialPageIndex = 0,
-                entryId = 10L,
-                sourceId = 1L,
-                chapterNumber = chapterNumber,
-                context = mockk(relaxed = true),
+                entry = entry,
+                child = child,
             ),
         )
     }

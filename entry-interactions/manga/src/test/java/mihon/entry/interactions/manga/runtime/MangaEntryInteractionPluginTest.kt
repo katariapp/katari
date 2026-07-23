@@ -24,11 +24,11 @@ import kotlinx.coroutines.test.runTest
 import mihon.entry.interactions.EntryChildListRequest
 import mihon.entry.interactions.EntryChildListRow
 import mihon.entry.interactions.EntryChildProgressRequest
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.EntryDownloadLifecycleResult
 import mihon.entry.interactions.EntryDownloadPhase
 import mihon.entry.interactions.EntryDownloadProgress
 import mihon.entry.interactions.EntryDownloadState
+import mihon.entry.interactions.EntryMediaSessionEventSink
+import mihon.entry.interactions.EntryMediaSessionResult
 import mihon.entry.interactions.EntryOpenOptions
 import mihon.entry.interactions.EntryPreviewSize
 import mihon.entry.interactions.EntryProgressResourceMapping
@@ -82,7 +82,7 @@ class MangaEntryInteractionPluginTest {
         val entry = entry(EntryType.MANGA).copy(
             chapterFlags = Entry.CHAPTER_SORTING_NUMBER or Entry.CHAPTER_SORT_ASC,
         )
-        val rows = interactions.childList.buildDisplayList(
+        val rows = interactions.missingChildGap.buildDisplayList(
             EntryChildListRequest(
                 entry = entry,
                 chapters = listOf(
@@ -121,21 +121,18 @@ class MangaEntryInteractionPluginTest {
         val entry = entry(EntryType.MANGA).copy(
             chapterFlags = Entry.CHAPTER_SORTING_NUMBER or Entry.CHAPTER_SORT_DESC,
         )
-        val rows = interactions.childList.buildDisplayList(
-            EntryChildListRequest(
-                entry = entry,
-                chapters = listOf(
-                    chapter(id = 1L, chapterNumber = 1.0),
-                    chapter(id = 3L, chapterNumber = 3.0),
-                    chapter(id = 2L, chapterNumber = 2.0),
-                ),
-                memberIds = listOf(entry.id),
-                includeMissingCounts = true,
+        val rows = interactions.childList.sortedForDisplay(
+            entry = entry,
+            chapters = listOf(
+                chapter(id = 1L, chapterNumber = 1.0),
+                chapter(id = 3L, chapterNumber = 3.0),
+                chapter(id = 2L, chapterNumber = 2.0),
             ),
+            memberIds = listOf(entry.id),
         )
 
-        rows.rows.filterIsInstance<EntryChildListRow.Child>()
-            .map { it.chapter.id }
+        rows
+            .map { it.id }
             .shouldContainExactly(3L, 2L, 1L)
     }
 
@@ -596,7 +593,7 @@ class MangaEntryInteractionPluginTest {
                     entries.firstOrNull { it.id == firstArg<Long>() }
                 }
             },
-            downloadLifecycle = noOpDownloadLifecycle(),
+            mediaSession = MangaMediaSessionProcessor(noOpMediaSession()),
             entryInteractionPreferences = entryInteractionPreferences,
         )
     }
@@ -611,8 +608,8 @@ class MangaEntryInteractionPluginTest {
         )
     }
 
-    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
-        EntryDownloadLifecycleResult.Handled
+    private fun noOpMediaSession() = EntryMediaSessionEventSink {
+        EntryMediaSessionResult.Handled
     }
 
     private fun mockDownloadPreferences(removeAfterMarkedAsRead: Boolean = false): DownloadPreferences {

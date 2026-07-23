@@ -4,7 +4,7 @@ import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
 import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
-import mihon.entry.interactions.EntryReaderIncognitoState
+import mihon.entry.interactions.EntryMediaSessionEventSink
 import mihon.entry.interactions.EntryTypeRuntimeContribution
 import mihon.entry.interactions.EntryTypeRuntimeModule
 import mihon.entry.interactions.book.download.BookDownloadCache
@@ -30,6 +30,8 @@ import uy.kohesive.injekt.api.get
 fun bookEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerInstaller): EntryTypeRuntimeModule {
     return EntryTypeRuntimeModule(EntryType.BOOK) { app ->
         val runtime = addBookEntryInteractionRuntime(app, profilePreferenceOwners)
+        val mediaSession = BookMediaSessionProcessor(get<EntryMediaSessionEventSink>())
+        addSingletonFactory { mediaSession }
         val progressRepository = get<EntryProgressRepository>()
         EntryTypeRuntimeContribution(
             plugin = bookEntryInteractionPlugin(
@@ -38,6 +40,7 @@ fun bookEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerIn
                     entryChapterRepository = get(),
                     entryProgressRepository = progressRepository,
                     downloadsEnabled = true,
+                    mediaSession = mediaSession,
                 ),
                 viewerSettingsProvider = DefaultEntryViewerSettingsProvider(
                     type = EntryType.BOOK,
@@ -138,14 +141,12 @@ private fun InjektRegistrar.addBookEntryInteractionRuntime(
             entryRepository = get(),
             entryChapterRepository = get(),
             entryProgressRepository = get(),
-            historyRepository = get(),
             sourceManager = get(),
             processorRegistry = get(),
             networkHelper = get(),
-            incognitoState = get<EntryReaderIncognitoState>(),
             materializationStore = get(),
             downloadCache = get(),
-            downloadLifecycle = get(),
+            mediaSession = get<BookMediaSessionProcessor>(),
         )
     }
     return BookRuntimeArtifacts(

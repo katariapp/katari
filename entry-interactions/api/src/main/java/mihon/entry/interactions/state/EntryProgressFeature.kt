@@ -3,10 +3,13 @@ package mihon.entry.interactions
 import eu.kanade.tachiyomi.source.entry.EntryType
 import kotlinx.serialization.Serializable
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.model.EntryProgressState
 
-/** Feature-owned boundary for portable progress snapshot, restore, and copy operations. */
+/** Feature-owned boundary for live progress persistence and portable state operations. */
 interface EntryProgressFeature {
     fun isApplicable(type: EntryType): Boolean
+
+    suspend fun recordMediaProgress(event: EntryMediaSessionEvent.Progressed): EntryProgressRecordingResult
 
     suspend fun snapshot(entry: Entry): EntryProgressSnapshotResult
 
@@ -30,6 +33,11 @@ interface EntryProgressFeature {
 
     suspend fun applyMigration(payload: EntryProgressMigrationPayload): EntryProgressRestoreResult
 }
+
+data class EntryProgressRecordingResult(
+    val state: EntryProgressState,
+    val completedNow: Boolean,
+)
 
 @Serializable
 data class EntryProgressMigrationPayload(

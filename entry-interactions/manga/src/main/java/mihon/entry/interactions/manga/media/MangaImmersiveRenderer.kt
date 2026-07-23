@@ -47,16 +47,16 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import mihon.entry.interactions.EntryImmersiveProgress
 import mihon.entry.interactions.EntryImmersiveRenderer
 import okhttp3.Headers
+import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.i18n.MR
 import tachiyomi.presentation.core.i18n.stringResource
 
 internal data class MangaImmersiveMedia(
     val pages: List<MangaImmersivePage>,
     val initialPageIndex: Int,
-    val entryId: Long,
-    val sourceId: Long,
-    val chapterNumber: Double,
-    val context: android.content.Context,
+    val entry: Entry,
+    val child: EntryChapter,
 )
 
 internal data class MangaImmersivePage(

@@ -11,7 +11,6 @@ import mihon.entry.interactions.EntryConsumptionCapability
 import mihon.entry.interactions.EntryContinueCapability
 import mihon.entry.interactions.EntryDownloadArchivePackagingCapability
 import mihon.entry.interactions.EntryDownloadCapability
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
 import mihon.entry.interactions.EntryDownloadParallelItemTransfersCapability
 import mihon.entry.interactions.EntryDownloadParallelSourceTransfersCapability
 import mihon.entry.interactions.EntryDownloadTallImageSplittingCapability
@@ -19,6 +18,8 @@ import mihon.entry.interactions.EntryImmersiveCapability
 import mihon.entry.interactions.EntryInteractionPlugin
 import mihon.entry.interactions.EntryLibraryProgressCapability
 import mihon.entry.interactions.EntryMediaCacheCapability
+import mihon.entry.interactions.EntryMediaSessionCapability
+import mihon.entry.interactions.EntryMediaSessionProcessor
 import mihon.entry.interactions.EntryMigrationCapability
 import mihon.entry.interactions.EntryMissingChildGapCapability
 import mihon.entry.interactions.EntryOpenCapability
@@ -26,8 +27,6 @@ import mihon.entry.interactions.EntryOutsideReleasePeriodFilterCapability
 import mihon.entry.interactions.EntryPreviewCapability
 import mihon.entry.interactions.EntryPreviewConfigurationCapability
 import mihon.entry.interactions.EntryProgressCapability
-import mihon.entry.interactions.EntryReaderIncognitoState
-import mihon.entry.interactions.EntryReaderTracking
 import mihon.entry.interactions.EntryTypePresentationCapability
 import mihon.entry.interactions.EntryViewerSettingsCapability
 import mihon.entry.interactions.EntryViewerSettingsProvider
@@ -41,7 +40,6 @@ import tachiyomi.domain.entry.interactor.GetEntryWithChapters
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
@@ -60,7 +58,7 @@ fun mangaEntryInteractionPlugin(
             downloadCache = Injekt.get(),
             sourceManager = dependencies.sourceManager,
             entryRepository = Injekt.get(),
-            downloadLifecycle = dependencies.downloadLifecycle,
+            mediaSession = dependencies.mediaSession,
             entryInteractionPreferences = dependencies.entryInteractionPreferences,
         ),
         viewerSettingsProvider = viewerSettingsProvider,
@@ -93,11 +91,8 @@ internal fun mangaEntryInteractionPlugin(
     val outsideReleasePeriodFilterProvider = MangaOutsideReleasePeriodFilterProvider()
     val previewProcessor = MangaPreviewInteraction(dependencies.entryInteractionPreferences)
     val immersiveProcessor = MangaImmersiveProcessor(
-        entryChapterRepository = dependencies.entryChapterRepository,
         entryProgressRepository = dependencies.entryProgressRepository,
-        historyRepository = runCatching { Injekt.get<HistoryRepository>() }.getOrNull(),
-        readerIncognitoState = runCatching { Injekt.get<EntryReaderIncognitoState>() }.getOrNull(),
-        readerTracking = runCatching { Injekt.get<EntryReaderTracking>() }.getOrNull(),
+        mediaSession = dependencies.mediaSession,
     )
     return object : EntryInteractionPlugin {
         override val type = EntryType.MANGA
@@ -126,6 +121,7 @@ internal fun mangaEntryInteractionPlugin(
                     EntryPreviewCapability.bind(previewProcessor),
                     EntryPreviewConfigurationCapability.bind(previewProcessor),
                     EntryImmersiveCapability.bind(immersiveProcessor),
+                    EntryMediaSessionCapability.bind(dependencies.mediaSession),
                     EntryTypePresentationCapability.bind(MangaEntryTypePresentationProvider),
                     EntryMediaCacheCapability.bind(MangaMediaCacheProvider { Injekt.get() }),
                 ),
@@ -144,7 +140,7 @@ data class MangaEntryInteractionDependencies(
     val entryProgressRepository: EntryProgressRepository,
     val downloadPreferences: DownloadPreferences,
     val sourceManager: SourceManager,
-    val downloadLifecycle: EntryDownloadLifecycleEventSink,
+    val mediaSession: EntryMediaSessionProcessor,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )
 
@@ -157,6 +153,6 @@ internal data class MangaEntryInteractionRuntimeDependencies(
     val downloadCache: DownloadCache,
     val sourceManager: SourceManager,
     val entryRepository: EntryRepository,
-    val downloadLifecycle: EntryDownloadLifecycleEventSink,
+    val mediaSession: EntryMediaSessionProcessor,
     val entryInteractionPreferences: EntryInteractionPreferences,
 )

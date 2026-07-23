@@ -4,7 +4,7 @@ import android.app.Application
 import eu.kanade.tachiyomi.source.entry.EntryType
 import mihon.entry.interactions.DefaultEntryViewerSettingsProvider
 import mihon.entry.interactions.ENTRY_VIEWER_SETTINGS_LEGACY_PREFERENCE_OWNER_GROUP_ID
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryMediaSessionEventSink
 import mihon.entry.interactions.EntryTypeRuntimeContribution
 import mihon.entry.interactions.EntryTypeRuntimeModule
 import mihon.entry.interactions.anime.download.AnimeDownloadCache
@@ -38,6 +38,8 @@ fun animeEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerI
         )
         addSingletonFactory { viewerSettingsProvider }
         val progressRepository = get<EntryProgressRepository>()
+        val mediaSession = AnimeMediaSessionProcessor(get<EntryMediaSessionEventSink>())
+        addSingletonFactory { mediaSession }
         EntryTypeRuntimeContribution(
             plugin = animeEntryInteractionPlugin(
                 AnimeEntryInteractionDependencies(
@@ -49,9 +51,8 @@ fun animeEntryTypeRuntimeModule(profilePreferenceOwners: ProfilePreferenceOwnerI
                     downloadPreferencesRepository = get(),
                     sourceManager = get(),
                     entryRepository = get(),
-                    downloadLifecycle = get<EntryDownloadLifecycleEventSink>(),
+                    mediaSession = mediaSession,
                     entryInteractionPreferences = get<EntryInteractionPreferences>(),
-                    historyRepository = get(),
                 ),
                 viewerSettingsProvider = typeViewerSettingsProvider,
             ),

@@ -21,6 +21,7 @@ import mihon.entry.interactions.EntryInteractionComposition
 import mihon.entry.interactions.EntryInteractionRuntimeDependencies
 import mihon.entry.interactions.EntryLibraryCustomCoverHost
 import mihon.entry.interactions.EntryLibraryMembershipHost
+import mihon.entry.interactions.EntryMediaSessionIncognitoState
 import mihon.entry.interactions.EntryPageImageCache
 import mihon.entry.interactions.EntryProfileMoveChildGroupFilterStateHost
 import mihon.entry.interactions.EntryProfileMoveCoverHashStateHost
@@ -28,8 +29,6 @@ import mihon.entry.interactions.EntryProfileMoveCustomCoverHost
 import mihon.entry.interactions.EntryProfileMoveHost
 import mihon.entry.interactions.EntryProfileMoveSourceVisibilityHost
 import mihon.entry.interactions.EntryProfileMoveTrackingStateHost
-import mihon.entry.interactions.EntryReaderIncognitoState
-import mihon.entry.interactions.EntryReaderTracking
 import mihon.entry.interactions.EntryViewerSettingsScreenProjection
 import mihon.entry.interactions.EntryViewerSettingsScreenProjectionResolver
 import mihon.entry.interactions.addEntryInteractionRuntime
@@ -99,8 +98,7 @@ class ProductionEntryInteractionValidationEnvironment(
                 notificationActions = mockk<EntryDownloadNotificationActions>(relaxed = true),
                 pageImageCache = mockk(relaxed = true),
                 childGroupFilterDataSource = mockk(relaxed = true),
-                readerIncognitoState = mockk(relaxed = true),
-                readerTracking = mockk<EntryReaderTracking>(relaxed = true),
+                mediaSessionIncognitoState = mockk(relaxed = true),
                 basePreferenceStore = InMemoryPreferenceStore(),
                 profilePreferenceOwners = preferenceOwners,
                 viewerSettingsScreenProjectionResolver = viewerSettingsScreenProjectionResolver,
@@ -159,7 +157,7 @@ class ProductionEntryInteractionValidationEnvironment(
         Injekt.addSingletonFactory<SourceManager> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<EntryDownloadWorkController> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<EntryPageImageCache> { mockk(relaxed = true) }
-        Injekt.addSingletonFactory<EntryReaderIncognitoState> { mockk(relaxed = true) }
+        Injekt.addSingletonFactory<EntryMediaSessionIncognitoState> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<EntryDownloadLifecycleEventSink> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<EntryInteractionPreferences> { mockk(relaxed = true) }
         Injekt.addSingletonFactory<ViewerSettingOverrideRepository> { mockk(relaxed = true) }

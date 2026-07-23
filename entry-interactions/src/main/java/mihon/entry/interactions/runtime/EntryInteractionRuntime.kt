@@ -26,8 +26,7 @@ data class EntryInteractionRuntimeDependencies(
     val notificationActions: EntryDownloadNotificationActions,
     val pageImageCache: EntryPageImageCache,
     val childGroupFilterDataSource: EntryChildGroupFilterDataSource,
-    val readerIncognitoState: EntryReaderIncognitoState,
-    val readerTracking: EntryReaderTracking,
+    val mediaSessionIncognitoState: EntryMediaSessionIncognitoState,
     val basePreferenceStore: PreferenceStore,
     val profilePreferenceOwners: ProfilePreferenceOwnerInstaller,
     val viewerSettingsScreenProjectionResolver: EntryViewerSettingsScreenProjectionResolver,
@@ -103,8 +102,7 @@ private fun InjektRegistrar.installEntryInteractionHostServices(
     addSingletonFactory<EntryInteractionActivityTheme> { dependencies.activityTheme }
     addSingletonFactory<EntryDownloadNotificationActions> { dependencies.notificationActions }
     addSingletonFactory<EntryPageImageCache> { dependencies.pageImageCache }
-    addSingletonFactory<EntryReaderIncognitoState> { dependencies.readerIncognitoState }
-    addSingletonFactory<EntryReaderTracking> { dependencies.readerTracking }
+    addSingletonFactory<EntryMediaSessionIncognitoState> { dependencies.mediaSessionIncognitoState }
     addSingletonFactory<EntryChildGroupFilterDataSource> { dependencies.childGroupFilterDataSource }
     addSingletonFactory { ReaderBasePreferences(dependencies.basePreferenceStore) }
     val entryInteractionPreferencesOwner = dependencies.profilePreferenceOwners.register(

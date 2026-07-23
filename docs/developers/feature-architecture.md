@@ -131,6 +131,24 @@ participants.
 Descriptive projections are different: they report or render already-derived truth and have no execution path. Do not
 use a projection ID as a runtime dispatch key.
 
+### Media-session consequences
+
+Readers, players, and immersive viewers report structured `EntryMediaSessionEvent` facts through the Media Session
+Feature. They do not persist progress or history, synchronize trackers, interpret incognito mode, or invoke Download
+policy themselves.
+
+Progress, History, Tracking, Download Lifecycle, and incognito policy contribute independently to the Media Session
+execution points. Incognito policy runs before consequences and suppresses recording behavior without becoming a
+type-specific reader branch. Progress publishes the authoritative completion transition used by later Tracking and
+Download participants. Participants declare their real ordering dependency; the Media Session coordinator does not
+name them.
+
+A type that implements a media runtime contributes an operational `EntryMediaSessionProcessor` and uses that same
+processor to emit its events. That declaration automatically selects the shared consequences and their contracts.
+Adding another consequence changes only its owning Feature contribution and runtime binding. Adding another media type
+does not require edits to the coordinator or to existing consequence owners unless a genuinely specialized contract is
+reported as incomplete.
+
 ### Durable consequences
 
 Work that must survive process death uses the same discovered participant model with a `DURABLE` execution point. A

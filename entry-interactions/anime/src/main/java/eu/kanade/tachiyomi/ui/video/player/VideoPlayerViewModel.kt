@@ -22,8 +22,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
+import mihon.entry.interactions.EntryMediaSessionActivity
+import mihon.entry.interactions.EntryMediaSessionEvent
+import mihon.entry.interactions.anime.AnimeMediaSessionProcessor
 import mihon.entry.interactions.anime.positionMs
 import mihon.entry.interactions.viewer.EntryChildDirection
 import mihon.entry.interactions.viewer.EntryChildWindow
@@ -40,7 +41,6 @@ import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
 import tachiyomi.domain.entry.repository.PlaybackPreferencesRepository
 import tachiyomi.domain.entry.service.sortedForReading
-import tachiyomi.domain.history.repository.HistoryRepository
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -56,8 +56,7 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
     }.getOrNull(),
     private val entryRepository: EntryRepository? = runCatching { Injekt.get<EntryRepository>() }.getOrNull(),
     private val entryProgressRepository: EntryProgressRepository = Injekt.get(),
-    private val historyRepository: HistoryRepository = Injekt.get(),
-    private val downloadLifecycle: EntryDownloadLifecycleEventSink = Injekt.get(),
+    private val mediaSession: AnimeMediaSessionProcessor = Injekt.get(),
     private val resolveDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val persistenceDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val now: () -> Long = { System.currentTimeMillis() },
@@ -330,24 +329,24 @@ internal class VideoPlayerViewModel @JvmOverloads constructor(
         viewModelScope.launch(persistenceDispatcher) {
             withContext(NonCancellable) {
                 persistMutex.withLock {
-                    entryProgressRepository.mergeAndSyncChild(snapshot.progressState)
-                    snapshot.historyUpdate?.let { historyUpdate ->
-                        historyRepository.upsertHistory(historyUpdate)
-                    }
-                    val lifecycleEvent = if (snapshot.completedNow) {
-                        EntryDownloadLifecycleEvent.Completed(current.entry, current.childWindow.current)
-                    } else {
-                        EntryDownloadLifecycleEvent.Progressed(
+                    mediaSession.onEvent(
+                        EntryMediaSessionEvent.Progressed(
                             visibleEntry = current.entry,
                             child = current.childWindow.current,
+                            progress = snapshot.progressState,
                             fraction = if (safeDurationMs > 0L) {
                                 safePositionMs.toDouble() / safeDurationMs
                             } else {
                                 0.0
                             },
-                        )
-                    }
-                    downloadLifecycle.onEvent(lifecycleEvent)
+                            activity = snapshot.historyUpdate?.let { history ->
+                                EntryMediaSessionActivity(
+                                    recordedAtEpochMillis = history.readAt?.time ?: now(),
+                                    durationMillis = history.sessionReadDuration,
+                                )
+                            },
+                        ),
+                    )
                 }
             }
         }

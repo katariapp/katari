@@ -13,16 +13,18 @@ import mihon.entry.interactions.EntryImmersiveLoadMode
 import mihon.entry.interactions.EntryImmersiveProcessor
 import mihon.entry.interactions.EntryImmersiveProgress
 import mihon.entry.interactions.EntryImmersiveRenderer
+import mihon.entry.interactions.EntryMediaSessionActivity
+import mihon.entry.interactions.EntryMediaSessionEvent
+import mihon.entry.interactions.EntryMediaSessionProcessor
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.progressResourceKey
 import tachiyomi.domain.entry.repository.EntryProgressRepository
-import tachiyomi.domain.history.repository.HistoryRepository
 
 internal class AnimeImmersiveProcessor(
     private val entryProgressRepository: EntryProgressRepository,
-    private val historyRepository: HistoryRepository?,
     private val resolveVideoStream: () -> VideoStreamResolver,
+    private val mediaSession: EntryMediaSessionProcessor,
 ) : EntryImmersiveProcessor {
     override val type: EntryType = EntryType.ANIME
     override val loadMode = EntryImmersiveLoadMode.FIRST_READING_CHILD
@@ -54,7 +56,7 @@ internal class AnimeImmersiveProcessor(
                     stream = result.stream,
                     subtitles = result.subtitles,
                     resumePositionMs = progress?.positionMs ?: 0L,
-                    delegate = session,
+                    delegate = AnimeImmersiveSession(entry, chapter, session),
                 )
             }
             is ResolveVideoStream.Result.Error -> error(result.reason.message())
@@ -73,20 +75,42 @@ internal class AnimeImmersiveProcessor(
     ) {
         val playback = handle as? EntryImmersiveHandle.Playback ?: return
         val playbackProgress = progress as? EntryImmersiveProgress.Playback ?: return
-        val session = playback.delegate as? VideoPlaybackSession ?: return
+        val immersiveSession = playback.delegate as? AnimeImmersiveSession ?: return
         persistMutex.withLock {
-            val snapshot = session.snapshot(
+            val snapshot = immersiveSession.playback.snapshot(
                 positionMs = playbackProgress.positionMs,
                 durationMs = playbackProgress.durationMs,
             )
-            entryProgressRepository.mergeAndSyncChild(snapshot.progressState)
-            snapshot.historyUpdate?.let { historyRepository?.upsertHistory(it) }
-            if (playbackProgress.resetSession) session.restore(0L)
+            mediaSession.onEvent(
+                EntryMediaSessionEvent.Progressed(
+                    visibleEntry = immersiveSession.entry,
+                    child = immersiveSession.child,
+                    progress = snapshot.progressState,
+                    fraction = if (playbackProgress.durationMs > 0L) {
+                        playbackProgress.positionMs.toDouble() / playbackProgress.durationMs
+                    } else {
+                        0.0
+                    },
+                    activity = snapshot.historyUpdate?.let { history ->
+                        EntryMediaSessionActivity(
+                            recordedAtEpochMillis = history.readAt?.time ?: System.currentTimeMillis(),
+                            durationMillis = history.sessionReadDuration,
+                        )
+                    },
+                ),
+            )
+            if (playbackProgress.resetSession) immersiveSession.playback.restore(0L)
         }
     }
 
     override fun release(handle: EntryImmersiveHandle) = Unit
 }
+
+private data class AnimeImmersiveSession(
+    val entry: Entry,
+    val child: EntryChapter,
+    val playback: VideoPlaybackSession,
+)
 
 private fun ResolveVideoStream.Reason.message(): String {
     return when (this) {

@@ -20,7 +20,10 @@ Status meanings:
 | Continue from saved progress | ✓ | ✓ | ✓ |
 | Mark individual child items consumed or unconsumed | ✓ | ✓ | ✓ |
 | Show partial progress for individual child items | ✓ | ✓ | ✓ |
+| Report viewing progress and activity | ✓ | ✓ | ✓ |
+| Respect incognito mode while viewing media | ✓ | ✓ | ✓ |
 | Preserve progress through backup and migration | ✓ | ✓ | ✓ |
+| Record reading and playback history | ✓ | ✓ | ✓ |
 | Apply smart library-update restrictions | ✓ | ✓ | ✓ |
 | Merge versions from different sources | ✓ | ✓ | ✓ |
 | Bookmark individual child items | — | — | ✓ |

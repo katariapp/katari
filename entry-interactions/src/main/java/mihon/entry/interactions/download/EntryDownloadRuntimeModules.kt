@@ -77,6 +77,7 @@ internal val EntryAutomaticDownloadFeatureRuntimeModule = EntryFeatureRuntimeMod
 internal val EntryDownloadLifecycleFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.lifecycle",
     contributor = EntryDownloadLifecycleFeatureContributor,
+    additionalContributors = listOf(EntryDownloadMediaSessionContributor),
 ) {
     addSingletonFactory<EntryDownloadLifecycleEventSink> {
         EntryDownloadLifecycleEventSink { event ->
@@ -95,9 +96,41 @@ internal val EntryDownloadLifecycleFeatureRuntimeModule = EntryFeatureRuntimeMod
         )
     }
     EntryFeatureRuntimeArtifacts(
+        executionBindings = listOf(
+            entryDownloadMediaSessionBinding { get<EntryDownloadLifecycleFeature>() },
+        ),
         runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryDownloadLifecycleFeature>() }),
     )
 }
+
+internal fun entryDownloadMediaSessionBinding(
+    feature: () -> EntryDownloadLifecycleFeature,
+) = FeatureExecutionParticipantBinding(
+    definition = ENTRY_DOWNLOAD_MEDIA_SESSION_PARTICIPANT,
+    handler = FeatureExecutionHandler { execution ->
+        val event = execution.event as? EntryMediaSessionEvent.Progressed
+            ?: return@FeatureExecutionHandler
+        event.fraction?.let { fraction ->
+            feature().onEvent(
+                EntryDownloadLifecycleEvent.Progressed(
+                    visibleEntry = event.visibleEntry,
+                    child = event.child,
+                    fraction = fraction,
+                    deduplicateByNumber = event.deduplicateDownloadByNumber,
+                ),
+            )
+        }
+        if (execution.progressResult?.completedNow == true) {
+            feature().onEvent(
+                EntryDownloadLifecycleEvent.Completed(
+                    visibleEntry = event.visibleEntry,
+                    child = event.child,
+                    deduplicateByNumber = event.deduplicateDownloadByNumber,
+                ),
+            )
+        }
+    },
+)
 
 internal val EntryDownloadConfigurationFeatureRuntimeModule = EntryFeatureRuntimeModule(
     id = "entry.download.configuration",

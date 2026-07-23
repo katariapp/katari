@@ -6,13 +6,17 @@ import io.mockk.mockk
 import mihon.entry.interactions.validation.contractExpectation
 import mihon.entry.interactions.validation.productionSubjectEvaluation
 import mihon.entry.interactions.validation.verifyFeatureContract
+import mihon.feature.graph.FeatureContractScenarioId
+import mihon.feature.graph.contextEvidence
 import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractVerifier
 import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractScenario
 import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.domain.entry.model.Entry
+import tachiyomi.domain.entry.repository.EntryProgressRepository
 
 class EntryProgressContractValidationContributor : FeatureValidationContributor {
     override val owner = EntryProgressFeatureContributor.owner
@@ -84,6 +88,9 @@ class EntryProgressContractValidationContributor : FeatureValidationContributor 
                                 resourceMappings: List<EntryProgressResourceMapping>,
                             ) = Unit
                         },
+                        repository = mockk(relaxed = true),
+                        getEntryWithChapters = mockk(relaxed = true),
+                        globalLibraryPreferences = mockk(relaxed = true),
                     )
 
                     contractExpectation(feature.isApplicable(provider.type), "Progress transfer must be applicable")
@@ -98,6 +105,73 @@ class EntryProgressContractValidationContributor : FeatureValidationContributor 
                     contractExpectation(restored == listOf(snapshot), "Progress transfer restored the wrong snapshot")
                 }
             },
+        )
+        val mediaFeatureReference = FeatureContractReference(
+            ENTRY_PROGRESS_FEATURE_ID,
+            EntryProgressMediaSessionBehaviorContract,
+        )
+        sink.add(
+            FeatureContractVerifier(mediaFeatureReference) { input ->
+                verifyFeatureContract {
+                    val progressProvider = input.provider(EntryProgressCapability.definition)
+                    val mediaProvider = input.provider(EntryMediaSessionCapability.definition)
+                    val event = mediaSessionContractEvent(progressProvider.type)
+                    val repository = mockk<EntryProgressRepository> {
+                        coEvery { get(any(), any(), any()) } returns null
+                        coEvery { mergeAndSyncChild(event.progress) } returns event.progress
+                    }
+                    val feature = DefaultEntryProgressFeature(
+                        evaluation = productionSubjectEvaluation(
+                            listOf(
+                                EntryProgressCapability.bind(progressProvider),
+                                EntryMediaSessionCapability.bind(mediaProvider),
+                            ),
+                            EntryProgressFeatureContributor,
+                        ),
+                        interaction = mockk(relaxed = true),
+                        repository = repository,
+                        getEntryWithChapters = mockk(relaxed = true),
+                        globalLibraryPreferences = mockk(relaxed = true),
+                    )
+
+                    val result = feature.recordMediaProgress(event)
+
+                    contractExpectation(result.state == event.progress, "Progress must persist Media Session state")
+                    contractExpectation(result.completedNow, "Progress must report a newly completed child")
+                    coVerify(exactly = 1) { repository.mergeAndSyncChild(event.progress) }
+                }
+            },
+        )
+        val mediaExecutionReference = FeatureExecutionContractReference(
+            ENTRY_PROGRESS_MEDIA_SESSION_PARTICIPANT.id,
+            EntryProgressMediaSessionBehaviorContract,
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(mediaExecutionReference) { input ->
+                verifyFeatureContract {
+                    val event = mediaSessionContractEvent(
+                        input.provider(EntryProgressCapability.definition).type,
+                    )
+                    val expected = EntryProgressRecordingResult(event.progress, completedNow = true)
+                    val feature = mockk<EntryProgressFeature> {
+                        coEvery { recordMediaProgress(event) } returns expected
+                    }
+                    val execution = EntryMediaSessionExecutionEvent(event)
+
+                    entryProgressMediaSessionBinding { feature }.handler.execute(execution)
+
+                    contractExpectation(
+                        execution.progressResult == expected,
+                        "Progress participation must publish the authoritative recording result",
+                    )
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractScenario(
+                FeatureContractScenarioId("entry.progress.media-session.execution.applicable"),
+                mediaExecutionReference,
+            ) { listOf(contextEvidence(ENTRY_MEDIA_SESSION_PROGRESS_ALLOWED, true)) },
         )
     }
 }

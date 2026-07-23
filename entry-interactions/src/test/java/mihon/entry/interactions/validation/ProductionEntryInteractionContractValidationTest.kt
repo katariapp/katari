@@ -1,5 +1,6 @@
 package mihon.entry.interactions.validation
 
+import io.kotest.assertions.withClue
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import mihon.feature.graph.validation.CompletedFeatureContractExecution
@@ -31,13 +32,16 @@ class ProductionEntryInteractionContractValidationTest {
         val composition = environment.composition()
 
         val result = validateEntryInteractionContracts(composition)
-
-        result.isSuccessful shouldBe true
-        result.plan.isComplete shouldBe true
-        result.plan.executions.isNotEmpty() shouldBe true
-        result.executions.filterNot { execution ->
+        val unexpected = result.executions.filterNot { execution ->
             execution is CompletedFeatureContractExecution &&
                 execution.verification == FeatureContractVerificationResult.Passed
-        } shouldBe emptyList()
+        }
+
+        withClue(unexpected.joinToString(separator = "\n")) {
+            result.isSuccessful shouldBe true
+        }
+        result.plan.isComplete shouldBe true
+        result.plan.executions.isNotEmpty() shouldBe true
+        unexpected shouldBe emptyList()
     }
 }

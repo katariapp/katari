@@ -10,7 +10,7 @@ Updated: 2026-07-23
 - Phase 1 is complete.
 - Phase 2 is complete.
 - Phase 3 is complete.
-- Phase 4 is next and has not started.
+- Phase 4 is complete.
 
 ## Phase status
 
@@ -19,7 +19,7 @@ Updated: 2026-07-23
 | 1. Durable participation architecture | Complete | Opaque versioned envelopes, owned preparation/delivery/discard, binding coverage, tests, and documentation. |
 | 2. Migration durable consequences | Complete | Migration persists and retries opaque owner-contributed participants. |
 | 3. Merge durable consequences | Complete | Merge persists and retries opaque owner-contributed participants. |
-| 4. Media-session lifecycle | Pending | Next phase; shared event seam before type migration. |
+| 4. Media-session lifecycle | Complete | Shared event seam with independently owned policy and consequences. |
 | 5. Refresh lifecycle | Pending | Preserve Library-update batching. |
 | 6. Lifecycle and consumer corrections | Pending | Profile deletion and Bookmark bypass. |
 | 7. Settings projections | Pending | One installation fact for navigation and search. |
@@ -93,6 +93,40 @@ Validation completed:
 
 - `./gradlew --quiet spotlessApply`
 - `./gradlew --quiet verifySqlDelightMigration`
+- `./gradlew --quiet verifyEntryFeatureArchitecture`
+- `./gradlew --quiet :app:compileFossKotlin`
+
+### Phase 4: Media-session lifecycle
+
+- Added one operational Media Session provider contract used by Manga, Anime, Book, and both immersive runtimes to
+  emit structured progress and activity facts.
+- Progress persistence, History recording, Tracking synchronization, Download lifecycle behavior, and incognito policy
+  now enter through independently owned execution participants rather than reader/player dependency lists.
+- Incognito policy applies uniformly to all media types and suppresses Progress, History, and Tracking recording while
+  leaving non-recording consequences independently selectable.
+- Progress owns authoritative completion detection, Manga equivalent-child completion, and Book locator-extension
+  preservation. Tracking and Download consume the authoritative completion result through declared ordering.
+- Added shared behavioral validation for every selected Media Session relationship and a composition proof that an
+  unknown future consequence joins without a coordinator edit.
+- Added generated content-type reference projections, developer documentation, and a boundary check preventing media
+  runtimes from directly restoring the migrated consequence paths.
+- Kept progress reads used to restore initial reader/player position in type runtimes; only consequence writes moved
+  behind the shared Feature seam.
+
+Manifesto comparison:
+
+- Media support is declared once by an operational provider; provider absence remains valid.
+- Consequences are discovered from Feature-owned contributions, not a coordinator list or per-type matrix.
+- The production report has zero unresolved contract obligations, and validation exercises behavior rather than
+  restating capability labels.
+- UI/runtime producers no longer own shared consequence policy, and generated documentation follows graph-selected
+  truth.
+
+Validation completed:
+
+- `./gradlew --quiet spotlessApply`
+- `./gradlew --quiet -p gradle/build-logic test --tests 'mihon.gradle.tasks.EntryInteractionBoundaryCheckTaskTest'`
+- `./gradlew --quiet :entry-interactions:testDebugUnitTest :entry-interactions:manga:testDebugUnitTest :entry-interactions:anime:testDebugUnitTest :entry-interactions:book:testDebugUnitTest`
 - `./gradlew --quiet verifyEntryFeatureArchitecture`
 - `./gradlew --quiet :app:compileFossKotlin`
 

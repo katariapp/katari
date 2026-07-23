@@ -14,14 +14,13 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import mihon.book.api.BookContentDescriptor
 import mihon.book.api.BookLocator
 import mihon.book.api.BookPublication
-import mihon.entry.interactions.EntryDownloadLifecycleEvent
-import mihon.entry.interactions.EntryDownloadLifecycleEventSink
-import mihon.entry.interactions.EntryDownloadLifecycleResult
+import mihon.entry.interactions.EntryMediaSessionEvent
+import mihon.entry.interactions.EntryMediaSessionEventSink
+import mihon.entry.interactions.EntryMediaSessionResult
 import mihon.entry.interactions.book.download.BookDownloadCache
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.Test
@@ -31,8 +30,6 @@ import tachiyomi.domain.entry.model.EntryProgressState
 import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
 import tachiyomi.domain.entry.repository.EntryRepository
-import tachiyomi.domain.history.model.HistoryUpdate
-import tachiyomi.domain.history.repository.HistoryRepository
 import tachiyomi.domain.source.service.SourceManager
 import java.nio.file.Files
 import kotlin.test.assertEquals
@@ -54,12 +51,10 @@ class BookReaderSessionFactoryTest {
             completed = false,
             completionUpdatedAt = 0L,
         )
-        val updatedProgress = slot<EntryProgressState>()
         val progressRepository = mockk<EntryProgressRepository> {
             coEvery { get(entry.id, "volume-1", "publication.epub") } returns currentProgress
-            coEvery { mergeAndSyncChild(capture(updatedProgress)) } answers { updatedProgress.captured }
         }
-        val historyRepository = mockk<HistoryRepository>(relaxed = true)
+        val events = mutableListOf<EntryMediaSessionEvent>()
         val source = mockk<UnifiedSource> {
             every { id } returns entry.source
         }
@@ -78,7 +73,6 @@ class BookReaderSessionFactoryTest {
         )
         val publicationSession = TestPublicationSession()
         val processor = SessionFactoryTestProcessor(publicationSession)
-        val downloadLifecycle = mockk<EntryDownloadLifecycleEventSink>(relaxed = true)
         val context = mockk<Context> {
             every { applicationContext } returns this@mockk
             every { contentResolver } returns mockk<ContentResolver>()
@@ -92,7 +86,6 @@ class BookReaderSessionFactoryTest {
                 coEvery { getChapterById(chapter.id) } returns chapter
             },
             entryProgressRepository = progressRepository,
-            historyRepository = historyRepository,
             sourceManager = mockk<SourceManager> {
                 every { get(entry.source) } returns source
             },
@@ -100,12 +93,14 @@ class BookReaderSessionFactoryTest {
             networkHelper = mockk<NetworkHelper> {
                 every { client } returns mockk<OkHttpClient>()
             },
-            incognitoState = mockk {
-                every { isIncognito(entry.source) } returns false
-            },
             materializationStore = mockk(relaxed = true),
             downloadCache = failingDownloadCache(),
-            downloadLifecycle = downloadLifecycle,
+            mediaSession = BookMediaSessionProcessor(
+                EntryMediaSessionEventSink {
+                    events += it
+                    EntryMediaSessionResult.Handled
+                },
+            ),
             now = { 100L },
         )
 
@@ -122,22 +117,16 @@ class BookReaderSessionFactoryTest {
         assertEquals(initialLocator, session.initialLocator)
         val latestLocator = BookLocator("chapter-2.xhtml", progression = 0.5, totalProgression = 0.6)
         session.saveLocation(latestLocator, completed = true)
-        assertEquals(latestLocator, BookProgressLocatorCodec.decode(updatedProgress.captured.locator))
-        assertTrue(updatedProgress.captured.completed)
-        assertEquals(100L, updatedProgress.captured.completionUpdatedAt)
-        assertEquals(100L, updatedProgress.captured.locatorUpdatedAt)
-        coVerify(exactly = 1) {
-            downloadLifecycle.onEvent(EntryDownloadLifecycleEvent.Completed(entry, chapter))
-        }
+        val progressEvent = assertIs<EntryMediaSessionEvent.Progressed>(events.single())
+        assertEquals(latestLocator, BookProgressLocatorCodec.decode(progressEvent.progress.locator))
+        assertTrue(progressEvent.progress.completed)
+        assertEquals(100L, progressEvent.progress.completionUpdatedAt)
+        assertEquals(100L, progressEvent.progress.locatorUpdatedAt)
 
         session.recordHistory(500L)
-        coVerify {
-            historyRepository.upsertHistory(
-                match<HistoryUpdate> {
-                    it.chapterId == chapter.id && it.readAt.time == 100L && it.sessionReadDuration == 500L
-                },
-            )
-        }
+        val activityEvent = assertIs<EntryMediaSessionEvent.ActivityRecorded>(events.last())
+        assertEquals(100L, activityEvent.activity.recordedAtEpochMillis)
+        assertEquals(500L, activityEvent.activity.durationMillis)
 
         session.close()
         assertEquals(1, publicationSession.closeCount)
@@ -147,37 +136,33 @@ class BookReaderSessionFactoryTest {
     @Test
     fun `saving progress preserves a manually consumed child without resolving media`() = runTest {
         val chapter = chapter().copy(read = true)
-        val captured = slot<EntryProgressState>()
-        val progressRepository = mockk<EntryProgressRepository> {
-            coEvery { get(chapter.entryId, "", "publication.epub") } returns null
-            coEvery { mergeAndSyncChild(capture(captured)) } answers { captured.captured }
-        }
+        val events = mutableListOf<EntryMediaSessionEvent>()
         val session = OpenedBookReaderSession(
             entry = entry(),
-            historySourceId = entry().source,
             chapter = chapter,
             progressIdentity = BookProgressIdentity("", "publication.epub", null),
             contentSession = mockk(relaxed = true),
             publicationSession = TestPublicationSession(),
             initialLocator = null,
-            entryProgressRepository = progressRepository,
-            historyRepository = mockk(relaxed = true),
-            incognitoState = mockk {
-                every { isIncognito(entry().source) } returns false
-            },
-            downloadLifecycle = noOpDownloadLifecycle(),
+            mediaSession = BookMediaSessionProcessor(
+                EntryMediaSessionEventSink {
+                    events += it
+                    EntryMediaSessionResult.Handled
+                },
+            ),
             now = { 100L },
         )
 
         session.saveLocation(BookLocator("chapter-1.xhtml", progression = 0.1))
 
-        assertTrue(captured.captured.completed)
-        assertEquals(100L, captured.captured.completionUpdatedAt)
+        val event = assertIs<EntryMediaSessionEvent.Progressed>(events.single())
+        assertTrue(event.progress.completed)
+        assertEquals(100L, event.progress.completionUpdatedAt)
         session.close()
     }
 
     @Test
-    fun `merged book history uses the child owner source for incognito`() = runTest {
+    fun `merged book reports visible entry and owner child to shared policy`() = runTest {
         val owner = entry()
         val visible = entry().copy(id = 2L, source = 20L, url = "/merged")
         val chapter = chapter()
@@ -199,10 +184,7 @@ class BookReaderSessionFactoryTest {
         val progressRepository = mockk<EntryProgressRepository> {
             coEvery { get(owner.id, any(), any()) } returns null
         }
-        val historyRepository = mockk<HistoryRepository>(relaxed = true)
-        val incognitoState = mockk<mihon.entry.interactions.EntryReaderIncognitoState> {
-            every { isIncognito(owner.source) } returns true
-        }
+        val events = mutableListOf<EntryMediaSessionEvent>()
         val processor = SessionFactoryTestProcessor(TestPublicationSession())
         val context = mockk<Context> {
             every { applicationContext } returns this@mockk
@@ -218,7 +200,6 @@ class BookReaderSessionFactoryTest {
                 coEvery { getChapterById(chapter.id) } returns chapter
             },
             entryProgressRepository = progressRepository,
-            historyRepository = historyRepository,
             sourceManager = mockk {
                 every { get(owner.source) } returns source
             },
@@ -226,10 +207,14 @@ class BookReaderSessionFactoryTest {
             networkHelper = mockk {
                 every { client } returns mockk<OkHttpClient>()
             },
-            incognitoState = incognitoState,
             materializationStore = mockk(relaxed = true),
             downloadCache = emptyDownloadCache(),
-            downloadLifecycle = noOpDownloadLifecycle(),
+            mediaSession = BookMediaSessionProcessor(
+                EntryMediaSessionEventSink {
+                    events += it
+                    EntryMediaSessionResult.Handled
+                },
+            ),
         )
 
         val session = assertIs<BookReaderOpenResult.Success>(
@@ -238,15 +223,8 @@ class BookReaderSessionFactoryTest {
         session.saveLocation(BookLocator("chapter-1.xhtml", progression = 0.5))
         session.recordHistory(500L)
 
-        coVerify { incognitoState.isIncognito(owner.source) }
-        coVerify(exactly = 1) { progressRepository.get(owner.id, any(), any()) }
-        coVerify(exactly = 0) { progressRepository.mergeAndSyncChild(any()) }
-        coVerify(exactly = 0) { historyRepository.upsertHistory(any()) }
+        assertTrue(events.all { it.visibleEntry == visible && it.child == chapter })
         session.close()
-    }
-
-    private fun noOpDownloadLifecycle() = EntryDownloadLifecycleEventSink {
-        EntryDownloadLifecycleResult.Handled
     }
 
     private fun entry(): Entry = Entry.create().copy(

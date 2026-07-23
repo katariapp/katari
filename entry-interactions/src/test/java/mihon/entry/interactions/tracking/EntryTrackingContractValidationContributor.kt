@@ -30,6 +30,7 @@ import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerifier
 import mihon.feature.graph.validation.FeatureExecutionContractExecutionInput
 import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractScenario
 import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
@@ -152,6 +153,42 @@ class EntryTrackingContractValidationContributor : FeatureValidationContributor 
                     coVerify(exactly = 1) { feature.bindAutomatically(persisted) }
                 }
             },
+        )
+        val mediaSessionReference = FeatureExecutionContractReference(
+            ENTRY_TRACKING_MEDIA_SESSION_PARTICIPANT.id,
+            EntryTrackingMediaSessionBehaviorContract,
+        )
+        sink.add(
+            FeatureExecutionContractVerifier(mediaSessionReference) { input ->
+                verifyFeatureContract {
+                    val event = mediaSessionContractEvent(
+                        input.provider(EntryProgressCapability.definition).type,
+                    )
+                    val feature = mockk<EntryTrackingFeature> {
+                        coEvery {
+                            synchronizeProgress(event.visibleEntry, event.child.chapterNumber, any())
+                        } returns EntryTrackingProgressSynchronizationResult.Completed(emptyList())
+                    }
+                    val execution = EntryMediaSessionExecutionEvent(event).apply {
+                        progressResult = EntryProgressRecordingResult(event.progress, completedNow = true)
+                    }
+
+                    entryTrackingMediaSessionBinding(
+                        feature = { feature },
+                        automaticSynchronizationEnabled = { true },
+                    ).handler.execute(execution)
+
+                    coVerify(exactly = 1) {
+                        feature.synchronizeProgress(event.visibleEntry, event.child.chapterNumber, any())
+                    }
+                }
+            },
+        )
+        sink.add(
+            FeatureExecutionContractScenario(
+                FeatureContractScenarioId("entry.tracking.media-session.execution.applicable"),
+                mediaSessionReference,
+            ) { listOf(contextEvidence(ENTRY_MEDIA_SESSION_TRACKING_ALLOWED, true)) },
         )
     }
 

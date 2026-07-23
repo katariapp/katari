@@ -1,7 +1,6 @@
 package mihon.entry.interactions
 
 import android.app.Activity
-import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import tachiyomi.domain.entry.model.EntryChapter
 import java.io.File
@@ -21,16 +20,6 @@ interface EntryPlayerCache {
 fun interface EntryInteractionActivityTheme {
     /** Applies the host application's current theme before the activity creates any UI. */
     fun apply(activity: Activity)
-}
-
-interface EntryReaderIncognitoState {
-    fun isIncognito(sourceId: Long?): Boolean
-}
-
-interface EntryReaderTracking {
-    fun isAutomaticTrackingEnabled(): Boolean
-
-    suspend fun updateChapterRead(context: Context, entryId: Long, chapterNumber: Double)
 }
 
 interface EntryChildGroupFilterDataSource {

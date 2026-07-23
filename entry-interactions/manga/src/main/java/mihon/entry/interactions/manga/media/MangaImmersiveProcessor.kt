@@ -12,24 +12,18 @@ import mihon.entry.interactions.EntryImmersiveLoadMode
 import mihon.entry.interactions.EntryImmersiveProcessor
 import mihon.entry.interactions.EntryImmersiveProgress
 import mihon.entry.interactions.EntryImmersiveRenderer
-import mihon.entry.interactions.EntryReaderIncognitoState
-import mihon.entry.interactions.EntryReaderTracking
+import mihon.entry.interactions.EntryMediaSessionActivity
+import mihon.entry.interactions.EntryMediaSessionEvent
+import mihon.entry.interactions.EntryMediaSessionProcessor
 import tachiyomi.domain.entry.adapter.toSEntryChapter
 import tachiyomi.domain.entry.model.Entry
 import tachiyomi.domain.entry.model.EntryChapter
 import tachiyomi.domain.entry.model.progressResourceKey
-import tachiyomi.domain.entry.repository.EntryChapterRepository
 import tachiyomi.domain.entry.repository.EntryProgressRepository
-import tachiyomi.domain.history.model.HistoryUpdate
-import tachiyomi.domain.history.repository.HistoryRepository
-import java.util.Date
 
 internal class MangaImmersiveProcessor(
-    private val entryChapterRepository: EntryChapterRepository? = null,
     private val entryProgressRepository: EntryProgressRepository? = null,
-    private val historyRepository: HistoryRepository? = null,
-    private val readerIncognitoState: EntryReaderIncognitoState? = null,
-    private val readerTracking: EntryReaderTracking? = null,
+    private val mediaSession: EntryMediaSessionProcessor,
     private val now: () -> Long = System::currentTimeMillis,
 ) : EntryImmersiveProcessor {
     override val type: EntryType = EntryType.MANGA
@@ -66,10 +60,8 @@ internal class MangaImmersiveProcessor(
             delegate = MangaImmersiveMedia(
                 pages = pages,
                 initialPageIndex = progress?.pageIndex?.toInt()?.coerceIn(0, pages.lastIndex) ?: 0,
-                entryId = entry.id,
-                sourceId = entry.source,
-                chapterNumber = chapter.chapterNumber,
-                context = context.applicationContext,
+                entry = entry,
+                child = chapter,
             ),
         )
     }
@@ -89,42 +81,36 @@ internal class MangaImmersiveProcessor(
         val pages = handle as? EntryImmersiveHandle.ImagePages ?: return
         val media = pages.delegate as? MangaImmersiveMedia ?: return
         val imageProgress = progress as? EntryImmersiveProgress.ImagePage ?: return
-        val repository = entryChapterRepository ?: return
-        val progressRepository = entryProgressRepository ?: return
-        if (readerIncognitoState?.isIncognito(media.sourceId) == true) return
         if (imageProgress.pageCount <= 0) return
 
         persistMutex.withLock {
-            val chapterId = requireNotNull(handle.chapterId) { "Manga immersive progress requires a child" }
-            val chapter = repository.getChapterById(chapterId) ?: return@withLock
             val pageIndex = imageProgress.pageIndex.coerceIn(0, imageProgress.pageCount - 1)
-            val current = progressRepository.get(chapter.entryId, "", chapter.progressResourceKey)
-            val completedNow = current?.completed != true && pageIndex == imageProgress.pageCount - 1
+            val completed = pageIndex == imageProgress.pageCount - 1
             val timestamp = now()
-            progressRepository.mergeAndSyncChild(
-                mangaProgressState(
-                    entryId = chapter.entryId,
-                    chapterId = chapter.id,
-                    resourceKey = chapter.progressResourceKey,
-                    pageIndex = pageIndex.toLong(),
-                    pageCount = imageProgress.pageCount.toLong(),
-                    completed = current?.completed == true || completedNow,
-                    locatorUpdatedAt = timestamp,
-                    completionUpdatedAt = if (completedNow) timestamp else current?.completionUpdatedAt ?: 0L,
+            mediaSession.onEvent(
+                EntryMediaSessionEvent.Progressed(
+                    visibleEntry = media.entry,
+                    child = media.child,
+                    progress = mangaProgressState(
+                        entryId = media.child.entryId,
+                        chapterId = media.child.id,
+                        resourceKey = media.child.progressResourceKey,
+                        pageIndex = pageIndex.toLong(),
+                        pageCount = imageProgress.pageCount.toLong(),
+                        completed = completed,
+                        locatorUpdatedAt = timestamp,
+                        completionUpdatedAt = if (completed) timestamp else 0L,
+                    ),
+                    fraction = pageIndex.toDouble() / imageProgress.pageCount,
+                    completeEquivalentChildrenByNumber = true,
+                    activity = imageProgress.sessionDurationMs.takeIf { it > 0L }?.let { duration ->
+                        EntryMediaSessionActivity(
+                            recordedAtEpochMillis = timestamp,
+                            durationMillis = duration,
+                        )
+                    },
                 ),
             )
-            if (imageProgress.sessionDurationMs > 0L) {
-                historyRepository?.upsertHistory(
-                    HistoryUpdate(
-                        chapterId = chapter.id,
-                        readAt = Date(),
-                        sessionReadDuration = imageProgress.sessionDurationMs,
-                    ),
-                )
-            }
-            if (completedNow && media.chapterNumber >= 0.0) {
-                readerTracking?.updateChapterRead(media.context, media.entryId, media.chapterNumber)
-            }
         }
     }
 

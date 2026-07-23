@@ -98,6 +98,32 @@ class EntryInteractionBoundaryCheckTaskTest {
     }
 
     @Test
+    fun `media runtime cannot execute contributed consequences directly`() {
+        createBaseFixture(
+            additionalFiles = mapOf(
+                "entry-interactions/manga/src/main/java/mihon/entry/interactions/manga/reader/MangaReader.kt" to
+                    """
+                        package mihon.entry.interactions.manga.reader
+
+                        class MangaReader(
+                            private val mediaSession: MangaMediaSessionProcessor,
+                        ) {
+                            suspend fun persist() {
+                                mediaSession.onEvent(event())
+                                repository.upsertHistory(history())
+                            }
+                        }
+                    """.trimIndent(),
+            ),
+        )
+
+        val error = assertThrows(GradleException::class.java) { runBoundaryCheck() }
+
+        error.message shouldContain "media runtimes must emit EntryMediaSessionEvent facts"
+        error.message shouldContain "upsertHistory"
+    }
+
+    @Test
     fun `application consumers cannot bypass Library Progress Feature through domain port`() {
         createBaseFixture(
             appSource = """

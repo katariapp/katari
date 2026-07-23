@@ -18,8 +18,7 @@ import eu.kanade.tachiyomi.data.track.TrackerManager
 import eu.kanade.tachiyomi.entry.AppEntryDownloadNotificationActions
 import eu.kanade.tachiyomi.entry.AppEntryMetadataChangeNotifier
 import eu.kanade.tachiyomi.entry.AppMangaPageImageCache
-import eu.kanade.tachiyomi.entry.AppReaderIncognitoState
-import eu.kanade.tachiyomi.entry.AppReaderTracking
+import eu.kanade.tachiyomi.entry.AppMediaSessionIncognitoState
 import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.network.JavaScriptEngine
 import eu.kanade.tachiyomi.network.NetworkHelper
@@ -211,6 +210,7 @@ class AppModule(val app: Application) : InjektModule {
             addTracks = get(),
             trackChapter = get(),
             syncChapterProgress = get(),
+            trackPreferences = get(),
         )
         addEntryInteractionRuntime(
             app = app,
@@ -219,8 +219,7 @@ class AppModule(val app: Application) : InjektModule {
                 notificationActions = AppEntryDownloadNotificationActions(),
                 pageImageCache = mangaPageImageCache,
                 childGroupFilterDataSource = AppEntryChildGroupFilterDataSource(get(), get(), get()),
-                readerIncognitoState = AppReaderIncognitoState(get()),
-                readerTracking = AppReaderTracking(get(), get()) { Injekt.get() },
+                mediaSessionIncognitoState = AppMediaSessionIncognitoState(get()),
                 basePreferenceStore = get<ProfileStore>().basePreferenceStore(),
                 profilePreferenceOwners = ProfilePreferenceOwnerInstaller(get()) {
                     get<ProfileStore>().profileStore()

@@ -15,6 +15,8 @@ import mihon.feature.graph.validation.FeatureContractReference
 import mihon.feature.graph.validation.FeatureContractScenario
 import mihon.feature.graph.validation.FeatureContractVerificationResult
 import mihon.feature.graph.validation.FeatureContractVerifier
+import mihon.feature.graph.validation.FeatureExecutionContractReference
+import mihon.feature.graph.validation.FeatureExecutionContractVerifier
 import mihon.feature.graph.validation.FeatureValidationContributionSink
 import mihon.feature.graph.validation.FeatureValidationContributor
 import tachiyomi.core.common.preference.InMemoryPreferenceStore
@@ -42,6 +44,44 @@ class EntryDownloadLifecycleContractValidationContributor : FeatureValidationCon
                 )
             }
         }
+        sink.add(
+            FeatureExecutionContractVerifier(
+                FeatureExecutionContractReference(
+                    ENTRY_DOWNLOAD_MEDIA_SESSION_PARTICIPANT.id,
+                    EntryDownloadMediaSessionBehaviorContract,
+                ),
+            ) { input ->
+                verifyFeatureContract {
+                    val event = mediaSessionContractEvent(
+                        input.provider(EntryDownloadCapability.definition).type,
+                    )
+                    val received = mutableListOf<EntryDownloadLifecycleEvent>()
+                    val feature = object : EntryDownloadLifecycleFeature {
+                        override fun isApplicable(type: eu.kanade.tachiyomi.source.entry.EntryType) = true
+
+                        override suspend fun onEvent(
+                            event: EntryDownloadLifecycleEvent,
+                        ): EntryDownloadLifecycleResult {
+                            received += event
+                            return EntryDownloadLifecycleResult.Handled
+                        }
+                    }
+                    val execution = EntryMediaSessionExecutionEvent(event).apply {
+                        progressResult = EntryProgressRecordingResult(event.progress, completedNow = true)
+                    }
+
+                    entryDownloadMediaSessionBinding { feature }.handler.execute(execution)
+
+                    contractExpectation(
+                        received.map { it::class } == listOf(
+                            EntryDownloadLifecycleEvent.Progressed::class,
+                            EntryDownloadLifecycleEvent.Completed::class,
+                        ),
+                        "Download Lifecycle must receive progress and newly-completed Media Session consequences",
+                    )
+                }
+            },
+        )
     }
 }
 
