@@ -32,9 +32,15 @@ class AudioPlugin : EntryInteractionPlugin {
 
 // entry-interactions root
 val ExampleFeatureModule = EntryFeatureRuntimeModule(
+    id = "entry.example",
     contributor = ExampleFeatureContribution,
     installRuntime = {
-        install<EntryExampleFeature>(DefaultEntryExampleFeature(graphEvaluation, interactions))
+        addSingletonFactory<EntryExampleFeature> {
+            DefaultEntryExampleFeature(/* graph-selected providers and host dependencies */)
+        }
+        EntryFeatureRuntimeArtifacts(
+            runtimeBoundaries = listOf(entryFeatureRuntimeBoundary { get<EntryExampleFeature>() }),
+        )
     },
 )
 
@@ -185,8 +191,9 @@ use a projection ID as a runtime dispatch key.
 ### Media-session consequences
 
 Readers, players, and immersive viewers report structured `EntryMediaSessionEvent` facts through the Media Session
-Feature. They do not persist progress or history, synchronize trackers, interpret incognito mode, or invoke Download
-policy themselves.
+Feature. They do not persist progress or history, synchronize trackers, invoke Download policy, or decide whether
+incognito suppresses those recording consequences themselves. Reader and player UI may still observe incognito for
+interface lifecycle or secure-screen behavior.
 
 Progress, History, Tracking, Download Lifecycle, and incognito policy contribute independently to the Media Session
 execution points. Incognito policy runs before consequences and suppresses recording behavior without becoming a

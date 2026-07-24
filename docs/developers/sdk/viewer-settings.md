@@ -1,7 +1,7 @@
 # Contributing viewer settings
 
 Viewer settings are optional content-type behavior. A content type with no Viewer Settings provider is valid; Katari
-does not render a Reader or Player settings destination for it. Do not add a boolean or an intentional-absence entry.
+does not render a Reader or Player settings destination for it.
 
 ## Type-owned provider
 
@@ -10,9 +10,14 @@ the type's ordinary `EntryInteractionPlugin`. One type provider may contain seve
 has several independent rendering engines.
 
 ```kotlin
+val audioPlayerSettingsOwner = profilePreferenceOwners.register(
+    id = ProfilePreferenceOwnerId("entry-interactions.audio.player-settings"),
+    factory = ::AudioPlayerSettings,
+)
+
 val viewerSettings = DefaultEntryViewerSettingsProvider(
     type = EntryType.AUDIO,
-    surfaces = listOf(AudioPlayerSettings(preferenceStore)),
+    surfaces = listOf(audioPlayerSettingsOwner.create()),
 )
 
 override val providerBindings = buildList {
@@ -23,7 +28,9 @@ override val providerBindings = buildList {
 
 Each surface owns a globally stable ID, category, display metadata, and every `ViewerSettingDefinition` used by that
 viewer. A definition's `providerId` must match its surface ID. Include profile-only definitions as well as settings that
-allow entry overrides: the Feature derives profile preference ownership from the complete definition collection.
+allow entry overrides. Register each preference-owning surface factory with `ProfilePreferenceOwnerInstaller`; the
+profile architecture derives its profile, app-state, and private keys from that factory. `EntryViewerSettingsFeature`
+uses the contributed definitions separately to validate and manage entry overrides.
 
 Provider presence is the only type-wide support fact. Contextual values belong in setting resolution or renderer
 behavior; they must not become a second availability switch on the surface.
@@ -56,7 +63,6 @@ UI. A type with no provider creates no projection obligation.
 
 `EntryViewerSettingsFeature` owns the integrations that follow from the provider definitions:
 
-- profile, app-state, and private preference-key ownership;
 - validated per-entry override snapshot and restore;
 - backup serialization and restoration;
 - compatible override copy during entry migration;
@@ -66,4 +72,5 @@ Consumers use the Feature rather than enumerating provider IDs or calling the ov
 flags are handled only by a named backup/reset compatibility adapter and are not evidence of current support.
 
 Profile-wide preference reset is separate from clearing per-entry overrides. The general discovery and lifecycle of
-preference-owner contributions belongs to the profile architecture; Viewer Settings only exposes its owned artifact.
+preference-owner contributions belongs to the profile architecture; Viewer Settings contributes its provider-backed
+relationship and manages only its Feature-owned behavior.

@@ -25,7 +25,7 @@
 
 ## Validation
 - Run `./gradlew spotlessApply` from the repo root.
-- CI runs `spotlessCheck` -> `verifyLegacySourceAbi` -> `testFossUnitTest` -> `verifySqlDelightMigration` -> `assembleRelease -Pinclude-telemetry -Penable-updater`.
+- CI runs `spotlessCheck` -> `verifyEntryFeatureArchitecture` -> `verifyLegacySourceAbi` -> `testFossUnitTest` -> `verifySqlDelightMigration` -> `assembleRelease -Pinclude-telemetry -Penable-updater`.
 - App unit tests run on the `foss` buildType (`testBuildType = "foss"`); focused example: `./gradlew :app:testFossUnitTest --tests '...'`.
 - FOSS compilation can be verified with `:app:compileFossKotlin`; telemetry-enabled release compilation uses `:app:compileReleaseKotlin -Pinclude-telemetry`.
 - After touching `data/src/main/sqldelight`, run `./gradlew verifySqlDelightMigration`.
