@@ -168,6 +168,11 @@ class AppModule(val app: Application) : InjektModule {
         addSingletonFactory { NetworkHelper(app, get()) }
         addSingletonFactory { JavaScriptEngine(app) }
 
+        addSingletonFactory { AndroidStorageFolderProvider(app) }
+        addSingletonFactory { LocalSourceFileSystem(get()) }
+        addSingletonFactory { LocalCoverManager(app, get()) }
+        addSingletonFactory { StorageManager(app, get()) }
+
         addSingletonFactory<SourceManager> { AndroidSourceManager(app, get(), get()) }
         addSingletonFactory { ExtensionManager(app) }
         addSingletonFactory { TrackerManager(get(), get()) }
@@ -211,7 +216,7 @@ class AppModule(val app: Application) : InjektModule {
             app = app,
             addTracks = get(),
             trackChapter = get(),
-            syncChapterProgress = get(),
+            syncChapterProgress = { get() },
             trackPreferences = get(),
         )
         addEntryInteractionRuntime(
@@ -253,11 +258,6 @@ class AppModule(val app: Application) : InjektModule {
         )
 
         addSingletonFactory { ImageSaver(app) }
-
-        addSingletonFactory { AndroidStorageFolderProvider(app) }
-        addSingletonFactory { LocalSourceFileSystem(get()) }
-        addSingletonFactory { LocalCoverManager(app, get()) }
-        addSingletonFactory { StorageManager(app, get()) }
 
         // Asynchronously init expensive components for a faster cold start
         ContextCompat.getMainExecutor(app).execute {

@@ -19,7 +19,7 @@ internal class AppEntryTrackingAutomationHost(
     private val sourceManager: SourceManager,
     private val addTracks: AddTracks,
     private val trackChapter: TrackChapter,
-    private val syncChapterProgress: SyncChapterProgressWithTrack,
+    private val syncChapterProgress: () -> SyncChapterProgressWithTrack,
     private val preferences: TrackPreferences,
 ) : EntryTrackingAutomationHost {
 
@@ -68,7 +68,7 @@ internal class AppEntryTrackingAutomationHost(
         track: EntryTrack,
     ) {
         val tracker = trackerManager.get(serviceId) ?: return
-        syncChapterProgress.await(entry, track, tracker)
+        syncChapterProgress().await(entry, track, tracker)
     }
 
     override suspend fun prepareMigrationTracks(

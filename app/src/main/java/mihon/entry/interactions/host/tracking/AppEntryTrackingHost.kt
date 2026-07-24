@@ -31,7 +31,7 @@ class AppEntryTrackingHost(
     app: Application,
     addTracks: AddTracks,
     trackChapter: TrackChapter,
-    syncChapterProgress: SyncChapterProgressWithTrack,
+    syncChapterProgress: () -> SyncChapterProgressWithTrack,
     trackPreferences: TrackPreferences,
 ) : EntryTrackingHost {
 
